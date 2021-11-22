@@ -8,52 +8,24 @@ export const isFetchingCoplete = () => ({ type: LoginTypes.ISFETCHING_LOGIN_COMP
 export const login = ( email, password ) => async (dispatch) => {
 
     dispatch( isFetchingStart());
-    // Puerta trasera para entrar como administrador.
-    // if( email === "mauricio@mauricio.com" && password === "mauricio") 
-    //     { return dispatch(
-    //         {
-
-    //             type: LoginTypes.LOGIN, 
-    //             payload: { 
-    //                 data: { 
-    //                     isLoggedIn: true,
-    //                     empleado:{
-    //                         nombre: "mauricio",
-    //                         email: "mauricio@mauriciol.com",
-    //                         password: "mauricio",
-    //                         admin: true,
-    //                     }
-    //                 }
-    //             }
-    //         }
-    //     )};
-
-        return new Promise((resolve, reject) => {
-            getLoginOkApi( email, password )
-                .then(( empleado ) => {
-                    console.log("entra al then:" + JSON.stringify(empleado));
-                    dispatch(
-                        { 
-                            type: LoginTypes.LOGIN, 
-                            payload: { 
-                                data: {
-                                    isLoggedIn: true,
-                                    empleado
-                                }
-                            }
+    
+    return new Promise((resolve, reject) => {
+        getLoginOkApi( email, password )
+            .then( empleado => {
+                dispatch({ 
+                    type: LoginTypes.LOGIN, 
+                    payload: { 
+                        data: {
+                            isLoggedIn: true,
+                            empleado
                         }
-                    );
-                    resolve( empleado );
-                })
-                .catch(( error ) => {
-                    console.log("entra al catch");
-                    // dispatch( errorLogin() );
-                    // history.push("/errorlogin");
-                    console.log( error );
-                    reject( error );
-                })
-                .finally( dispatch( isFetchingCoplete()) );
-        });
+                    }
+                });
+                resolve( empleado );
+            })
+            .catch(error  => reject(error))
+            .finally(dispatch(isFetchingCoplete()));
+    });
 };
 
 // export const errorLogin = () => ({

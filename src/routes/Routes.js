@@ -26,25 +26,25 @@ const Routes = ({ isLoggedIn, admin }) => (
             return !isLoggedIn ? <Redirect to="/login" /> : <Principal admin = { admin }/>
         }} />
 
-        <Route path="/empleados" render = { ( props ) => {
+        {/* <Route path="/empleados" render = { ( props ) => {
                 return <EmpleadosRoutes { ...props } isLoggedIn = { isLoggedIn } admin = { admin } />;
-        }} />
+        }} /> */}
 
         <Route exact path="/noautorizado" render = { () => <Error mensaje={"Acceso no autorizado"} /> } />
         <Route exact path="/errorlogin" render = { () => <Error mensaje={"Login incorrecto"} /> } />
         <Route exact path="/ocurrioproblema" render = { () => <Error mensaje={"Ocurrió un problema"} /> } />
 
-        <Route exact path="/turnos" render = { () => {
+        {/* <Route exact path="/turnos" render = { () => {
             return !isLoggedIn ? <Redirect to="/login" /> : <Turno />
-        }} />  
+        }} />   */}
 
-        <Route path="/tiposjornada" render = { ( props ) =>{
+        {/* <Route path="/tiposjornada" render = { ( props ) =>{
                 return <TiposJornadaRoutes { ...props } isLoggedIn = { isLoggedIn } admin = { admin }/>;
-        }} />
+        }} /> */}
 
-        <Route exact path="/resumen" render = { () => {
+        {/* <Route exact path="/resumen" render = { () => {
             return !isLoggedIn ? <Redirect to="/login" /> : <Resumen />
-        }} />  
+        }} />   */}
 
         <Route path="/login" render = {( props ) => <Login { ...props } /> }/>
 
