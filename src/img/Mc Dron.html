@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<!-- saved from url=(0032)http://localhost:8000/index.html -->
+<html class="md device-pixel-ratio-1 device-desktop device-windows device-cordova"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <!--
+        Customize this policy to fit your own app's needs. For more guidance, see:
+            https://github.com/apache/cordova-plugin-whitelist/blob/master/README.md#content-security-policy
+        Some notes:
+            * gap: is required only on iOS (when using UIWebView) and is needed for JS->native communication
+            * https://ssl.gstatic.com is required only on Android and is needed for TalkBack to function properly
+            * Disables use of inline scripts in order to mitigate risk of XSS vulnerabilities. To change this:
+                * Enable inline JS: add 'unsafe-inline' to default-src
+        -->
+    <!--<meta http-equiv="Content-Security-Policy" content="default-src 'self' data: gap: https://ssl.gstatic.com 'unsafe-eval'; style-src 'self' 'unsafe-inline'; media-src *; img-src 'self' data: content:;">-->
+
+    <!-- Required meta tags-->
+    
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, minimal-ui, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="format-detection" content="telephone=no">
+    <meta name="msapplication-tap-highlight" content="no">
+    <!-- Color theme for statusbar -->
+    <!-- <meta name="theme-color" content="#2196f3"> -->
+    <meta name="color-scheme" content="light dark">
+
+    <!-- Your app title -->
+    <title>Mc Dron</title>
+    <!-- Path to Framework7 Library CSS -->
+    <link rel="stylesheet" href="./Mc Dron_files/framework7-bundle.min.css">
+    <!-- Path to icons -->
+    <link rel="stylesheet" href="./Mc Dron_files/icons.css">
+    <!-- Path to your custom app styles-->
+    <link rel="stylesheet" href="./Mc Dron_files/app.css">
+    <link rel="stylesheet" href="./Mc Dron_files/estilos.css">
+<script src="./Mc Dron_files/cordova_plugins.js.descarga"></script></head>
+
+<body class="framework7-root">
+    <div id="app">
+        <!-- Statusbar overlay -->
+        <div class="statusbar"></div>
+    
+        <!-- Your main view, should have "view-main" class -->
+        <div class="view view-main">
+       
+                   
+        <!-- Initial Page, "data-name" contains page name -->
+            
+        <div class="page page-previous" data-name="login" aria-hidden="true">
+    
+    <div class="page-content">
+
+    <div class="text-align-center margin-top">
+        <img src="./Mc Dron_files/logo.png" width="90%/"> 
+    </div>
+        <div class="block-title">Logueate</div>
+        <div class="list no-hairlines-md">
+        <ul>
+          <li class="item-content item-input item-input-with-value">
+            <div class="item-media">
+              <i class="icon demo-list-icon"></i>
+            </div>
+            <div class="item-inner">
+              <div class="item-title item-floating-label">E-mail</div>
+              <div class="item-input-wrap">
+                <input id="logEmail" type="email" placeholder="Tu e-mail" value="mauricio11111@gmail.com" class="input-with-value">
+                <span class="input-clear-button"></span>
+              </div>
+            </div>
+          </li>
+          <li class="item-content item-input item-input-with-value">
+            <div class="item-media">
+              <i class="icon demo-list-icon"></i>
+            </div>
+            <div class="item-inner">
+              <div class="item-title item-floating-label">Contraseña</div>
+              <div class="item-input-wrap">
+                <input id="logContra" type="password" placeholder="Contraseña" value="123456" class="input-with-value">
+                <span class="input-clear-button"></span>
+              </div>
+            </div>
+          </li>
+
+
+
+        </ul>
+        </div>
+          <div class="row">                        
+            <div class="col-20"></div>                
+            <div class="col-60 button button-fill irLoguearse" widht="100px">Logueate</div>
+            <div class="col-20"></div>
+          </div>
+
+
+        <a class="irRecuperar">Olvidó su contraseña?</a>
+
+    </div>
+</div><div data-name="inicio" class="page page-current page-with-card-opened">
+
+      <div class="navbar navbar-hidden navbar-hidden-statusbar">
+        <div class="navbar-inner sliding">
+          <div class="left">
+            <a class="link irPerfil">
+              <img src="./Mc Dron_files/perfilicono.png" width="20px">
+            </a>
+          </div>
+          <div class="title bluemcdron saludoUsu"></div>
+          <div class="right irLogout">
+            <a class="link">
+              <img src="./Mc Dron_files/menuicono.png" width="20px"> 
+            </a>
+          </div>
+        </div>
+      </div>
+
+
+
+      <div class="page-content">
+            <div class="text-align-center margin-top">
+              <img src="./Mc Dron_files/logo.png" width="90%/"> 
+            </div>
+            <div class="row">
+                <div class="col">
+                    <div class="card card-expandable" style="height: 230px">
+                        <div class="card-content">
+                            <div class="bg-color-red" style="height: 300px">
+                            <div class="card-header text-color-white display-block">REPARACIONES<br>
+                                 <div><img src="./Mc Dron_files/reparacioneslogo.png" width="50vw/"></div>
+                                    <small style="opacity: 0.7"></small>
+                                </div>
+                                <a href="http://localhost:8000/index.html#" class="link card-close card-opened-fade-in color-white" style="position: absolute; right: 15px; top: 15px">
+                                    <i class="icon f7-icons">xmark_circle_fill</i>
+                                </a>
+                            </div>
+                                <div class="card-content-padding">
+                                    <div class="block-title">Reparaciones</div>
+                                      <div class="list media-list inset">
+                                        <ul>
+                                          <li>
+                                            <a class="item-link item-content irReparacion" data-reparacion="1">
+                                              <div class="item-media"><img src="./Mc Dron_files/log-gris2.jpg" width="44"></div>
+                                              <div class="item-inner">
+                                                <div class="item-title-row">
+                                                  <div class="item-title">Numero de Reparacion 1</div>
+                                                </div>
+                                                <div class="item-subtitle">Modelo de drone</div>
+                                              </div>
+                                            </a>
+                                          </li>
+                                    
+                                          <li>
+                                            <a href="http://localhost:8000/index.html#" class="item-link item-content irReparacion" data-reparacion="2">
+                                              <div class="item-media"><img src="./Mc Dron_files/log-gris2.jpg" width="44"></div>
+                                              <div class="item-inner">
+                                                <div class="item-title-row">
+                                                  <div class="item-title">Numero de Reparacion 2</div>
+                                                </div>
+                                                <div class="item-subtitle">Modelo de drone</div>
+                                              </div>
+                                            </a>
+                                          </li>
+                                       
+                                          <li>
+                                            <a href="http://localhost:8000/index.html#" class="item-link item-content irReparacion" data-reparacion="3">
+                                              <div class="item-media"><img src="./Mc Dron_files/log-gris2.jpg" width="44"></div>
+                                              <div class="item-inner">
+                                                <div class="item-title-row">
+                                                  <div class="item-title">Numero de Reparacion 3</div>
+                                                </div>
+                                                <div class="item-subtitle">Modelo de drone</div>
+                                              </div>
+                                            </a>
+                                          </li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                </div>
+
+                <div class="col">
+                    <div class="card card-expandable" style="height: 230px">
+                        <div class="card-content">
+                            <div class="bg-color-red" style="height: 300px">
+                                <div class="card-header text-color-white display-block">PRESUPUESTO<br>
+                                    <div><img src="./Mc Dron_files/presupuestoslogo.png" width="50vw/"></div>
+                                    <small style="opacity: 0.7"></small>
+                                </div>
+                                <a href="http://localhost:8000/index.html#" class="link card-close card-opened-fade-in color-white" style="position: absolute; right: 15px; top: 15px">
+                                    <i class="icon f7-icons">xmark_circle_fill</i>
+                                </a>
+                            </div>
+                            <div class="card-content-padding">
+                                <div class="block-title">COMPLETE LOS DATOS PARA UN PRESUPUESTO</div>
+                                  <div class="list no-hairlines-md">
+                                    <ul>
+                                    <li class="item-content item-input item-input-outline">
+                                    <div class="item-media">
+                                      <i class="icon demo-list-icon"></i>
+                                        </div>
+                                        <div class="item-inner">
+                                          <div class="item-title item-floating-label" id="lblNombrePresu">Nombre</div>
+                                          <div class="item-input-wrap">
+                                            <input type="text" placeholder="Tú Nombre" id="nombrePresu">
+                                            <span class="input-clear-button"></span>
+                                          </div>
+                                        </div>
+                                      </li>
+                                      <li class="item-content item-input item-input-outline">
+                                        <div class="item-media">
+                                          <i class="icon demo-list-icon"></i>
+                                            </div>
+                                            <div class="item-inner">
+                                              <div class="item-title item-floating-label" id="lblApellidoPresu">Apellido</div>
+                                              <div class="item-input-wrap">
+                                                <input type="text" placeholder="Tú Apellido" id="apellidoPresu">
+                                                <span class="input-clear-button"></span>
+                                              </div>
+                                            </div>
+                                        </li>
+                                      <li class="item-content item-input item-input-outline">
+                                        <div class="item-media">
+                                          <i class="icon demo-list-icon"></i>
+                                        </div>
+                                        <div class="item-inner">
+                                          <div class="item-title item-floating-label">Modelo de Drone</div>
+                                          <div class="item-input-wrap">
+                                            <input type="text" placeholder="Tú Drone" id="modeloDrone">
+                                            <span class="input-clear-button"></span>
+                                          </div>
+                                        </div>
+                                      </li>
+                                      <li class="item-content item-input item-input-outline">
+                                        <div class="item-media">
+                                          <i class="icon demo-list-icon"></i>
+                                        </div>
+                                        <div class="item-inner">
+                                          <div class="item-title item-floating-label" id="lblTelefonoPresu">Teléfono</div>
+                                          <div class="item-input-wrap">
+                                            <input type="tel" placeholder="Tú teléfono" id="telefonoPresu">
+                                            <span class="input-clear-button"></span>
+                                          </div>
+                                        </div>
+                                      </li>
+                                      <li class="item-content item-input item-input-outline">
+                                        <div class="item-media">
+                                          <i class="icon demo-list-icon"></i>
+                                        </div>
+                                        <div class="item-inner">
+                                          <div class="item-title item-floating-label" id="lblCiudadPresu">Ciudad y Provincia</div>
+                                          <div class="item-input-wrap">
+                                            <input type="text" placeholder="Tú Ciudad y Provincia" id="ciudadPresu">
+                                            <span class="input-clear-button"></span>
+                                          </div>
+                                        </div>
+                                      </li>
+                                      <li class="item-content item-input item-input-outline">
+                                        <div class="item-media">
+                                          <i class="icon demo-list-icon"></i>
+                                        </div>
+                                        <div class="item-inner">
+                                          <div class="item-title item-floating-label">Desperfecto</div>
+                                          <div class="item-input-wrap">
+                                            <textarea class="resizable" placeholder="Descripción" id="descripcionPresu"></textarea>
+                                            <span class="input-clear-button"></span>
+                                          </div>
+                                        </div>
+                                      </li>
+                                      <div class="row">                        
+                                          <div class="col-20"></div>                
+                                          <div class="col-60 button button-fill card-close irPresupuestar" widht="100px">Presupuestar</div>
+                                          <div class="col-20"></div>
+                                       </div>
+                                    </ul>
+                                  </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col">
+                    <div class="card card-expandable card-opened" style="height: 230px; transform: translate3d(94px, -283px, 0px) scale(2.09302, 2.78261);">
+                        <div class="card-content" style="width: 360px; height: 640px; transform: translate3d(-94px, 0px, 0px) scale(0.477778, 0.359375);">
+                            <div class="bg-color-red" style="height: 300px">
+                                <div class="card-header text-color-white display-block">VENTAS<br>
+                                    <div><img src="./Mc Dron_files/ventaslogo.png" width="50vw/"></div>
+                                    <small style="opacity: 0.7"></small>
+                                </div>
+                                <a href="http://localhost:8000/index.html#" class="link card-close card-opened-fade-in color-white" style="position: absolute; right: 15px; top: 15px">
+                                    <i class="icon f7-icons">xmark_circle_fill</i>
+                                </a>
+                            </div>
+                            <div class="card-content-padding">
+                             <div class="block-title">TIENDA MCDRON</div>
+                                  <div class="list media-list inset">
+                                    <ul>
+                                      <li>
+                                        <a href="https://articulo.mercadolibre.com.ar/MLA-881149722-refuerzos-zona-motores-para-carcasas-phantom-3-std-adv-pro-_JM" class="item-link item-content">
+                                          <div class="item-media"><img src="./Mc Dron_files/ventasRefuerzos.jpg" width="44"></div>
+                                          <div class="item-inner">
+                                            <div class="item-title-row">
+                                              <div class="item-title">REFUERZOS PHANTOM 3</div>
+                                            </div>
+                                            <div class="item-subtitle">Para la carcaza debajo de los motores</div>
+                                          </div>
+                                        </a>
+                                      </li>
+                                    </ul>
+                                </div>
+                                <div class="list media-list inset">
+                                    <ul>
+                                      <li>
+                                        <a href="https://articulo.mercadolibre.com.ar/MLA-883790444-control-remoto-radio-drone-dji-mavic-air-2-_JM" class="item-link item-content">
+                                          <div class="item-media"><img src="./Mc Dron_files/ventasControl.jpg" width="44"></div>
+                                          <div class="item-inner">
+                                            <div class="item-title-row">
+                                              <div class="item-title">RC MAVIC AIR 2</div>
+                                            </div>
+                                            <div class="item-subtitle">Control remotor para Mavic Air 2</div>
+                                          </div>
+                                        </a>
+                                      </li>
+                                    </ul>
+                                </div>
+                                <div class="list media-list inset">
+                                    <ul>
+                                      <li>
+                                        <a href="https://www.mercadolibre.com.ar/publicaciones/MLA886695036/modificar/59259884-update-fb2f4269d1ec/detail" class="item-link item-content">
+                                          <div class="item-media" style="width="><img></div>
+                                          <div class="item-inner">
+                                            <div class="item-title-row">
+                                              <div class="item-title">REPUESTO GIMBAL PHANTOM 3 PRO</div>
+                                            </div>
+                                            <div class="item-subtitle">Brazo roll Gimbal Phantom 3 Professional</div>
+                                          </div>
+                                        </a>
+                                      </li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    <div class="card-expandable-size"></div></div>
+                </div>
+
+                <div class="col">
+                    <div class="card card-expandable" style="height: 230px">
+                        <div class="card-content">
+                            <div class="bg-color-gray" style="height: 300px">
+                                <div class="card-header text-color-white display-block">APPS UTILES<br>
+                                    <div><img src="./Mc Dron_files/applogo.png" width="50vw/"></div>
+                                    <small style="opacity: 0.7"></small>
+                                </div>
+                                <a href="http://localhost:8000/index.html#" class="link card-close card-opened-fade-in color-white" style="position: absolute; right: 15px; top: 15px">
+                                    <i class="icon f7-icons">xmark_circle_fill</i>
+                                </a>
+                            </div>
+                            <div class="card-content-padding">
+                                      <div class="block-title">Aplicaciones Recomendadas</div>
+                                  <div class="list media-list inset">
+                                    <ul>
+                                      <li>
+                                        <a href="http://localhost:8000/index.html#" class="item-link item-content">
+                                          <div class="item-media"><img src="./Mc Dron_files/logogsp.jpg" width="44"></div>
+                                          <div class="item-inner">
+                                            <div class="item-title-row">
+                                              <div class="item-title">App DJI GSPRO (fotogrametria)</div>
+                                            </div>
+                                            <div class="item-subtitle">Descargala</div>
+                                          </div>
+                                        </a>
+                                      </li>
+                                    </ul>
+                                </div>
+                                <div class="list media-list inset">
+                                    <ul>
+                                      <li>
+                                        <a href="http://localhost:8000/index.html#" class="item-link item-content">
+                                          <div class="item-media"><img src="./Mc Dron_files/solarlogo.png" width="44"></div>
+                                          <div class="item-inner">
+                                            <div class="item-title-row">
+                                              <div class="item-title">App Condiciones Solares</div>
+                                            </div>
+                                            <div class="item-subtitle">Descargala</div>
+                                          </div>
+                                        </a>
+                                      </li>
+                                    </ul>
+                                </div>
+                                <div class="list media-list inset">
+                                    <ul>
+                                      <li>
+                                        <a href="http://localhost:8000/index.html#" class="item-link item-content">
+                                          <div class="item-media"><img src="./Mc Dron_files/climalogo.png" width="44"></div>
+                                          <div class="item-inner">
+                                            <div class="item-title-row">
+                                              <div class="item-title">App Clima y Vientos</div>
+                                            </div>
+                                            <div class="item-subtitle">Descargala</div>
+                                          </div>
+                                        </a>
+                                      </li>
+                                    </ul>
+                                </div>
+                              
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+             
+        <div class="card-backdrop card-backdrop-in"></div></div>
+    </div></div>
+    </div>
+
+
+<!-- The core Firebase JS SDK is always required and must be listed first -->
+<script src="./Mc Dron_files/firebase-app.js.descarga"></script>
+
+<!-- TODO: Add SDKs for Firebase products that you want to use
+     https://firebase.google.com/docs/web/setup#available-libraries -->
+<script src="./Mc Dron_files/firebase-auth.js.descarga"></script>
+<script src="./Mc Dron_files/firebase-firestore.js.descarga"></script>
+
+<script>
+  // Your web app's Firebase configuration
+  var firebaseConfig = {
+    apiKey: "AIzaSyCqupkvp1jXt8y8WjVjSuqi9OFMkJu_LpI",
+    authDomain: "mauriciocruzdrones.com",
+    projectId: "mc-dron",
+    storageBucket: "mc-dron.appspot.com",
+    messagingSenderId: "410639876260",
+    appId: "1:410639876260:web:045fb9451d7ec1d6ee2631"
+  };
+  // Initialize Firebase
+  firebase.initializeApp(firebaseConfig);
+</script>
+
+    <script type="text/javascript" src="./Mc Dron_files/cordova.js.descarga"></script>
+    <script type="text/javascript" src="./Mc Dron_files/framework7-bundle.min.js.descarga"></script>
+    <script type="text/javascript" src="./Mc Dron_files/my-app.js.descarga"></script>
+
+
+
+
+
+
+
+<textarea class="textarea-resizable-shadow" disabled="" style="padding: 7px 12px; margin: 0px; width: 272px; font-size: 16px; font-family: Poppins, Arial, sans-serif; font-style: normal; font-weight: 400; line-height: 22.4px; font-variant: normal; text-transform: none; letter-spacing: normal; border: 0px none rgb(33, 33, 33); box-sizing: border-box; display: block; height: 0px;"></textarea></body></html>

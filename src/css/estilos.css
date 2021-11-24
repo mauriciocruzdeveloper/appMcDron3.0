@@ -1,0 +1,138 @@
+.bluemcdron {
+	color: #224194;
+}
+.bg-bluemcdron {
+	background-color: #224194;
+}
+.bg-red {
+	background-color: #c90e17;
+}
+.saludoUsu {
+	color: #ffffff;
+}
+.saludoRep {
+	color: #ffffff;
+}
+h1 {
+	color: #de3436;
+	text-align: center;
+}
+h3 {
+	color: #224194;
+	text-align: center;
+}
+.btnEstados{
+	font-size: 10px;
+	border-radius: 10px;
+}
+.estilotool {
+	color:#ffffff;
+}
+
+.imagen{
+	text-align:center;
+	background-size: cover;
+}
+
+.galeria .imagen{
+	float:left;
+	width:300px;
+	height:240px;
+	overflow:hidden;
+}
+
+.galeria .contenedor{
+	width:auto;
+	display:flex;
+	flex-wrap: wrap;
+	justify-content:center;
+	overflow:hidden;
+}
+
+.contenedor{
+	max-width: 1200px;
+	margin-right: auto;
+	margin-left: auto;
+}
+
+.recibido{
+	text-align: left;
+	margin: 10px;
+}
+
+.recibido .col-80{
+	background-color: #b5b5b5;
+}
+
+.enviado{
+	text-align: right;
+	margin: 10px;
+}
+
+.enviado .col-80{
+	background-color: #e7e8e8;
+}
+
+.disabledbutton {
+    pointer-events: none;
+}
+
+.estiloperfil{
+  background-color: #b5b5b5;  
+}
+
+.invisible{
+	visibility: hidden;
+}
+.saludoMen{
+	color: #ffffff;
+}
+.botonadmin{
+	margin: 25px 0px 25px 0px;
+}
+.btnfotosadmin{
+	margin: 15px;
+}
+.bg-gris{
+	background-color: #e7e8e8;
+}
+
+/* html,
+body {
+  height: 100%;
+} */
+
+#body {
+  display: flex;
+  align-items: center;
+  padding-top: 40px;
+  padding-bottom: 40px;
+  background-color: #f5f5f5;
+}
+
+.form-signin {
+  width: 100%;
+  max-width: 330px;
+  padding: 15px;
+  margin: auto;
+}
+
+.form-signin .checkbox {
+  font-weight: 400;
+}
+
+.form-signin .form-floating:focus-within {
+  z-index: 2;
+}
+
+.form-signin input[type="email"] {
+  margin-bottom: -1px;
+  border-bottom-right-radius: 0;
+  border-bottom-left-radius: 0;
+}
+
+.form-signin input[type="password"] {
+  margin-bottom: 10px;
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+}

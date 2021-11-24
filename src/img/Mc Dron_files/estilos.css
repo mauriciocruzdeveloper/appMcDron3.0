@@ -1,0 +1,35 @@
+.card-header {
+	background-color: #224194;
+	height: 100%;
+}
+.button {
+	background-color: #224194;
+
+}
+
+.bluemcdron {
+	color: #224194;
+}
+
+h1 {
+	color: #de3436;
+	text-align: center;
+}
+h3 {
+	color: #224194;
+	text-align: center;
+}
+
+/*
+.list .item-floating-label {
+  --label-height: calc(var(--f7-label-font-size) * var(--f7-label-line-height));
+  transform: scale(var(--f7-floating-label-scale)) translateY(calc((var(--f7-input-height) / 2 + 50%) / var(--f7-floating-label-scale)));
+  color: var(--f7-input-placeholder-color);
+  width: auto;
+  max-width: calc(100% / var(--f7-floating-label-scale));
+  pointer-events: none;
+  left: var(--f7-input-padding-left);
+  transform-origin: left center;
+}
+*/
+

@@ -1,0 +1,594 @@
+  
+// If we need to use custom DOM library, let's save it to $$ variable:
+var $$ = Dom7;
+
+var app = new Framework7({
+    // App root element
+    root: '#app',
+    // App Name
+    name: 'My App',
+    // App id
+    id: 'com.myapp.test',
+    // Enable swipe panel
+    panel: {
+      swipe: 'left',
+      
+    },
+    // Add default routes
+    routes: [
+      {
+        path: '/inicio/',
+        url: 'inicio.html',
+      },
+      {
+        path: '/index/',
+        url: 'index.html',
+      },
+      {
+        path: '/login/',
+        url: 'login.html',
+      },
+      {
+        path: '/registro/',
+        url: 'registro.html',
+      },
+      {
+        path: '/listarep/',
+        url: 'listarep.html',
+      },
+      {
+        path: '/reparacion/',
+        url: 'reparacion.html',
+      },
+      {
+        path: '/presupuesto/',
+        url: 'presupuesto.html',
+      },
+      {
+        path: '/perfil/',
+        url: 'perfil.html',
+      },
+
+      
+    ]
+    // ... other parameters
+  });
+
+var mainView = app.views.create('.view-main');
+
+var db = firebase.firestore();
+var colUsuarios = db.collection("USUARIOS");
+var colPresupuestos = db.collection("PRESUPUESTOS");
+var colCiudades = db.collection("CIUDADES");
+var pepito = db.collection('PEPITO');
+
+var userAuth;
+
+// Handle Cordova Device Ready Event
+$$(document).on('deviceready', function() {
+    console.log("Device is ready!");
+    inicializarTablas();
+});
+
+
+
+
+$$(document).on('page:init', function (e) {
+    // Do something here when page with data-name="about" attribute loaded and initialized
+
+    $$(".irPerfil").on("click",function(){
+      console.log("click en el perfil");
+      mainView.router.navigate('/perfil/');
+      consultaPerfil(userAuth.email);
+    });
+
+    $$(".irIndex").on("click",function(){
+      mainView.router.navigate('/index/');
+    });
+
+    $$(".irInicio").on("click",function(){
+      mainView.router.navigate('/inicio/');
+    });
+
+    $$(".irRegistro").on("click",function(){
+      console.log("click registro");
+      mainView.router.navigate('/registro/');
+    });
+
+    $$(".irLogin").on("click",function(){
+      console.log("click login");
+      mainView.router.navigate('/login/');
+    });
+
+    $$(".irRegistrarse").on("click",function(){
+      console.log("click registrarse");
+      registro();
+    });
+
+    $$(".irLoguearse").on("click",function(){
+      console.log("click loguearse");
+      login();
+    });
+
+    $$(".irRecuperar").on("click",function(){
+      console.log("click recuperar");
+      recuperaContra();
+    });
+
+    $$(".irLogout").on("click",function(){
+      console.log("click logout");
+      logout();
+    });
+
+    $$(".irPresupuestar").on("click",function(){
+      console.log("click Presupuestar");
+      presupuestar();
+    });
+
+    $$(".irGuardarUsu").on("click",function(){
+      console.log("click Guardar Usuario");
+      guardarUsu();
+    });
+
+    $$(".irEnviarUsu").on("click",function(){
+      console.log("click Enviar Mensaje");
+      enviarUsu();
+    });
+
+    $$(".irReparacion").on("click",function(){
+      var idReparacion = $$(this).data("reparacion");
+      mainView.router.navigate('/reparacion/');
+      consultaReparacion(idReparacion);
+    });
+
+});
+
+
+
+
+$$(document).on('page:init', '.page[data-name="perfil"]', function () {
+  // Do something here when page with data-name="about" attribute loaded and initialized
+});
+
+// Option 2. Using live 'page:init' event handlers for each page
+$$(document).on('page:init', '.page[data-name="inicio"]', function () {
+  // Do something here when page with data-name="about" attribute loaded and initialized
+  precargaInicio();
+});
+
+
+function inicializarTablas(){
+
+  colCiudades.get().then(function(querySnapshot){
+    console.log('ciudades: ' + querySnapshot.empty);
+
+    if(querySnapshot.empty){
+      var url="datos/cp.json";    
+      app.request.json(url, function(datos){
+
+          for (var i = 0; i < datos.codigos.length; i++) {
+            //var latitud = datos.municipios[i].centroide.lat; EN EL FUTURO
+            //var longitud = datos.municipios[i].centroide.lon;
+            var ciudad = datos.codigos[i].localidad;
+            var provincia = datos.codigos[i].provincia;
+            var cp = datos.codigos[i].cp;
+
+            colCiudades.doc(cp).set({ 
+              NombreCiu: ciudad, 
+              ProvinciaCiu: provincia, 
+            })
+            .catch(function(error) {
+              console.log("Error con SET CIUDAD: " + error);
+            });  
+          };
+
+      })
+      .catch(function(error) {
+        console.log("Error con JSON: " + error);
+      });
+    };
+  });
+}
+
+
+function consultaReparacion(idReparacion){
+
+  var reparacion = colReparaciones.doc(idReparacion);
+
+  reparacion.get()
+  .then((doc) => {
+    if (doc.exists) {
+        $$(".saludoRep").text("Hola " + doc.data().Nick);
+
+        if(doc.data().NombreUsu){
+          $$("#nombreUsu").val(doc.data().NombreUsu);
+        };
+
+        if(doc.data().ApellidoUsu){
+          $$("#apellidoUsu").val(doc.data().ApellidoUsu);
+        };
+
+        if(doc.data().Nick){
+          $$("#nickUsu").val(doc.data().Nick);
+        };
+
+        if(doc.data().DomicilioUsu){
+          $$("#domicilioUsu").val(doc.data().DomicilioUsu);
+        };
+
+        if(doc.data().CiudadUsu){
+          $$("#ciudadUsu").val(doc.data().CiudadUsu);
+
+        };
+
+        if(doc.data().TelefonoUsu){
+          $$("#telefonoUsu").val(doc.data().TelefonoUsu);
+        };
+
+        if(email){
+          $$("#emailUsu").val(email);
+          //("#lblEmailUsu").text(email);
+          $$("#emailUsu").prop("disabled",true);
+        };
+
+
+    } else {
+        // doc.data() will be undefined in this case
+        console.log("No such document!");
+    }
+  })
+  .catch((error) => {
+      console.log("Error getting document:", error);
+  });
+
+}
+
+
+
+function consultaPerfil(email){
+  console.log("pasó el navigate. email: " + email);
+
+  var contenidoHTML="<option>Seleccione una ciudad</option>";
+
+  //colCiudades.get().then(function(querySnapshot){
+  //  querySnapshot.forEach(function(doc) {
+  //    contenidoHTML+= "<option value=" + doc.id + ">" + doc.data().localidad + " - " + doc.data().provincia + "</option>";
+  //  });
+  //});
+
+  console.log(contenidoHTML);
+
+  $$("#ciudadUsu").html(contenidoHTML);
+
+
+  
+
+  var usuario = colUsuarios.doc(email);
+
+  usuario.get()
+  .then((doc) => {
+    if (doc.exists) {
+        $$(".saludoUsu").text("Hola " + doc.data().Nick);
+
+        if(doc.data().NombreUsu){
+          $$("#nombreUsu").val(doc.data().NombreUsu);
+        };
+
+        if(doc.data().ApellidoUsu){
+          $$("#apellidoUsu").val(doc.data().ApellidoUsu);
+        };
+
+        if(doc.data().Nick){
+          $$("#nickUsu").val(doc.data().Nick);
+        };
+
+        if(doc.data().DomicilioUsu){
+          $$("#domicilioUsu").val(doc.data().DomicilioUsu);
+        };
+
+        if(doc.data().CiudadUsu){
+          $$("#ciudadUsu").val(doc.data().CiudadUsu);
+
+        };
+
+        if(doc.data().TelefonoUsu){
+          $$("#telefonoUsu").val(doc.data().TelefonoUsu);
+        };
+
+        if(email){
+          $$("#emailUsu").val(email);
+          //("#lblEmailUsu").text(email);
+          $$("#emailUsu").prop("disabled",true);
+        };
+
+
+    } else {
+        // doc.data() will be undefined in this case
+        console.log("No such document!");
+    }
+  })
+  .catch((error) => {
+      console.log("Error getting document:", error);
+  });
+
+}
+
+
+function guardarUsu(){
+
+
+  var nombre = $$("#nombreUsu").val();
+  var apellido = $$("#apellidoUsu").val();
+  var telefono = $$("#telefonoUsu").val();
+  var ciudad = $$("#ciudadUsu").val();
+  var domicilio = $$("#domicilioUsu").val();
+  var nick = $$("#nickUsu").val();
+
+  colUsuarios.doc(userAuth.email).update({ 
+    NombreUsu: nombre, 
+    ApellidoUsu: apellido, 
+    TelefonoUsu: telefono, 
+    CiudadUsu: ciudad,
+    DomicilioUsu: domicilio,
+    Nick: nick
+  })
+  .then(function() {
+    console.log("actualizado usuario ok");
+    app.dialog.alert("Su perfil se ha actualizado","Atención");
+  })
+  .catch(function(error) {
+    console.log("Error: " + error);
+  });
+
+
+}
+
+
+
+function precargaInicio(){
+
+  var email = userAuth.email;
+  console.log(email);
+
+  var usuario = colUsuarios.doc(email);
+
+
+  usuario.get()
+  .then((doc) => {
+      if (doc.exists) {
+          $$(".saludoUsu").text("Hola " + doc.data().Nick);
+
+          if(doc.data().NombreUsu){
+            $$("#nombrePresu").val(doc.data().NombreUsu);
+            $$("#lblNombrePresu").text(doc.data().NombreUsu);
+            $$("#nombrePresu").prop("disabled",true);
+          };
+
+          if(doc.data().ApellidoUsu){
+            $$("#apellidoPresu").val(doc.data().ApellidoUsu);
+            $$("#lbsApellidoPresu").text(doc.data().ApellidoUsu);
+            $$("#apellidoPresu").prop("disabled",true);
+          };
+
+          if(doc.data().TelefonoUsu){
+            $$("#telefonoPresu").val(doc.data().TelefonoUsu);
+            $$("#lblTelefonoPresu").text(doc.data().TelefonoUsu);
+            $$("#telefonoPresu").prop("disabled",true);
+          };
+
+          if(doc.data().CiudadUsu){
+            $$("#ciudadPresu").val(doc.data().CiudadUsu);
+            $$("#lblCiudadPresu").text(doc.data().CiudadUsu);
+            $$("#ciudadPresu").prop("disabled",true);
+          };
+      } else {
+          // doc.data() will be undefined in this case
+          console.log("No such document!");
+      }
+  }).catch((error) => {
+      console.log("Error getting document:", error);
+  });
+}
+
+
+function registro(){
+  var email = $$("#regEmail").val();
+  var password = $$("#regContra").val();
+  var password2 = $$("#regContra2").val();
+  var nick = $$('#regNick').val();
+
+  console.log("Entró a registro");
+
+  if(email!="" && password!=""){
+    if(password==password2){
+        firebase.auth().createUserWithEmailAndPassword(email,password)
+        .then(function(){
+          //todo lo que tiene que hacer si se registró
+          console.log("Se registró");
+
+          //POR QUE ESTO NO FUNCIONA????
+          /*
+          firebase.auth().onAuthStateChanged(function(user) {
+            console.log("user.displayName: " + user.displayName);
+            user.displayName = nick;
+            console.log("user.displayName: " + user.displayName);
+            user.sendEmailVerification();
+          });
+          */
+
+          firebase.auth().onAuthStateChanged(function(user) {
+            console.log("user.displayName: " + user.displayName);
+            user
+            .updateProfile({ 
+              displayName: nick,
+            })
+            .then(function(){
+              console.log("user.displayName: " + user.displayName);
+              user.sendEmailVerification();
+            });
+          });
+
+          app.dialog.alert("Verifique su email. Compruebe su casilla de correos","Atención");
+
+          datos = {Nick: nick};
+          colUsuarios.doc(email).set(datos);
+          mainView.router.navigate('/login/');
+        })
+        .catch(function(error){
+          //Handle Errors here
+          console.log("Entró al catch");
+          var errorCode = error.code;
+          var errorMessage = error.message;
+          if(errorCode == 'auth/weak-password'){
+              console.log('Clave muy débil');
+          }else{
+              console.log(errorCode + "   "  + errorMessage);
+          };
+        });
+    }else{
+      app.dialog.alert("Las contraseñas no son iguales","Atención");
+    };
+  }else{
+    app.dialog.alert("Completa todos los campos","Atención");
+  }
+}
+
+function login(){
+  var email = $$("#logEmail").val();
+  var password = $$("#logContra").val();
+
+  if(email!="" && password!=""){
+
+      firebase.auth().signInWithEmailAndPassword(email,password)
+      .then(function(){
+        //todo lo que tiene que hacer si se registró
+        console.log("Se logueó");
+
+        userAuth = firebase.auth().currentUser;
+
+        //ARREGLAR LO DE ABAJO PARA QUE NO DE ERROR CUANDO SE DESLOGUEA
+
+        firebase.auth().onAuthStateChanged(function(user) { 
+          if (user.emailVerified) {
+            console.log('Email is verified');
+            mainView.router.navigate('/inicio/');
+          }
+          else {
+            console.log('Email is not verified');
+            app.dialog.alert("Falta verificar el email. Compruebe su casilla de correos","Atención");
+            userAuth.sendEmailVerification();
+          }
+        });
+
+        //ARREGLAR LO DE ARRIBA PARA QUE NO DE ERROR CUANDO SE DESLOGUEA
+
+      })
+      .catch(function(error){
+        //errores clasicos al loguearse
+        var mensajeError= "";
+        var errorCode = error.code;
+        var errorMessage = error.message;
+        
+        switch (errorCode){
+           case "auth/user-not-found":
+            mensajeError = "Usuario no encontrado";
+            break;
+          case "auth/wrong-password":
+            mensajeError = "Contrase&ntilde;a Incorrecta";
+            break;
+          case "auth/weak-password":
+            mensajeError = "Contrase&ntilde;a D&eacute;bil";
+            break;
+          default:
+            mensajeError = "Ha Ocurrido un Error";
+        };
+        console.log(errorMessage);
+        app.dialog.alert( mensajeError,"Atención");
+               
+      });
+  }else{
+    app.dialog.alert("Completa todo los campos","Atención");
+  };
+}
+
+
+function recuperaContra(){
+  var email = $$("#logEmail").val();
+
+  console.log("Entra a recuperaContra")
+
+  if(email!=""){
+    firebase.auth().sendPasswordResetEmail(email)
+      .then(function() {
+        // Password reset email sent.
+        app.dialog.alert("Te enviamos un email para cambiar la contraseña","Atención");
+      })
+      .catch(function(error) {
+        // Error occurred. Inspect error.code.
+      });
+  }else{
+    app.dialog.alert("Completa el email","Atención");
+  };
+}
+ function logout(){
+    
+
+    app.dialog.confirm("¿Desea cerrar sesión?","Atención",function(){
+      firebase.auth().signOut()
+      .then(function() {
+        console.log("sesión cerrada")
+      }).catch(function(error) {
+        app.dialog.alert(error,"Atención");
+      });  
+    });
+
+    
+ 
+ }
+
+function presupuestar(){
+
+  var nombre = $$("#nombrePresu").val();
+  var apellido = $$("#apellidoPresu").val();
+  var telefono = $$("#telefonoPresu").val();
+  var ciudad = $$("#ciudadPresu").val();
+  var modeloDrone = $$("#modeloDrone").val();
+  var descripcionPresu = $$("#descripcionPresu").val();
+
+  var email = userAuth.email;
+
+  colUsuarios.doc(email).update
+    ({ NombreUsu: nombre, ApellidoUsu: apellido, TelefonoUsu: telefono, CiudadUsu: ciudad })
+  .then(function() {
+    console.log("actualizado usuario ok");
+  })
+  .catch(function(error) {
+    console.log("Error: " + error);
+  });
+
+  var tiempo = Date.now();
+  tiempo = tiempo.toString();
+
+  var datos = {Email: email, ModeloDrone: modeloDrone, DescripcionPresu: descripcionPresu};
+
+  colPresupuestos.doc(tiempo).set(datos)
+  .then(function() {
+    console.log("alta presupuesto ok");
+  })
+  .catch(function(error) {
+    console.log("Error: " + error);
+  });
+
+}
+
+
+
+
+/*inicializarTablas(){
+
+  var email = "a@a.com";
+  var datos = { Ciudad: "Rosario", Provincia: "Santa Fe", Habitantes: 1400000 };
+  colCiudades.doc(cp).set(datos);
+
+}*/
+
