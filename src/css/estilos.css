@@ -97,10 +97,10 @@ h3 {
 	background-color: #e7e8e8;
 }
 
-/* html,
+html,
 body {
   height: 100%;
-} */
+}
 
 #body {
   display: flex;

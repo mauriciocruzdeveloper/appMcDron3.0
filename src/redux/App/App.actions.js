@@ -1,31 +1,41 @@
 import { AppTypes } from "./App.types";
-// Esta función está en Empleados en lugar de Login
-// import { getLoginOkApi } from "../Empleados/Empleados.utils";
+import { loginPersistencia } from "../../persistencia/persistenciaFirebase";
 
 export const isFetchingStart = () => {console.log("llega a isfetching"); return { type: AppTypes.ISFETCHING_START }};
 export const isFetchingCoplete = () => ({ type: AppTypes.ISFETCHING_COMPLETE });
 
-export const login = ( email, password ) => async (dispatch) => {
+export const login = (email, password) => async (dispatch) => {
 
-    // dispatch( isFetchingStart());
+    dispatch( isFetchingStart());
 
-    // return new Promise((resolve, reject) => {
-    //     getLoginOkApi( email, password )
-    //         .then( empleado => {
-    //             dispatch({ 
-    //                 type: LoginTypes.LOGIN, 
-    //                 payload: { 
-    //                     data: {
-    //                         isLoggedIn: true,
-    //                         empleado
-    //                     }
-    //                 }
-    //             });
-    //             resolve( empleado );
-    //         })
-    //         .catch(error  => reject(error))
-    //         .finally(dispatch(isFetchingCoplete()));
-    // });
+    return new Promise(async (resolve, reject) => {
+        if(email!="" && password!=""){
+            await loginPersistencia( email, password )
+            .then( usuario => {
+                console.log("llega al then del loginPersistencia");
+                dispatch({ 
+                    type: AppTypes.LOGIN, 
+                    payload: { 
+                        data: {
+                            isLoggedIn: true,
+                            usuario
+                        }
+                    }
+                });
+                // No hace falta devolver el usuario, pero lo hago por si sirve en otra ocación.
+                return resolve(usuario); 
+            })
+            .catch(error  => {
+                console.log("llega al catch del loginPersistencia");
+                reject(error);
+            })
+            .finally(dispatch(isFetchingCoplete()));
+        }else{
+            return reject()
+        };
+    });
+
+    
 };
 
 // export const errorLogin = () => ({

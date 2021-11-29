@@ -1,3 +1,4 @@
-import { createBrowserHistory } from "history";
+import { createHashHistory } from "history";
 
-export default createBrowserHistory();
+// Hay que usar createHashHistory con Cordova, en lugar de createBrowserHistory
+export default createHashHistory();

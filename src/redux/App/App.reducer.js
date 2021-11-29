@@ -4,11 +4,14 @@ const INITIAL_STATE = {
     isLoggedIn: false,
     isFetching: false,
     usuario:{
-        nombre: '',
-        email: '',
-        password: '',
-        admin: false,
-        token: ''
+        nombre: null,
+        apellido: null,
+        email: null,
+        nick: null,
+        urlFoto: null,
+        password: null,
+        admin: false
+        //token: ''
     },
 }
 
@@ -28,11 +31,14 @@ export default (state = INITIAL_STATE, action) => {
                 isLoggedIn: action.payload.data.isLoggedIn,
                 usuario: {
                     ...state.usuario,
-                    nombre: action.payload.data.empleado.nombre,
-                    admin: action.payload.data.empleado.admin,
-                    email: action.payload.data.empleado.email,
-                    password: action.payload.data.empleado.password,
-                    token: action.payload.data.empleado.token
+                    nombre: action.payload.data.usuario?.nombre,
+                    apellido: action.payload.data.usuario?.apellido,
+                    admin: action.payload.data.usuario?.admin,
+                    email: action.payload.data.usuario?.email,
+                    nick: action.payload.data.usuario?.nick,
+                    password: action.payload.data.usuario?.password,
+                    urlFoto: action.payload.data.usuario?.urlFoto
+                    //token: action.payload.data.usuario.token
                 }
             }
         case AppTypes.LOGOUT:
