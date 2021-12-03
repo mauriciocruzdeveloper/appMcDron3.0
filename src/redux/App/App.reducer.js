@@ -3,6 +3,11 @@ import { AppTypes } from "./App.types";
 const INITIAL_STATE = {
     isLoggedIn: false,
     isFetching: false,
+    modalError: {
+        showError: false,
+        mensajeError: '',
+        tituloError: ''
+    },
     usuario:{
         nombre: null,
         apellido: null,
@@ -61,6 +66,12 @@ export default (state = INITIAL_STATE, action) => {
                     ...state.usuario,
                     email: action.payload.data
                 }
+            };
+        case AppTypes.MODAL_ERROR:
+            console.log("llega al reducer " + action.payload.data.showError);
+            return { 
+                ...state,
+                modalError: action.payload.data.modalError
             };
         default:
             return state;

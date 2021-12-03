@@ -6,10 +6,10 @@ export const isFetchingCoplete = () => ({ type: AppTypes.ISFETCHING_COMPLETE });
 
 export const login = (email, password) => async (dispatch) => {
 
-    dispatch( isFetchingStart());
 
     return new Promise(async (resolve, reject) => {
         if(email!="" && password!=""){
+            dispatch( isFetchingStart());
             await loginPersistencia( email, password )
             .then( usuario => {
                 console.log("llega al then del loginPersistencia");
@@ -31,11 +31,10 @@ export const login = (email, password) => async (dispatch) => {
             })
             .finally(dispatch(isFetchingCoplete()));
         }else{
-            return reject()
+            const error = {code: "email o password incorrectos"};
+            return reject(error);
         };
     });
-
-    
 };
 
 // export const errorLogin = () => ({
@@ -59,3 +58,33 @@ export const passwordOnChangeLogin = ( data ) => ({
     type: AppTypes.CHANGE_PASSWORD_LOGIN,
     payload: { data }
 });
+
+export const cierraError = () => {
+    console.log('llega a cierra');
+    return {
+        type: AppTypes.MODAL_ERROR,
+        payload: { 
+            data: {
+                modalError: {
+                    showError: false
+                }
+            } 
+        }
+    }
+};
+
+export const abreError = (titulo, mensaje) => {
+    console.log('llega a abreError');
+    return {
+        type: AppTypes.MODAL_ERROR,
+        payload: { 
+            data: {
+                modalError: {
+                    showError: true,
+                    mensajeError: mensaje,
+                    tituloError: titulo
+                }
+            } 
+        }
+    }
+};

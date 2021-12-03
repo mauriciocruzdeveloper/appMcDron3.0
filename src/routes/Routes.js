@@ -4,16 +4,14 @@ import { Route, Switch, Redirect } from "react-router-dom";
 import { connect } from "react-redux";
 
 // Componenst
-import Principal from '../components/Principal.component';
 import Login from '../components/Login.component';
 import Error from "../components/Error.component";
 
 // import Turno from "../components/Turno.components";
 // import Resumen from "../components/Resumen.component";
 
-
 //Routes
-// import EmpleadosRoutes from "./Empleados/Empleados.routes";
+import InicioRoutes from "./Inicio.routes";
 // import TiposJornadaRoutes from "./TiposJornada/TiposJornada.routes";
 
 // Actions
@@ -23,13 +21,9 @@ const Routes = ({ isLoggedIn, admin }) => (
     <Switch>
 
         {/* Si está logueado, entra a la página principal, sino a la página de login. */}
-        <Route exact path="/" render = { () => {
-            return !isLoggedIn ? <Redirect to="/login" /> : <Principal admin = { admin }/>
+        <Route path="/inicio" render = { ( props ) => {
+                return !isLoggedIn ? <Redirect to="/login" /> : <InicioRoutes {...props} isLoggedIn = { isLoggedIn } admin = { admin } />;
         }} />
-
-        {/* <Route path="/empleados" render = { ( props ) => {
-                return <EmpleadosRoutes { ...props } isLoggedIn = { isLoggedIn } admin = { admin } />;
-        }} /> */}
 
         <Route exact path="/noautorizado" render = { () => <Error mensaje={"Acceso no autorizado"} /> } />
         <Route exact path="/errorlogin" render = { () => <Error mensaje={"Login incorrecto"} /> } />
@@ -47,7 +41,9 @@ const Routes = ({ isLoggedIn, admin }) => (
             return !isLoggedIn ? <Redirect to="/login" /> : <Resumen />
         }} />   */}
 
-        <Route path="/login" render = {( props ) => <Login { ...props } /> }/>
+        <Route path="/login" render = {props => <Login {...props} /> }/>
+
+        <Route path="/" render = {props => <Redirect {...props} to="/inicio" /> }/>
 
     </Switch>
 );

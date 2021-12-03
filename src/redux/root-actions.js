@@ -3,12 +3,16 @@ import {
     login, 
     logout,
     emailOnChangeLogin,
-    passwordOnChangeLogin
+    passwordOnChangeLogin,
+    cierraError,
+    abreError
 } from "./App/App.actions";
 
 export { 
     login, 
     logout, 
     emailOnChangeLogin,
-    passwordOnChangeLogin
+    passwordOnChangeLogin,
+    cierraError,
+    abreError
 }
