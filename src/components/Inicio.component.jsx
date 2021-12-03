@@ -16,21 +16,19 @@ const Inicio = ({ logout, admin }) => {
         <div className="text-center">
             <img class="mb-4" src="./img/logo.png" alt="" width="100%" max-width="100px" />   
 
-            <div 
-              className="card bg-bluemcdron"
-              width="80%"
+            <button 
+              className="m-4 btn w-75 bg-bluemcdron"
               style={{height: "100px"}}
             >      
-              Reparaciones
-            </div>
+              <text class="text-white text-center">REPARACIONES</text>
+            </button>
 
-            <div 
-              className="card bg-bluemcdron"
-              width="80%"
+            <button 
+              className="m-4 btn w-75 bg-bluemcdron"
               style={{height: "100px"}}
             >      
-              Presupuesto
-            </div>
+              <text class="text-white text-center">PRESUPUESTO</text>
+            </button>
 
         </div>
       </Collapse>
