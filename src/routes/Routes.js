@@ -21,29 +21,17 @@ const Routes = ({ isLoggedIn, admin }) => (
     <Switch>
 
         {/* Si está logueado, entra a la página principal, sino a la página de login. */}
-        <Route path="/inicio" render = { ( props ) => {
-                return !isLoggedIn ? <Redirect to="/login" /> : <InicioRoutes {...props} isLoggedIn = { isLoggedIn } admin = { admin } />;
+        <Route exact path="/" render = { () => {
+                return !isLoggedIn ? <Redirect to="/login" /> : <Redirect to="/inicio" />;
         }} />
 
         <Route exact path="/noautorizado" render = { () => <Error mensaje={"Acceso no autorizado"} /> } />
         <Route exact path="/errorlogin" render = { () => <Error mensaje={"Login incorrecto"} /> } />
         <Route exact path="/ocurrioproblema" render = { () => <Error mensaje={"Ocurrió un problema"} /> } />
 
-        {/* <Route exact path="/turnos" render = { () => {
-            return !isLoggedIn ? <Redirect to="/login" /> : <Turno />
-        }} />   */}
+        <Route exact path="/login" render = {props => <Login {...props} /> }/>
 
-        {/* <Route path="/tiposjornada" render = { ( props ) =>{
-                return <TiposJornadaRoutes { ...props } isLoggedIn = { isLoggedIn } admin = { admin }/>;
-        }} /> */}
-
-        {/* <Route exact path="/resumen" render = { () => {
-            return !isLoggedIn ? <Redirect to="/login" /> : <Resumen />
-        }} />   */}
-
-        <Route path="/login" render = {props => <Login {...props} /> }/>
-
-        <Route path="/" render = {props => <Redirect {...props} to="/inicio" /> }/>
+        <Route path="/inicio" render = {props => <InicioRoutes {...props} isLoggedIn = { isLoggedIn } admin = { admin } /> }/>
 
     </Switch>
 );

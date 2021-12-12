@@ -1,5 +1,8 @@
 import { AppTypes } from "./App.types";
-import { loginPersistencia } from "../../persistencia/persistenciaFirebase";
+import { 
+    loginPersistencia, 
+    getReparacionesPersistencia 
+} from "../../persistencia/persistenciaFirebase";
 
 export const isFetchingStart = () => {console.log("llega a isfetching"); return { type: AppTypes.ISFETCHING_START }};
 export const isFetchingCoplete = () => ({ type: AppTypes.ISFETCHING_COMPLETE });
@@ -88,3 +91,34 @@ export const abreError = (titulo, mensaje) => {
         }
     }
 };
+
+export const changeInputRep = (target) => ({ 
+    type: AppTypes.CHANGE_INPUT_REP,
+    payload: { input: target.id, data: target.value }
+});
+
+
+
+export const getReparaciones = () => async (dispatch) => {
+    return new Promise(async (resolve, reject) => {
+        dispatch( isFetchingStart());
+        await getReparacionesPersistencia()
+        .then( reparaciones => {
+            console.log("llega al then del getReparacionesPersistencia");
+            dispatch({ 
+                type: AppTypes.GET_REPARACIONES, 
+                payload: { 
+                    data: reparaciones
+                }
+            });
+            // No hace falta devolver el usuario, pero lo hago por si sirve en otra ocación.
+            return resolve(reparaciones); 
+        })
+        .catch(error  => {
+            console.log("llega al catch del getReparacionesPersistencia");
+            reject(error);
+        })
+        .finally(dispatch(isFetchingCoplete()));
+    });
+};
+

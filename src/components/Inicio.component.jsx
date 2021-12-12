@@ -8,6 +8,9 @@ import {logout} from "../redux/root-actions";
 // import PantallaAdministrador from "./PantallaAdministrador";
 // Transitions
 import { Collapse } from "react-bootstrap";
+// Servicios
+import history from "../history";
+
 
 const Inicio = ({ logout, admin }) => {
     return (
@@ -19,6 +22,7 @@ const Inicio = ({ logout, admin }) => {
             <button 
               className="m-4 btn w-75 bg-bluemcdron"
               style={{height: "100px"}}
+              onClick={() => history.push("/inicio/listareparaciones")}
             >      
               <text class="text-white text-center">REPARACIONES</text>
             </button>

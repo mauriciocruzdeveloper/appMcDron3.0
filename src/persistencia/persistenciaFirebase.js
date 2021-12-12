@@ -1,8 +1,23 @@
 //import firebase from  'firebase/app';
 //const firebase = require('firebase/app');
-import firebase from 'firebase/compat/app';
-import 'firebase/compat/auth';
-import 'firebase/compat/firestore';
+// import firebase from 'firebase/app';
+
+import { initializeApp } from "firebase/app";
+
+import { 
+    getAuth, 
+    signInWithEmailAndPassword 
+} from "firebase/auth"
+import { 
+    collection, 
+    doc, 
+    setDoc, 
+    getFirestore, 
+    getDoc,
+    getDocs,
+    query, 
+    orderBy
+} from "firebase/firestore";
 
 var firebaseConfig = {
     apiKey: "AIzaSyCqupkvp1jXt8y8WjVjSuqi9OFMkJu_LpI",
@@ -13,7 +28,11 @@ var firebaseConfig = {
     appId: "1:410639876260:web:045fb9451d7ec1d6ee2631"
   };
 // Initialize Firebase
-firebase.initializeApp(firebaseConfig);
+const firebaseApp = initializeApp(firebaseConfig);
+
+const firestore = getFirestore();
+
+
 
 export const loginPersistencia = (emailParametro, passwordParametro) => {
 
@@ -22,17 +41,17 @@ export const loginPersistencia = (emailParametro, passwordParametro) => {
 
         console.log(emailParametro,passwordParametro);
 
-        firebase.auth().signInWithEmailAndPassword(emailParametro,passwordParametro)
+        const auth = getAuth();
+
+        signInWithEmailAndPassword(auth, emailParametro,passwordParametro)
         .then(() => {
             console.log("Se logueó");
-
-            let userAuth = firebase.auth().currentUser;
-
+            let userAuth = auth.currentUser;
             if(userAuth.emailVerified) {
                 console.log('Email is verified ' + emailParametro);
-                let usuarioRef = firebase.firestore().collection("USUARIOS").doc(emailParametro);
-                console.log('Pasa el ref');
-                usuarioRef.get()
+                let usuarioRef = doc(collection(firestore, "USUARIOS"), emailParametro);
+                console.log('Pasa el ref:' + JSON.stringify(usuarioRef));
+                getDoc(usuarioRef)
                 .then(doc => {
                     console.log('Entra al then get');
                     if(doc.exists){
@@ -62,6 +81,7 @@ export const loginPersistencia = (emailParametro, passwordParametro) => {
                     console.log('Entra al catch get');
                     reject(error);
                 });
+                return resolve();
             }else{
                 console.log('Email is not verified');
                 app.dialog.alert("Falta verificar el email. Compruebe su casilla de correos","Atención");
@@ -74,19 +94,25 @@ export const loginPersistencia = (emailParametro, passwordParametro) => {
         });
     });
 
-
-
-
-
-
-
-   
-
-
-
-
-
-
-
-
 };
+
+export const getReparacionesPersistencia = () => {
+    return new Promise((resolve, reject) => {
+        const reparacionesRef = collection(firestore, 'REPARACIONES');
+        const q = query(reparacionesRef, orderBy("PrioridadRep"));
+        getDocs(q)
+        .then(querySnapshot => {
+            let reparaciones = [];
+            querySnapshot.forEach(doc => reparaciones.push({id: doc.id, data:doc.data()}))
+            resolve(reparaciones)
+        })
+        .catch(error => reject(error))
+    });
+};
+
+
+// VER DONDE AGREGARLO PARA QUE ME ACTUALICE LAS REPARACIONES
+// unsubscribeRep = colReparaciones.onSnapshot(function(snapshot){
+//     console.log("detecta cambio reparaciones");
+//     cargaListaRep()
+// });

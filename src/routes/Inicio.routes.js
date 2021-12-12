@@ -1,7 +1,8 @@
 import React from "react";
 import { Route, Switch, Redirect } from "react-router-dom";
 import Inicio from "../components/Inicio.component";
-// import CargaEmpleados from "../../components/Carga.empleados.component";
+import ListaReparaciones from "../components/ListaReparaciones.component";
+import Reparacion from "../components/Reparacion.component";
 
 import NavMcDron from "../components/NavMcDron.component";
 
@@ -11,15 +12,15 @@ const InicioRoutes = ({ match, isLoggedIn, admin }) => {
     return (<>
         <NavMcDron />
         {
-        !isLoggedIn ? <Redirect to = "/" /> : 
+        // !isLoggedIn ? <Redirect to = "/" /> : 
             // !admin ? <Redirect to = "/noautorizado" /> :
         <Switch>
 
-            <Route exact path = {`${match.path}`} render = { () => <Inicio /> } />
+            <Route exact path = {`${match.path}`} component= {Inicio} />
 
-            {/* <Route exact path={`${match.path}/carga`} render={() => {
-                return <CargaEmpleados />
-            }} /> */}
+            <Route exact path={`${match.path}/listareparaciones`} component={ListaReparaciones} />
+
+            <Route path={`${match.path}/listareparaciones/:id`} component={Reparacion} />
 
         </Switch>
         }

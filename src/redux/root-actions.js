@@ -5,7 +5,9 @@ import {
     emailOnChangeLogin,
     passwordOnChangeLogin,
     cierraError,
-    abreError
+    abreError,
+    changeInputRep,
+    getReparaciones
 } from "./App/App.actions";
 
 export { 
@@ -14,5 +16,7 @@ export {
     emailOnChangeLogin,
     passwordOnChangeLogin,
     cierraError,
-    abreError
+    abreError,
+    changeInputRep,
+    getReparaciones
 }
