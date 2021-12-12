@@ -18,11 +18,48 @@ const INITIAL_STATE = {
         admin: false
         //token: ''
     },
+    // reparacion:{
+    //     drone: '',
+    //     nroSerieDrone: '',
+    //     descripcionTec: '',
+    //     descripcionUsu: '',
+    //     presupuestoMO: '',
+    //     presupuestoRepuestos: '',
+    //     presupuestoFinal: '',
+    //     presupuestoDiagnostico: '',
+    //     estado: '',
+    //     fechaConsulta: '',
+    //     fechaRecepcion: '',
+    //     fechaEntrega: '',
+    //     fechaFinalizacion: '',
+    //     prioridad: '',
+    //     repuestos: '',
+    //     entrega: '',
+    //     seguimientoEntrega: '',
+    //     drive: '',
+    //     informe: ''
+    // },
+    coleccionReparaciones: []
 }
 
 // Reducer para el App
 export default (state = INITIAL_STATE, action) => {
     switch (action.type) {
+        case AppTypes.GET_REPARACIONES:
+            return { 
+                ...state, 
+                coleccionReparaciones: action.payload.data
+            };
+
+        case AppTypes.CHANGE_INPUT_REP:
+            return { 
+                ...state, 
+                reparacion: {
+                    ...state.reparacion,
+                    [action.payload.input]: action.payload.data
+                }
+             };
+
         case AppTypes.ISFETCHING_START:
             return { ...state, isFetching: true };
 
