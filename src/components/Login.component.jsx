@@ -22,12 +22,14 @@ const Login = ({
 
   const handleLogin = async () => {
     // Hice una promesa para que cuando no se puede loguear me mande a una página de error de login
+    
     await login( email, password)
       .then( () => history.push("/") )
       .catch( error => {
         abreError("Error ", "Código - " + error.code );
         // history.push("/errorlogin") 
       });
+    //history.push("/")
     // console.log('showError ' + showError);
     // abreError("Error", "Login Incorrecto" );
     // console.log('showError ' + showError);
@@ -36,37 +38,37 @@ const Login = ({
   return (
     isFetching ? <h3>cargando ....</h3> :
 
-    <div class="text-center">
-      <main class="form-signin">
-        <form class="text-center">
+    <div className="text-center">
+      <main className="form-signin">
+        <div className="text-center">
 
-          <img class="mb-4" src="./img/logo.png" alt="" width="100%" />
-          <h1 class="h3 mb-3 fw-normal">Please sign in</h1>
+          <img className="mb-4" src="./img/logo.png" alt="" width="100%" />
+          <h1 className="h3 mb-3 fw-normal">Please sign in</h1>
       
-          <div class="form-floating">
+          <div className="form-floating">
             <input 
               type="email" 
-              class="form-control" 
+              className="form-control" 
               id="floatingInput" 
               placeholder="name@example.com" 
               value={ email }
               onChange={ (e) => emailOnChangeLogin( e.target.value ) }
             />
-            <label for="floatingInput">Email address</label>
+            <label>Email address</label>
           </div>
-          <div class="form-floating">
+          <div className="form-floating">
             <input 
               type="password" 
-              class="form-control" 
+              className="form-control" 
               id="floatingPassword" 
               placeholder="Password" 
               value={ password }
               onChange={ e => passwordOnChangeLogin( e.target.value ) }
             />
-            <label for="floatingPassword">Password</label>
+            <label>Password</label>
           </div>
       
-          <div class="checkbox mb-3">
+          <div className="checkbox mb-3">
             <label>
               <input type="checkbox" value="remember-me" /> Remember me
             </label>
@@ -74,15 +76,14 @@ const Login = ({
 
           <button 
             onClick={ () => handleLogin() }
-            class="w-100 btn btn-lg btn-primary bg-bluemcdron" 
-            type="submit"
+            className="w-100 btn btn-lg btn-primary bg-bluemcdron"
           >
             Sign in
           </button>
 
-          <p class="mt-5 mb-3 text-muted">© 2017–2021</p>
+          <p className="mt-5 mb-3 text-muted">© 2017–2021</p>
           
-        </form>
+        </div>
       </main>
     </div>
 

@@ -9,12 +9,12 @@ const INITIAL_STATE = {
         tituloError: ''
     },
     usuario:{
-        nombre: null,
-        apellido: null,
-        email: null,
-        nick: null,
-        urlFoto: null,
-        password: null,
+        nombre: '',
+        apellido: '',
+        email: '',
+        nick: '',
+        urlFoto: '',
+        password: '',
         admin: false
         //token: ''
     },

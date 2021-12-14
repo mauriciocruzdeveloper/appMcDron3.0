@@ -8,7 +8,8 @@ import {
 const ListaReparaciones = ({ 
   getReparaciones, 
   coleccionReparaciones, 
-  isFetching 
+  isFetching,
+  match
 }) => {
 
   //PARA FORZAR LA CARGA DE LOS EMPLEADOS AL INICIALIZAR
@@ -45,7 +46,12 @@ const ListaReparaciones = ({
     isFetching ? <h3>cargando ....</h3> :
     <div class="list-group">
       {coleccionReparaciones.map(reparacion => (
-        <a value={reparacion.id} href="#" class="list-group-item list-group-item-action" aria-current="true">
+        <a 
+          value={reparacion.id} 
+          class="list-group-item list-group-item-action" 
+          aria-current="true"
+          onClick={() => history.push(`/inicio/${reparacion.id}`)}
+        >
           <div class="d-flex w-100 justify-content-between">
             <h5 class="mb-1">{reparacion.data.DroneRep}</h5>
             <small>3 days ago</small>

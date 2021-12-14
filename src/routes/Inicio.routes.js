@@ -9,22 +9,33 @@ import NavMcDron from "../components/NavMcDron.component";
 
 const InicioRoutes = ({ match, isLoggedIn, admin }) => {
 
-    return (<>
-        <NavMcDron />
-        {
-        // !isLoggedIn ? <Redirect to = "/" /> : 
-            // !admin ? <Redirect to = "/noautorizado" /> :
-        <Switch>
+    console.log("inicio rutes")
+    console.log(isLoggedIn);
 
-            <Route exact path = {`${match.path}`} component= {Inicio} />
+    return (
+        <>
+        { isLoggedIn ?
+        // true ? 
+        <>
+            <NavMcDron />
 
-            <Route exact path={`${match.path}/listareparaciones`} component={ListaReparaciones} />
+            <Switch>
 
-            <Route path={`${match.path}/listareparaciones/:id`} component={Reparacion} />
+                <Route exact path = {`${match.path}`} component= {Inicio} />
 
-        </Switch>
+                <Route exact path={`${match.path}/reparaciones`} component={ListaReparaciones} />
+
+                <Route exact path={`${match.path}/:id`} component={Reparacion} />
+
+            </Switch> 
+        </> 
+        : 
+             <Redirect to="/login" />
+            
         }
-    </>)
+        </>
+        
+    )
 }
 
 export default InicioRoutes;

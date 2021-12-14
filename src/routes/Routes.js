@@ -17,23 +17,21 @@ import InicioRoutes from "./Inicio.routes";
 // Actions
 import { login, logout } from "../redux/root-actions";
 
-const Routes = ({ isLoggedIn, admin }) => (
-    <Switch>
+const Routes = ({ isLoggedIn, admin }) => {
+    return (<>
+        <Switch>
+            <Route exact path="/" render={() => <Redirect to="/inicio" />}/>
 
-        {/* Si está logueado, entra a la página principal, sino a la página de login. */}
-        <Route exact path="/" render = { () => {
-                return !isLoggedIn ? <Redirect to="/login" /> : <Redirect to="/inicio" />;
-        }} />
+            <Route path="/noautorizado" render = { () => <Error mensaje={"Acceso no autorizado"} /> } />
+            <Route path="/errorlogin" render = { () => <Error mensaje={"Login incorrecto"} /> } />
+            <Route path="/ocurrioproblema" render = { () => <Error mensaje={"Ocurrió un problema"} /> } />
 
-        <Route exact path="/noautorizado" render = { () => <Error mensaje={"Acceso no autorizado"} /> } />
-        <Route exact path="/errorlogin" render = { () => <Error mensaje={"Login incorrecto"} /> } />
-        <Route exact path="/ocurrioproblema" render = { () => <Error mensaje={"Ocurrió un problema"} /> } />
+            <Route path="/login" render = {props => <Login {...props} /> }/>
 
-        <Route exact path="/login" render = {props => <Login {...props} /> }/>
+            <Route path="/inicio" render = {props => <InicioRoutes {...props} isLoggedIn = { isLoggedIn } admin = { admin } /> }/>
 
-        <Route path="/inicio" render = {props => <InicioRoutes {...props} isLoggedIn = { isLoggedIn } admin = { admin } /> }/>
-
-    </Switch>
-);
+        </Switch>
+    </>)
+};
 
 export default connect( null, { login, logout } )( Routes );

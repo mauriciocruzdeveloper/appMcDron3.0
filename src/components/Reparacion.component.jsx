@@ -5,138 +5,144 @@ import {
     changeInputRep
   } from "../redux/root-actions";
 
-const Reparacion = (changeInputRep) => {
+import { useParams } from "react-router-dom";
+
+const Reparacion = ({ changeInputRep }) => {
+
+    const { id } = useParams();
+
+    console.log("llega a reparación: " + id); 
 
     return(
-        <form>
-            <div class="card" style="width: 18rem;">
-                <div class="card-body">
-                <h5 class="card-title">ESTADO DE LA REPARACIÓN</h5>
-                    <div class="form-floating mb-3">
-                        <label for="estadoRep" class="form-label">Estado</label>
+        <div>
+            <div className="card card-personalizado">
+                <div className="card-body">
+                <h5 className="card-title">ESTADO DE LA REPARACIÓN</h5>
+                    <div>
+                        <label className="form-label">Estado</label>
                         <input 
                             type="text" 
-                            class="form-control" 
+                            className="form-control" 
                             id="estadoRep" 
                             onChange={e => changeInputRep(e.target)}
                         />
                     </div>
                 </div>
             </div>
-            <div class="card" style="width: 18rem;">
-                <div class="card-body">
-                <h5 class="card-title">ENLACE A DRIVE</h5>
-                    <div class="form-floating mb-3">
-                        <label for="driveRep" class="form-label">En lace a Drive</label>
-                        <input onChange={e => changeInputRep(e.target)} type="text" class="form-control" id="driveRep" />
+            <div className="card card-personalizado">
+                <div className="card-body">
+                <h5 className="card-title">ENLACE A DRIVE</h5>
+                    <div>
+                        <label className="form-label">En lace a Drive</label>
+                        <input onChange={e => changeInputRep(e.target)} type="text" className="form-control" id="driveRep" />
                     </div>
                 </div>
             </div>
-            <div class="card" style="width: 18rem;">
-                <div class="card-body">
-                <h5 class="card-title">CONSULTA - PRIMEROS DATOS</h5>
-                    <div class="form-floating mb-3">
-                        <label for="feConRep" class="form-label">Fecha de Cosulta</label>
-                        <input onChange={e => changeInputRep(e.target)} type="date" class="form-control" id="feConRep" />
+            <div className="card card-personalizado">
+                <div className="card-body">
+                <h5 className="card-title">CONSULTA - PRIMEROS DATOS</h5>
+                    <div>
+                        <label className="form-label">Fecha de Cosulta</label>
+                        <input onChange={e => changeInputRep(e.target)} type="date" className="form-control" id="feConRep" />
                     </div>
-                    <div class="form-floating mb-3">
-                        <label for="usuarioRep" class="form-label">Cliente</label>
-                        <input onChange={e => changeInputRep(e.target)} type="text" class="form-control" id="usuarioRep" />
+                    <div>
+                        <label className="form-label">Cliente</label>
+                        <input onChange={e => changeInputRep(e.target)} type="text" className="form-control" id="usuarioRep" />
                     </div>
-                    <div class="form-floating mb-3">
-                        <label for="droneRep" class="form-label">Modelo del Drone</label>
-                        <input onChange={e => changeInputRep(e.target)} type="text" class="form-control" id="droneRep" />
+                    <div>
+                        <label className="form-label">Modelo del Drone</label>
+                        <input onChange={e => changeInputRep(e.target)} type="text" className="form-control" id="droneRep" />
                     </div>
-                    <div class="form-floating mb-3">
-                        <label for="descripcionUsuRep" class="form-label">Desperfectos o Roturas</label>
-                        <textarea onChange={e => changeInputRep(e.target)} class="form-control" id="descripcionUsuRep"></textarea>
-                    </div>
-                </div>
-            </div>
-            <div class="card" style="width: 18rem;">
-                <div class="card-body">
-                <h5 class="card-title">CONSULTA - PRIMEROS DATOS</h5>
-                    <div class="form-floating mb-3">
-                        <label for="feRecRep" class="form-label">Fecha de Recepción</label>
-                        <input onChange={e => changeInputRep(e.target)} type="date" class="form-control" id="feRecRep" />
+                    <div>
+                        <label className="form-label">Desperfectos o Roturas</label>
+                        <textarea onChange={e => changeInputRep(e.target)} className="form-control" id="descripcionUsuRep"></textarea>
                     </div>
                 </div>
             </div>
-            <div class="card" style="width: 18rem;">
-                <div class="card-body">
-                <h5 class="card-title">REVISIÓN - DIAGNÓSTICO Y PRESUPUESTO DATOS</h5>
-                    <div class="form-floating mb-3">
-                        <label for="numeroSerieRep" class="form-label">Número de Serie</label>
-                        <input onChange={e => changeInputRep(e.target)} type="text" class="form-control" id="numeroSerieRep" />
-                    </div>
-                    <div class="form-floating mb-3">
-                        <label for="descripcionTecRep" class="form-label">Observaciones del Técnico</label>
-                        <textarea onChange={e => changeInputRep(e.target)} class="form-control" id="descripcionTecRep"></textarea>
-                    </div>
-                    <div class="form-floating mb-3">
-                        <label for="presuMoRep" class="form-label">Presupuesto Mano de Obra $</label>
-                        <input onChange={e => changeInputRep(e.target)} type="number" class="form-control" id="presuMoRep" />
-                    </div>
-                    <div class="form-floating mb-3">
-                        <label for="presuReRep" class="form-label">Presupuesto Repuestos $</label>
-                        <input onChange={e => changeInputRep(e.target)} type="number" class="form-control" id="presuReRep" />
-                    </div>
-                    <div class="form-floating mb-3">
-                        <label for="presuFiRep" class="form-label">Presupuesto Final $</label>
-                        <input onChange={e => changeInputRep(e.target)} type="number" class="form-control" id="presuFiRep" />
-                    </div>
-                    <div class="form-floating mb-3">
-                        <label for="presuDiRep" class="form-label">Diagnóstico $</label>
-                        <input onChange={e => changeInputRep(e.target)} type="number" class="form-control" id="presuDiRep" />
+            <div className="card card-personalizado">
+                <div className="card-body">
+                <h5 className="card-title">CONSULTA - PRIMEROS DATOS</h5>
+                    <div>
+                        <label className="form-label">Fecha de Recepción</label>
+                        <input onChange={e => changeInputRep(e.target)} type="date" className="form-control" id="feRecRep" />
                     </div>
                 </div>
             </div>
-            <div class="card" style="width: 18rem;">
-                <div class="card-body">
-                <h5 class="card-title">REPUESTOS - CUALES Y SEGUIMIENTO</h5>
-                    <div class="form-floating mb-3">
-                        <label for="txtRepuestosRep" class="form-label">Qué repuesto, seguimiento, transportista</label>
-                        <textarea onChange={e => changeInputRep(e.target)} class="form-control" id="txtRepuestosRep"></textarea>
+            <div className="card card-personalizado">
+                <div className="card-body">
+                <h5 className="card-title">REVISIÓN - DIAGNÓSTICO Y PRESUPUESTO DATOS</h5>
+                    <div>
+                        <label className="form-label">Número de Serie</label>
+                        <input onChange={e => changeInputRep(e.target)} type="text" className="form-control" id="numeroSerieRep" />
+                    </div>
+                    <div>
+                        <label className="form-label">Observaciones del Técnico</label>
+                        <textarea onChange={e => changeInputRep(e.target)} className="form-control" id="descripcionTecRep"></textarea>
+                    </div>
+                    <div>
+                        <label className="form-label">Presupuesto Mano de Obra $</label>
+                        <input onChange={e => changeInputRep(e.target)} type="number" className="form-control" id="presuMoRep" />
+                    </div>
+                    <div>
+                        <label className="form-label">Presupuesto Repuestos $</label>
+                        <input onChange={e => changeInputRep(e.target)} type="number" className="form-control" id="presuReRep" />
+                    </div>
+                    <div>
+                        <label className="form-label">Presupuesto Final $</label>
+                        <input onChange={e => changeInputRep(e.target)} type="number" className="form-control" id="presuFiRep" />
+                    </div>
+                    <div>
+                        <label className="form-label">Diagnóstico $</label>
+                        <input onChange={e => changeInputRep(e.target)} type="number" className="form-control" id="presuDiRep" />
                     </div>
                 </div>
             </div>
-            <div class="card" style="width: 18rem;">
-                <div class="card-body">
-                <h5 class="card-title">REPARACIÓN - DATOS DE LA REPARACIÓN</h5>
-                    <div class="form-floating mb-3">
-                        <label for="informeRep" class="form-label">Informe de Reparación o Diagnóstico</label>
-                        <textarea onChange={e => changeInputRep(e.target)} class="form-control" id="informeRep"></textarea>
-                    </div>
-                    <div class="form-floating mb-3">
-                        <label for="feFinRep" class="form-label">Fecha Finalizacion</label>
-                        <input onChange={e => changeInputRep(e.target)} type="date" class="form-control" id="feFinRep" />
+            <div className="card card-personalizado">
+                <div className="card-body">
+                <h5 className="card-title">REPUESTOS - CUALES Y SEGUIMIENTO</h5>
+                    <div>
+                        <label className="form-label">Qué repuesto, seguimiento, transportista</label>
+                        <textarea onChange={e => changeInputRep(e.target)} className="form-control" id="txtRepuestosRep"></textarea>
                     </div>
                 </div>
             </div>
-            <div class="card" style="width: 18rem;">
-                <div class="card-body">
-                <h5 class="card-title">ENTREGA - DATOS DE LA ENTREGA</h5>
-                    <div class="form-floating mb-3">
-                        <label for="feEntRep" class="form-label">Fecha Entrega</label>
-                        <input onChange={e => changeInputRep(e.target)} type="date" class="form-control" id="feEntRep" />
+            <div className="card card-personalizado">
+                <div className="card-body">
+                <h5 className="card-title">REPARACIÓN - DATOS DE LA REPARACIÓN</h5>
+                    <div>
+                        <label className="form-label">Informe de Reparación o Diagnóstico</label>
+                        <textarea onChange={e => changeInputRep(e.target)} className="form-control" id="informeRep"></textarea>
                     </div>
-                    <div class="form-floating mb-3">
-                        <label for="txtEntregaRep" class="form-label">Cliente, Comisionista, Correo, Seguimiento</label>
-                        <textarea onChange={e => changeInputRep(e.target)} class="form-control" id="txtEntregaRep"></textarea>
+                    <div>
+                        <label className="form-label">Fecha Finalizacion</label>
+                        <input onChange={e => changeInputRep(e.target)} type="date" className="form-control" id="feFinRep" />
                     </div>
-                    <div class="form-floating mb-3">
-                        <label for="seguimientoEntregaRep" class="form-label">Nro. de Seguimiento</label>
-                        <input onChange={e => changeInputRep(e.target)} type="text" class="form-control" id="seguimientoEntregaRep" />
+                </div>
+            </div>
+            <div className="card card-personalizado">
+                <div className="card-body">
+                <h5 className="card-title">ENTREGA - DATOS DE LA ENTREGA</h5>
+                    <div>
+                        <label className="form-label">Fecha Entrega</label>
+                        <input onChange={e => changeInputRep(e.target)} type="date" className="form-control" id="feEntRep" />
+                    </div>
+                    <div>
+                        <label className="form-label">Cliente, Comisionista, Correo, Seguimiento</label>
+                        <textarea onChange={e => changeInputRep(e.target)} className="form-control" id="txtEntregaRep"></textarea>
+                    </div>
+                    <div>
+                        <label className="form-label">Nro. de Seguimiento</label>
+                        <input onChange={e => changeInputRep(e.target)} type="text" className="form-control" id="seguimientoEntregaRep" />
                     </div>
                 </div>
             </div>
 
            
-            <button type="submit" class="btn btn-primary">Submit</button>
-        </form>
+            <button className="btn btn-primary">Submit</button>
+        </div>
     )
 }
 
 
 
-export default connect(null, {changeInputRep})(Reparacion);
+export default connect(null, { changeInputRep })(Reparacion);

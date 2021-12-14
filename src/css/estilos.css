@@ -1,3 +1,11 @@
+.card-personalizado {
+	width: 90%;
+	margin: auto;
+	margin-top: 10px;
+	margin-bottom: 10px;
+	box-sizing: border-box;
+}
+
 .bluemcdron {
 	color: #224194;
 }
