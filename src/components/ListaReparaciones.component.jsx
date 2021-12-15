@@ -53,11 +53,11 @@ const ListaReparaciones = ({
           onClick={() => history.push(`/inicio/${reparacion.id}`)}
         >
           <div class="d-flex w-100 justify-content-between">
-            <h5 class="mb-1">{reparacion.data.DroneRep}</h5>
+            <h5 class="mb-1">{reparacion.DroneRep}</h5>
             <small>3 days ago</small>
           </div>
-          <p class="mb-1">{reparacion.data.EstadoRep}</p>
-          <small>{reparacion.data.UsuarioRep}</small>
+          <p class="mb-1">{reparacion.EstadoRep}</p>
+          <small>{reparacion.UsuarioRep}</small>
         </a>
           
                       /* class="bg-${estados[reparacion.EstadoRep].color}" */

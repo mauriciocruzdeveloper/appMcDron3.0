@@ -1,17 +1,22 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { connect } from "react-redux";
 import history from "../history";
 import { 
-    changeInputRep
+    changeInputRep,
+    getReparacion
   } from "../redux/root-actions";
 
 import { useParams } from "react-router-dom";
 
-const Reparacion = ({ changeInputRep }) => {
+const Reparacion = ({ changeInputRep, getReparacion, reparacion }) => {
 
     const { id } = useParams();
 
-    console.log("llega a reparación: " + id); 
+    useEffect(async () => {
+        await getReparacion(id);
+    }, [getReparacion]);
+
+    console.log("llega a reparación: " + JSON.stringify(reparacion)); 
 
     return(
         <div>
@@ -23,7 +28,8 @@ const Reparacion = ({ changeInputRep }) => {
                         <input 
                             type="text" 
                             className="form-control" 
-                            id="estadoRep" 
+                            id="estadoRep"
+                            value={reparacion?.EstadoRep}
                             onChange={e => changeInputRep(e.target)}
                         />
                     </div>
@@ -43,7 +49,12 @@ const Reparacion = ({ changeInputRep }) => {
                 <h5 className="card-title">CONSULTA - PRIMEROS DATOS</h5>
                     <div>
                         <label className="form-label">Fecha de Cosulta</label>
-                        <input onChange={e => changeInputRep(e.target)} type="date" className="form-control" id="feConRep" />
+                        <input 
+                            onChange={e => changeInputRep(e.target)} 
+                            type="date" 
+                            className="form-control" 
+                            id="feConRep" 
+                        />
                     </div>
                     <div>
                         <label className="form-label">Cliente</label>
@@ -143,6 +154,9 @@ const Reparacion = ({ changeInputRep }) => {
     )
 }
 
+const mapStateToProps = (state) => ({
+    reparacion: state.app?.reparacion
+  });
 
 
-export default connect(null, { changeInputRep })(Reparacion);
+export default connect(mapStateToProps, { changeInputRep, getReparacion })(Reparacion);

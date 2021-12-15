@@ -1,7 +1,8 @@
 import { AppTypes } from "./App.types";
 import { 
     loginPersistencia, 
-    getReparacionesPersistencia 
+    getReparacionesPersistencia,
+    getReparacionPersistencia
 } from "../../persistencia/persistenciaFirebase";
 
 export const isFetchingStart = () => {console.log("llega a isfetching"); return { type: AppTypes.ISFETCHING_START }};
@@ -116,6 +117,30 @@ export const getReparaciones = () => async (dispatch) => {
         })
         .catch(error  => {
             console.log("llega al catch del getReparacionesPersistencia");
+            reject(error);
+        })
+        .finally(dispatch(isFetchingCoplete()));
+    });
+};
+
+export const getReparacion = (id) => async (dispatch) => {
+    return new Promise(async (resolve, reject) => {
+        dispatch( isFetchingStart());
+        await getReparacionPersistencia(id)
+        .then( reparacion => {
+            console.log("llega al then del getReparacionPersistencia");
+            console.log("reparacion " + JSON.stringify(reparacion));
+            dispatch({ 
+                type: AppTypes.GET_REPARACION, 
+                payload: { 
+                    data: reparacion
+                }
+            });
+            // No hace falta devolver el usuario, pero lo hago por si sirve en otra ocación.
+            return resolve(reparacion); 
+        })
+        .catch(error  => {
+            console.log("llega al catch del getReparacionPersistencia");
             reject(error);
         })
         .finally(dispatch(isFetchingCoplete()));

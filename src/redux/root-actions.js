@@ -7,7 +7,8 @@ import {
     cierraError,
     abreError,
     changeInputRep,
-    getReparaciones
+    getReparaciones,
+    getReparacion
 } from "./App/App.actions";
 
 export { 
@@ -18,5 +19,6 @@ export {
     cierraError,
     abreError,
     changeInputRep,
-    getReparaciones
+    getReparaciones,
+    getReparacion
 }

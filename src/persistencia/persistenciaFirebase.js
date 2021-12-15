@@ -103,14 +103,25 @@ export const getReparacionesPersistencia = () => {
         getDocs(q)
         .then(querySnapshot => {
             let reparaciones = [];
-            querySnapshot.forEach(doc => reparaciones.push({id: doc.id, data:doc.data()}))
+            querySnapshot.forEach(doc => reparaciones.push({id: doc.id, ...doc.data()}))
             resolve(reparaciones)
         })
         .catch(error => reject(error))
     });
 };
 
+export const getReparacionPersistencia = (id) => {
+    return new Promise((resolve, reject) => {
 
+        const docRef = doc(firestore, 'REPARACIONES', id);
+        getDoc(docRef)
+        .then(docSnap => {
+            let reparacion = {id: docSnap.id, ...docSnap.data()};
+            resolve(reparacion)
+        })
+        .catch(error => reject(error))
+    });
+};
 // VER DONDE AGREGARLO PARA QUE ME ACTUALICE LAS REPARACIONES
 // unsubscribeRep = colReparaciones.onSnapshot(function(snapshot){
 //     console.log("detecta cambio reparaciones");

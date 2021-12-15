@@ -51,6 +51,12 @@ export default (state = INITIAL_STATE, action) => {
                 coleccionReparaciones: action.payload.data
             };
 
+        case AppTypes.GET_REPARACION:
+            return { 
+                ...state, 
+                reparacion: action.payload.data
+            };
+
         case AppTypes.CHANGE_INPUT_REP:
             return { 
                 ...state, 
