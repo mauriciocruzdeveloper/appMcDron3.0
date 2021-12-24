@@ -17,8 +17,9 @@ import InicioRoutes from "./Inicio.routes";
 // Actions
 import { login, logout } from "../redux/root-actions";
 
-const Routes = ({ isLoggedIn, admin }) => {
+const Routes = ({ isLoggedIn, admin, isFetching }) => {
     return (<>
+        { !isFetching ?
         <Switch>
             <Route exact path="/" render={() => <Redirect to="/inicio" />}/>
 
@@ -30,8 +31,13 @@ const Routes = ({ isLoggedIn, admin }) => {
 
             <Route path="/inicio" render = {props => <InicioRoutes {...props} isLoggedIn = { isLoggedIn } admin = { admin } /> }/>
 
-        </Switch>
+        </Switch> : <h1>Cargando</h1>
+        }
     </>)
 };
 
-export default connect( null, { login, logout } )( Routes );
+const mapStateToProps = (state) => ({
+    isFetching: state.app?.isFetching
+});
+
+export default connect( mapStateToProps, { login, logout } )( Routes );

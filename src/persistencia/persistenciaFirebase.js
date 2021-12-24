@@ -103,7 +103,7 @@ export const getReparacionesPersistencia = () => {
         getDocs(q)
         .then(querySnapshot => {
             let reparaciones = [];
-            querySnapshot.forEach(doc => reparaciones.push({id: doc.id, ...doc.data()}))
+            querySnapshot.forEach(doc => reparaciones.push({id: doc.id, data: doc.data()}))
             resolve(reparaciones)
         })
         .catch(error => reject(error))
@@ -116,11 +116,35 @@ export const getReparacionPersistencia = (id) => {
         const docRef = doc(firestore, 'REPARACIONES', id);
         getDoc(docRef)
         .then(docSnap => {
-            let reparacion = {id: docSnap.id, ...docSnap.data()};
-            resolve(reparacion)
+            resolve({id: id, data: docSnap.data()}) // Este objeto es una reparación.
         })
         .catch(error => reject(error))
     });
+};
+
+export const guardarReparacionPersistencia = (reparacion) => {
+
+    return new Promise((resolve, reject) => {
+
+        setDoc(
+            doc(firestore, "REPARACIONES", reparacion.id), 
+            reparacion.data
+        )
+        .then(() => {
+            console.log("actualizado reparación ok");
+            resolve(reparacion);
+            //app.dialog.alert("Su reparacion se ha actualizado","Atención");
+            //LO DE LAS FOTOS LO VEREMOS DESPUES
+            //subeFotoReparacion(Date.now(),idReparacion,userAuth.email);
+            // cargaListaRep();
+            // precargaInicio();
+        })
+        .catch(error => {
+            console.log("Error: " + error);
+            reject(error);
+        });
+
+    })
 };
 // VER DONDE AGREGARLO PARA QUE ME ACTUALICE LAS REPARACIONES
 // unsubscribeRep = colReparaciones.onSnapshot(function(snapshot){

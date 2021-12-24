@@ -4,6 +4,8 @@ import history from "../history";
 import { 
   getReparaciones
 } from "../redux/root-actions";
+// JSON con los estados de las reparaciones
+import { estados } from '../datos/estados.json';
 
 const ListaReparaciones = ({ 
   getReparaciones, 
@@ -42,27 +44,30 @@ const ListaReparaciones = ({
   //   history.push("/empleados/carga")
   // }
 
+ 
+
   return (
     isFetching ? <h3>cargando ....</h3> :
-    <div class="list-group">
+    <div className="list-group">
       {coleccionReparaciones.map(reparacion => (
-        <a 
+        <a
+          key={reparacion.id}
           value={reparacion.id} 
-          class="list-group-item list-group-item-action" 
+          className="list-group-item list-group-item-action" 
           aria-current="true"
           onClick={() => history.push(`/inicio/${reparacion.id}`)}
         >
-          <div class="d-flex w-100 justify-content-between">
-            <h5 class="mb-1">{reparacion.DroneRep}</h5>
-            <small>3 days ago</small>
+          <div className="d-flex w-100 justify-content-between">
+            <h5 className="mb-1">{reparacion.data.DroneRep}</h5>
           </div>
-          <p class="mb-1">{reparacion.EstadoRep}</p>
-          <small>{reparacion.UsuarioRep}</small>
+          <p 
+            className="mb-1" 
+            style={{backgroundColor: estados[reparacion.data.EstadoRep].color}}
+          >
+            {reparacion.data.EstadoRep} - {estados[reparacion.data.EstadoRep].accion}
+          </p>
+          <small>{reparacion.data.UsuarioRep}</small>
         </a>
-          
-                      /* class="bg-${estados[reparacion.EstadoRep].color}" */
-          
-                      /* <span>    -    ${estados[reparacion.EstadoRep].accion}</span> */
       ))}
     </div>
   );

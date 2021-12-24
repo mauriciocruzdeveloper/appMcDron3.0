@@ -28,7 +28,7 @@ const InicioRoutes = ({ match, isLoggedIn, admin }) => {
                 <Route exact path={`${match.path}/:id`} component={Reparacion} />
 
             </Switch> 
-        </> 
+        </>
         : 
              <Redirect to="/login" />
             

@@ -54,7 +54,22 @@ export default (state = INITIAL_STATE, action) => {
         case AppTypes.GET_REPARACION:
             return { 
                 ...state, 
-                reparacion: action.payload.data
+                reparacion: {
+                    id: action.payload.id,
+                    data: action.payload.data
+                }
+            };
+
+        case AppTypes.SET_ESTADO:
+            return { 
+                ...state, 
+                reparacion: {
+                    ...state.reparacion,
+                    data: {
+                        ...state.reparacion.data,
+                        EstadoRep: action.payload.data
+                    }
+                }
             };
 
         case AppTypes.CHANGE_INPUT_REP:
@@ -62,7 +77,11 @@ export default (state = INITIAL_STATE, action) => {
                 ...state, 
                 reparacion: {
                     ...state.reparacion,
-                    [action.payload.input]: action.payload.data
+                    data: {
+                        ...state.reparacion.data,
+                        [action.payload.input]: action.payload.data
+                    }
+                    
                 }
              };
 
