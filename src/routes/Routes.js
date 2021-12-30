@@ -19,7 +19,7 @@ import { login, logout } from "../redux/root-actions";
 
 const Routes = ({ isLoggedIn, admin, isFetching }) => {
     return (<>
-        { !isFetching ?
+        { isFetching ? <h1>Cargando: { isFetching }</h1> :
         <Switch>
             <Route exact path="/" render={() => <Redirect to="/inicio" />}/>
 
@@ -31,7 +31,7 @@ const Routes = ({ isLoggedIn, admin, isFetching }) => {
 
             <Route path="/inicio" render = {props => <InicioRoutes {...props} isLoggedIn = { isLoggedIn } admin = { admin } /> }/>
 
-        </Switch> : <h1>Cargando</h1>
+        </Switch>
         }
     </>)
 };

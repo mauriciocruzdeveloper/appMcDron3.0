@@ -44,18 +44,22 @@ export const loginPersistencia = (emailParametro, passwordParametro) => {
         const auth = getAuth();
 
         signInWithEmailAndPassword(auth, emailParametro,passwordParametro)
-        .then(() => {
+        .then(async () => {
             console.log("Se logueó");
             let userAuth = auth.currentUser;
             if(userAuth.emailVerified) {
                 console.log('Email is verified ' + emailParametro);
                 let usuarioRef = doc(collection(firestore, "USUARIOS"), emailParametro);
-                console.log('Pasa el ref:' + JSON.stringify(usuarioRef));
-                getDoc(usuarioRef)
+                console.log('Pasa el ref:');
+                await getDoc(usuarioRef)
                 .then(doc => {
                     console.log('Entra al then get');
                     if(doc.exists){
                         console.log('Entra al doc.exists');
+                        // ESTO DE ABAJO HAY QUE REVISAR. EN LUGAR DE PASAR PARÁMETRO POR PARÁMETRO Y USAR
+                        // NOMBRES DISTINTOS, SE PODRÍA PASAR EL OBJETO ENTERO, Y LUEGO MAPEAR LOS PARÁMETROS
+                        // EN EL REDUCER. EN EL STORE ESTARÍA EL OBJETO CON LOS PARÁMETROS TAL CUAL LOS PASA
+                        // LA BASE DE DATOS.
                         const {Nick, UrlFotoUsu, NombreUsu, ApellidoUsu, CiudadUsu, DomicilioUsu, ProvinciaUsu, TelefonoUsu, Admin} = doc.data();
 
                         let usuario = {
@@ -72,7 +76,7 @@ export const loginPersistencia = (emailParametro, passwordParametro) => {
                             telefono: TelefonoUsu
                         };
 
-                        console.log(JSON.stringify(usuario));
+                        console.log("OBTUVO EL USUARIO: " + JSON.stringify(usuario));
 
                         return resolve(usuario);
                     }
@@ -81,7 +85,7 @@ export const loginPersistencia = (emailParametro, passwordParametro) => {
                     console.log('Entra al catch get');
                     reject(error);
                 });
-                return resolve();
+                return resolve(); // ESTA LÍNEA PUEDE ESTAR MAL
             }else{
                 console.log('Email is not verified');
                 app.dialog.alert("Falta verificar el email. Compruebe su casilla de correos","Atención");

@@ -11,14 +11,12 @@ export const isFetchingStart = () => {console.log("llega a isfetching"); return 
 export const isFetchingCoplete = () => ({ type: AppTypes.ISFETCHING_COMPLETE });
 
 export const login = (email, password) => async (dispatch) => {
-
-
-    return new Promise(async (resolve, reject) => {
+    return new Promise((resolve, reject) => {
         if(email!="" && password!=""){
             dispatch( isFetchingStart());
-            await loginPersistencia( email, password )
+            loginPersistencia( email, password )
             .then( usuario => {
-                console.log("llega al then del loginPersistencia");
+                console.log("llega al then del loginPersistencia: " + JSON.stringify(usuario));
                 dispatch({ 
                     type: AppTypes.LOGIN, 
                     payload: { 
@@ -95,10 +93,12 @@ export const abreError = (titulo, mensaje) => {
     }
 };
 
-export const changeInputRep = (target) => ({ 
+export const changeInputRep = (target) => {
+    console.log("value: " + target.value + " id: " + target.id);
+    return { 
     type: AppTypes.CHANGE_INPUT_REP,
     payload: { input: target.id, data: target.value }
-});
+}};
 
 export const setEstado = (estado) => ({ 
     type: AppTypes.SET_ESTADO,
@@ -134,7 +134,6 @@ export const getReparacion = (id) => async (dispatch) => {
         await getReparacionPersistencia(id)
         .then( reparacion => {
             console.log("llega al then del getReparacionPersistencia");
-            console.log("reparacion: " + JSON.stringify(reparacion))
             dispatch({ 
                 type: AppTypes.GET_REPARACION, 
                 payload: {

@@ -1,6 +1,6 @@
 import React, { useEffect } from "react";
 import { connect } from "react-redux";
-import history from "../history";
+import TextareaAutosize from "react-textarea-autosize";
 import { 
     changeInputRep,
     getReparacion,
@@ -22,24 +22,34 @@ const Reparacion = ({ changeInputRep, getReparacion, reparacion, setEstado, guar
         await getReparacion(id);
     }, [getReparacion]);
 
-    console.log("REPARACION: " + JSON.stringify(reparacion));
+    // console.log("REPARACION: " + JSON.stringify(reparacion));
 
     let estadosArray = Object.values(estados);
 
     return(
-        <div>
+        <div
+            style={{
+                backgroundColor: estados[reparacion?.data?.EstadoRep]?.color
+                // ,opacity: "0.5"
+            }}
+        >
             <div className="card card-personalizado">
                 <div className="card-body">
-                <h5 className="card-title">ESTADO DE LA REPARACIÓN</h5>
-                    <div>
+                <h5 className="card-title bluemcdron">ESTADO DE LA REPARACIÓN</h5>
+                    <div className="text-center">
                         {
                             estadosArray.map(estado =>
                                 <button 
+                                    className="m-2 overflow-hidden"
+                                    alt={estado.nombre}
                                     style={{
                                         backgroundColor: 
                                             estado.nombre == reparacion?.data?.EstadoRep?
                                             estado.color :
                                             "#CCCCCC"
+                                        ,
+                                        width: "90px",
+                                        height: "30px"
                                     }}
                                     onClick={ ()=>setEstado(estado.nombre) }
                                 >
@@ -62,14 +72,14 @@ const Reparacion = ({ changeInputRep, getReparacion, reparacion, setEstado, guar
             </div>
             <div className="card card-personalizado">
                 <div className="card-body">
-                <h5 className="card-title">ENLACE A DRIVE</h5>
+                <h5 className="card-title bluemcdron">ENLACE A DRIVE</h5>
                     <div>
                         <label className="form-label">En lace a Drive</label>
                         <input 
                             onChange={e => changeInputRep(e.target)} 
                             type="text" 
                             className="form-control" 
-                            id="driveRep"
+                            id="DriveRep"
                             value={reparacion?.data?.DriveRep}
                         />
                     </div>
@@ -77,14 +87,14 @@ const Reparacion = ({ changeInputRep, getReparacion, reparacion, setEstado, guar
             </div>
             <div className="card card-personalizado">
                 <div className="card-body">
-                <h5 className="card-title">CONSULTA - PRIMEROS DATOS</h5>
+                <h5 className="card-title bluemcdron">CONSULTA - PRIMEROS DATOS</h5>
                     <div>
                         <label className="form-label">Fecha de Cosulta</label>
                         <input 
                             onChange={e => changeInputRep(e.target)} 
                             type="date" 
                             className="form-control" 
-                            id="feConRep"
+                            id="FeConRep"
                             value={convertTimestampCORTO(reparacion?.data?.FeConRep)}
                         />
                     </div>
@@ -94,7 +104,7 @@ const Reparacion = ({ changeInputRep, getReparacion, reparacion, setEstado, guar
                             onChange={e => changeInputRep(e.target)} 
                             type="text" 
                             className="form-control" 
-                            id="usuarioRep" 
+                            id="UsuarioRep" 
                             value={reparacion?.data?.UsuarioRep}
                         />
                     </div>
@@ -104,32 +114,31 @@ const Reparacion = ({ changeInputRep, getReparacion, reparacion, setEstado, guar
                             onChange={e => changeInputRep(e.target)} 
                             type="text" 
                             className="form-control" 
-                            id="droneRep"
+                            id="DroneRep"
                             value={reparacion?.data?.DroneRep}
                         />
                     </div>
                     <div>
                         <label className="form-label">Desperfectos o Roturas</label>
-                        <textarea 
+                        <TextareaAutosize
                             onChange={e => changeInputRep(e.target)} 
                             className="form-control" 
-                            id="descripcionUsuRep"
+                            id="DescripcionUsuRep"
                             value={reparacion?.data?.DescripcionUsuRep}
-                        >
-                        </textarea>
+                        />
                     </div>
                 </div>
             </div>
             <div className="card card-personalizado">
                 <div className="card-body">
-                <h5 className="card-title">RECEPCIÓN</h5>
+                <h5 className="card-title bluemcdron">RECEPCIÓN</h5>
                     <div>
                         <label className="form-label">Fecha de Recepción</label>
                         <input 
                             onChange={e => changeInputRep(e.target)} 
                             type="date" 
                             className="form-control" 
-                            id="feRecRep"
+                            id="FeRecRep"
                             value={convertTimestampCORTO(reparacion?.data?.FeRecRep)}
                         />
                     </div>
@@ -137,25 +146,26 @@ const Reparacion = ({ changeInputRep, getReparacion, reparacion, setEstado, guar
             </div>
             <div className="card card-personalizado">
                 <div className="card-body">
-                <h5 className="card-title">REVISIÓN - DIAGNÓSTICO Y PRESUPUESTO DATOS</h5>
+                <h5 className="card-title bluemcdron">REVISIÓN - DIAGNÓSTICO Y PRESUPUESTO DATOS</h5>
                     <div>
                         <label className="form-label">Número de Serie</label>
                         <input 
                             onChange={e => changeInputRep(e.target)} 
                             type="text" 
                             className="form-control" 
-                            id="numeroSerieRep"
+                            id="NumeroSerieRep"
                             value={reparacion?.data?.NumeroSerieRep}
                         />
                     </div>
                     <div>
                         <label className="form-label">Observaciones del Técnico</label>
-                        <textarea 
+                        <TextareaAutosize
                             onChange={e => changeInputRep(e.target)} 
                             className="form-control" 
-                            id="descripcionTecRep"
+                            id="DescripcionTecRep"
                             value={reparacion?.data?.DescripcionTecRep}
-                        ></textarea>
+                            rows="5"
+                        />
                     </div>
                     <div>
                         <label className="form-label">Presupuesto Mano de Obra $</label>
@@ -163,7 +173,7 @@ const Reparacion = ({ changeInputRep, getReparacion, reparacion, setEstado, guar
                             onChange={e => changeInputRep(e.target)} 
                             type="number" 
                             className="form-control" 
-                            id="presuMoRep" 
+                            id="PresuMoRep" 
                             value={reparacion?.data?.PresuMoRep}
                         />
                     </div>
@@ -173,7 +183,7 @@ const Reparacion = ({ changeInputRep, getReparacion, reparacion, setEstado, guar
                             onChange={e => changeInputRep(e.target)} 
                             type="number" 
                             className="form-control" 
-                            id="presuReRep"
+                            id="PresuReRep"
                             value={reparacion?.data?.PresuReRep}
                         />
                     </div>
@@ -183,7 +193,7 @@ const Reparacion = ({ changeInputRep, getReparacion, reparacion, setEstado, guar
                             onChange={e => changeInputRep(e.target)} 
                             type="number" 
                             className="form-control" 
-                            id="presuFiRep"
+                            id="PresuFiRep"
                             value={reparacion?.data?.PresuFiRep}
                         />
                     </div>
@@ -193,7 +203,7 @@ const Reparacion = ({ changeInputRep, getReparacion, reparacion, setEstado, guar
                             onChange={e => changeInputRep(e.target)} 
                             type="number" 
                             className="form-control" 
-                            id="presuDiRep"
+                            id="PresuDiRep"
                             value={reparacion?.data?.PresuDiRep}
                         />
                     </div>
@@ -201,29 +211,31 @@ const Reparacion = ({ changeInputRep, getReparacion, reparacion, setEstado, guar
             </div>
             <div className="card card-personalizado">
                 <div className="card-body">
-                <h5 className="card-title">REPUESTOS - CUALES Y SEGUIMIENTO</h5>
+                <h5 className="card-title bluemcdron">REPUESTOS - CUALES Y SEGUIMIENTO</h5>
                     <div>
                         <label className="form-label">Qué repuesto, seguimiento, transportista</label>
-                        <textarea 
+                        <TextareaAutosize
                             onChange={e => changeInputRep(e.target)} 
                             className="form-control" 
-                            id="txtRepuestosRep"
+                            id="TxtRepuestosRep"
                             value={reparacion?.data?.TxtRepuestosRep}
-                        ></textarea>
+                            rows="5"
+                        />
                     </div>
                 </div>
             </div>
             <div className="card card-personalizado">
                 <div className="card-body">
-                <h5 className="card-title">REPARACIÓN - DATOS DE LA REPARACIÓN</h5>
+                <h5 className="card-title bluemcdron">REPARACIÓN - DATOS DE LA REPARACIÓN</h5>
                     <div>
                         <label className="form-label">Informe de Reparación o Diagnóstico</label>
-                        <textarea 
+                        <TextareaAutosize
                             onChange={e => changeInputRep(e.target)} 
                             className="form-control" 
-                            id="informeRep"
+                            id="InformeRep"
                             value={reparacion?.data?.InformeRep}
-                        ></textarea>
+                            rows="5"
+                        />
                     </div>
                     <div>
                         <label className="form-label">Fecha Finalizacion</label>
@@ -231,7 +243,7 @@ const Reparacion = ({ changeInputRep, getReparacion, reparacion, setEstado, guar
                             onChange={e => changeInputRep(e.target)} 
                             type="date" 
                             className="form-control" 
-                            id="feFinRep"
+                            id="FeFinRep"
                             value={convertTimestampCORTO(reparacion?.data?.FeFinRep)}
                         />
                     </div>
@@ -239,25 +251,26 @@ const Reparacion = ({ changeInputRep, getReparacion, reparacion, setEstado, guar
             </div>
             <div className="card card-personalizado">
                 <div className="card-body">
-                <h5 className="card-title">ENTREGA - DATOS DE LA ENTREGA</h5>
+                <h5 className="card-title bluemcdron">ENTREGA - DATOS DE LA ENTREGA</h5>
                     <div>
                         <label className="form-label">Fecha Entrega</label>
                         <input 
                             onChange={e => changeInputRep(e.target)} 
                             type="date" 
                             className="form-control" 
-                            id="feEntRep"
+                            id="FeEntRep"
                             value={convertTimestampCORTO(reparacion?.data?.FeEntRep)}
                         />
                     </div>
                     <div>
                         <label className="form-label">Cliente, Comisionista, Correo, Seguimiento</label>
-                        <textarea 
+                        <TextareaAutosize
                             onChange={e => changeInputRep(e.target)} 
                             className="form-control" 
-                            id="txtEntregaRep"
+                            id="TxtEntregaRep"
                             value={reparacion?.data?.TxtEntregaRep}
-                        ></textarea>
+                            rows="5"
+                        />
                     </div>
                     <div>
                         <label className="form-label">Nro. de Seguimiento</label>
@@ -265,8 +278,9 @@ const Reparacion = ({ changeInputRep, getReparacion, reparacion, setEstado, guar
                             onChange={e => changeInputRep(e.target)} 
                             type="text" 
                             className="form-control" 
-                            id="seguimientoEntregaRep"
+                            id="SeguimientoEntregaRep"
                             value={reparacion?.data?.SeguimientoEntrega}
+                            rows="5"
                         />
                     </div>
                 </div>
@@ -275,10 +289,11 @@ const Reparacion = ({ changeInputRep, getReparacion, reparacion, setEstado, guar
            
             <button 
                 onClick={ () => guardarReparacion(reparacion) }
-                className="w-100 btn btn-lg btn-primary bg-bluemcdron"
+                className="w-100 btn btn-lg btn-primary bluemcdron text-white"
             >
                 Guardar
             </button>
+
         </div>
     )
 }
