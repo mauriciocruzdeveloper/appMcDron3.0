@@ -16,7 +16,8 @@ import {
     getDoc,
     getDocs,
     query, 
-    orderBy
+    orderBy,
+    deleteDoc
 } from "firebase/firestore";
 
 var firebaseConfig = {
@@ -129,7 +130,7 @@ export const getReparacionPersistencia = (id) => {
 export const guardarReparacionPersistencia = (reparacion) => {
 
     return new Promise((resolve, reject) => {
-
+        console.log("Llega a guardarReparacionPersistencia");
         setDoc(
             doc(firestore, "REPARACIONES", reparacion.id), 
             reparacion.data
@@ -150,6 +151,24 @@ export const guardarReparacionPersistencia = (reparacion) => {
 
     })
 };
+
+export const eliminarReparacionPersistencia = (reparacion) => {
+
+    return new Promise((resolve, reject) => {
+
+        deleteDoc(doc(firestore, "REPARACIONES", reparacion.id))
+        .then(() => {
+            console.log("borrando reparación ok");
+            resolve(reparacion);
+        })
+        .catch(error => {
+            console.log("Error: " + error);
+            reject(error);
+        });
+
+    })
+};
+
 // VER DONDE AGREGARLO PARA QUE ME ACTUALICE LAS REPARACIONES
 // unsubscribeRep = colReparaciones.onSnapshot(function(snapshot){
 //     console.log("detecta cambio reparaciones");

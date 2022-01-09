@@ -3,12 +3,17 @@ import {
     loginPersistencia, 
     getReparacionesPersistencia,
     getReparacionPersistencia,
-    guardarReparacionPersistencia
+    guardarReparacionPersistencia,
+    eliminarReparacionPersistencia
 } from "../../persistencia/persistenciaFirebase";
 import { async } from "@firebase/util";
 
-export const isFetchingStart = () => {console.log("llega a isfetching"); return { type: AppTypes.ISFETCHING_START }};
-export const isFetchingCoplete = () => ({ type: AppTypes.ISFETCHING_COMPLETE });
+export const isFetchingStart = () => {
+    console.log("llega a isfetching"); return { type: AppTypes.ISFETCHING_START }
+};
+export const isFetchingCoplete = () => (
+    { type: AppTypes.ISFETCHING_COMPLETE }
+);
 
 export const login = (email, password) => async (dispatch) => {
     return new Promise((resolve, reject) => {
@@ -41,11 +46,6 @@ export const login = (email, password) => async (dispatch) => {
     });
 };
 
-// export const errorLogin = () => ({
-//     type: LoginTypes.ERROR_LOGIN,
-//     payload: { data: { errorLogin: true } }
-// });
-
 export const logout = () => ({
     type: AppTypes.LOGOUT,
     payload: { data: { isLoggedIn: false } }
@@ -63,30 +63,31 @@ export const passwordOnChangeLogin = ( data ) => ({
     payload: { data }
 });
 
-export const cierraError = () => {
+export const cierraModal = () => {
     console.log('llega a cierra');
     return {
-        type: AppTypes.MODAL_ERROR,
+        type: AppTypes.MODAL,
         payload: { 
             data: {
-                modalError: {
-                    showError: false
+                modal: {
+                    showModal: false
                 }
             } 
         }
     }
 };
 
-export const abreError = (titulo, mensaje) => {
-    console.log('llega a abreError');
+export const abreModal = (titulo, mensaje, tipo) => {
+    console.log('llega a abreModal');
     return {
-        type: AppTypes.MODAL_ERROR,
+        type: AppTypes.MODAL,
         payload: { 
             data: {
-                modalError: {
-                    showError: true,
-                    mensajeError: mensaje,
-                    tituloError: titulo
+                modal: {
+                    showModal: true,
+                    mensajeModal: mensaje,
+                    tituloModal: titulo,
+                    tipoModal: tipo
                 }
             } 
         }
@@ -94,11 +95,26 @@ export const abreError = (titulo, mensaje) => {
 };
 
 export const changeInputRep = (target) => {
-    console.log("value: " + target.value + " id: " + target.id);
-    return { 
-    type: AppTypes.CHANGE_INPUT_REP,
-    payload: { input: target.id, data: target.value }
-}};
+    // En caso que el input sea tipo date,
+    if(target.type == "date"){
+        let anio = target.value.substr(0, 4);
+        let mes = target.value.substr(5, 2)-1;
+        let dia = target.value.substr(8, 2);
+        return { 
+            type: AppTypes.CHANGE_INPUT_REP,
+            payload: { 
+                input: target.id, 
+                data: new Date(anio, mes, dia).getTime()+10800001 
+                // Se agrega este número para que de bien la fecha.
+            }
+        } 
+    }else{
+        return { 
+            type: AppTypes.CHANGE_INPUT_REP,
+            payload: { input: target.id, data: target.value }
+        }
+    }  
+};
 
 export const setEstado = (estado) => ({ 
     type: AppTypes.SET_ESTADO,
@@ -155,16 +171,36 @@ export const getReparacion = (id) => async (dispatch) => {
 export const guardarReparacion = (reparacion) => async (dispatch) => {
     return new Promise(async (resolve, reject) => {
         dispatch( isFetchingStart());
-        await guardarReparacionPersistencia(reparacion)
+        guardarReparacionPersistencia(reparacion)
         .then( reparacion => {
             console.log("llega al then del guardarReparacionPesistencia");
             return resolve(reparacion); 
         })
         .catch(error  => {
-            console.log("llega al catch del getReparacionPersistencia");
+            console.log("llega al catch del guardarReparacionPersistencia");
             reject(error);
         })
         .finally(dispatch(isFetchingCoplete()));
-    });
-    
+    });   
+}
+
+export const eliminarReparacion = (reparacion) => async (dispatch) => {
+    return new Promise(async (resolve, reject) => {
+        dispatch( isFetchingStart());
+        await eliminarReparacionPersistencia(reparacion)
+        .then( (reparacion) => {
+            console.log("llega al then del eliminarReparacionPesistencia");
+            return resolve(reparacion); 
+        })
+        .catch(error  => {
+            console.log("llega al catch del eliminarReparacionPersistencia");
+            reject(error);
+        })
+        .finally(dispatch(isFetchingCoplete()));
+    });   
+}
+
+export const rememberMe = () => {
+    localStorage.setItem('memoria', JSON.stringify( estado.display1 ));
+    const memoria = JSON.parse(localStorage.getItem('memoria')) || [];
 }

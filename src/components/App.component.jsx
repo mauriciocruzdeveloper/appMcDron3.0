@@ -4,20 +4,21 @@ import history from "../history";
 import {connect} from "react-redux";
 
 import Routes from "../routes/Routes";
-import ErrorComponent from "./Error.component";
+import ModalComponent from "./Modal.component";
 
 // import '../../node_modules/bootstrap-icons/icons';
 
 
-const App = ( { isLoggedIn, admin, modalError }) => {
+const App = ( { isLoggedIn, admin, modal }) => {
 
 
   return (
     <div>
-        <ErrorComponent 
-          hide = {modalError.showError} 
-          mensaje = {modalError.mensajeError} 
-          titulo = {modalError.tituloError}
+        <ModalComponent 
+          show = {modal.showModal} 
+          mensaje = {modal.mensajeModal} 
+          titulo = {modal.tituloModal}
+          tipo = {modal.tipoModal}
         />
         <Router history = {history} >
           <Routes isLoggedIn = {isLoggedIn} admin = {admin}/>
@@ -29,7 +30,7 @@ const App = ( { isLoggedIn, admin, modalError }) => {
 const mapStateToProps = ( state ) => ({
   isLoggedIn: state.app.isLoggedIn,
   admin: state.app.usuario.admin,
-  modalError: state.app.modalError,
+  modal: state.app.modal,
 });
 
 export default connect( mapStateToProps )( App );

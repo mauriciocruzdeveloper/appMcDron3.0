@@ -5,7 +5,9 @@ import {
     changeInputRep,
     getReparacion,
     setEstado,
-    guardarReparacion
+    guardarReparacion,
+    eliminarReparacion,
+    abreModal
   } from "../redux/root-actions";
 
 import { convertTimestampCORTO } from "../utils/utils";
@@ -14,7 +16,19 @@ import { useParams } from "react-router-dom";
 
 import { estados } from '../datos/estados.json';
 
-const Reparacion = ({ changeInputRep, getReparacion, reparacion, setEstado, guardarReparacion }) => {
+import history from "../history";
+
+const Reparacion = ({ 
+    changeInputRep, 
+    getReparacion, 
+    reparacion, 
+    setEstado, 
+    guardarReparacion,
+    eliminarReparacion,
+    abreModal,
+    isFetching,
+    match
+}) => {
 
     const { id } = useParams();
 
@@ -26,21 +40,38 @@ const Reparacion = ({ changeInputRep, getReparacion, reparacion, setEstado, guar
 
     let estadosArray = Object.values(estados);
 
+    const handleGuardarReparacion = async () => {
+        await guardarReparacion(reparacion)
+        .then(reparacion => abreModal("Guardado con éxito", "Reparación: " + reparacion.id, "success" ))
+        .catch(error => abreModal("Error al guardar ", "Código - " + error.code, "danger" ));
+    }
+
+    const handleEliminarReparacion = async () => {
+        await eliminarReparacion(reparacion)
+        .then(reparacion => {
+            abreModal("Reparación eliminada con éxito", "Reparación: " + reparacion.id, "success" )
+            history.push(`/inicio/reparaciones`)
+        })
+        .catch(error => abreModal("Error al guardar ", "Código - " + error.code, "danger" ));
+    }
+
     return(
+        isFetching ? <h1>Cargando: { isFetching }</h1> :
         <div
+            className="p-4"
             style={{
                 backgroundColor: estados[reparacion?.data?.EstadoRep]?.color
-                // ,opacity: "0.5"
             }}
         >
-            <div className="card card-personalizado">
+            <div className="card mb-3">
                 <div className="card-body">
                 <h5 className="card-title bluemcdron">ESTADO DE LA REPARACIÓN</h5>
                     <div className="text-center">
                         {
                             estadosArray.map(estado =>
                                 <button 
-                                    className="m-2 overflow-hidden"
+                                    className="m-2 btn btn-outline-secondary overflow-hidden"
+                                    type="button"
                                     alt={estado.nombre}
                                     style={{
                                         backgroundColor: 
@@ -51,41 +82,38 @@ const Reparacion = ({ changeInputRep, getReparacion, reparacion, setEstado, guar
                                         width: "90px",
                                         height: "30px"
                                     }}
-                                    onClick={ ()=>setEstado(estado.nombre) }
+                                    onClick={ ()=>setEstado(estado) }
                                 >
                                     {estado.nombre}
                                 </button>
                             )
 
                         }
-
-                        {/* <label className="form-label">Estado</label>
-                        <input 
-                            type="text" 
-                            className="form-control" 
-                            id="estadoRep"
-                            value={reparacion?.data?.EstadoRep}
-                            onChange={e => changeInputRep(e.target)}
-                        /> */}
                     </div>
                 </div>
             </div>
-            <div className="card card-personalizado">
+            <div className="card mb-3">
                 <div className="card-body">
                 <h5 className="card-title bluemcdron">ENLACE A DRIVE</h5>
                     <div>
                         <label className="form-label">En lace a Drive</label>
-                        <input 
-                            onChange={e => changeInputRep(e.target)} 
-                            type="text" 
-                            className="form-control" 
-                            id="DriveRep"
-                            value={reparacion?.data?.DriveRep}
-                        />
+
+                        <div class="input-group">
+                            <input 
+                                onChange={e => changeInputRep(e.target)} 
+                                type="text"
+                                className="form-control" 
+                                id="DriveRep"
+                                value={reparacion?.data?.DriveRep} 
+                            />
+                            <div class="input-group-append">
+                                <a href={reparacion?.data?.DriveRep}><button class="btn btn-outline-secondary bg-bluemcdron text-white" type="button">Ir</button></a>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
-            <div className="card card-personalizado">
+            <div className="card mb-3">
                 <div className="card-body">
                 <h5 className="card-title bluemcdron">CONSULTA - PRIMEROS DATOS</h5>
                     <div>
@@ -115,7 +143,7 @@ const Reparacion = ({ changeInputRep, getReparacion, reparacion, setEstado, guar
                             type="text" 
                             className="form-control" 
                             id="DroneRep"
-                            value={reparacion?.data?.DroneRep}
+                            value={reparacion?.data?.DroneRep || ""}
                         />
                     </div>
                     <div>
@@ -124,12 +152,12 @@ const Reparacion = ({ changeInputRep, getReparacion, reparacion, setEstado, guar
                             onChange={e => changeInputRep(e.target)} 
                             className="form-control" 
                             id="DescripcionUsuRep"
-                            value={reparacion?.data?.DescripcionUsuRep}
+                            value={reparacion?.data?.DescripcionUsuRep || ""}
                         />
                     </div>
                 </div>
             </div>
-            <div className="card card-personalizado">
+            <div className="card mb-3">
                 <div className="card-body">
                 <h5 className="card-title bluemcdron">RECEPCIÓN</h5>
                     <div>
@@ -144,7 +172,7 @@ const Reparacion = ({ changeInputRep, getReparacion, reparacion, setEstado, guar
                     </div>
                 </div>
             </div>
-            <div className="card card-personalizado">
+            <div className="card mb-3">
                 <div className="card-body">
                 <h5 className="card-title bluemcdron">REVISIÓN - DIAGNÓSTICO Y PRESUPUESTO DATOS</h5>
                     <div>
@@ -154,7 +182,7 @@ const Reparacion = ({ changeInputRep, getReparacion, reparacion, setEstado, guar
                             type="text" 
                             className="form-control" 
                             id="NumeroSerieRep"
-                            value={reparacion?.data?.NumeroSerieRep}
+                            value={reparacion?.data?.NumeroSerieRep || ""}
                         />
                     </div>
                     <div>
@@ -163,7 +191,7 @@ const Reparacion = ({ changeInputRep, getReparacion, reparacion, setEstado, guar
                             onChange={e => changeInputRep(e.target)} 
                             className="form-control" 
                             id="DescripcionTecRep"
-                            value={reparacion?.data?.DescripcionTecRep}
+                            value={reparacion?.data?.DescripcionTecRep || ""}
                             rows="5"
                         />
                     </div>
@@ -174,7 +202,7 @@ const Reparacion = ({ changeInputRep, getReparacion, reparacion, setEstado, guar
                             type="number" 
                             className="form-control" 
                             id="PresuMoRep" 
-                            value={reparacion?.data?.PresuMoRep}
+                            value={reparacion?.data?.PresuMoRep || ""}
                         />
                     </div>
                     <div>
@@ -184,7 +212,7 @@ const Reparacion = ({ changeInputRep, getReparacion, reparacion, setEstado, guar
                             type="number" 
                             className="form-control" 
                             id="PresuReRep"
-                            value={reparacion?.data?.PresuReRep}
+                            value={reparacion?.data?.PresuReRep || ""}
                         />
                     </div>
                     <div>
@@ -194,7 +222,7 @@ const Reparacion = ({ changeInputRep, getReparacion, reparacion, setEstado, guar
                             type="number" 
                             className="form-control" 
                             id="PresuFiRep"
-                            value={reparacion?.data?.PresuFiRep}
+                            value={reparacion?.data?.PresuFiRep || ""}
                         />
                     </div>
                     <div>
@@ -204,12 +232,12 @@ const Reparacion = ({ changeInputRep, getReparacion, reparacion, setEstado, guar
                             type="number" 
                             className="form-control" 
                             id="PresuDiRep"
-                            value={reparacion?.data?.PresuDiRep}
+                            value={reparacion?.data?.PresuDiRep || ""}
                         />
                     </div>
                 </div>
             </div>
-            <div className="card card-personalizado">
+            <div className="card mb-3">
                 <div className="card-body">
                 <h5 className="card-title bluemcdron">REPUESTOS - CUALES Y SEGUIMIENTO</h5>
                     <div>
@@ -218,13 +246,13 @@ const Reparacion = ({ changeInputRep, getReparacion, reparacion, setEstado, guar
                             onChange={e => changeInputRep(e.target)} 
                             className="form-control" 
                             id="TxtRepuestosRep"
-                            value={reparacion?.data?.TxtRepuestosRep}
+                            value={reparacion?.data?.TxtRepuestosRep || ""} //Esto es lo correcto
                             rows="5"
                         />
                     </div>
                 </div>
             </div>
-            <div className="card card-personalizado">
+            <div className="card mb-3">
                 <div className="card-body">
                 <h5 className="card-title bluemcdron">REPARACIÓN - DATOS DE LA REPARACIÓN</h5>
                     <div>
@@ -233,7 +261,7 @@ const Reparacion = ({ changeInputRep, getReparacion, reparacion, setEstado, guar
                             onChange={e => changeInputRep(e.target)} 
                             className="form-control" 
                             id="InformeRep"
-                            value={reparacion?.data?.InformeRep}
+                            value={reparacion?.data?.InformeRep || ""}
                             rows="5"
                         />
                     </div>
@@ -249,7 +277,7 @@ const Reparacion = ({ changeInputRep, getReparacion, reparacion, setEstado, guar
                     </div>
                 </div>
             </div>
-            <div className="card card-personalizado">
+            <div className="card mb-3">
                 <div className="card-body">
                 <h5 className="card-title bluemcdron">ENTREGA - DATOS DE LA ENTREGA</h5>
                     <div>
@@ -268,7 +296,7 @@ const Reparacion = ({ changeInputRep, getReparacion, reparacion, setEstado, guar
                             onChange={e => changeInputRep(e.target)} 
                             className="form-control" 
                             id="TxtEntregaRep"
-                            value={reparacion?.data?.TxtEntregaRep}
+                            value={reparacion?.data?.TxtEntregaRep || ""}
                             rows="5"
                         />
                     </div>
@@ -279,28 +307,37 @@ const Reparacion = ({ changeInputRep, getReparacion, reparacion, setEstado, guar
                             type="text" 
                             className="form-control" 
                             id="SeguimientoEntregaRep"
-                            value={reparacion?.data?.SeguimientoEntrega}
+                            value={reparacion?.data?.SeguimientoEntrega || ""}
                             rows="5"
                         />
                     </div>
                 </div>
             </div>
 
-           
-            <button 
-                onClick={ () => guardarReparacion(reparacion) }
-                className="w-100 btn btn-lg btn-primary bluemcdron text-white"
-            >
-                Guardar
-            </button>
+           <div className="text-center">
+                <button 
+                    onClick={ handleGuardarReparacion }
+                    className="w-100 mb-3 btn bg-bluemcdron text-white"
+                >
+                    Guardar
+                </button>
+                <button 
+                    onClick={ handleEliminarReparacion }
+                    className="w-100 btn bg-danger text-white"
+                >
+                    Eliminar
+                </button>
+            </div>
 
         </div>
+ 
     )
 }
 
 const mapStateToProps = (state) => ({
-    reparacion: state.app?.reparacion
+    reparacion: state.app?.reparacion,
+    isFetching: state.app.isFetching
   });
 
 
-export default connect(mapStateToProps, { changeInputRep, getReparacion, setEstado, guardarReparacion })(Reparacion);
+export default connect(mapStateToProps, { changeInputRep, getReparacion, setEstado, guardarReparacion, eliminarReparacion, abreModal })(Reparacion);

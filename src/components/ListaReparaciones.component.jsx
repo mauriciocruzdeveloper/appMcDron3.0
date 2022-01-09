@@ -70,13 +70,14 @@ const ListaReparaciones = ({
         </a>
       ))}
     </div>
+
   );
 };
 
 
 const mapStateToProps = (state) => ({
   coleccionReparaciones: state.app.coleccionReparaciones,
-  isFetching: state.app.isFetching,
+  isFetching: state.app.isFetching
 });
 
 export default connect( mapStateToProps, { getReparaciones } )( ListaReparaciones );

@@ -17,7 +17,9 @@ const NavMcDron = ({ usuario }) => {
     console.log("USUARIO: " + JSON.stringify(usuario));
 
     return (
-    <Navbar className="bg-bluemcdron d-flex justify-content-between px-2">
+    // La prop sticky es para que el navbar quede arriba, pero "ocupando" un espacio
+    // si utilizo fixed, el navbar me tapa la parte superior de la vista.
+    <Navbar sticky="top" className="bg-bluemcdron d-flex justify-content-between px-2">
         <ArrowLeftShort 
             width="50" 
             height="50"

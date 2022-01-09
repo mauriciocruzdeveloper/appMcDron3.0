@@ -4,7 +4,7 @@ import {
   login, 
   emailOnChangeLogin, 
   passwordOnChangeLogin,
-  abreError
+  abreModal
 } from "../redux/root-actions";
 import history from "../history";
 
@@ -16,8 +16,8 @@ const Login = ({
   passwordOnChangeLogin, 
   email, 
   password,
-  showError,
-  abreError
+  showModal,
+  abreModal
 }) => {
 
   const handleLogin = async () => {
@@ -26,13 +26,8 @@ const Login = ({
     await login( email, password)
       .then( () => history.push("/") )
       .catch( error => {
-        abreError("Error ", "Código - " + error.code );
-        // history.push("/errorlogin") 
+        abreModal("Error ", "Código - " + error.code, "danger" );
       });
-    //history.push("/")
-    // console.log('showError ' + showError);
-    // abreError("Error", "Login Incorrecto" );
-    // console.log('showError ' + showError);
   };
 
   return (
@@ -70,7 +65,11 @@ const Login = ({
       
           <div className="checkbox mb-3">
             <label>
-              <input type="checkbox" value="remember-me" /> Remember me
+              <input 
+                type="checkbox" 
+                value="remember-me" 
+              /> 
+              Remember me
             </label>
           </div>
 
@@ -98,8 +97,8 @@ const mapStateToProps = (state) => ({
   password: state.app.usuario.password,
   admin: state.app.usuario.admin,
   isFetching: state.app.isFetching,
-  showError: state.app.showError
+  showModal: state.app.showModal
 });
 
 
-export default connect(mapStateToProps, { login, emailOnChangeLogin, passwordOnChangeLogin, abreError })(Login);
+export default connect(mapStateToProps, { login, emailOnChangeLogin, passwordOnChangeLogin, abreModal })(Login);

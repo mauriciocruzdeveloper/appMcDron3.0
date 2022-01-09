@@ -5,7 +5,7 @@ import { connect } from "react-redux";
 
 // Componenst
 import Login from '../components/Login.component';
-import Error from "../components/Error.component";
+// import Modal from "../components/Modal.component";
 
 // import Turno from "../components/Turno.components";
 // import Resumen from "../components/Resumen.component";
@@ -18,26 +18,21 @@ import InicioRoutes from "./Inicio.routes";
 import { login, logout } from "../redux/root-actions";
 
 const Routes = ({ isLoggedIn, admin, isFetching }) => {
+
     return (<>
-        { isFetching ? <h1>Cargando: { isFetching }</h1> :
         <Switch>
             <Route exact path="/" render={() => <Redirect to="/inicio" />}/>
 
-            <Route path="/noautorizado" render = { () => <Error mensaje={"Acceso no autorizado"} /> } />
-            <Route path="/errorlogin" render = { () => <Error mensaje={"Login incorrecto"} /> } />
-            <Route path="/ocurrioproblema" render = { () => <Error mensaje={"Ocurrió un problema"} /> } />
+            {/* <Route path="/noautorizado" render = { () => <Modal mensaje={"Acceso no autorizado"} /> } />
+            <Route path="/errorlogin" render = { () => <Modal mensaje={"Login incorrecto"} /> } />
+            <Route path="/ocurrioproblema" render = { () => <Modal mensaje={"Ocurrió un problema"} /> } /> */}
 
             <Route path="/login" render = {props => <Login {...props} /> }/>
 
             <Route path="/inicio" render = {props => <InicioRoutes {...props} isLoggedIn = { isLoggedIn } admin = { admin } /> }/>
 
         </Switch>
-        }
     </>)
 };
 
-const mapStateToProps = (state) => ({
-    isFetching: state.app?.isFetching
-});
-
-export default connect( mapStateToProps, { login, logout } )( Routes );
+export default connect( null, { login, logout } )( Routes );

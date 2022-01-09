@@ -4,13 +4,14 @@ import {
     logout,
     emailOnChangeLogin,
     passwordOnChangeLogin,
-    cierraError,
-    abreError,
+    cierraModal,
+    abreModal,
     changeInputRep,
     getReparaciones,
     getReparacion,
     setEstado,
-    guardarReparacion
+    guardarReparacion,
+    eliminarReparacion
 } from "./App/App.actions";
 
 export { 
@@ -18,11 +19,12 @@ export {
     logout, 
     emailOnChangeLogin,
     passwordOnChangeLogin,
-    cierraError,
-    abreError,
+    cierraModal,
+    abreModal,
     changeInputRep,
     getReparaciones,
     getReparacion,
     setEstado,
-    guardarReparacion
+    guardarReparacion,
+    eliminarReparacion
 }

@@ -3,10 +3,11 @@ import { AppTypes } from "./App.types";
 const INITIAL_STATE = {
     isLoggedIn: false,
     isFetching: false,
-    modalError: {
-        showError: false,
+    modal: {
+        showModal: false,
         mensajeError: '',
-        tituloError: ''
+        tituloError: '',
+        tipoModal: ''
     },
     usuario:{
         nombre: '',
@@ -67,7 +68,8 @@ export default (state = INITIAL_STATE, action) => {
                     ...state.reparacion,
                     data: {
                         ...state.reparacion.data,
-                        EstadoRep: action.payload.data
+                        EstadoRep: action.payload.data.nombre,
+                        PrioridadRep: action.payload.data.prioridad
                     }
                 }
             };
@@ -129,11 +131,11 @@ export default (state = INITIAL_STATE, action) => {
                     email: action.payload.data
                 }
             };
-        case AppTypes.MODAL_ERROR:
-            console.log("llega al reducer " + action.payload.data.showError);
+        case AppTypes.MODAL:
+            console.log("llega al reducer Modal" + action.payload.data.showModal);
             return { 
                 ...state,
-                modalError: action.payload.data.modalError
+                modal: action.payload.data.modal
             };
         default:
             return state;
