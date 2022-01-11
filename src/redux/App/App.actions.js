@@ -6,7 +6,7 @@ import {
     guardarReparacionPersistencia,
     eliminarReparacionPersistencia
 } from "../../persistencia/persistenciaFirebase";
-import { async } from "@firebase/util";
+// import { async } from "@firebase/util";
 
 export const isFetchingStart = () => {
     console.log("llega a isfetching"); return { type: AppTypes.ISFETCHING_START }

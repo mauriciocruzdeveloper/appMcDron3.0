@@ -1,7 +1,3 @@
-//import firebase from  'firebase/app';
-//const firebase = require('firebase/app');
-// import firebase from 'firebase/app';
-
 import { initializeApp } from "firebase/app";
 
 import { 
@@ -12,12 +8,15 @@ import {
     collection, 
     doc, 
     setDoc, 
-    getFirestore, 
+    //getFirestore, COMENTADO PORQUE NO LO USO
+    initializeFirestore,
     getDoc,
     getDocs,
     query, 
     orderBy,
-    deleteDoc
+    deleteDoc,
+    enableIndexedDbPersistence,
+    CACHE_SIZE_UNLIMITED // constante para caché ilimitada
 } from "firebase/firestore";
 
 var firebaseConfig = {
@@ -31,8 +30,17 @@ var firebaseConfig = {
 // Initialize Firebase
 const firebaseApp = initializeApp(firebaseConfig);
 
-const firestore = getFirestore();
+// Base de datos usando getFirestore()
+//const firestore = getFirestore();
+// Base de datos usando initializeFirestore() para pasar parámetro cacheSizeBytes
+const firestore = initializeFirestore(firebaseApp, {
+    cacheSizeBytes: CACHE_SIZE_UNLIMITED
+})
 
+// Esto habilita la persistensia sin conexión
+enableIndexedDbPersistence(firestore)
+  .then(() => console.log("Persistencia habilitada"))
+  .catch(err => console.log("Error en persistencia: " + err));
 
 
 export const loginPersistencia = (emailParametro, passwordParametro) => {
