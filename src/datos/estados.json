@@ -9,7 +9,7 @@
         "nombre": "Respondido",
         "prioridad": "3",
         "accion": "Esperar decisión del cliente",
-        "color": "#ff6b22"
+        "color": "#5ac8fa"
     },
     "Transito": {
         "nombre": "Transito",
@@ -27,7 +27,7 @@
         "nombre": "Revisado",
         "prioridad": "1",
         "accion": "Enviar Presupuesto",
-        "color": "#ff3b30"
+        "color": "#ff6b22"
     },
     "Presupuestado": {
         "nombre": "Presupuestado",
@@ -39,7 +39,7 @@
         "nombre": "Reparar",
         "prioridad": "1",
         "accion": "Reparar",
-        "color": "#5ac8fa"
+        "color": "#ff3b30"
     },
     "Repuestos": {
         "nombre": "Repuestos",
@@ -69,10 +69,10 @@
         "nombre": "Entregado",
         "prioridad": "5",
         "accion": "",
-        "color": "#4cd964"
+        "color": "#EEEEEE"
     },
     "Venta": {
-        "nombre": "En Venta",
+        "nombre": "Venta",
         "prioridad": "3",
         "accion": "",
         "color": "#8e8e93"
@@ -87,6 +87,6 @@
         "nombre": "Trabado",
         "prioridad": "3",
         "accion": "",
-        "color": "#8e8e93"
+        "color": "#4cd964"
     }
 }}

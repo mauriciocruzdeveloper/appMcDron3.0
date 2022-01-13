@@ -15,11 +15,17 @@ import history from "../history";
 const Inicio = ({ logout, admin, match }) => {
     return (
 
-        <div className="text-center">
+        <div 
+          className="p-4" 
+          style={{
+            backgroundColor: "#EEEEEE", 
+            height: "100vh",
+          }}
+        > 
             <img className="mb-4" src="./img/logo.png" alt="" width="100%" max-width="100px" />   
 
             <button 
-              className="m-4 btn w-75 bg-bluemcdron"
+              className="mb-3 btn w-100 bg-bluemcdron"
               style={{height: "100px"}}
               onClick={() => history.push(`${match.path}/reparaciones`)}
             >      
@@ -27,7 +33,7 @@ const Inicio = ({ logout, admin, match }) => {
             </button>
 
             <button 
-              className="m-4 btn w-75 bg-bluemcdron"
+              className="mb-3 btn w-100 bg-bluemcdron"
               style={{height: "100px"}}
             >      
               <div className="text-white text-center">PRESUPUESTO</div>

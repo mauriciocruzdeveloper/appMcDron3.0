@@ -33,14 +33,20 @@ const Login = ({
   return (
     isFetching ? <h3>cargando ....</h3> :
 
-    <div className="text-center">
+    <div 
+      className="text-center"
+      style={{
+        backgroundColor: "#EEEEEE", 
+        height: "100vh",
+      }}
+    >
       <main className="form-signin">
         <div className="text-center">
 
           <img className="mb-4" src="./img/logo.png" alt="" width="100%" />
           <h1 className="h3 mb-3 fw-normal">Please sign in</h1>
       
-          <div className="form-floating">
+          <div className="form-floating mb-2">
             <input 
               type="email" 
               className="form-control" 

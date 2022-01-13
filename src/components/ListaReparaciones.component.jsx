@@ -6,6 +6,9 @@ import {
 } from "../redux/root-actions";
 // JSON con los estados de las reparaciones
 import { estados } from '../datos/estados.json';
+// Estas son las importaciones de react-floating-action-button
+// lightColors y darkColors pueden estar buenos... hay que probarlos
+import { Container, Button, lightColors, darkColors } from 'react-floating-action-button';
 
 const ListaReparaciones = ({ 
   getReparaciones, 
@@ -48,27 +51,33 @@ const ListaReparaciones = ({
 
   return (
     isFetching ? <h3>cargando ....</h3> :
-    <div className="list-group">
+    <div className="p-4" style={{backgroundColor: "#EEEEEE"}}>
       {coleccionReparaciones.map(reparacion => (
-        <a
+        <div
           key={reparacion.id}
           value={reparacion.id} 
-          className="list-group-item list-group-item-action" 
+          className="card mb-3 p-1" 
           aria-current="true"
           onClick={() => history.push(`/inicio/${reparacion.id}`)}
         >
           <div className="d-flex w-100 justify-content-between">
             <h5 className="mb-1">{reparacion.data.DroneRep}</h5>
           </div>
+          <small>{reparacion.data.UsuarioRep}</small>
           <p 
             className="mb-1" 
             style={{backgroundColor: estados[reparacion.data.EstadoRep].color}}
           >
             {reparacion.data.EstadoRep} - {estados[reparacion.data.EstadoRep].accion}
           </p>
-          <small>{reparacion.data.UsuarioRep}</small>
-        </a>
+        </div>
       ))}
+    <Container>
+      <Button
+        className="bg-bluemcdron"
+        styles={{color: lightColors.white}}
+      >+</Button>
+    </Container>
     </div>
 
   );
