@@ -10,7 +10,6 @@ import NavMcDron from "../components/NavMcDron.component";
 const InicioRoutes = ({ match, isLoggedIn, admin }) => {
 
     console.log("inicio rutes")
-    console.log(isLoggedIn);
 
     return (
         <>
@@ -20,9 +19,9 @@ const InicioRoutes = ({ match, isLoggedIn, admin }) => {
             <NavMcDron />
 
             <Switch>
-                <Route exact path = {`${match.path}`} component= {Inicio} />
-                <Route exact path={`${match.path}/reparaciones`} component={ListaReparaciones} />
-                 <Route exact path={`${match.path}/:id`} component={Reparacion} />
+                <Route exact path={`${match.path}`} component = {Inicio} />
+                <Route exact path={`${match.path}/reparaciones`} component = {ListaReparaciones} />
+                 <Route exact path={`${match.path}/reparaciones/:id`} component = {Reparacion} />
             </Switch> 
         </>
         : 

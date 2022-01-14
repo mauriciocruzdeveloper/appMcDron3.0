@@ -58,7 +58,7 @@ const ListaReparaciones = ({
           value={reparacion.id} 
           className="card mb-3 p-1" 
           aria-current="true"
-          onClick={() => history.push(`/inicio/${reparacion.id}`)}
+          onClick={() => history.push(`/inicio/reparaciones/${reparacion.id}`)}
         >
           <div className="d-flex w-100 justify-content-between">
             <h5 className="mb-1">{reparacion.data.DroneRep}</h5>
@@ -75,8 +75,11 @@ const ListaReparaciones = ({
     <Container>
       <Button
         className="bg-bluemcdron"
-        styles={{color: lightColors.white}}
-      >+</Button>
+        styles={{
+          color: lightColors.white
+        }}
+        // onClick={() => history.push(`/inicio/cargapresupuesto`)} VER BIEN!!!
+      >Add</Button>
     </Container>
     </div>
 

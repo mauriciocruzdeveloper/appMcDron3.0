@@ -19,14 +19,9 @@ import {
     CACHE_SIZE_UNLIMITED // constante para caché ilimitada
 } from "firebase/firestore";
 
-var firebaseConfig = {
-    apiKey: "AIzaSyCqupkvp1jXt8y8WjVjSuqi9OFMkJu_LpI",
-    authDomain: "mc-dron.firebaseapp.com",
-    projectId: "mc-dron",
-    storageBucket: "mc-dron.appspot.com",
-    messagingSenderId: "410639876260",
-    appId: "1:410639876260:web:045fb9451d7ec1d6ee2631"
-  };
+import { config as firebaseConfig }  from '../configProd'; // Para producción
+//import { config as firebaseConfig }  from '../configDev'; // Para desarrollo
+
 // Initialize Firebase
 const firebaseApp = initializeApp(firebaseConfig);
 
