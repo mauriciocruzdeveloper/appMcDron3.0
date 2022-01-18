@@ -26,7 +26,12 @@ const ListaReparaciones = ({
 
   return (
     isFetching ? <h3>cargando ....</h3> :
-    <div className="p-4" style={{backgroundColor: "#EEEEEE"}}>
+    <div 
+      className="p-4" 
+      style={{
+        backgroundColor: "#EEEEEE",
+        height: "100vh",
+      }}>
       {coleccionReparaciones.map(reparacion => (
         <div
           key={reparacion.id}
