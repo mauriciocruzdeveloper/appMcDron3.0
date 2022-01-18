@@ -21,18 +21,13 @@ const Login = ({
 }) => {
 
   const handleLogin = async () => {
-    // Hice una promesa para que cuando no se puede loguear me mande a una página de error de login
-    
     await login( email, password)
-      .then( () => history.push("/") )
-      .catch( error => {
-        abreModal("Error ", "Código - " + error.code, "danger" );
-      });
+      .then(() => history.push("/"))
+      .catch( error => abreModal("Error ", "Código - " + error.code, "danger" ));
   };
 
   return (
     isFetching ? <h3>cargando ....</h3> :
-
     <div 
       className="text-center"
       style={{
@@ -95,9 +90,6 @@ const Login = ({
   );
 };
 
-
-
-
 const mapStateToProps = (state) => ({
   email: state.app.usuario.email,
   password: state.app.usuario.password,
@@ -105,6 +97,5 @@ const mapStateToProps = (state) => ({
   isFetching: state.app.isFetching,
   showModal: state.app.showModal
 });
-
 
 export default connect(mapStateToProps, { login, emailOnChangeLogin, passwordOnChangeLogin, abreModal })(Login);

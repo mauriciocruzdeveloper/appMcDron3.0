@@ -36,8 +36,6 @@ const Reparacion = ({
         await getReparacion(id);
     }, [getReparacion]);
 
-    // console.log("REPARACION: " + JSON.stringify(reparacion));
-
     let estadosArray = Object.values(estados);
 
     const handleGuardarReparacion = async () => {
@@ -67,28 +65,25 @@ const Reparacion = ({
                 <div className="card-body">
                 <h5 className="card-title bluemcdron">ESTADO DE LA REPARACIÓN</h5>
                     <div className="text-center">
-                        {
-                            estadosArray.map(estado =>
-                                <button 
-                                    className="m-2 btn btn-outline-secondary overflow-hidden"
-                                    type="button"
-                                    alt={estado.nombre}
-                                    style={{
-                                        backgroundColor: 
-                                            estado.nombre == reparacion?.data?.EstadoRep?
-                                            estado.color :
-                                            "#CCCCCC"
-                                        ,
-                                        width: "90px",
-                                        height: "30px"
-                                    }}
-                                    onClick={ ()=>setEstado(estado) }
-                                >
-                                    {estado.nombre}
-                                </button>
-                            )
-
-                        }
+                        {estadosArray.map(estado =>
+                            <button 
+                                className="m-2 btn btn-outline-secondary overflow-hidden"
+                                type="button"
+                                alt={estado.nombre}
+                                style={{
+                                    backgroundColor: 
+                                        estado.nombre == reparacion?.data?.EstadoRep?
+                                        estado.color :
+                                        "#CCCCCC"
+                                    ,
+                                    width: "90px",
+                                    height: "30px"
+                                }}
+                                onClick={ ()=>setEstado(estado) }
+                            >
+                                {estado.nombre}
+                            </button>
+                        )}
                     </div>
                 </div>
             </div>

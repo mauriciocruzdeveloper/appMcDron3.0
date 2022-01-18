@@ -3,7 +3,6 @@ import { connect } from "react-redux";
 import { Modal, Button, Alert } from 'react-bootstrap';
 import { cierraModal } from '../redux/root-actions.js';
 
-
 //TIPOS
 // primary
 // secondary
@@ -32,7 +31,5 @@ const ModalComponent = ({ show, titulo, mensaje, cierraModal, tipo }) => {
         </Modal>
     )
 }
-
-
 
 export default connect(null, {cierraModal})(ModalComponent);

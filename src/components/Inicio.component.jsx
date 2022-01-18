@@ -1,13 +1,10 @@
-import React, { Fragment } from "react";
+import React from "react";
 // Módulo para conectar con redux
 import { connect } from "react-redux";
 // Actions
 import { logout } from "../redux/root-actions";
 // Componentes
-// import Calendario from "./Calendario/Calendario.component";
-// import PantallaAdministrador from "./PantallaAdministrador";
 // Transitions
-import { Collapse, text, Button } from "react-bootstrap";
 // Servicios
 import history from "../history";
 
