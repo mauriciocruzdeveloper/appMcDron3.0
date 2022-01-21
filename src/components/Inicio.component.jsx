@@ -1,4 +1,3 @@
-import React from "react";
 // Módulo para conectar con redux
 import { connect } from "react-redux";
 // Actions
@@ -32,6 +31,7 @@ const Inicio = ({ logout, admin, match }) => {
             <button 
               className="mb-3 btn w-100 bg-bluemcdron"
               style={{height: "100px"}}
+              onClick={() => history.push(`${match.path}/presupuesto`)}
             >      
               <div className="text-white text-center">PRESUPUESTO</div>
             </button>

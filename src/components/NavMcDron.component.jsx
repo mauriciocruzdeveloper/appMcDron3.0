@@ -1,4 +1,3 @@
-import React from "react";
 // Módulo para conectar con redux
 import { connect } from "react-redux";
 // Actions

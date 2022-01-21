@@ -33,9 +33,9 @@ const firestore = initializeFirestore(firebaseApp, {
 })
 
 // Esto habilita la persistensia sin conexión
-enableIndexedDbPersistence(firestore)
-  .then(() => console.log("Persistencia habilitada"))
-  .catch(err => console.log("Error en persistencia: " + err));
+// enableIndexedDbPersistence(firestore)
+//   .then(() => console.log("Persistencia habilitada"))
+//   .catch(err => console.log("Error en persistencia: " + err));
 
 
 export const loginPersistencia = (emailParametro, passwordParametro) => {

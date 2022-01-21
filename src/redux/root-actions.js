@@ -6,12 +6,15 @@ import {
     passwordOnChangeLogin,
     cierraModal,
     abreModal,
+    cierraConfirm,
     changeInputRep,
+    changeInputPresu,
     getReparaciones,
     getReparacion,
     setEstado,
     guardarReparacion,
-    eliminarReparacion
+    eliminarReparacion,
+    confirmaEliminacion
 } from "./App/App.actions";
 
 export { 
@@ -21,10 +24,13 @@ export {
     passwordOnChangeLogin,
     cierraModal,
     abreModal,
+    cierraConfirm,
     changeInputRep,
+    changeInputPresu,
     getReparaciones,
     getReparacion,
     setEstado,
     guardarReparacion,
-    eliminarReparacion
+    eliminarReparacion,
+    confirmaEliminacion
 }

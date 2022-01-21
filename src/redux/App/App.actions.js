@@ -16,10 +16,10 @@ export const isFetchingCoplete = () => (
 );
 
 export const login = (email, password) => async (dispatch) => {
-    return new Promise((resolve, reject) => {
+    dispatch( isFetchingStart());
+    return new Promise(async (resolve, reject) => {
         if(email!="" && password!=""){
-            dispatch( isFetchingStart());
-            loginPersistencia( email, password )
+            await loginPersistencia( email, password )
             .then( usuario => {
                 console.log("llega al then del loginPersistencia: " + JSON.stringify(usuario));
                 dispatch({ 
@@ -37,8 +37,8 @@ export const login = (email, password) => async (dispatch) => {
             .catch(error  => {
                 console.log("llega al catch del loginPersistencia");
                 reject(error);
-            })
-            .finally(dispatch(isFetchingCoplete()));
+            });
+            dispatch(isFetchingCoplete());
         }else{
             const error = {code: "email o password incorrectos"};
             return reject(error);
@@ -71,6 +71,20 @@ export const cierraModal = () => {
             data: {
                 modal: {
                     showModal: false
+                }
+            } 
+        }
+    }
+};
+
+export const cierraConfirm = () => {
+    console.log('llega a cierra');
+    return {
+        type: AppTypes.CONFIRM,
+        payload: { 
+            data: {
+                confirm: {
+                    showConfirm: false
                 }
             } 
         }
@@ -116,14 +130,36 @@ export const changeInputRep = (target) => {
     }  
 };
 
+export const changeInputPresu = (target) => {
+    // En caso que el input sea tipo date,
+    if(target.type == "date"){
+        let anio = target.value.substr(0, 4);
+        let mes = target.value.substr(5, 2)-1;
+        let dia = target.value.substr(8, 2);
+        return { 
+            type: AppTypes.CHANGE_INPUT_PRESU,
+            payload: { 
+                input: target.id, 
+                data: new Date(anio, mes, dia).getTime()+10800001 
+                // Se agrega este número para que de bien la fecha.
+            }
+        } 
+    }else{
+        return { 
+            type: AppTypes.CHANGE_INPUT_PRESU,
+            payload: { input: target.id, data: target.value }
+        }
+    }  
+};
+
 export const setEstado = (estado) => ({ 
     type: AppTypes.SET_ESTADO,
     payload: { data: estado }
 });
 
 export const getReparaciones = () => async (dispatch) => {
+    dispatch( isFetchingStart());
     return new Promise(async (resolve, reject) => {
-        dispatch( isFetchingStart());
         await getReparacionesPersistencia()
         .then( reparaciones => {
             console.log("llega al then del getReparacionesPersistencia");
@@ -139,14 +175,14 @@ export const getReparaciones = () => async (dispatch) => {
         .catch(error  => {
             console.log("llega al catch del getReparacionesPersistencia");
             reject(error);
-        })
-        .finally(dispatch(isFetchingCoplete()));
+        });
+        dispatch(isFetchingCoplete());
     });
 };
 
 export const getReparacion = (id) => async (dispatch) => {
+    dispatch( isFetchingStart());
     return new Promise(async (resolve, reject) => {
-        dispatch( isFetchingStart());
         await getReparacionPersistencia(id)
         .then( reparacion => {
             console.log("llega al then del getReparacionPersistencia");
@@ -163,15 +199,15 @@ export const getReparacion = (id) => async (dispatch) => {
         .catch(error  => {
             console.log("llega al catch del getReparacionPersistencia");
             reject(error);
-        })
-        .finally(dispatch(isFetchingCoplete()));
+        });
+        dispatch(isFetchingCoplete());
     });
 };
 
 export const guardarReparacion = (reparacion) => async (dispatch) => {
+    dispatch(isFetchingStart());
     return new Promise(async (resolve, reject) => {
-        dispatch( isFetchingStart());
-        guardarReparacionPersistencia(reparacion)
+        await guardarReparacionPersistencia(reparacion)
         .then( reparacion => {
             console.log("llega al then del guardarReparacionPesistencia");
             return resolve(reparacion); 
@@ -179,14 +215,14 @@ export const guardarReparacion = (reparacion) => async (dispatch) => {
         .catch(error  => {
             console.log("llega al catch del guardarReparacionPersistencia");
             reject(error);
-        })
-        .finally(dispatch(isFetchingCoplete()));
+        });
+        dispatch(isFetchingCoplete());
     });   
 }
 
 export const eliminarReparacion = (reparacion) => async (dispatch) => {
+    dispatch( isFetchingStart());
     return new Promise(async (resolve, reject) => {
-        dispatch( isFetchingStart());
         await eliminarReparacionPersistencia(reparacion)
         .then( (reparacion) => {
             console.log("llega al then del eliminarReparacionPesistencia");
@@ -196,11 +232,31 @@ export const eliminarReparacion = (reparacion) => async (dispatch) => {
             console.log("llega al catch del eliminarReparacionPersistencia");
             reject(error);
         })
-        .finally(dispatch(isFetchingCoplete()));
+        dispatch(isFetchingCoplete());
     });   
 }
 
 export const rememberMe = () => {
     localStorage.setItem('memoria', JSON.stringify( estado.display1 ));
     const memoria = JSON.parse(localStorage.getItem('memoria')) || [];
+}
+
+export const confirmaEliminacion = (mensaje, titulo, tipo, callBack) => {
+    console.log("llega a actions. callBack: " + callBack);
+    return(
+        {
+            type: AppTypes.CONFIRM,
+                payload: { 
+                    data: {
+                        confirm: {
+                            showConfirm: true,
+                            mensajeConfirm: mensaje,
+                            tituloConfirm: titulo,
+                            tipoConfirm: tipo,
+                            callBackConfirm: callBack
+                        }
+                    } 
+                }
+        }
+    )
 }

@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import { useEffect } from "react";
 import { connect } from "react-redux";
 import TextareaAutosize from "react-textarea-autosize";
 import { 
@@ -7,7 +7,8 @@ import {
     setEstado,
     guardarReparacion,
     eliminarReparacion,
-    abreModal
+    abreModal,
+    confirmaEliminacion
   } from "../redux/root-actions";
 
 import { convertTimestampCORTO } from "../utils/utils";
@@ -27,7 +28,7 @@ const Reparacion = ({
     eliminarReparacion,
     abreModal,
     isFetching,
-    match
+    confirmaEliminacion
 }) => {
 
     const { id } = useParams();
@@ -44,17 +45,27 @@ const Reparacion = ({
         .catch(error => abreModal("Error al guardar ", "Código - " + error.code, "danger" ));
     }
 
-    const handleEliminarReparacion = async () => {
-        await eliminarReparacion(reparacion)
-        .then(reparacion => {
-            abreModal("Reparación eliminada con éxito", "Reparación: " + reparacion.id, "success" )
-            history.push(`/inicio/reparaciones`)
-        })
-        .catch(error => abreModal("Error al guardar ", "Código - " + error.code, "danger" ));
+    const handleEliminarReparacion = () => {
+        confirmaEliminacion(
+            "Eliminar Reparación?",
+            "Atención",
+            "danger",
+            () => {
+                console.log("llega al callBakc de confirm") ;
+                eliminarReparacion(reparacion)
+                .then(reparacion => {
+                        abreModal("Reparación eliminada con éxito", "Reparación: " + reparacion.id, "success" );
+                        history.push(`/inicio/reparaciones`);
+                })
+                .catch(error => abreModal("Error al guardar ", "Código - " + error.code, "danger" ))
+            }
+        );
     }
 
+    console.log("isFetching en Reparacion: " + isFetching);
+
     return(
-        isFetching ? <h1>Cargando: { isFetching }</h1> :
+        isFetching ? <h3>cargando ....</h3> :
         <div
             className="p-4"
             style={{
@@ -335,4 +346,14 @@ const mapStateToProps = (state) => ({
   });
 
 
-export default connect(mapStateToProps, { changeInputRep, getReparacion, setEstado, guardarReparacion, eliminarReparacion, abreModal })(Reparacion);
+export default connect(
+    mapStateToProps, 
+    { 
+        changeInputRep, 
+        getReparacion, 
+        setEstado, 
+        guardarReparacion, 
+        eliminarReparacion, 
+        abreModal,
+        confirmaEliminacion
+    })(Reparacion);

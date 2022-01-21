@@ -5,9 +5,16 @@ const INITIAL_STATE = {
     isFetching: false,
     modal: {
         showModal: false,
-        mensajeError: '',
-        tituloError: '',
+        mensajeModal: '',
+        tituloModal: '',
         tipoModal: ''
+    },
+    confirm: {
+        showConfirm: false,
+        mensajeConfirm: '',
+        tituloConfirm: '',
+        tipoConfirm: '',
+        callBakcConfirm: null
     },
     usuario:{
         nombre: '',
@@ -87,6 +94,19 @@ export default (state = INITIAL_STATE, action) => {
                 }
              };
 
+        case AppTypes.CHANGE_INPUT_PRESU:
+            return { 
+                ...state, 
+                presupuesto: {
+                    ...state.presupuesto,
+                    data: {
+                        ...state.presupuesto.data,
+                        [action.payload.input]: action.payload.data
+                    }
+                    
+                }
+            };
+
         case AppTypes.ISFETCHING_START:
             return { ...state, isFetching: true };
 
@@ -132,10 +152,16 @@ export default (state = INITIAL_STATE, action) => {
                 }
             };
         case AppTypes.MODAL:
-            console.log("llega al reducer Modal" + action.payload.data.showModal);
+            console.log("llega al reducer Modal " + action.payload.data.modal.showModal);
             return { 
                 ...state,
                 modal: action.payload.data.modal
+            };
+        case AppTypes.CONFIRM:
+            console.log("llega al reducer Confirm " + action.payload.data.confirm.callBackConfirm);
+            return { 
+                ...state,
+                confirm: action.payload.data.confirm
             };
         default:
             return state;
