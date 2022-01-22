@@ -115,6 +115,9 @@ export default (state = INITIAL_STATE, action) => {
                 }
             };
 
+        // VER BIEN SI ES CORRECTO MOSTRAR EL ALERT AQUÍ O 
+        // QUE LA ACTION ISFETHCING_START SÓLO MODIFIQUE ISFETCHING
+
         case AppTypes.ISFETCHING_START:
             return { 
                 ...state, 
@@ -123,7 +126,7 @@ export default (state = INITIAL_STATE, action) => {
                     showAlert: true,
                     mensajeAlert: '',
                     tituloAlert: 'Cargando',
-                    tipoAlert: 'primary'
+                    tipoAlert: 'secondary'
                 },
             };
 

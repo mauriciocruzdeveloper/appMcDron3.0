@@ -19,7 +19,7 @@ const ModalComponent = ({ show, titulo, mensaje, cierraModal, tipo }) => {
     console.log('Llega a ErrorComponent ' + show);
 
     return(
-        <Modal centered show={show} onHide={cierraModal}>
+        <Modal className="w-80" centered show={show} onHide={cierraModal}>
             <Modal.Title><Alert variant={tipo}>{titulo}</Alert></Modal.Title>
             <Modal.Body>{mensaje}</Modal.Body>
             <Modal.Footer>
