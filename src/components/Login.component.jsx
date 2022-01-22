@@ -26,7 +26,6 @@ const Login = ({
   };
 
   return (
-    isFetching ? <h3>cargando ....</h3> :
     <div 
       className="text-center"
       style={{

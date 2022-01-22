@@ -3,11 +3,19 @@ import { AppTypes } from "./App.types";
 const INITIAL_STATE = {
     isLoggedIn: false,
     isFetching: false,
+    // si quiero que aparezca un modal, hago un action con los parámetos del modal
+    // y showModal: true, lo mismo con el confirm
     modal: {
         showModal: false,
         mensajeModal: '',
         tituloModal: '',
         tipoModal: ''
+    },
+    alert: {
+        showAlert: false,
+        mensajeAlert: '',
+        tituloAlert: '',
+        tipoAlert: ''
     },
     confirm: {
         showConfirm: false,
@@ -108,10 +116,19 @@ export default (state = INITIAL_STATE, action) => {
             };
 
         case AppTypes.ISFETCHING_START:
-            return { ...state, isFetching: true };
+            return { 
+                ...state, 
+                isFetching: true,
+                alert: {
+                    showAlert: true,
+                    mensajeAlert: '',
+                    tituloAlert: 'Cargando',
+                    tipoAlert: 'primary'
+                },
+            };
 
         case AppTypes.ISFETCHING_COMPLETE:
-            return { ...state, isFetching: false };
+            return { ...state, isFetching: false, alert:{showAlert: false} };
 
         case AppTypes.LOGIN:
             return {

@@ -8,7 +8,7 @@ import {
     guardarReparacion,
     eliminarReparacion,
     abreModal,
-    confirmaEliminacion
+    confirm
   } from "../redux/root-actions";
 
 import { convertTimestampCORTO } from "../utils/utils";
@@ -28,7 +28,7 @@ const Reparacion = ({
     eliminarReparacion,
     abreModal,
     isFetching,
-    confirmaEliminacion
+    confirm
 }) => {
 
     const { id } = useParams();
@@ -39,14 +39,21 @@ const Reparacion = ({
 
     let estadosArray = Object.values(estados);
 
-    const handleGuardarReparacion = async () => {
-        await guardarReparacion(reparacion)
-        .then(reparacion => abreModal("Guardado con éxito", "Reparación: " + reparacion.id, "success" ))
-        .catch(error => abreModal("Error al guardar ", "Código - " + error.code, "danger" ));
+    const handleGuardarReparacion = () => {
+        confirm(
+            "Guardar Reparación?",
+            "Atención",
+            "warning",
+            () => {
+                guardarReparacion(reparacion)
+                .then(reparacion => abreModal("Guardado con éxito", "Reparación: " + reparacion.id, "success" ))
+                .catch(error => abreModal("Error al guardar ", "Código - " + error.code, "danger" ));
+            }
+        );
     }
 
     const handleEliminarReparacion = () => {
-        confirmaEliminacion(
+        confirm(
             "Eliminar Reparación?",
             "Atención",
             "danger",
@@ -65,7 +72,6 @@ const Reparacion = ({
     console.log("isFetching en Reparacion: " + isFetching);
 
     return(
-        isFetching ? <h3>cargando ....</h3> :
         <div
             className="p-4"
             style={{
@@ -355,5 +361,5 @@ export default connect(
         guardarReparacion, 
         eliminarReparacion, 
         abreModal,
-        confirmaEliminacion
+        confirm
     })(Reparacion);

@@ -64,7 +64,7 @@ export const passwordOnChangeLogin = ( data ) => ({
 });
 
 export const cierraModal = () => {
-    console.log('llega a cierra');
+    console.log('llega a cierra modal');
     return {
         type: AppTypes.MODAL,
         payload: { 
@@ -78,13 +78,27 @@ export const cierraModal = () => {
 };
 
 export const cierraConfirm = () => {
-    console.log('llega a cierra');
+    console.log('llega a cierra confirm');
     return {
         type: AppTypes.CONFIRM,
         payload: { 
             data: {
                 confirm: {
                     showConfirm: false
+                }
+            } 
+        }
+    }
+};
+
+export const cierraAlert = () => {
+    console.log('llega a cierra alert');
+    return {
+        type: AppTypes.ALERT,
+        payload: { 
+            data: {
+                alert: {
+                    showAlert: false
                 }
             } 
         }
@@ -241,7 +255,7 @@ export const rememberMe = () => {
     const memoria = JSON.parse(localStorage.getItem('memoria')) || [];
 }
 
-export const confirmaEliminacion = (mensaje, titulo, tipo, callBack) => {
+export const confirm = (mensaje, titulo, tipo, callBack) => {
     console.log("llega a actions. callBack: " + callBack);
     return(
         {
@@ -254,6 +268,25 @@ export const confirmaEliminacion = (mensaje, titulo, tipo, callBack) => {
                             tituloConfirm: titulo,
                             tipoConfirm: tipo,
                             callBackConfirm: callBack
+                        }
+                    } 
+                }
+        }
+    )
+}
+
+export const alert = (mensaje, titulo, tipo) => {
+    console.log("llega a action alert");
+    return(
+        {
+            type: AppTypes.ALERT,
+                payload: { 
+                    data: {
+                        alert: {
+                            showAlert: true,
+                            mensajeAlert: mensaje,
+                            tituloAlert: titulo,
+                            tipoAlert: tipo
                         }
                     } 
                 }

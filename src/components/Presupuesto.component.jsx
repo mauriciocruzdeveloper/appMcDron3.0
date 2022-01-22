@@ -44,7 +44,6 @@ const Reparacion = ({
 
 
     return(
-        isFetching ? <h1>Cargando: { isFetching }</h1> :
         <div
             className="p-4"
             style={{

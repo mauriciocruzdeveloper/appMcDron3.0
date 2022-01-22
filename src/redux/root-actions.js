@@ -7,6 +7,7 @@ import {
     cierraModal,
     abreModal,
     cierraConfirm,
+    cierraAlert,
     changeInputRep,
     changeInputPresu,
     getReparaciones,
@@ -14,7 +15,8 @@ import {
     setEstado,
     guardarReparacion,
     eliminarReparacion,
-    confirmaEliminacion
+    confirm,
+    alert
 } from "./App/App.actions";
 
 export { 
@@ -25,6 +27,7 @@ export {
     cierraModal,
     abreModal,
     cierraConfirm,
+    cierraAlert,
     changeInputRep,
     changeInputPresu,
     getReparaciones,
@@ -32,5 +35,6 @@ export {
     setEstado,
     guardarReparacion,
     eliminarReparacion,
-    confirmaEliminacion
+    confirm,
+    alert
 }

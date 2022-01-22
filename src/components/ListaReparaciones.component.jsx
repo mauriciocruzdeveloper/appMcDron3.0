@@ -25,7 +25,6 @@ const ListaReparaciones = ({
 
 
   return (
-    isFetching ? <h3>cargando ....</h3> :
     <div 
       className="p-4" 
       style={{
