@@ -3,11 +3,10 @@ import { connect } from "react-redux";
 import TextareaAutosize from "react-textarea-autosize";
 import { 
     changeInputPresu,
-    getReparacion,
     setEstado,
-    guardarReparacion,
-    eliminarReparacion,
-    abreModal
+    guardarPresupuesto,
+    abreModal,
+    loadUsuToPresu
   } from "../redux/root-actions";
 
 import { convertTimestampCORTO } from "../utils/utils";
@@ -18,29 +17,28 @@ import { estados } from '../datos/estados.json';
 
 import history from "../history";
 
-const Reparacion = ({ 
+const Presupuesto = ({ 
     changeInputPresu, 
-    getReparacion, 
-    reparacion, 
-    setEstado, 
-    guardarReparacion,
-    eliminarReparacion,
+    presupuesto,
+    usuario,
+    guardarPresupuesto,
     abreModal,
-    isFetching,
-    match
+    loadUsuToPresu
 }) => {
 
     // ACÁ TENGO QUE CARGAR LOS DATOS DEL USUARIO QUE HACE EL PRESUPUESTO
     useEffect(async () => {
-        await cargaUsuario();
-    }, [cargaUsuario]);
+        await loadUsuToPresu(usuario);
+    }, [loadUsuToPresu]);
 
 
-    // const handleGuardarReparacion = async () => {
-    //     await guardarReparacion(reparacion)
-    //     .then(reparacion => abreModal("Guardado con éxito", "Reparación: " + reparacion.id, "success" ))
-    //     .catch(error => abreModal("Error al guardar ", "Código - " + error.code, "danger" ));
-    // }
+
+
+    const handleGuardarPresupuesto = async () => {
+        await guardarPresupuesto(reparacion)
+        .then(reparacion => abreModal("Guardado con éxito", "Reparación: " + reparacion.id, "success" ))
+        .catch(error => abreModal("Error al guardar ", "Código - " + error.code, "danger" ));
+    }
 
 
     return(
@@ -83,7 +81,7 @@ const Reparacion = ({
                             type="text" 
                             className="form-control" 
                             id="UsuarioPresu" 
-                            value={presupuesto?.data?.UsuarioPresu || ""}
+                            value={presupuesto?.UsuarioPresu || ""}
                         />
                     </div>
                     <div>
@@ -93,7 +91,7 @@ const Reparacion = ({
                             type="text" 
                             className="form-control" 
                             id="NombrePresu" 
-                            value={presupuesto?.data?.NombrePresu || ""}
+                            value={presupuesto?.NombrePresu || ""}
                         />
                     </div>
                     <div>
@@ -103,7 +101,7 @@ const Reparacion = ({
                             type="text" 
                             className="form-control" 
                             id="ApellidoPresu" 
-                            value={presupuesto?.data?.ApellidoPresu || ""}
+                            value={presupuesto?.ApellidoPresu || ""}
                         />
                     </div>
                     <div>
@@ -113,7 +111,7 @@ const Reparacion = ({
                             type="text" 
                             className="form-control" 
                             id="TelefonoPresu"
-                            value={reparacion?.data?.TelefonoPresu || ""}
+                            value={presupuesto?.TelefonoPresu || ""}
                         />
                     </div>
                     <div>
@@ -123,7 +121,17 @@ const Reparacion = ({
                             type="text" 
                             className="form-control" 
                             id="ProvinciaPresu"
-                            value={reparacion?.data?.ProvinciaPresu || ""}
+                            value={presupuesto?.ProvinciaPresu || ""}
+                        />
+                    </div>
+                    <div>
+                        <label className="form-label">Ciudad</label>
+                        <input 
+                            onChange={e => changeInputPresu(e.target)} 
+                            type="text" 
+                            className="form-control" 
+                            id="CiudadPresu"
+                            value={presupuesto?.CiudadPresu || ""}
                         />
                     </div>
                 </div>
@@ -139,7 +147,7 @@ const Reparacion = ({
                             type="text" 
                             className="form-control" 
                             id="DronePresu"
-                            value={reparacion?.data?.DronePresu || ""}
+                            value={presupuesto?.DronePresu || ""}
                         />
                     </div>
                     
@@ -149,7 +157,7 @@ const Reparacion = ({
                             onChange={e => changeInputPresu(e.target)} 
                             className="form-control" 
                             id="DescripcionPresu"
-                            value={reparacion?.data?.DescripcionUsuRep || ""}
+                            value={presupuesto?.DescripcionPresu || ""}
                         />
                     </div>
                 </div>
@@ -159,16 +167,10 @@ const Reparacion = ({
 
             <div className="text-center">
                 <button 
-                    onClick={ handleGuardarReparacion }
+                    onClick={ handleGuardarPresupuesto }
                     className="w-100 mb-3 btn bg-bluemcdron text-white"
                 >
                     Guardar
-                </button>
-                <button 
-                    onClick={ handleEliminarReparacion }
-                    className="w-100 btn bg-danger text-white"
-                >
-                    Eliminar
                 </button>
             </div>
 
@@ -178,9 +180,17 @@ const Reparacion = ({
 }
 
 const mapStateToProps = (state) => ({
-    reparacion: state.app?.reparacion,
-    isFetching: state.app.isFetching
+    presupuesto: state.app?.presupuesto,
+    usuario: state.app?.usuario,
   });
 
 
-export default connect(mapStateToProps, { changeInputPresu, getReparacion, setEstado, guardarReparacion, eliminarReparacion, abreModal })(Reparacion);
+export default connect(
+    mapStateToProps, 
+    { 
+        changeInputPresu, 
+        setEstado, 
+        guardarPresupuesto, 
+        abreModal,
+        loadUsuToPresu
+    })(Presupuesto);

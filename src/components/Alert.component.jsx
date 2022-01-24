@@ -1,6 +1,4 @@
-import { connect } from "react-redux";
-import { Modal, Button, Alert } from 'react-bootstrap';
-import { cierraAlert } from '../redux/root-actions.js';
+import { Modal, Alert } from 'react-bootstrap';
 
 //TIPOS
 // primary
@@ -14,16 +12,17 @@ import { cierraAlert } from '../redux/root-actions.js';
 // muted
 // white
 
-const AlertComponent = ({ show, titulo, mensaje, cierraAlert, tipo }) => {
+const AlertComponent = ({ show, titulo, mensaje, tipo }) => {
 
     console.log('Llega a ErrorComponent ' + show);
 
     return(
-        <Modal centered show={show} onHide={cierraAlert}>
-            <Modal.Title><Alert variant={tipo}>{titulo}</Alert></Modal.Title>
-            <Modal.Body>{mensaje}</Modal.Body>
+        <Modal centered show={show}>
+            
+            <Modal.Body><span class="spinner-grow float-right" role="status"></span></Modal.Body>
+            
         </Modal>
     )
 }
 
-export default connect(null, {cierraAlert})(AlertComponent);
+export default AlertComponent;

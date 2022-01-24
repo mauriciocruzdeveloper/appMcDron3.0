@@ -33,9 +33,9 @@ const firestore = initializeFirestore(firebaseApp, {
 })
 
 // Esto habilita la persistensia sin conexión
-// enableIndexedDbPersistence(firestore)
-//   .then(() => console.log("Persistencia habilitada"))
-//   .catch(err => console.log("Error en persistencia: " + err));
+enableIndexedDbPersistence(firestore)
+  .then(() => console.log("Persistencia habilitada"))
+  .catch(err => console.log("Error en persistencia: " + err));
 
 
 export const loginPersistencia = (emailParametro, passwordParametro) => {
@@ -64,21 +64,24 @@ export const loginPersistencia = (emailParametro, passwordParametro) => {
                         // NOMBRES DISTINTOS, SE PODRÍA PASAR EL OBJETO ENTERO, Y LUEGO MAPEAR LOS PARÁMETROS
                         // EN EL REDUCER. EN EL STORE ESTARÍA EL OBJETO CON LOS PARÁMETROS TAL CUAL LOS PASA
                         // LA BASE DE DATOS.
-                        const {Nick, UrlFotoUsu, NombreUsu, ApellidoUsu, CiudadUsu, DomicilioUsu, ProvinciaUsu, TelefonoUsu, Admin} = doc.data();
+                        // const {Nick, UrlFotoUsu, NombreUsu, ApellidoUsu, CiudadUsu, DomicilioUsu, ProvinciaUsu, TelefonoUsu, Admin} = doc.data();
 
-                        let usuario = {
-                            nombre: NombreUsu, 
-                            apellido: ApellidoUsu, 
-                            email: emailParametro, 
-                            nick: Nick, 
-                            urlFoto: UrlFotoUsu, 
-                            password: passwordParametro, 
-                            admin: Admin, 
-                            ciudad: CiudadUsu, 
-                            domicilio: DomicilioUsu,  
-                            provincia: ProvinciaUsu, 
-                            telefono: TelefonoUsu
-                        };
+                        // let usuario = {
+                        //     nombre: NombreUsu, 
+                        //     apellido: ApellidoUsu, 
+                        //     email: emailParametro, 
+                        //     nick: Nick, 
+                        //     urlFoto: UrlFotoUsu, 
+                        //     password: passwordParametro, 
+                        //     admin: Admin, 
+                        //     ciudad: CiudadUsu, 
+                        //     domicilio: DomicilioUsu,  
+                        //     provincia: ProvinciaUsu, 
+                        //     telefono: TelefonoUsu
+                        // };
+                        let usuario = {};
+                        usuario.id = doc.id;
+                        usuario.data = doc.data();
 
                         console.log("OBTUVO EL USUARIO: " + JSON.stringify(usuario));
 

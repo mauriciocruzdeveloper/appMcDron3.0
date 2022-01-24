@@ -6,13 +6,12 @@ import Routes from "../routes/Routes";
 
 import ModalComponent from "./Modal.component";
 import ConfirmComponent from "./Confirm.component";
-import AlertComponent from "./Alert.component";
+import AlertComponent from "./Alert.component"; // Sólo se usa para "Cargando..."
 
 // import '../../node_modules/bootstrap-icons/icons';
 
 const App = ( { isFetching, isLoggedIn, admin, modal, confirm, alert }) => {
 
-  const { showAlert, mensajeAlert, tituloAlert, tipoAlert } = alert;
   const { showModal, mensajeModal, tituloModal, tipoModal } = modal;
   const { showConfirm, mensajeConfirm, tituloConfirm, tipoConfirm, callBackConfirm } = confirm;
 
@@ -29,12 +28,6 @@ const App = ( { isFetching, isLoggedIn, admin, modal, confirm, alert }) => {
           titulo = {tituloModal}
           tipo = {tipoModal}
         />
-        <AlertComponent 
-          show = {showAlert} 
-          mensaje = {mensajeAlert} 
-          titulo = {tituloAlert}
-          tipo = {tipoAlert}
-        />
         <ConfirmComponent 
           show = {showConfirm} 
           mensaje = {mensajeConfirm} 
@@ -46,6 +39,21 @@ const App = ( { isFetching, isLoggedIn, admin, modal, confirm, alert }) => {
         <Router history = {history} >
           <Routes isLoggedIn = {isLoggedIn} admin = {admin}/>
         </Router>
+        <footer className="page-footer fixed-bottom text-center">
+        {isFetching ? 
+          <div className="float-right">
+            <span 
+              className="spinner-grow" 
+              role="status"
+              style={{
+                height: "15vh",
+                width: "15vh"
+              }}
+            >
+            </span>
+          </div>
+        : null }
+        </footer>
     </div>
   );
 };
@@ -53,7 +61,7 @@ const App = ( { isFetching, isLoggedIn, admin, modal, confirm, alert }) => {
 const mapStateToProps = ( state ) => ({
   isLoggedIn: state.app.isLoggedIn,
   isFetching: state.app.isFetching,
-  admin: state.app.usuario.admin,
+  admin: state.app.usuario?.data?.Admin || false,
   modal: state.app.modal,
   alert: state.app.alert,
   confirm: state.app.confirm

@@ -11,12 +11,6 @@ const INITIAL_STATE = {
         tituloModal: '',
         tipoModal: ''
     },
-    alert: {
-        showAlert: false,
-        mensajeAlert: '',
-        tituloAlert: '',
-        tipoAlert: ''
-    },
     confirm: {
         showConfirm: false,
         mensajeConfirm: '',
@@ -24,16 +18,20 @@ const INITIAL_STATE = {
         tipoConfirm: '',
         callBakcConfirm: null
     },
-    usuario:{
-        nombre: '',
-        apellido: '',
+    login: {
         email: '',
-        nick: '',
-        urlFoto: '',
-        password: '',
-        admin: false
-        //token: ''
+        password: ''
     },
+    // usuario:{
+    //     nombre: '',
+    //     apellido: '',
+    //     email: '',
+    //     nick: '',
+    //     urlFoto: '',
+    //     password: '',
+    //     admin: false
+    //     //token: ''
+    // },
     // reparacion:{
     //     drone: '',
     //     nroSerieDrone: '',
@@ -115,40 +113,40 @@ export default (state = INITIAL_STATE, action) => {
                 }
             };
 
-        // VER BIEN SI ES CORRECTO MOSTRAR EL ALERT AQUÍ O 
-        // QUE LA ACTION ISFETHCING_START SÓLO MODIFIQUE ISFETCHING
-
         case AppTypes.ISFETCHING_START:
             return { 
                 ...state, 
-                isFetching: true,
-                alert: {
-                    showAlert: true,
-                    mensajeAlert: '',
-                    tituloAlert: 'Cargando',
-                    tipoAlert: 'secondary'
-                },
+                isFetching: true
             };
 
         case AppTypes.ISFETCHING_COMPLETE:
-            return { ...state, isFetching: false, alert:{showAlert: false} };
+            return { 
+                ...state, 
+                isFetching: false 
+            };
 
+        // HAY QUE ESTABLECER EL ESTÁNDAR DE USUARIO COMO ESTÁ EN LA BASE DE DATOS
+        // DE FIRESTORE COMO EL ESTÁNDAR DEL FRONTEND. LAS OTRAS DB TENDRÁN QUE USAR
+        // ESOS NOMBRES, O SINO LA PERSISTENCIA TENDRÁ QUE CAMBIAR LOS NOSMBRES PARA
+        // QUE SEAN COMO ESTÁN EN LA DB DE FIRESTORE.
+        // CAMBIAR LO DE ABAJO PARA QUE SEA COMO DICE ARRIBA.
         case AppTypes.LOGIN:
             return {
                 ...state,
                 isFetching: false,
                 isLoggedIn: action.payload.data.isLoggedIn,
-                usuario: {
-                    ...state.usuario,
-                    nombre: action.payload.data.usuario?.nombre,
-                    apellido: action.payload.data.usuario?.apellido,
-                    admin: action.payload.data.usuario?.admin,
-                    email: action.payload.data.usuario?.email,
-                    nick: action.payload.data.usuario?.nick,
-                    password: action.payload.data.usuario?.password,
-                    urlFoto: action.payload.data.usuario?.urlFoto
-                    //token: action.payload.data.usuario.token
-                }
+                usuario: action.payload.data.usuario
+                // {
+                //     ...state.usuario,
+                //     nombre: action.payload.data.usuario?.nombre,
+                //     apellido: action.payload.data.usuario?.apellido,
+                //     admin: action.payload.data.usuario?.admin,
+                //     email: action.payload.data.usuario?.email,
+                //     nick: action.payload.data.usuario?.nick,
+                //     password: action.payload.data.usuario?.password,
+                //     urlFoto: action.payload.data.usuario?.urlFoto
+                //     //token: action.payload.data.usuario.token
+                // }
             }
         case AppTypes.LOGOUT:
             return {
@@ -156,18 +154,18 @@ export default (state = INITIAL_STATE, action) => {
                 isLoggedIn: action.payload.data.isLoggedIn
             }
         case AppTypes.CHANGE_PASSWORD_LOGIN:
-            return { 
+            return {
                 ...state, 
-                usuario: {
-                    ...state.usuario,
+                login: {
+                    ...state.login,
                     password: action.payload.data
                 }
             };
         case AppTypes.CHANGE_EMAIL_LOGIN:
             return { 
                 ...state, 
-                usuario: {
-                    ...state.usuario,
+                login: {
+                    ...state.login,
                     email: action.payload.data
                 }
             };
@@ -183,6 +181,18 @@ export default (state = INITIAL_STATE, action) => {
                 ...state,
                 confirm: action.payload.data.confirm
             };
+        case AppTypes.LOAD_USU_TO_PRESU:
+            return {
+                ...state,
+                presupuesto: {
+                    UsuarioPresu: action.payload.data.usuario.id,
+                    NombrePresu: action.payload.data.usuario.data?.NombreUsu,
+                    ApellidoPresu: action.payload.data.usuario.data?.ApellidoUsu,
+                    TelefonoPresu: action.payload.data.usuario.data?.TelefonoUsu,
+                    CiudadPresu: action.payload.data.usuario.data?.CiudadUsu,
+                    ProvinciaPresu: action.payload.data.usuario.data?.ProvinciaUsu
+                }
+            }
         default:
             return state;
     }

@@ -27,7 +27,6 @@ const Reparacion = ({
     guardarReparacion,
     eliminarReparacion,
     abreModal,
-    isFetching,
     confirm
 }) => {
 
@@ -68,8 +67,6 @@ const Reparacion = ({
             }
         );
     }
-
-    console.log("isFetching en Reparacion: " + isFetching);
 
     return(
         <div
@@ -348,7 +345,6 @@ const Reparacion = ({
 
 const mapStateToProps = (state) => ({
     reparacion: state.app?.reparacion,
-    isFetching: state.app.isFetching
   });
 
 

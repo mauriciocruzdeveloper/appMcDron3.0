@@ -13,7 +13,7 @@ import history from "../history";
 
 const NavMcDron = ({ usuario }) => {
 
-    console.log("USUARIO: " + JSON.stringify(usuario));
+    // console.log("USUARIO: " + JSON.stringify(usuario));
 
     return (
     // La prop sticky es para que el navbar quede arriba, pero "ocupando" un espacio
@@ -26,7 +26,7 @@ const NavMcDron = ({ usuario }) => {
             color="white"
         />
         <h4 className="text-white m-0 float-left">
-            Hola {usuario?.nick || "amigo"}!
+            Hola {usuario?.data?.Nick || "amigo"}!
         </h4>
         {/* <div 
             className="imageContainer rounded-circle float-right"
@@ -34,7 +34,7 @@ const NavMcDron = ({ usuario }) => {
             height="50"
         > */}
             <img 
-                src={usuario?.urlFoto}
+                src={usuario?.data?.UrlFotoUsu}
                 width="50" 
                 height="50"
                 className="rounded-circle float-right" 

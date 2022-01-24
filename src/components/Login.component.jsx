@@ -20,7 +20,7 @@ const Login = ({
 }) => {
 
   const handleLogin = async () => {
-    await login( email, password)
+    await login(email, password)
       .then(() => history.push("/"))
       .catch( error => abreModal("Error ", "Código - " + error.code, "danger" ));
   };
@@ -46,7 +46,7 @@ const Login = ({
               id="floatingInput" 
               placeholder="name@example.com" 
               value={ email }
-              onChange={ (e) => emailOnChangeLogin( e.target.value ) }
+              onChange={ e => emailOnChangeLogin(e.target.value) }
             />
             <label>Email address</label>
           </div>
@@ -57,7 +57,7 @@ const Login = ({
               id="floatingPassword" 
               placeholder="Password" 
               value={ password }
-              onChange={ e => passwordOnChangeLogin( e.target.value ) }
+              onChange={ e => passwordOnChangeLogin(e.target.value) }
             />
             <label>Password</label>
           </div>
@@ -89,9 +89,8 @@ const Login = ({
 };
 
 const mapStateToProps = (state) => ({
-  email: state.app.usuario.email,
-  password: state.app.usuario.password,
-  admin: state.app.usuario.admin,
+  email: state.app.login.email,
+  password: state.app.login.password,
   isFetching: state.app.isFetching,
   showModal: state.app.showModal
 });

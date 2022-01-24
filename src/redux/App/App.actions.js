@@ -27,7 +27,7 @@ export const login = (email, password) => async (dispatch) => {
                     payload: { 
                         data: {
                             isLoggedIn: true,
-                            usuario
+                            usuario: usuario
                         }
                     }
                 });
@@ -85,20 +85,6 @@ export const cierraConfirm = () => {
             data: {
                 confirm: {
                     showConfirm: false
-                }
-            } 
-        }
-    }
-};
-
-export const cierraAlert = () => {
-    console.log('llega a cierra alert');
-    return {
-        type: AppTypes.ALERT,
-        payload: { 
-            data: {
-                alert: {
-                    showAlert: false
                 }
             } 
         }
@@ -273,23 +259,19 @@ export const confirm = (mensaje, titulo, tipo, callBack) => {
                 }
         }
     )
-}
+};
 
-export const alert = (mensaje, titulo, tipo) => {
-    console.log("llega a action alert");
-    return(
-        {
-            type: AppTypes.ALERT,
-                payload: { 
-                    data: {
-                        alert: {
-                            showAlert: true,
-                            mensajeAlert: mensaje,
-                            tituloAlert: titulo,
-                            tipoAlert: tipo
-                        }
-                    } 
-                }
+export const loadUsuToPresu = (usuario) => {
+    return({
+        type: AppTypes.LOAD_USU_TO_PRESU,
+        payload: {
+            data: {
+                usuario
+            }
         }
-    )
+    })
+};
+
+export const guardarPresupuesto = (presupuesto) => {
+
 }

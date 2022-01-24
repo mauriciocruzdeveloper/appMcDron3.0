@@ -14,25 +14,18 @@ const InicioRoutes = ({ match, isLoggedIn, admin }) => {
     console.log("inicio rutes")
 
     return (
-        <>
-        { isLoggedIn ?
+        isLoggedIn ?
         // true ? 
         <>
             <NavMcDron />
-
             <Switch>
                 <Route exact path={`${match.path}`} component = {Inicio} />
                 <Route exact path={`${match.path}/reparaciones`} component = {ListaReparaciones} />
                 <Route exact path={`${match.path}/presupuesto`} component = {Presupuesto} />
                 <Route exact path={`${match.path}/reparaciones/:id`} component = {Reparacion} />
-            </Switch> 
+            </Switch>
         </>
-        : 
-             <Redirect to="/login" />
-            
-        }
-        </>
-        
+        : <Redirect to="/login" />        
     )
 }
 
