@@ -4,6 +4,7 @@ import {
     getReparacionesPersistencia,
     getReparacionPersistencia,
     guardarReparacionPersistencia,
+    guardarUsuarioPersistencia,
     eliminarReparacionPersistencia
 } from "../../persistencia/persistenciaFirebase";
 // import { async } from "@firebase/util";
@@ -204,7 +205,7 @@ export const getReparacion = (id) => async (dispatch) => {
     });
 };
 
-export const guardarReparacion = (reparacion) => async (dispatch) => {
+export const guardarReparacion = async (reparacion) => async (dispatch) => {
     dispatch(isFetchingStart());
     return new Promise(async (resolve, reject) => {
         await guardarReparacionPersistencia(reparacion)
@@ -220,8 +221,24 @@ export const guardarReparacion = (reparacion) => async (dispatch) => {
     });   
 }
 
+export const guardarUsuario = (usuario) => async (dispatch) => {
+    dispatch(isFetchingStart());
+    return new Promise(async (resolve, reject) => {
+        await guardarUsuarioPersistencia(usuario)
+        .then(usuario => {
+            console.log("llega al then del guardarUsuarioPesistencia");
+            return resolve(usuario); 
+        })
+        .catch(error  => {
+            console.log("llega al catch del guardarReparacionPersistencia");
+            reject(error);
+        });
+        dispatch(isFetchingCoplete());
+    });   
+}
+
 export const eliminarReparacion = (reparacion) => async (dispatch) => {
-    dispatch( isFetchingStart());
+    dispatch(isFetchingStart());
     return new Promise(async (resolve, reject) => {
         await eliminarReparacionPersistencia(reparacion)
         .then( (reparacion) => {
@@ -272,6 +289,36 @@ export const loadUsuToPresu = (usuario) => {
     })
 };
 
-export const guardarPresupuesto = (presupuesto) => {
+export const guardarPresupuesto = (presupuesto) => async (dispatch) => {
 
+    dispatch(isFetchingStart());
+
+    let usuario = {};
+    usuario.data = {};
+    usuario.id = presupuesto.UsuarioPresu || '';
+    usuario.data.NombreUsu = presupuesto.NombrePresu || '';
+    usuario.data.ApellidoUsu = presupuesto.ApellidoPresu || '';
+    usuario.data.TelefonoUsu = presupuesto.TelefonoPresu || '';
+    usuario.data.ProvinciaUsu = presupuesto.ProvinciaPresu || '';
+    usuario.data.CiudadUsu = presupuesto.CiudadPresu || '';
+    let reparacion = {};
+    reparacion.data = {};
+    reparacion.data.UsuarioRep = presupuesto.UsuarioPresu || '';
+    reparacion.data.DroneRep = presupuesto.DronePresu || '';
+    reparacion.data.DescripcionUsuRep = presupuesto.DescripcionPresu || '';
+    reparacion.data.EstadoRep = "Consulta";
+    reparacion.data.PrioridadRep = "1";
+    reparacion.data.FeConRep = Date.now();
+    reparacion.id = Date.now().toString();
+
+    return new Promise(async (resolve, reject) => {
+        await guardarReparacionPersistencia(reparacion)
+        .then(() => {
+            guardarUsuarioPersistencia(usuario)
+            .then(resolve())
+            .catch(error  => reject(error))
+        })
+        .catch(error  => reject(error));
+        dispatch(isFetchingCoplete());
+    });
 }

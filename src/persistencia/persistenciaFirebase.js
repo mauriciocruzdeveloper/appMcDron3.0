@@ -158,6 +158,24 @@ export const guardarReparacionPersistencia = (reparacion) => {
     })
 };
 
+export const guardarUsuarioPersistencia = (usuario) => {
+    return new Promise((resolve, reject) => {
+        console.log("Llega a guardarUsuarioPersistencia");
+        setDoc(
+            doc(firestore, "USUARIOS", usuario.id), 
+            usuario.data
+        )
+        .then(() => {
+            console.log("actualizado usuario ok");
+            resolve(usuario);
+        })
+        .catch(error => {
+            console.log("Error: " + error);
+            reject(error);
+        });
+    })
+};
+
 export const eliminarReparacionPersistencia = (reparacion) => {
 
     return new Promise((resolve, reject) => {

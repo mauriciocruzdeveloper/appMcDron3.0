@@ -105,11 +105,7 @@ export default (state = INITIAL_STATE, action) => {
                 ...state, 
                 presupuesto: {
                     ...state.presupuesto,
-                    data: {
-                        ...state.presupuesto.data,
-                        [action.payload.input]: action.payload.data
-                    }
-                    
+                    [action.payload.input]: action.payload.data   
                 }
             };
 

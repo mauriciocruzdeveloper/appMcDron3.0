@@ -51,7 +51,7 @@ const ListaReparaciones = ({
           </p>
         </div>
       ))}
-    <Container>
+    {/* <Container>
       <Button
         className="bg-bluemcdron"
         styles={{
@@ -59,7 +59,7 @@ const ListaReparaciones = ({
         }}
         // onClick={() => history.push(`/inicio/cargapresupuesto`)} VER BIEN!!!
       >Add</Button>
-    </Container>
+    </Container> */}
     </div>
 
   );

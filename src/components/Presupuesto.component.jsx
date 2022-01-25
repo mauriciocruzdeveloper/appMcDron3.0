@@ -11,9 +11,7 @@ import {
 
 import { convertTimestampCORTO } from "../utils/utils";
 
-import { useParams } from "react-router-dom";
-
-import { estados } from '../datos/estados.json';
+import { useParams } from "react-router-dom"
 
 import history from "../history";
 
@@ -26,18 +24,23 @@ const Presupuesto = ({
     loadUsuToPresu
 }) => {
 
+
+    console.log("admin: " + usuario.data?.Admin);
+
     // ACÁ TENGO QUE CARGAR LOS DATOS DEL USUARIO QUE HACE EL PRESUPUESTO
     useEffect(async () => {
-        await loadUsuToPresu(usuario);
+        // Si el usuario es admin, deja todo en blanco para cargar cualquier usuario
+        // sino cargo los datos del usuario logueado.
+        usuario.data?.Admin ? null : await loadUsuToPresu(usuario);
     }, [loadUsuToPresu]);
 
 
 
 
     const handleGuardarPresupuesto = async () => {
-        await guardarPresupuesto(reparacion)
-        .then(reparacion => abreModal("Guardado con éxito", "Reparación: " + reparacion.id, "success" ))
-        .catch(error => abreModal("Error al guardar ", "Código - " + error.code, "danger" ));
+        await guardarPresupuesto(presupuesto)
+        .then(() => abreModal("Guardado con éxito", "", "success" ))
+        //.catch(error => abreModal("Error al guardar ", "Código - " + error.code, "danger" ));
     }
 
 
@@ -49,28 +52,24 @@ const Presupuesto = ({
                 height: "100vh",
               }}
         >
-            
-            {/* <div className="card mb-3">
-                <div className="card-body">
-                <h5 className="card-title bluemcdron">ENLACE A DRIVE</h5>
-                    <div>
-                        <label className="form-label">En lace a Drive</label>
 
-                        <div class="input-group">
-                            <input 
-                                onChange={e => changeInputPresu(e.target)} 
-                                type="text"
-                                className="form-control" 
-                                id="DriveRep"
-                                value={reparacion?.data?.DriveRep} 
-                            />
-                            <div class="input-group-append">
-                                <a href={reparacion?.data?.DriveRep}><button class="btn btn-outline-secondary bg-bluemcdron text-white" type="button">Ir</button></a>
-                            </div>
-                        </div>
-                    </div>
+            <div className="card mb-3 bg-bluemcdron">
+                <div className="card-body">
+                    <h3 className="card-title text-light p-0 m-0">
+                        PEDIDO DE PRESUPUESTO
+                    </h3>
+                    {/* <div>
+                        <label className="form-label">E-mail</label>
+                        <input 
+                            onChange={e => changeInputPresu(e.target)} 
+                            type="text" 
+                            className="form-control" 
+                            id="UsuarioPresu" 
+                            value={presupuesto?.UsuarioPresu || ""}
+                        />
+                    </div> */}
                 </div>
-            </div> */}
+            </div>
             <div className="card mb-3">
                 <div className="card-body">
                     <h5 className="card-title bluemcdron">USUARIO</h5>
