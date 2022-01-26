@@ -4,6 +4,7 @@ import TextareaAutosize from "react-textarea-autosize";
 import { 
     changeInputRep,
     getReparacion,
+    getCliente,
     setEstado,
     guardarReparacion,
     eliminarReparacion,
@@ -21,8 +22,10 @@ import history from "../history";
 
 const Reparacion = ({ 
     changeInputRep, 
-    getReparacion, 
-    reparacion, 
+    getReparacion,
+    getCliente, 
+    reparacion,
+    cliente,
     setEstado, 
     guardarReparacion,
     eliminarReparacion,
@@ -33,8 +36,9 @@ const Reparacion = ({
     const { id } = useParams();
 
     useEffect(async () => {
-        await getReparacion(id);
+        await getReparacion(id)
     }, [getReparacion]);
+    
 
     let estadosArray = Object.values(estados);
 
@@ -75,6 +79,22 @@ const Reparacion = ({
                 backgroundColor: estados[reparacion?.data?.EstadoRep]?.color
             }}
         >
+            <div 
+                className="card mb-3"
+                style={{
+                    backgroundColor: "#CCCCCC",
+
+                }}
+            >
+                <div className="card-body">
+                    <h3 className="card-title">
+                        REPARACIÓN
+                    </h3>
+                    <div>Drone: {reparacion?.data?.DroneRep}</div>
+                    <div>Cliente: {reparacion?.data?.NombreUsu} {reparacion?.data?.ApellidoUsu}</div>
+                </div>
+            </div>
+
             <div className="card mb-3">
                 <div className="card-body">
                 <h5 className="card-title bluemcdron">ESTADO DE LA REPARACIÓN</h5>
@@ -128,21 +148,51 @@ const Reparacion = ({
                     <div>
                         <label className="form-label">Fecha de Cosulta</label>
                         <input 
-                            onChange={e => changeInputRep(e.target)} 
                             type="date" 
                             className="form-control" 
                             id="FeConRep"
                             value={convertTimestampCORTO(reparacion?.data?.FeConRep)}
+                            disabled
                         />
                     </div>
                     <div>
-                        <label className="form-label">Cliente</label>
+                        <label className="form-label">Email Cliente</label>
                         <input 
-                            onChange={e => changeInputRep(e.target)} 
                             type="text" 
                             className="form-control" 
                             id="UsuarioRep" 
                             value={reparacion?.data?.UsuarioRep}
+                            disabled
+                        />
+                    </div>
+                    <div>
+                        <label className="form-label">Nombre Cliente</label>
+                        <input 
+                            type="text" 
+                            className="form-control" 
+                            id="NombreUsu" 
+                            value={reparacion?.data?.NombreUsu}
+                            disabled
+                        />
+                    </div>
+                    <div>
+                        <label className="form-label">Apellido Cliente</label>
+                        <input 
+                            type="text" 
+                            className="form-control" 
+                            id="ApellidoUsu" 
+                            value={reparacion?.data?.ApellidoUsu}
+                            disabled
+                        />
+                    </div>
+                    <div>
+                        <label className="form-label">Teléfono Cliente</label>
+                        <input 
+                            type="text" 
+                            className="form-control" 
+                            id="TelefonoUsu" 
+                            value={reparacion?.data?.TelefonoUsu}
+                            disabled
                         />
                     </div>
                     <div>
@@ -345,14 +395,16 @@ const Reparacion = ({
 
 const mapStateToProps = (state) => ({
     reparacion: state.app?.reparacion,
+    cliente: state.app?.cliente
   });
 
 
 export default connect(
     mapStateToProps, 
-    { 
+    {
         changeInputRep, 
-        getReparacion, 
+        getReparacion,
+        getCliente,
         setEstado, 
         guardarReparacion, 
         eliminarReparacion, 

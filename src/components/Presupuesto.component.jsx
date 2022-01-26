@@ -37,10 +37,17 @@ const Presupuesto = ({
 
 
 
-    const handleGuardarPresupuesto = async () => {
-        await guardarPresupuesto(presupuesto)
-        .then(() => abreModal("Guardado con éxito", "", "success" ))
-        //.catch(error => abreModal("Error al guardar ", "Código - " + error.code, "danger" ));
+    const handleGuardarPresupuesto = () => {
+        confirm(
+            "Guardar Reparación?",
+            "Atención",
+            "warning",
+            () => {
+                guardarPresupuesto(presupuesto)
+                .then(reparacion => abreModal("Presupuesto enviado!", "", "success" ))
+                .catch(error => abreModal("Error al guardar ", "Código - " + error.code, "danger" ));
+            }
+        );
     }
 
 
@@ -58,16 +65,6 @@ const Presupuesto = ({
                     <h3 className="card-title text-light p-0 m-0">
                         PEDIDO DE PRESUPUESTO
                     </h3>
-                    {/* <div>
-                        <label className="form-label">E-mail</label>
-                        <input 
-                            onChange={e => changeInputPresu(e.target)} 
-                            type="text" 
-                            className="form-control" 
-                            id="UsuarioPresu" 
-                            value={presupuesto?.UsuarioPresu || ""}
-                        />
-                    </div> */}
                 </div>
             </div>
             <div className="card mb-3">

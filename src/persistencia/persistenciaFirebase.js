@@ -21,6 +21,7 @@ import {
 
 // import { config as firebaseConfig }  from '../configProd'; // Para producción
 import { config as firebaseConfig }  from '../configDev'; // Para desarrollo
+import { getCliente } from "../redux/root-actions";
 
 // Initialize Firebase
 const firebaseApp = initializeApp(firebaseConfig);
@@ -60,31 +61,9 @@ export const loginPersistencia = (emailParametro, passwordParametro) => {
                     console.log('Entra al then get');
                     if(doc.exists){
                         console.log('Entra al doc.exists');
-                        // ESTO DE ABAJO HAY QUE REVISAR. EN LUGAR DE PASAR PARÁMETRO POR PARÁMETRO Y USAR
-                        // NOMBRES DISTINTOS, SE PODRÍA PASAR EL OBJETO ENTERO, Y LUEGO MAPEAR LOS PARÁMETROS
-                        // EN EL REDUCER. EN EL STORE ESTARÍA EL OBJETO CON LOS PARÁMETROS TAL CUAL LOS PASA
-                        // LA BASE DE DATOS.
-                        // const {Nick, UrlFotoUsu, NombreUsu, ApellidoUsu, CiudadUsu, DomicilioUsu, ProvinciaUsu, TelefonoUsu, Admin} = doc.data();
-
-                        // let usuario = {
-                        //     nombre: NombreUsu, 
-                        //     apellido: ApellidoUsu, 
-                        //     email: emailParametro, 
-                        //     nick: Nick, 
-                        //     urlFoto: UrlFotoUsu, 
-                        //     password: passwordParametro, 
-                        //     admin: Admin, 
-                        //     ciudad: CiudadUsu, 
-                        //     domicilio: DomicilioUsu,  
-                        //     provincia: ProvinciaUsu, 
-                        //     telefono: TelefonoUsu
-                        // };
                         let usuario = {};
                         usuario.id = doc.id;
                         usuario.data = doc.data();
-
-                        console.log("OBTUVO EL USUARIO: " + JSON.stringify(usuario));
-
                         return resolve(usuario);
                     }
                 })
@@ -123,8 +102,34 @@ export const getReparacionesPersistencia = () => {
 
 export const getReparacionPersistencia = (id) => {
     return new Promise((resolve, reject) => {
-
         const docRef = doc(firestore, 'REPARACIONES', id);
+        getDoc(docRef)
+        .then(docSnap => {
+            const idCliente = docSnap.data().UsuarioRep;
+            const docRefCliente = doc(firestore, 'USUARIOS', idCliente);
+            getDoc(docRefCliente)
+            .then(docSnapCliente => {
+                console.log("docSnapCliente.data(): " + JSON.stringify(docSnapCliente.data()));
+                resolve({
+                    id: id, 
+                    data: {
+                        ...docSnap.data(),
+                        NombreUsu: docSnapCliente.data().NombreUsu,
+                        ApellidoUsu: docSnapCliente.data().ApellidoUsu,
+                        TelefonoUsu: docSnapCliente.data().TelefonoUsu
+                    }
+
+                })
+            })
+        })
+        .catch(error => reject(error))
+    });
+};
+
+export const getClientePersistencia = (id) => {
+    console.log("id cliente: " + id);
+    return new Promise((resolve, reject) => {
+        const docRef = doc(firestore, 'USUARIOS', id);
         getDoc(docRef)
         .then(docSnap => {
             resolve({id: id, data: docSnap.data()}) // Este objeto es una reparación.

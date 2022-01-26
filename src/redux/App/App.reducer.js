@@ -1,60 +1,34 @@
 import { AppTypes } from "./App.types";
 
 const INITIAL_STATE = {
-    isLoggedIn: false,
-    isFetching: false,
-    // si quiero que aparezca un modal, hago un action con los parámetos del modal
-    // y showModal: true, lo mismo con el confirm
-    modal: {
+    isLoggedIn: false, // Para indicar si hay alguien logueado
+    isFetching: false, // Para indicar si está leyendo en la nube
+    modal: { // Los parámetros para el modal tipo alert
         showModal: false,
         mensajeModal: '',
         tituloModal: '',
         tipoModal: ''
     },
-    confirm: {
+    confirm: { // Los parámetros para el modal confirm
         showConfirm: false,
         mensajeConfirm: '',
         tituloConfirm: '',
         tipoConfirm: '',
         callBakcConfirm: null
     },
-    login: {
+    login: { // Son los datos de usuario y contraseña
         email: '',
         password: ''
     },
-    // usuario:{
-    //     nombre: '',
-    //     apellido: '',
-    //     email: '',
-    //     nick: '',
-    //     urlFoto: '',
-    //     password: '',
-    //     admin: false
-    //     //token: ''
-    // },
-    // reparacion:{
-    //     drone: '',
-    //     nroSerieDrone: '',
-    //     descripcionTec: '',
-    //     descripcionUsu: '',
-    //     presupuestoMO: '',
-    //     presupuestoRepuestos: '',
-    //     presupuestoFinal: '',
-    //     presupuestoDiagnostico: '',
-    //     estado: '',
-    //     fechaConsulta: '',
-    //     fechaRecepcion: '',
-    //     fechaEntrega: '',
-    //     fechaFinalizacion: '',
-    //     prioridad: '',
-    //     repuestos: '',
-    //     entrega: '',
-    //     seguimientoEntrega: '',
-    //     drive: '',
-    //     informe: ''
-    // },
-    coleccionReparaciones: []
+    usuario: {}, // Es el usuario logueado
+    // Le voy a llamar usuario al usuario logueado, 
+    // y cliente al usuario/cliente en general
+    reparacion: {}, // La reparación que se muestra
+    cliente: {}, // Es el cliente que se muestra
+    coleccionReparaciones: [] // Todas las reparaciones
 }
+
+// Todas las estructuras tiene un id del documento y un data del documento.
 
 // Reducer para el App
 export default (state = INITIAL_STATE, action) => {
@@ -64,7 +38,6 @@ export default (state = INITIAL_STATE, action) => {
                 ...state, 
                 coleccionReparaciones: action.payload.data
             };
-
         case AppTypes.GET_REPARACION:
             return { 
                 ...state, 
@@ -73,7 +46,14 @@ export default (state = INITIAL_STATE, action) => {
                     data: action.payload.data
                 }
             };
-
+        case AppTypes.GET_CLIENTE:
+            return { 
+                ...state, 
+                cliente: {
+                    id: action.payload.id,
+                    data: action.payload.data
+                }
+            };
         case AppTypes.SET_ESTADO:
             return { 
                 ...state, 
@@ -86,7 +66,6 @@ export default (state = INITIAL_STATE, action) => {
                     }
                 }
             };
-
         case AppTypes.CHANGE_INPUT_REP:
             return { 
                 ...state, 
@@ -99,7 +78,6 @@ export default (state = INITIAL_STATE, action) => {
                     
                 }
              };
-
         case AppTypes.CHANGE_INPUT_PRESU:
             return { 
                 ...state, 
@@ -108,19 +86,16 @@ export default (state = INITIAL_STATE, action) => {
                     [action.payload.input]: action.payload.data   
                 }
             };
-
         case AppTypes.ISFETCHING_START:
             return { 
                 ...state, 
                 isFetching: true
             };
-
         case AppTypes.ISFETCHING_COMPLETE:
             return { 
                 ...state, 
                 isFetching: false 
             };
-
         // HAY QUE ESTABLECER EL ESTÁNDAR DE USUARIO COMO ESTÁ EN LA BASE DE DATOS
         // DE FIRESTORE COMO EL ESTÁNDAR DEL FRONTEND. LAS OTRAS DB TENDRÁN QUE USAR
         // ESOS NOMBRES, O SINO LA PERSISTENCIA TENDRÁ QUE CAMBIAR LOS NOSMBRES PARA

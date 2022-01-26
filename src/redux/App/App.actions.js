@@ -3,6 +3,7 @@ import {
     loginPersistencia, 
     getReparacionesPersistencia,
     getReparacionPersistencia,
+    getClientePersistencia,
     guardarReparacionPersistencia,
     guardarUsuarioPersistencia,
     eliminarReparacionPersistencia
@@ -205,7 +206,32 @@ export const getReparacion = (id) => async (dispatch) => {
     });
 };
 
-export const guardarReparacion = async (reparacion) => async (dispatch) => {
+export const getCliente = (id) => async (dispatch) => {
+    console.log("id cliente action: " + id);
+    dispatch( isFetchingStart());
+    return new Promise(async (resolve, reject) => {
+        await getClientePersistencia(id)
+        .then( cliente => {
+            console.log("llega al then del getClientePersistencia");
+            dispatch({ 
+                type: AppTypes.GET_CLIENTE, 
+                payload: {
+                    id: id,
+                    data: cliente.data
+                }
+            });
+            // No hace falta devolver el usuario, pero lo hago por si sirve en otra ocación.
+            return resolve(cliente); 
+        })
+        .catch(error  => {
+            console.log("llega al catch del getClientePersistencia");
+            reject(error);
+        });
+        dispatch(isFetchingCoplete());
+    });
+};
+
+export const guardarReparacion = (reparacion) => async (dispatch) => {
     dispatch(isFetchingStart());
     return new Promise(async (resolve, reject) => {
         await guardarReparacionPersistencia(reparacion)
