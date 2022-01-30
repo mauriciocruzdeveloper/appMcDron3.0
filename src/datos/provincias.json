@@ -1,0 +1,74 @@
+{ "provincias": [
+  {
+    "provincia": "Capital Federal"
+  },
+  {
+    "provincia": "Buenos Aires"
+  },
+  {
+    "provincia": "Entre Ríos"
+  },
+  {
+    "provincia": "Santa Fe"
+  },
+  {
+    "provincia": "Córdoba"
+  },
+  {
+    "provincia": "Santiago Del Estero"
+  },
+  {
+    "provincia": "Catamarca"
+  },
+  {
+    "provincia": "Corrientes"
+  },
+  {
+    "provincia": "Misiones"
+  },
+  {
+    "provincia": "Chaco"
+  },
+  {
+    "provincia": "Formosa"
+  },
+  {
+    "provincia": "La Rioja"
+  },
+  {
+    "provincia": "Salta"
+  },
+  {
+    "provincia": "Tucumán"
+  },
+  {
+    "provincia": "Jujuy"
+  },
+  {
+    "provincia": "San Luis"
+  },
+  {
+    "provincia": "San Juan"
+  },
+  {
+    "provincia": "Mendoza"
+  },
+  {
+    "provincia": "La Pampa"
+  },
+  {
+    "provincia": "Río Negro"
+  },
+  {
+    "provincia": "Chubut"
+  },
+  {
+    "provincia": "Neuquén"
+  },
+  {
+    "provincia": "Tierra Del Fuego"
+  },
+  {
+    "provincia": "Santa Cruz"
+  }
+]}

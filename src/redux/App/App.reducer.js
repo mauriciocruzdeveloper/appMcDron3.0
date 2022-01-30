@@ -1,3 +1,4 @@
+import { applyActionCode } from "firebase/auth";
 import { AppTypes } from "./App.types";
 
 const INITIAL_STATE = {
@@ -25,7 +26,8 @@ const INITIAL_STATE = {
     // y cliente al usuario/cliente en general
     reparacion: {}, // La reparación que se muestra
     cliente: {}, // Es el cliente que se muestra
-    coleccionReparaciones: [] // Todas las reparaciones
+    coleccionReparaciones: [], // Todas las reparaciones
+    //provincias: [] // Las provincias usadas en los select
 }
 
 // Todas las estructuras tiene un id del documento y un data del documento.
@@ -163,6 +165,16 @@ export default (state = INITIAL_STATE, action) => {
                     CiudadPresu: action.payload.data.usuario.data?.CiudadUsu,
                     ProvinciaPresu: action.payload.data.usuario.data?.ProvinciaUsu
                 }
+            }
+        case AppTypes.GET_PROVINCIAS:
+            return {
+                ...state,
+                provincias: action.payload.data
+            }
+        case AppTypes.GET_LOCALIDADES:
+            return {
+                ...state,
+                localidades: action.payload.data
             }
         default:
             return state;

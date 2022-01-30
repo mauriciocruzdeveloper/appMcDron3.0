@@ -1,19 +1,19 @@
 import { useEffect } from "react";
 import { connect } from "react-redux";
 import TextareaAutosize from "react-textarea-autosize";
+import Select from 'react-select';
 import { 
     changeInputPresu,
     setEstado,
     guardarPresupuesto,
     abreModal,
-    loadUsuToPresu
+    confirm,
+    loadUsuToPresu,
+    getProvinciasSelect,
+    getLocalidadesPorProvincia
   } from "../redux/root-actions";
 
-import { convertTimestampCORTO } from "../utils/utils";
-
-import { useParams } from "react-router-dom"
-
-import history from "../history";
+// import { provincias } from '../datos/provincias.json'; 
 
 const Presupuesto = ({ 
     changeInputPresu, 
@@ -21,21 +21,26 @@ const Presupuesto = ({
     usuario,
     guardarPresupuesto,
     abreModal,
-    loadUsuToPresu
+    confirm,
+    loadUsuToPresu,
+    getProvinciasSelect,
+    getLocalidadesPorProvincia,
+    localidades,
+    provincias
 }) => {
 
+    console.log("PRESUPUESTO");
 
-    console.log("admin: " + usuario.data?.Admin);
+    console.log("provincias: " + JSON.stringify(provincias));
+    console.log("localidades: " + JSON.stringify(localidades));
 
     // ACÁ TENGO QUE CARGAR LOS DATOS DEL USUARIO QUE HACE EL PRESUPUESTO
     useEffect(async () => {
         // Si el usuario es admin, deja todo en blanco para cargar cualquier usuario
         // sino cargo los datos del usuario logueado.
         usuario.data?.Admin ? null : await loadUsuToPresu(usuario);
+        await getProvinciasSelect();
     }, [loadUsuToPresu]);
-
-
-
 
     const handleGuardarPresupuesto = () => {
         confirm(
@@ -49,6 +54,44 @@ const Presupuesto = ({
             }
         );
     }
+
+    // const handleOnFocusSelect = async () =>{
+    //     console.log("handleOnFocusSelect");
+    //     !!!provincias ? await getProvinciasSelect() : null;
+    // }
+
+    // console.log("provincias ANTES: " + JSON.stringify(provincias));
+
+    // const provinciasSelect = provincias.map(provincia => {
+    //     return {
+    //         value: provincia.provincia,
+    //         label: provincia.provincia
+    //     }
+    // });
+
+    // console.log("provincias DESPUÉS: " + JSON.stringify(provinciasSelect));
+
+    // console.log("localidades ANTES: " + JSON.stringify(localidades));    
+
+    // let localidadesSelect = [];
+
+    const handleOnChangeProvincias = (e) => {
+        console.log("e.target.value: " + JSON.stringify(e));
+        getLocalidadesPorProvincia(e.value);
+        // localidadesSelect = localidades.filter(localidad => (
+        //     localidad.provincia.nombre == e.value
+        // ))
+        // .map(localidad => {
+        //     return {
+        //         value: localidad.nombre,
+        //         label: localidad.nombre
+        //     }
+        // });
+    }
+
+    // console.log("localidades DESPUÉS: " + JSON.stringify(localidadesSelect));
+
+  
 
 
     return(
@@ -112,23 +155,39 @@ const Presupuesto = ({
                     </div>
                     <div>
                         <label className="form-label">Provincia</label>
-                        <input 
+                        <Select 
+                            // onFocus={handleOnFocusSelect}
+                            options={provincias}
+                            onChange={e => handleOnChangeProvincias(e)}
+                            id="ProvinciaPresu"
+                            // value={presupuesto?.ProvinciaPresu || ""}
+                        />
+                        
+                        {/* <input 
                             onChange={e => changeInputPresu(e.target)} 
                             type="text" 
                             className="form-control" 
                             id="ProvinciaPresu"
                             value={presupuesto?.ProvinciaPresu || ""}
-                        />
+                        /> */}
                     </div>
                     <div>
                         <label className="form-label">Ciudad</label>
-                        <input 
+
+                        <Select 
+                            // onFocus={handleOnFocusSelect}
+                            options={localidades}
+                            // onChange={e => handleOnSelect(e)}
+                            id="CiudadPresu"
+                            // value={presupuesto?.CiudadPresu || ""}
+                        />
+                        {/* <input 
                             onChange={e => changeInputPresu(e.target)} 
                             type="text" 
                             className="form-control" 
                             id="CiudadPresu"
                             value={presupuesto?.CiudadPresu || ""}
-                        />
+                        /> */}
                     </div>
                 </div>
             </div>
@@ -178,6 +237,8 @@ const Presupuesto = ({
 const mapStateToProps = (state) => ({
     presupuesto: state.app?.presupuesto,
     usuario: state.app?.usuario,
+    localidades: state.app?.localidades,
+    provincias: state.app?.provincias
   });
 
 
@@ -188,5 +249,8 @@ export default connect(
         setEstado, 
         guardarPresupuesto, 
         abreModal,
-        loadUsuToPresu
+        loadUsuToPresu,
+        confirm,
+        getProvinciasSelect,
+        getLocalidadesPorProvincia
     })(Presupuesto);

@@ -42,7 +42,7 @@ const ListaReparaciones = ({
           <div className="d-flex w-100 justify-content-between">
             <h5 className="mb-1">{reparacion.data.DroneRep}</h5>
           </div>
-          <small>{reparacion.data.UsuarioRep}</small>
+          <small>{reparacion.data?.NombreUsu || reparacion.data?.UsuarioRep}</small>
           <p 
             className="mb-1" 
             style={{backgroundColor: estados[reparacion.data.EstadoRep].color}}

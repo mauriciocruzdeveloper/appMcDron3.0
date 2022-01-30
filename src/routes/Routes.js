@@ -18,6 +18,8 @@ import { login, logout } from "../redux/root-actions";
 
 const Routes = ({ isLoggedIn, admin, isFetching }) => {
 
+    console.log("ROUTES");
+
     return (<>
         <Switch>
             <Route exact path="/" render={() => <Redirect to="/inicio" />}/>

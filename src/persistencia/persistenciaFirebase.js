@@ -1,9 +1,12 @@
 import { initializeApp } from "firebase/app";
 
+import axios from 'axios';
+
 import { 
     getAuth, 
     signInWithEmailAndPassword 
 } from "firebase/auth"
+
 import { 
     collection, 
     doc, 
@@ -21,7 +24,10 @@ import {
 
 // import { config as firebaseConfig }  from '../configProd'; // Para producción
 import { config as firebaseConfig }  from '../configDev'; // Para desarrollo
-import { getCliente } from "../redux/root-actions";
+
+import { provincias } from '../datos/provincias.json';
+
+import { localidades } from '../datos/localidades.json';
 
 // Initialize Firebase
 const firebaseApp = initializeApp(firebaseConfig);
@@ -182,9 +188,7 @@ export const guardarUsuarioPersistencia = (usuario) => {
 };
 
 export const eliminarReparacionPersistencia = (reparacion) => {
-
     return new Promise((resolve, reject) => {
-
         deleteDoc(doc(firestore, "REPARACIONES", reparacion.id))
         .then(() => {
             console.log("borrando reparación ok");
@@ -198,8 +202,54 @@ export const eliminarReparacionPersistencia = (reparacion) => {
     })
 };
 
+// Obtengo las provincias desde un archivo propio
+
+export const getProvinciasSelectPersistencia = () => {
+    console.log("getProvinciasSelectPersistencia");
+    return new Promise((resolve, reject) => {
+    //     // Acá meto en el header el token para que el backend me autorice la consulta
+    //     axios.get("../datos/provincias")
+    //     .then(provincias => {
+    //         return resolve(provincias.map(provincia => {
+    //             return {
+    //                 value: provincia.provincia,
+    //                 label: provincia.provincia
+    //             }
+    //         }))
+    //     }).
+    //     catch(error => reject(error));
+    // });
+    
+        resolve(provincias.map(provincia => {
+            return {
+                value: provincia.provincia,
+                label: provincia.provincia
+            }
+        }))
+    });
+}
+
+export const getLocPorProvPersistencia = (provincia) => {
+     console.log("getLocPorProvPersistencia");
+     return new Promise((resolve, reject) => {
+        resolve(
+            localidades.filter(localidad => (
+                localidad.provincia.nombre == provincia
+            ))
+            .map(localidad => {
+                return {
+                    value: localidad.nombre,
+                    label: localidad.nombre
+                }
+            })
+        );
+    })
+};
+
 // VER DONDE AGREGARLO PARA QUE ME ACTUALICE LAS REPARACIONES
+// En lista reparaciones, en el effect, poner esto, y en el unmount del effect
+// poner unsuscribeRep();
 // unsubscribeRep = colReparaciones.onSnapshot(function(snapshot){
 //     console.log("detecta cambio reparaciones");
 //     cargaListaRep()
-// });
+// })

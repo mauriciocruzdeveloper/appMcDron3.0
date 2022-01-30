@@ -17,7 +17,9 @@ import {
     eliminarReparacion,
     confirm,
     loadUsuToPresu,
-    guardarPresupuesto
+    guardarPresupuesto,
+    getProvinciasSelect,
+    getLocalidadesPorProvincia
     //getUsuario
 } from "./App/App.actions";
 
@@ -39,6 +41,8 @@ export {
     eliminarReparacion,
     confirm,
     loadUsuToPresu,
-    guardarPresupuesto
+    guardarPresupuesto,
+    getProvinciasSelect,
+    getLocalidadesPorProvincia
     //getUsuario
 }

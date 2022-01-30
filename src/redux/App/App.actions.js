@@ -6,7 +6,9 @@ import {
     getClientePersistencia,
     guardarReparacionPersistencia,
     guardarUsuarioPersistencia,
-    eliminarReparacionPersistencia
+    eliminarReparacionPersistencia,
+    getProvinciasSelectPersistencia,
+    getLocPorProvPersistencia
 } from "../../persistencia/persistenciaFirebase";
 // import { async } from "@firebase/util";
 
@@ -334,6 +336,9 @@ export const guardarPresupuesto = (presupuesto) => async (dispatch) => {
     reparacion.data.DescripcionUsuRep = presupuesto.DescripcionPresu || '';
     reparacion.data.EstadoRep = "Consulta";
     reparacion.data.PrioridadRep = "1";
+    reparacion.data.ApellidoUsu = presupuesto.ApellidoPresu,
+    reparacion.data.NombreUsu = presupuesto.NombrePresu,
+    reparacion.data.TelefonoUsu = presupuesto.TelefonoPresu
     reparacion.data.FeConRep = Date.now();
     reparacion.id = Date.now().toString();
 
@@ -347,4 +352,55 @@ export const guardarPresupuesto = (presupuesto) => async (dispatch) => {
         .catch(error  => reject(error));
         dispatch(isFetchingCoplete());
     });
+}
+
+export const getProvinciasSelect = () => async (dispatch) => {
+    console.log("getProvinciasSelect");
+    dispatch(isFetchingStart());
+    return new Promise(async (resolve, reject) => {
+        await getProvinciasSelectPersistencia()
+        .then(provincias => {
+            dispatch({
+                type: AppTypes.GET_PROVINCIAS,
+                payload: {
+                    data: 
+                        provincias
+                    
+                }
+            });
+            resolve(provincias);
+        })
+        .catch(error  => reject(error));
+        dispatch(isFetchingCoplete());
+    });
+}
+
+export const getLocalidadesPorProvincia = (provincia) => async (dispatch) => {
+    console.log("getLocalidadesPorProvincia");
+    dispatch(isFetchingStart());
+    return new Promise(async (resolve, reject) => {
+        await getLocPorProvPersistencia(provincia)
+        .then(localidades => {
+            dispatch({
+                type: AppTypes.GET_LOCALIDADES,
+                payload: {
+                    data: 
+                        localidades
+                    
+                }
+            });
+            resolve(localidades);
+        })
+        .catch(error  => reject(error));
+        dispatch(isFetchingCoplete());
+    });
+    // localidadesSelect = localidades.filter(localidad => (
+        //     localidad.provincia.nombre == e.value
+        // ))
+        // .map(localidad => {
+        //     return {
+        //         value: localidad.nombre,
+        //         label: localidad.nombre
+        //     }
+        // });
 }

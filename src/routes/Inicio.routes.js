@@ -9,9 +9,9 @@ import Presupuesto from "../components/Presupuesto.component";
 import NavMcDron from "../components/NavMcDron.component";
 
 
-const InicioRoutes = ({ match, isLoggedIn, admin }) => {
+const InicioRoutes = ({ match, isLoggedIn }) => {
 
-    console.log("inicio rutes")
+    console.log("INICIO ROUTES")
 
     return (
         isLoggedIn ?
