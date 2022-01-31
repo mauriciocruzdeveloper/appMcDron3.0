@@ -384,9 +384,10 @@ export const getLocalidadesPorProvincia = (provincia) => async (dispatch) => {
             dispatch({
                 type: AppTypes.GET_LOCALIDADES,
                 payload: {
-                    data: 
-                        localidades
-                    
+                    data: {
+                        localidades: localidades,
+                        provincia: provincia
+                    }
                 }
             });
             resolve(localidades);
@@ -404,3 +405,9 @@ export const getLocalidadesPorProvincia = (provincia) => async (dispatch) => {
         //     }
         // });
 }
+
+
+export const setLocalidad = (localidad) => ({
+    type: AppTypes.SET_LOCALIDAD,
+    payload: {data: localidad}
+})

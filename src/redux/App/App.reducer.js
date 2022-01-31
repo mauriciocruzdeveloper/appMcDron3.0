@@ -174,7 +174,19 @@ export default (state = INITIAL_STATE, action) => {
         case AppTypes.GET_LOCALIDADES:
             return {
                 ...state,
-                localidades: action.payload.data
+                presupuesto: {
+                    ...state.presupuesto,
+                    ProvinciaPresu: action.payload.data.provincia
+                },
+                localidades: action.payload.data.localidades
+            }
+        case AppTypes.SET_LOCALIDAD:
+            return {
+                ...state,
+                presupuesto: {
+                    ...state.presupuesto,
+                    CiudadPresu: action.payload.data
+                },
             }
         default:
             return state;

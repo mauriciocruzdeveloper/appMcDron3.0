@@ -65,7 +65,7 @@ const Reparacion = ({
                 eliminarReparacion(reparacion)
                 .then(reparacion => {
                         abreModal("Reparación eliminada con éxito", "Reparación: " + reparacion.id, "success" );
-                        history.push(`/inicio/reparaciones`);
+                        history.goBack();
                 })
                 .catch(error => abreModal("Error al guardar ", "Código - " + error.code, "danger" ))
             }

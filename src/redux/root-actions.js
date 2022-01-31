@@ -19,7 +19,8 @@ import {
     loadUsuToPresu,
     guardarPresupuesto,
     getProvinciasSelect,
-    getLocalidadesPorProvincia
+    getLocalidadesPorProvincia,
+    setLocalidad
     //getUsuario
 } from "./App/App.actions";
 
@@ -43,6 +44,7 @@ export {
     loadUsuToPresu,
     guardarPresupuesto,
     getProvinciasSelect,
-    getLocalidadesPorProvincia
+    getLocalidadesPorProvincia,
+    setLocalidad
     //getUsuario
 }

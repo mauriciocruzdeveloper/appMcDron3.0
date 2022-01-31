@@ -10,7 +10,8 @@ import {
     confirm,
     loadUsuToPresu,
     getProvinciasSelect,
-    getLocalidadesPorProvincia
+    getLocalidadesPorProvincia,
+    setLocalidad
   } from "../redux/root-actions";
 
 // import { provincias } from '../datos/provincias.json'; 
@@ -26,7 +27,8 @@ const Presupuesto = ({
     getProvinciasSelect,
     getLocalidadesPorProvincia,
     localidades,
-    provincias
+    provincias,
+    setLocalidad
 }) => {
 
     console.log("PRESUPUESTO");
@@ -49,16 +51,14 @@ const Presupuesto = ({
             "warning",
             () => {
                 guardarPresupuesto(presupuesto)
-                .then(reparacion => abreModal("Presupuesto enviado!", "", "success" ))
+                .then(reparacion => {
+                    abreModal("Presupuesto enviado!", "", "success" );
+                    history.goBack();
+                })
                 .catch(error => abreModal("Error al guardar ", "Código - " + error.code, "danger" ));
             }
         );
     }
-
-    // const handleOnFocusSelect = async () =>{
-    //     console.log("handleOnFocusSelect");
-    //     !!!provincias ? await getProvinciasSelect() : null;
-    // }
 
     // console.log("provincias ANTES: " + JSON.stringify(provincias));
 
@@ -68,16 +68,13 @@ const Presupuesto = ({
     //         label: provincia.provincia
     //     }
     // });
-
-    // console.log("provincias DESPUÉS: " + JSON.stringify(provinciasSelect));
-
-    // console.log("localidades ANTES: " + JSON.stringify(localidades));    
+   
 
     // let localidadesSelect = [];
 
-    const handleOnChangeProvincias = (e) => {
+    const handleOnChangeProvincias = async (e) => {
         console.log("e.target.value: " + JSON.stringify(e));
-        getLocalidadesPorProvincia(e.value);
+        await getLocalidadesPorProvincia(e.value);
         // localidadesSelect = localidades.filter(localidad => (
         //     localidad.provincia.nombre == e.value
         // ))
@@ -89,9 +86,10 @@ const Presupuesto = ({
         // });
     }
 
-    // console.log("localidades DESPUÉS: " + JSON.stringify(localidadesSelect));
-
-  
+    const handleOnChangeLocalidades = async (e) => {
+        setLocalidad(e.value);
+    }
+ 
 
 
     return(
@@ -99,7 +97,7 @@ const Presupuesto = ({
             className="p-4"
             style={{
                 backgroundColor: "#EEEEEE",
-                height: "100vh",
+
               }}
         >
 
@@ -177,7 +175,7 @@ const Presupuesto = ({
                         <Select 
                             // onFocus={handleOnFocusSelect}
                             options={localidades}
-                            // onChange={e => handleOnSelect(e)}
+                            onChange={e => handleOnChangeLocalidades(e)}
                             id="CiudadPresu"
                             // value={presupuesto?.CiudadPresu || ""}
                         />
@@ -252,5 +250,6 @@ export default connect(
         loadUsuToPresu,
         confirm,
         getProvinciasSelect,
-        getLocalidadesPorProvincia
+        getLocalidadesPorProvincia,
+        setLocalidad
     })(Presupuesto);
