@@ -33,6 +33,8 @@ const Reparacion = ({
     confirm
 }) => {
 
+    console.log("REPARACION");
+
     const { id } = useParams();
 
     useEffect(async () => {
@@ -61,7 +63,7 @@ const Reparacion = ({
             "Atención",
             "danger",
             () => {
-                console.log("llega al callBakc de confirm") ;
+                console.log("llega al callBacK de confirm") ;
                 eliminarReparacion(reparacion)
                 .then(reparacion => {
                         abreModal("Reparación eliminada con éxito", "Reparación: " + reparacion.id, "success" );

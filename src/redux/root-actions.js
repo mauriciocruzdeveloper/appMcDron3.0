@@ -9,6 +9,7 @@ import {
     cierraConfirm,
     changeInputRep,
     changeInputPresu,
+    changeInputUsu,
     getReparaciones,
     getReparacion,
     getCliente,
@@ -20,12 +21,18 @@ import {
     guardarPresupuesto,
     getProvinciasSelect,
     getLocalidadesPorProvincia,
-    setLocalidad
+    setLocalidadPresu,
+    setProvinciaPresu,
+    setLocalidadCliente,
+    setProvinciaCliente,
+    getUsuarios,
+    guardarUsuario,
+    eliminarUsuario
     //getUsuario
 } from "./App/App.actions";
 
 export { 
-    login, 
+    login,
     logout, 
     emailOnChangeLogin,
     passwordOnChangeLogin,
@@ -34,6 +41,7 @@ export {
     cierraConfirm,
     changeInputRep,
     changeInputPresu,
+    changeInputUsu,
     getReparaciones,
     getReparacion,
     getCliente,
@@ -45,6 +53,12 @@ export {
     guardarPresupuesto,
     getProvinciasSelect,
     getLocalidadesPorProvincia,
-    setLocalidad
+    setLocalidadPresu,
+    setProvinciaPresu,
+    setLocalidadCliente,
+    setProvinciaCliente,
+    getUsuarios,
+    guardarUsuario,
+    eliminarUsuario
     //getUsuario
 }

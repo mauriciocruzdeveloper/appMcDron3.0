@@ -36,6 +36,14 @@ const Inicio = ({ logout, admin, match }) => {
               <div className="text-white text-center">PRESUPUESTO</div>
             </button>
 
+            <button 
+              className="mb-3 btn w-100 bg-bluemcdron"
+              style={{height: "100px"}}
+              onClick={() => history.push(`${match.path}/usuarios`)}
+            >      
+              <div className="text-white text-center">USUARIOS</div>
+            </button>
+
         </div>
     )
 };

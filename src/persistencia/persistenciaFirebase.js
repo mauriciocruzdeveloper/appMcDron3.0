@@ -4,7 +4,8 @@ import axios from 'axios';
 
 import { 
     getAuth, 
-    signInWithEmailAndPassword 
+    signInWithEmailAndPassword,
+    sendEmailVerification
 } from "firebase/auth"
 
 import { 
@@ -73,20 +74,17 @@ export const loginPersistencia = (emailParametro, passwordParametro) => {
                         return resolve(usuario);
                     }
                 })
-                .catch(error => {
-                    console.log('Entra al catch get');
-                    reject(error);
-                });
+                .catch(error => reject(error));
                 return resolve(); // ESTA LÍNEA PUEDE ESTAR MAL
             }else{
-                console.log('Email is not verified');
-                app.dialog.alert("Falta verificar el email. Compruebe su casilla de correos","Atención");
-                userAuth.sendEmailVerification();
+                console.log('Email no verificado');
+                await sendEmailVerification(userAuth)
+                .then(reject({code: "Email no verificado. Se envió email de verificación a su casilla de correos"}))
+                .catch(error => reject(error));
             }
         })
         .catch(error => {
-            console.log(error.code);
-            reject(error);
+            reject(error = {...error, code: "problema en el logueo"});
         });
     });
 
@@ -101,6 +99,20 @@ export const getReparacionesPersistencia = () => {
             let reparaciones = [];
             querySnapshot.forEach(doc => reparaciones.push({id: doc.id, data: doc.data()}))
             resolve(reparaciones)
+        })
+        .catch(error => reject(error))
+    });
+};
+
+export const getUsuariosPersistencia = () => {
+    return new Promise((resolve, reject) => {
+        const usuariosRef = collection(firestore, 'USUARIOS');
+        const q = query(usuariosRef, orderBy("NombreUsu"));
+        getDocs(q)
+        .then(querySnapshot => {
+            let usuarios = [];
+            querySnapshot.forEach(doc => usuarios.push({id: doc.id, data: doc.data()}))
+            resolve(usuarios)
         })
         .catch(error => reject(error))
     });
@@ -192,6 +204,21 @@ export const eliminarReparacionPersistencia = (reparacion) => {
         .then(() => {
             console.log("borrando reparación ok");
             resolve(reparacion);
+        })
+        .catch(error => {
+            console.log("Error: " + error);
+            reject(error);
+        });
+
+    })
+};
+
+export const eliminarUsuarioPersistencia = (usuario) => {
+    return new Promise((resolve, reject) => {
+        deleteDoc(doc(firestore, "USUARIOS", usuario.id))
+        .then(() => {
+            console.log("borrando usuario ok");
+            resolve(usuario);
         })
         .catch(error => {
             console.log("Error: " + error);

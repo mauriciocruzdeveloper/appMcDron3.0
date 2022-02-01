@@ -27,6 +27,7 @@ const INITIAL_STATE = {
     reparacion: {}, // La reparación que se muestra
     cliente: {}, // Es el cliente que se muestra
     coleccionReparaciones: [], // Todas las reparaciones
+    coleccionUsuarios: [], // Todos los usuarios
     //provincias: [] // Las provincias usadas en los select
 }
 
@@ -39,6 +40,11 @@ export default (state = INITIAL_STATE, action) => {
             return { 
                 ...state, 
                 coleccionReparaciones: action.payload.data
+            };
+        case AppTypes.GET_USUARIOS:
+            return { 
+                ...state, 
+                coleccionUsuarios: action.payload.data
             };
         case AppTypes.GET_REPARACION:
             return { 
@@ -174,18 +180,45 @@ export default (state = INITIAL_STATE, action) => {
         case AppTypes.GET_LOCALIDADES:
             return {
                 ...state,
-                presupuesto: {
-                    ...state.presupuesto,
-                    ProvinciaPresu: action.payload.data.provincia
-                },
                 localidades: action.payload.data.localidades
             }
-        case AppTypes.SET_LOCALIDAD:
+        case AppTypes.SET_LOCALIDAD_PRESU:
             return {
                 ...state,
                 presupuesto: {
                     ...state.presupuesto,
                     CiudadPresu: action.payload.data
+                },
+            }
+        case AppTypes.SET_PROVINCIA_PRESU:
+            return {
+                ...state,
+                presupuesto: {
+                    ...state.presupuesto,
+                    ProvinciaPresu: action.payload.data
+                },
+            }
+        case AppTypes.SET_LOCALIDAD_CLIENTE:
+            return {
+                ...state,
+                cliente: {
+                    ...state.cliente,
+                    data: {
+                        ...state.cliente.data,
+                        CiudadUsu: action.payload.data
+                    }
+                },
+            }
+        case AppTypes.SET_PROVINCIA_CLIENTE:
+            return {
+                ...state,
+                cliente: {
+                    ...state.cliente,
+                    data: {
+                        ...state.cliente.data,
+                        ProvinciaUsu: action.payload.data
+                    }
+                    
                 },
             }
         default:

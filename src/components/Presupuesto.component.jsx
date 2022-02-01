@@ -11,7 +11,8 @@ import {
     loadUsuToPresu,
     getProvinciasSelect,
     getLocalidadesPorProvincia,
-    setLocalidad
+    setLocalidadPresu,
+    setProvinciaPresu
   } from "../redux/root-actions";
 
 // import { provincias } from '../datos/provincias.json'; 
@@ -28,7 +29,8 @@ const Presupuesto = ({
     getLocalidadesPorProvincia,
     localidades,
     provincias,
-    setLocalidad
+    setLocalidadPresu,
+    setProvinciaPresu
 }) => {
 
     console.log("PRESUPUESTO");
@@ -75,6 +77,7 @@ const Presupuesto = ({
     const handleOnChangeProvincias = async (e) => {
         console.log("e.target.value: " + JSON.stringify(e));
         await getLocalidadesPorProvincia(e.value);
+        await setProvinciaPresu(e.value);
         // localidadesSelect = localidades.filter(localidad => (
         //     localidad.provincia.nombre == e.value
         // ))
@@ -87,7 +90,7 @@ const Presupuesto = ({
     }
 
     const handleOnChangeLocalidades = async (e) => {
-        setLocalidad(e.value);
+        await setLocalidadPresu(e.value);
     }
  
 
@@ -251,5 +254,6 @@ export default connect(
         confirm,
         getProvinciasSelect,
         getLocalidadesPorProvincia,
-        setLocalidad
+        setLocalidadPresu,
+        setProvinciaPresu
     })(Presupuesto);

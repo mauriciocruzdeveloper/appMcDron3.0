@@ -8,7 +8,8 @@ import {
     guardarUsuarioPersistencia,
     eliminarReparacionPersistencia,
     getProvinciasSelectPersistencia,
-    getLocPorProvPersistencia
+    getLocPorProvPersistencia,
+    getUsuariosPersistencia
 } from "../../persistencia/persistenciaFirebase";
 // import { async } from "@firebase/util";
 
@@ -23,7 +24,7 @@ export const login = (email, password) => async (dispatch) => {
     dispatch( isFetchingStart());
     return new Promise(async (resolve, reject) => {
         if(email!="" && password!=""){
-            await loginPersistencia( email, password )
+            await loginPersistencia(email, password)
             .then( usuario => {
                 console.log("llega al then del loginPersistencia: " + JSON.stringify(usuario));
                 dispatch({ 
@@ -38,8 +39,9 @@ export const login = (email, password) => async (dispatch) => {
                 // No hace falta devolver el usuario, pero lo hago por si sirve en otra ocación.
                 return resolve(usuario); 
             })
-            .catch(error  => {
+            .catch(error => {
                 console.log("llega al catch del loginPersistencia");
+                console.log("error.code: " + error.code);
                 reject(error);
             });
             dispatch(isFetchingCoplete());
@@ -134,6 +136,28 @@ export const changeInputRep = (target) => {
     }  
 };
 
+export const changeInputUsu = (target) => {
+    // En caso que el input sea tipo date,
+    if(target.type == "date"){
+        let anio = target.value.substr(0, 4);
+        let mes = target.value.substr(5, 2)-1;
+        let dia = target.value.substr(8, 2);
+        return { 
+            type: AppTypes.CHANGE_INPUT_USU,
+            payload: { 
+                input: target.id, 
+                data: new Date(anio, mes, dia).getTime()+10800001 
+                // Se agrega este número para que de bien la fecha.
+            }
+        } 
+    }else{
+        return { 
+            type: AppTypes.CHANGE_INPUT_USU,
+            payload: { input: target.id, data: target.value }
+        }
+    }  
+};
+
 export const changeInputPresu = (target) => {
     // En caso que el input sea tipo date,
     if(target.type == "date"){
@@ -178,6 +202,29 @@ export const getReparaciones = () => async (dispatch) => {
         })
         .catch(error  => {
             console.log("llega al catch del getReparacionesPersistencia");
+            reject(error);
+        });
+        dispatch(isFetchingCoplete());
+    });
+};
+
+export const getUsuarios = () => async (dispatch) => {
+    dispatch( isFetchingStart());
+    return new Promise(async (resolve, reject) => {
+        await getUsuariosPersistencia()
+        .then( usuarios => {
+            console.log("llega al then del getUsuariosPersistencia");
+            dispatch({ 
+                type: AppTypes.GET_USUARIOS, 
+                payload: { 
+                    data: usuarios
+                }
+            });
+            // No hace falta devolver el usuario, pero lo hago por si sirve en otra ocación.
+            return resolve(usuarios); 
+        })
+        .catch(error  => {
+            console.log("llega al catch del getUsuariosPersistencia");
             reject(error);
         });
         dispatch(isFetchingCoplete());
@@ -275,6 +322,20 @@ export const eliminarReparacion = (reparacion) => async (dispatch) => {
         })
         .catch(error  => {
             console.log("llega al catch del eliminarReparacionPersistencia");
+            reject(error);
+        })
+        dispatch(isFetchingCoplete());
+    });   
+}
+
+export const eliminarUsuario = (usuario) => async (dispatch) => {
+    dispatch(isFetchingStart());
+    return new Promise(async (resolve, reject) => {
+        await eliminarUsuarioPersistencia(usuario)
+        .then((usuario) => {
+            return resolve(usuario); 
+        })
+        .catch(error  => {
             reject(error);
         })
         dispatch(isFetchingCoplete());
@@ -407,7 +468,22 @@ export const getLocalidadesPorProvincia = (provincia) => async (dispatch) => {
 }
 
 
-export const setLocalidad = (localidad) => ({
-    type: AppTypes.SET_LOCALIDAD,
+export const setLocalidadPresu = (localidad) => ({
+    type: AppTypes.SET_LOCALIDAD_PRESU,
     payload: {data: localidad}
+})
+
+export const setProvinciaPresu = (provincia) => ({
+    type: AppTypes.SET_PROVINCIA_PRESU,
+    payload: {data: provincia}
+})
+
+export const setLocalidadCliente = (localidad) => ({
+    type: AppTypes.SET_LOCALIDAD_CLIENTE,
+    payload: {data: localidad}
+})
+
+export const setProvinciaCliente = (provincia) => ({
+    type: AppTypes.SET_PROVINCIA_CLIENTE,
+    payload: {data: provincia}
 })
