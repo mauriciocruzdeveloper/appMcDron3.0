@@ -27,7 +27,8 @@ import {
     setProvinciaCliente,
     getUsuarios,
     guardarUsuario,
-    eliminarUsuario
+    eliminarUsuario,
+    clearCliente
     //getUsuario
 } from "./App/App.actions";
 
@@ -59,6 +60,7 @@ export {
     setProvinciaCliente,
     getUsuarios,
     guardarUsuario,
-    eliminarUsuario
+    eliminarUsuario,
+    clearCliente
     //getUsuario
 }

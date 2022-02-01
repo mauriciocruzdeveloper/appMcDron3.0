@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useCallback } from "react";
 import { connect } from "react-redux";
 import { 
     changeInputUsu,
@@ -13,7 +13,8 @@ import {
     getProvinciasSelect,
     getLocalidadesPorProvincia,
     setProvinciaCliente,
-    setLocalidadCliente
+    setLocalidadCliente,
+    clearCliente
   } from "../redux/root-actions";
 
 import { useParams } from "react-router-dom";
@@ -36,17 +37,25 @@ const Reparacion = ({
     getProvinciasSelect,
     getLocalidadesPorProvincia,
     setProvinciaCliente,
-    setLocalidadCliente
+    setLocalidadCliente,
+    clearCliente
 }) => {
 
     console.log("USUARIO");
 
     const { id } = useParams();
 
-    useEffect(async () => {
-        await getCliente(id);
+    // 
+
+    const inicializaFormulario = useCallback(async () => {
         await getProvinciasSelect();
-    }, [getCliente]);
+        await getCliente(id);
+    }, [id]);
+
+    useEffect(() => {
+        inicializaFormulario();
+        return () => clearCliente();
+    }, [inicializaFormulario]);
 
     const handleGuardarUsuario = () => {
         confirm(
@@ -86,6 +95,8 @@ const Reparacion = ({
     const handleOnChangeLocalidades = async (e) => {
         await setLocalidadCliente(e.value);
     }
+
+    console.log("cliente: " + JSON.stringify(cliente));
 
     return(
         <div
@@ -147,7 +158,7 @@ const Reparacion = ({
                         <label className="form-label">Teléfono</label>
                         <input 
                             onChange={e => changeInputUsu(e.target)} 
-                            type="text" 
+                            type="number" 
                             className="form-control" 
                             id="TelefonoUsu"
                             value={cliente?.data?.TelefonoUsu || ""}
@@ -159,7 +170,9 @@ const Reparacion = ({
                             options={provincias}
                             onChange={e => handleOnChangeProvincias(e)}
                             id="ProvinciaUsu"
-                            value={cliente?.data?.ProviniciaUsu}
+                            // Hay que usar "value" y no "defaultValue". Por alguna razón que desconozco
+                            // defaultValue me trae el valor del estado anterior...
+                            value={({value: cliente?.data?.ProvinciaUsu, label: cliente?.data?.ProvinciaUsu})}
                         />
                     </div>
                     <div>
@@ -168,7 +181,10 @@ const Reparacion = ({
                             options={localidades}
                             onChange={e => handleOnChangeLocalidades(e)}
                             id="CiudadUsu"
-                            value={cliente?.data?.CiudadUsu}
+                            // Ver si puedo usar useRef para habilitar y desabilitar
+                            // el campo luego de elegir la provincia
+                            // ref="CiudadUsu"
+                            value={{value: cliente?.data?.CiudadUsu, label: cliente?.data?.CiudadUsu}}
                         />
                     </div>
                 </div>
@@ -213,5 +229,6 @@ export default connect(
         getProvinciasSelect,
         getLocalidadesPorProvincia,
         setProvinciaCliente,
-        setLocalidadCliente
+        setLocalidadCliente,
+        clearCliente
     })(Reparacion);

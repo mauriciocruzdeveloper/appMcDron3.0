@@ -35,14 +35,12 @@ const Presupuesto = ({
 
     console.log("PRESUPUESTO");
 
-    console.log("provincias: " + JSON.stringify(provincias));
-    console.log("localidades: " + JSON.stringify(localidades));
-
     // ACÁ TENGO QUE CARGAR LOS DATOS DEL USUARIO QUE HACE EL PRESUPUESTO
     useEffect(async () => {
         // Si el usuario es admin, deja todo en blanco para cargar cualquier usuario
         // sino cargo los datos del usuario logueado.
         usuario.data?.Admin ? null : await loadUsuToPresu(usuario);
+        await loadUsuToPresu(usuario);
         await getProvinciasSelect();
     }, [loadUsuToPresu]);
 
@@ -93,7 +91,7 @@ const Presupuesto = ({
         await setLocalidadPresu(e.value);
     }
  
-
+    console.log("presupuesto: " + JSON.stringify(presupuesto));
 
     return(
         <div
@@ -161,7 +159,7 @@ const Presupuesto = ({
                             options={provincias}
                             onChange={e => handleOnChangeProvincias(e)}
                             id="ProvinciaPresu"
-                            // value={presupuesto?.ProvinciaPresu || ""}
+                            value={{value: presupuesto?.ProvinciaPresu, label: presupuesto?.ProvinciaPresu}}
                         />
                         
                         {/* <input 
@@ -181,6 +179,7 @@ const Presupuesto = ({
                             onChange={e => handleOnChangeLocalidades(e)}
                             id="CiudadPresu"
                             // value={presupuesto?.CiudadPresu || ""}
+                            defaultValue={{value: presupuesto?.CiudadPresu, label: presupuesto?.CiudadPresu}}
                         />
                         {/* <input 
                             onChange={e => changeInputPresu(e.target)} 

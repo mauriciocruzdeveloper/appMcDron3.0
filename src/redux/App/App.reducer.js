@@ -86,6 +86,18 @@ export default (state = INITIAL_STATE, action) => {
                     
                 }
              };
+        case AppTypes.CHANGE_INPUT_USU:
+            return { 
+                ...state, 
+                cliente: {
+                    ...state.cliente,
+                    data: {
+                        ...state.cliente.data,
+                        [action.payload.input]: action.payload.data
+                    }
+                    
+                }
+            };
         case AppTypes.CHANGE_INPUT_PRESU:
             return { 
                 ...state, 
@@ -220,6 +232,11 @@ export default (state = INITIAL_STATE, action) => {
                     }
                     
                 },
+            }
+        case AppTypes.CLEAR_CLIENTE:
+            return {
+                ...state,
+                cliente: {},
             }
         default:
             return state;

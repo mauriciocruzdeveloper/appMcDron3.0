@@ -487,3 +487,8 @@ export const setProvinciaCliente = (provincia) => ({
     type: AppTypes.SET_PROVINCIA_CLIENTE,
     payload: {data: provincia}
 })
+
+export const clearCliente = () => ({
+    type: AppTypes.CLEAR_CLIENTE,
+    payload: {}
+})

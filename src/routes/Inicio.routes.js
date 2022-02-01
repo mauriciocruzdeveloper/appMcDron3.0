@@ -13,7 +13,8 @@ import NavMcDron from "../components/NavMcDron.component";
 
 const InicioRoutes = ({ match, isLoggedIn }) => {
 
-    console.log("INICIO ROUTES")
+    console.log("INICIO ROUTES");
+    console.log("match: " + JSON.stringify(match));
 
     return (
         isLoggedIn ?
