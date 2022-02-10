@@ -77,10 +77,10 @@ const Reparacion = ({
             "danger",
             () => {
                 console.log("llega al callBakc de confirm") ;
-                eliminarUsuario(cliente)
-                .then(reparacion => {
-                        abreModal("Usuario eliminado con éxito", "Reparación: " + cliente.id, "success" );
-                        history.goBack();
+                eliminarUsuario(id)
+                .then(id => {
+                    abreModal("Usuario eliminado con éxito", "Reparación: " + id, "success" );
+                    history.goBack();
                 })
                 .catch(error => abreModal("Error al guardar ", "Código - " + error.code, "danger" ))
             }

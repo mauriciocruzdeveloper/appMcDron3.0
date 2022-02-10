@@ -19,7 +19,8 @@ const INITIAL_STATE = {
     },
     login: { // Son los datos de usuario y contraseña
         email: '',
-        password: ''
+        password: '',
+        token: ''
     },
     usuario: {}, // Es el usuario logueado
     // Le voy a llamar usuario al usuario logueado, 

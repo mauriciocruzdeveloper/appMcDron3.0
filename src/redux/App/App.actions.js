@@ -1,3 +1,10 @@
+// En este archivo están las definiciones de acciones para el reducer y también funciones
+// que pueden no disparar una acción. Acá están todas las funciones que se llaman desde
+// los componentes.
+// Habría que separar la lógica de las acciones... No se cómo. Puede ser con in middleware.
+// Otra opción podría se usar componentes "Contenedores", donde esté la lógica, y aquí también
+// se disparen las acciones, y luego los componentes "Presentación" que se sirvan de los estados del store.
+
 import { AppTypes } from "./App.types";
 import { 
     loginPersistencia, 
@@ -10,7 +17,9 @@ import {
     getProvinciasSelectPersistencia,
     getLocPorProvPersistencia,
     getUsuariosPersistencia
-} from "../../persistencia/persistenciaFirebase";
+// } from "../../persistencia/persistenciaFirebase";
+} from "../../persistencia/persistenciaNode";
+
 // import { async } from "@firebase/util";
 
 export const isFetchingStart = () => {
@@ -21,7 +30,7 @@ export const isFetchingCoplete = () => (
 );
 
 export const login = (email, password) => async (dispatch) => {
-    dispatch( isFetchingStart());
+    dispatch(isFetchingStart());
     return new Promise(async (resolve, reject) => {
         if(email!="" && password!=""){
             await loginPersistencia(email, password)

@@ -45,15 +45,6 @@ const ListaUsuarios = ({
           <small>{usuario.id}</small>
         </div>
       ))}
-    {/* <Container>
-      <Button
-        className="bg-bluemcdron"
-        styles={{
-          color: lightColors.white
-        }}
-        // onClick={() => history.push(`/inicio/cargapresupuesto`)} VER BIEN!!!
-      >Add</Button>
-    </Container> */}
     </div>
 
   );

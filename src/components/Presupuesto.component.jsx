@@ -40,7 +40,6 @@ const Presupuesto = ({
         // Si el usuario es admin, deja todo en blanco para cargar cualquier usuario
         // sino cargo los datos del usuario logueado.
         usuario.data?.Admin ? null : await loadUsuToPresu(usuario);
-        await loadUsuToPresu(usuario);
         await getProvinciasSelect();
     }, [loadUsuToPresu]);
 

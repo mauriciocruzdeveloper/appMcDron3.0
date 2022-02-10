@@ -198,12 +198,12 @@ export const guardarUsuarioPersistencia = (usuario) => {
     })
 };
 
-export const eliminarReparacionPersistencia = (reparacion) => {
+export const eliminarReparacionPersistencia = (id) => {
     return new Promise((resolve, reject) => {
-        deleteDoc(doc(firestore, "REPARACIONES", reparacion.id))
+        deleteDoc(doc(firestore, "REPARACIONES", id))
         .then(() => {
             console.log("borrando reparación ok");
-            resolve(reparacion);
+            resolve(id);
         })
         .catch(error => {
             console.log("Error: " + error);
@@ -213,12 +213,12 @@ export const eliminarReparacionPersistencia = (reparacion) => {
     })
 };
 
-export const eliminarUsuarioPersistencia = (usuario) => {
+export const eliminarUsuarioPersistencia = (id) => {
     return new Promise((resolve, reject) => {
-        deleteDoc(doc(firestore, "USUARIOS", usuario.id))
+        deleteDoc(doc(firestore, "USUARIOS", id))
         .then(() => {
             console.log("borrando usuario ok");
-            resolve(usuario);
+            resolve(id);
         })
         .catch(error => {
             console.log("Error: " + error);

@@ -39,6 +39,7 @@ const Reparacion = ({
 
     useEffect(async () => {
         await getReparacion(id)
+        .catch(error => abreModal("Error al guardar ", `Código - ${error.code}`, "danger" ));
     }, [getReparacion]);
     
 
@@ -52,7 +53,7 @@ const Reparacion = ({
             () => {
                 guardarReparacion(reparacion)
                 .then(reparacion => abreModal("Guardado con éxito", "Reparación: " + reparacion.id, "success" ))
-                .catch(error => abreModal("Error al guardar ", "Código - " + error.code, "danger" ));
+                .catch(error => abreModal("Error al guardar ", `Código - ${error.code}`, "danger" ));
             }
         );
     }
@@ -64,12 +65,12 @@ const Reparacion = ({
             "danger",
             () => {
                 console.log("llega al callBacK de confirm") ;
-                eliminarReparacion(reparacion)
-                .then(reparacion => {
-                        abreModal("Reparación eliminada con éxito", "Reparación: " + reparacion.id, "success" );
+                eliminarReparacion(reparacion.id)
+                .then(id => {
+                        abreModal("Reparación eliminada con éxito", "Reparación: " + id, "success" );
                         history.goBack();
                 })
-                .catch(error => abreModal("Error al guardar ", "Código - " + error.code, "danger" ))
+                .catch(error => abreModal("Error al guardar ", `Código - ${error.code}`, "danger" ))
             }
         );
     }
@@ -190,7 +191,7 @@ const Reparacion = ({
                     <div>
                         <label className="form-label">Teléfono Cliente</label>
                         <input 
-                            type="text" 
+                            type="tel" 
                             className="form-control" 
                             id="TelefonoUsu" 
                             value={reparacion?.data?.TelefonoUsu}
