@@ -166,11 +166,6 @@ export const guardarReparacionPersistencia = (reparacion) => {
         .then(() => {
             console.log("actualizado reparación ok");
             resolve(reparacion);
-            //app.dialog.alert("Su reparacion se ha actualizado","Atención");
-            //LO DE LAS FOTOS LO VEREMOS DESPUES
-            //subeFotoReparacion(Date.now(),idReparacion,userAuth.email);
-            // cargaListaRep();
-            // precargaInicio();
         })
         .catch(error => {
             console.log("Error: " + error);

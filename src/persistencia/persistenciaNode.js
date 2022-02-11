@@ -1,5 +1,7 @@
 import axios from 'axios';
 
+import { token } from '../token';
+
 // import { config as firebaseConfig }  from '../configProd'; // Para producción
 // import { config as firebaseConfig }  from '../configDev'; // Para desarrollo
 
@@ -9,6 +11,8 @@ import { localidades } from '../datos/localidades.json';
 
 const SERVIDOR = 'http://localhost:5000';
 
+
+//////////////////// LOGIN //////////////////////
 
 export const loginPersistencia = (email, password) => {
     return new Promise((resolve, reject) => {
@@ -32,75 +36,67 @@ export const loginPersistencia = (email, password) => {
     });
 };
 
-export const getReparacionesPersistencia = async () => {
+//////////////////// REPARACIONES //////////////////////
+
+// Devuelve todas las reparaciones
+export const getReparacionesPersistencia = (id) => {
     return new Promise((resolve, reject) => {
-        // Acá meto en el header el token para que el backend me autorice la consulta
         const headers = { 'autorization': token() }
-        axios.get(SERVIDOR + '/api/reparaciones', { headers })
-        .then(response =>{
+        axios.get(`${SERVIDOR}/api/reparaciones`, { headers })
+        .then(response => {
             let reparaciones = [];
-            response.forEach(doc => reparaciones.push({ id: doc.data._id, data: doc.data }));
+            response.data.forEach(doc => {
+                let id = doc._id;
+                delete doc._id;
+                delete response.data.__v;
+                reparaciones.push({id: id, data: doc});
+            });
             resolve(reparaciones);
         })
-        .catch(error => reject({ ...error, code: `Error consulta codigo: ${error.response.status}` }));
+        .catch(error => reject({ ...error, code: `Error consulta codigo: ${error?.response?.status}` }));
     });
 };
 
-export const getUsuariosPersistencia = async () => {
-    return new Promise((resolve, reject) => {
-        // Acá meto en el header el token para que el backend me autorice la consulta
-        const headers = { 'autorization': token() }
-        axios.get(SERVIDOR + '/api/usuarios', { headers })
-        .then(response => {
-            let usuarios = [];
-            response.forEach(doc => usuarios.push({id: doc.data._id, data: doc.data}));
-            resolve(usuarios);
-        })
-        .catch(error => reject({ ...error, code: `Error consulta codigo: ${error.response.status}` }));
-    });
-};
-
+// Trae una reparación por id
 export const getReparacionPersistencia = (id) => {
     return new Promise((resolve, reject) => {
         const headers = { 'autorization': token() }
         axios.get(`${SERVIDOR}/api/reparaciones/${id}`, { headers })
-        .then(response => resolve({ id: response.data._id, data: response.data }))
+        .then(async response => {
+            let id = response.data._id;
+            // Borro el id y el v para no pasar datos que no corresponden al cuerpo del objeto.
+            delete response.data._id;
+            delete response.data.__v;
+            let reparacion = {};
+            reparacion.id = id;
+            reparacion.data = response.data;
+            await getUsuariosPersistencia(reparacion.UsuarioRep)
+            .then(usuario => {
+                reparacion.data = { ...reparacion.data, ...usuario.data }
+            })
+            .catch();
+            resolve(reparacion);
+        })
         .catch(error => reject({ ...error, code: `Error consulta codigo: ${error.response.status}` }));
     });
 };
 
-export const getClientePersistencia = (id) => {
-    return new Promise((resolve, reject) => {
-        const headers = { 'autorization': token() }
-        axios.get(`${SERVIDOR}/api/usuarios/${id}`, { headers })
-        .then(response => resolve({ id: response.data._id, data: response.data }))
-        .catch(error => reject({ ...error, code: `Error consulta codigo: ${error.response.status}` }));
-    });
-};
-
+// Guarda una reparación. Ver la del usuario
 export const guardarReparacionPersistencia = (reparacion) => {
     return new Promise((resolve, reject) => {
         const headers = {'autorization': token()}
-        axios.post(SERVIDOR + '/api/reparaciones', { reparacion }, { headers }
-        ).then(response => {
-            console.log(response.data);
-            return resolve(response.data);
-        }).catch(error => {
-            return reject(error);
-        });
+        console.log("data: " + JSON.stringify(reparacion.data));
+        reparacion.id 
+        ? axios.patch(`${SERVIDOR}/api/reparaciones/${reparacion.id}`, reparacion.data, { headers })
+            .then(response => resolve(response.data))
+            .catch(error => reject(error))
+        : axios.post(`${SERVIDOR}/api/reparaciones`, reparacion.data, { headers })
+            .then(response => resolve(response.data))
+            .catch(error => reject(error));
     });
 };
 
-
-export const guardarUsuarioPersistencia = (usuario) => {
-    return new Promise((resolve, reject) => {
-        const headers = {'autorization': token()}
-        axios.post(SERVIDOR + '/api/usuarios', { usuario }, { headers })
-        .then(response => resolve(response.data))
-        .catch(error => reject(error));
-    });
-};
-
+// Elimina una reparción
 export const eliminarReparacionPersistencia = (id) => {
     return new Promise((resolve, reject) => {
         const headers = {'autorization': token()}
@@ -110,6 +106,62 @@ export const eliminarReparacionPersistencia = (id) => {
     });
 };
 
+//////////////////// REPARACIONES //////////////////////
+
+// Trae todos los usuarios
+export const getUsuariosPersistencia = async () => {
+    return new Promise((resolve, reject) => {
+        // Acá agrego en el header el token para que el backend me autorice la consulta
+        const headers = { 'autorization': token() }
+        axios.get(`${SERVIDOR}/api/usuarios`, { headers })
+        .then(response => {
+            let usuarios = [];
+            response.data.forEach(doc => {
+                let id = doc._id;
+                delete doc._id;
+                delete response.data.__v;
+                usuarios.push({id: id, data: doc});
+            });
+            resolve(usuarios);
+        })
+        // Da error cuando intenta leer status
+        .catch(error => reject({ ...error, code: `Error consulta codigo: ${error?.response?.status}` }));
+    });
+};
+
+// Trae un usuario por id
+export const getClientePersistencia = (id) => {
+    return new Promise((resolve, reject) => {
+        const headers = { 'autorization': token() }
+        axios.get(`${SERVIDOR}/api/usuarios/${id}`, { headers })
+        .then(response => {
+            let id = response.data._id;
+            // Borro el id para no pasar datos que no corresponden al cuerpo del objeto.
+            delete response.data._id;
+            delete response.data.__v;
+            resolve({ id: id, data: response.data })
+        })
+        .catch(error => reject({ ...error, code: `Error consulta codigo: ${error.response.status}` }));
+    });
+};
+
+// Esta función guarda. Hace un alta o modifica según si tiene un id o no el usuario.
+// Esto mismo en Firebase no lo hago porque firebase lo hace automáticamente.
+export const guardarUsuarioPersistencia = (usuario) => {
+    return new Promise((resolve, reject) => {
+        const headers = {'autorization': token()}
+        console.log("data: " + JSON.stringify(usuario.data));
+        usuario.id 
+        ? axios.patch(`${SERVIDOR}/api/usuarios/${usuario.id}`, usuario.data, { headers })
+            .then(response => resolve(transformMongooseToApp(response)))
+            .catch(error => reject(error))
+        : axios.post(SERVIDOR + '/api/usuarios', usuario.data, { headers })
+            .then(response => resolve(transformMongooseToApp(response)))
+            .catch(error => reject(error));
+    });
+};
+
+// Elimina un usuario
 export const eliminarUsuarioPersistencia = (id) => {
     return new Promise((resolve, reject) => {
         const headers = {'autorization': token()}
@@ -149,3 +201,13 @@ export const getLocPorProvPersistencia = (provincia) => {
         );
     })
 };
+
+// Quita _id y __v de response.data.
+const transformMongooseToApp = (response) => {
+    let objeto = {};
+    objeto.id = response.data._id;
+    delete response.data._id;
+    delete response.data.__v;
+    objeto.data = response.data;
+    return objeto;
+}

@@ -12,9 +12,7 @@ import { Container, Button, lightColors, darkColors } from 'react-floating-actio
 
 const ListaUsuarios = ({ 
   getUsuarios, 
-  coleccionUsuarios, 
-  isFetching,
-  match
+  coleccionUsuarios
 }) => {
 
   //PARA FORZAR LA CARGA DE LAS REPARACIONES AL INICIALIZAR
@@ -42,7 +40,7 @@ const ListaUsuarios = ({
           <div className="d-flex w-100 justify-content-between">
             <h5 className="mb-1">{usuario.data.NombreUsu} {usuario.data.ApellidoUsu}</h5>
           </div>
-          <small>{usuario.id}</small>
+          <small>{usuario?.data?.EmailUsu}</small>
         </div>
       ))}
     </div>

@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useCallback } from "react";
 import { connect } from "react-redux";
 import TextareaAutosize from "react-textarea-autosize";
 import Select from 'react-select';
@@ -12,8 +12,11 @@ import {
     getProvinciasSelect,
     getLocalidadesPorProvincia,
     setLocalidadPresu,
-    setProvinciaPresu
+    setProvinciaPresu,
+    clearPresupuesto
   } from "../redux/root-actions";
+
+  import history from "../history";
 
 // import { provincias } from '../datos/provincias.json'; 
 
@@ -30,18 +33,27 @@ const Presupuesto = ({
     localidades,
     provincias,
     setLocalidadPresu,
-    setProvinciaPresu
+    setProvinciaPresu,
+    clearPresupuesto
 }) => {
 
     console.log("PRESUPUESTO");
 
-    // ACÁ TENGO QUE CARGAR LOS DATOS DEL USUARIO QUE HACE EL PRESUPUESTO
-    useEffect(async () => {
+    // Esto inicializa el form al montar y limpia al desmontar ///////
+
+    const initForm = useCallback(async () => {
         // Si el usuario es admin, deja todo en blanco para cargar cualquier usuario
         // sino cargo los datos del usuario logueado.
-        usuario.data?.Admin ? null : await loadUsuToPresu(usuario);
+        !usuario.data?.Admin ? await loadUsuToPresu(usuario) : null;
         await getProvinciasSelect();
-    }, [loadUsuToPresu]);
+    },[usuario]);
+
+    useEffect(() => {
+        initForm();
+        return () => clearPresupuesto();
+    }, [initForm]);
+
+    //////////////////////////////////////////////////////////////
 
     const handleGuardarPresupuesto = () => {
         confirm(
@@ -54,7 +66,7 @@ const Presupuesto = ({
                     abreModal("Presupuesto enviado!", "", "success" );
                     history.goBack();
                 })
-                .catch(error => abreModal("Error al guardar ", "Código - " + error.code, "danger" ));
+                //.catch(error => abreModal("Error al guardar ", "Código - " + error.code, "danger" ));
             }
         );
     }
@@ -89,8 +101,6 @@ const Presupuesto = ({
     const handleOnChangeLocalidades = async (e) => {
         await setLocalidadPresu(e.value);
     }
- 
-    console.log("presupuesto: " + JSON.stringify(presupuesto));
 
     return(
         <div
@@ -117,8 +127,8 @@ const Presupuesto = ({
                             onChange={e => changeInputPresu(e.target)} 
                             type="text" 
                             className="form-control" 
-                            id="UsuarioPresu" 
-                            value={presupuesto?.UsuarioPresu || ""}
+                            id="EmailUsu" 
+                            value={presupuesto?.EmailUsu || ""}
                         />
                     </div>
                     <div>
@@ -253,5 +263,6 @@ export default connect(
         getProvinciasSelect,
         getLocalidadesPorProvincia,
         setLocalidadPresu,
-        setProvinciaPresu
+        setProvinciaPresu,
+        clearPresupuesto
     })(Presupuesto);

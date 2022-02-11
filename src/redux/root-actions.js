@@ -28,7 +28,8 @@ import {
     getUsuarios,
     guardarUsuario,
     eliminarUsuario,
-    clearCliente
+    clearCliente,
+    clearPresupuesto
     //getUsuario
 } from "./App/App.actions";
 
@@ -61,6 +62,7 @@ export {
     getUsuarios,
     guardarUsuario,
     eliminarUsuario,
-    clearCliente
+    clearCliente,
+    clearPresupuesto
     //getUsuario
 }

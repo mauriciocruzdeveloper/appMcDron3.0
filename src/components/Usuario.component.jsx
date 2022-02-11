@@ -45,7 +45,7 @@ const Reparacion = ({
 
     const { id } = useParams();
 
-    // 
+    // Esto inicializa el form al montar y limpia al desmontar ///////
 
     const inicializaFormulario = useCallback(async () => {
         await getProvinciasSelect();
@@ -57,6 +57,8 @@ const Reparacion = ({
         return () => clearCliente();
     }, [inicializaFormulario]);
 
+    ///////////////////////////////////////////////////////////////////
+
     const handleGuardarUsuario = () => {
         confirm(
             "Guardar Usuario?",
@@ -65,7 +67,7 @@ const Reparacion = ({
             () => {
                 guardarUsuario(cliente)
                 .then(reparacion => abreModal("Guardado con éxito", "Usuario: " + cliente.id, "success" ))
-                .catch(error => abreModal("Error al guardar ", "Código - " + error.code, "danger" ));
+                //.catch(error => abreModal("Error al guardar ", "Código - " + error.code, "danger" ));
             }
         );
     }
@@ -77,9 +79,9 @@ const Reparacion = ({
             "danger",
             () => {
                 console.log("llega al callBakc de confirm") ;
-                eliminarUsuario(id)
+                eliminarUsuario(cliente.id)
                 .then(id => {
-                    abreModal("Usuario eliminado con éxito", "Reparación: " + id, "success" );
+                    abreModal("Usuario eliminado con éxito", "Usuario: " + id, "success" );
                     history.goBack();
                 })
                 .catch(error => abreModal("Error al guardar ", "Código - " + error.code, "danger" ))
@@ -117,7 +119,7 @@ const Reparacion = ({
                         USUARIO
                     </h3>
                     <div>Nombre: {cliente?.data?.NombreUsu} {cliente?.data?.ApellidoUsu}</div>
-                    <div>Email: {cliente?.id}</div>
+                    <div>Email: {cliente?.data?.EmailUsu}</div>
                 </div>
             </div>
 
@@ -130,8 +132,8 @@ const Reparacion = ({
                             onChange={e => changeInputUsu(e.target)} 
                             type="text" 
                             className="form-control" 
-                            id="UsuarioUsu" 
-                            value={cliente.id || ""}
+                            id="EmailUsu" 
+                            value={cliente?.data?.EmailUsu || ""}
                         />
                     </div>
                     <div>

@@ -38,8 +38,9 @@ const Reparacion = ({
     const { id } = useParams();
 
     useEffect(async () => {
+        console.log("id: " + id);
         await getReparacion(id)
-        .catch(error => abreModal("Error al guardar ", `Código - ${error.code}`, "danger" ));
+        .catch(error => abreModal("Error buscando Reparación ", `Código - ${error.code}`, "danger" ));
     }, [getReparacion]);
     
 

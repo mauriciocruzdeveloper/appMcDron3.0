@@ -162,13 +162,11 @@ export default (state = INITIAL_STATE, action) => {
                 }
             };
         case AppTypes.MODAL:
-            console.log("llega al reducer Modal " + action.payload.data.modal.showModal);
             return { 
                 ...state,
                 modal: action.payload.data.modal
             };
         case AppTypes.CONFIRM:
-            console.log("llega al reducer Confirm " + action.payload.data.confirm.callBackConfirm);
             return { 
                 ...state,
                 confirm: action.payload.data.confirm
@@ -177,7 +175,8 @@ export default (state = INITIAL_STATE, action) => {
             return {
                 ...state,
                 presupuesto: {
-                    UsuarioPresu: action.payload.data.usuario.id,
+                    UsuarioPreu: action.payload.data.usuario?.id,
+                    EmailPresu: action.payload.data.usuario.data?.EmailUsu,
                     NombrePresu: action.payload.data.usuario.data?.NombreUsu,
                     ApellidoPresu: action.payload.data.usuario.data?.ApellidoUsu,
                     TelefonoPresu: action.payload.data.usuario.data?.TelefonoUsu,
@@ -238,6 +237,11 @@ export default (state = INITIAL_STATE, action) => {
             return {
                 ...state,
                 cliente: {},
+            }
+        case AppTypes.CLEAR_PRESUPUESTO:
+            return {
+                ...state,
+                presupuesto: {},
             }
         default:
             return state;

@@ -14,6 +14,7 @@ import {
     guardarReparacionPersistencia,
     guardarUsuarioPersistencia,
     eliminarReparacionPersistencia,
+    eliminarUsuarioPersistencia,
     getProvinciasSelectPersistencia,
     getLocPorProvPersistencia,
     getUsuariosPersistencia
@@ -256,10 +257,10 @@ export const getReparacion = (id) => async (dispatch) => {
             // No hace falta devolver el usuario, pero lo hago por si sirve en otra ocación.
             return resolve(reparacion); 
         })
-        .catch(error  => {
-            console.log("llega al catch del getReparacionPersistencia");
-            reject(error);
-        });
+        // .catch(error  => {
+        //     console.log("llega al catch del getReparacionPersistencia");
+        //     reject(error);
+        // });
         dispatch(isFetchingCoplete());
     });
 };
@@ -313,21 +314,21 @@ export const guardarUsuario = (usuario) => async (dispatch) => {
             console.log("llega al then del guardarUsuarioPesistencia");
             return resolve(usuario); 
         })
-        .catch(error  => {
-            console.log("llega al catch del guardarReparacionPersistencia");
-            reject(error);
-        });
+        // .catch(error  => {
+        //     console.log("llega al catch del guardarReparacionPersistencia");
+        //     reject(error);
+        // });
         dispatch(isFetchingCoplete());
     });   
 }
 
-export const eliminarReparacion = (reparacion) => async (dispatch) => {
+export const eliminarReparacion = (id) => async (dispatch) => {
     dispatch(isFetchingStart());
     return new Promise(async (resolve, reject) => {
-        await eliminarReparacionPersistencia(reparacion)
-        .then( (reparacion) => {
+        await eliminarReparacionPersistencia(id)
+        .then((id) => {
             console.log("llega al then del eliminarReparacionPesistencia");
-            return resolve(reparacion); 
+            return resolve(id); 
         })
         .catch(error  => {
             console.log("llega al catch del eliminarReparacionPersistencia");
@@ -337,12 +338,12 @@ export const eliminarReparacion = (reparacion) => async (dispatch) => {
     });   
 }
 
-export const eliminarUsuario = (usuario) => async (dispatch) => {
+export const eliminarUsuario = (id) => async (dispatch) => {
     dispatch(isFetchingStart());
     return new Promise(async (resolve, reject) => {
-        await eliminarUsuarioPersistencia(usuario)
-        .then((usuario) => {
-            return resolve(usuario); 
+        await eliminarUsuarioPersistencia(id)
+        .then((id) => {
+            return resolve(id); 
         })
         .catch(error  => {
             reject(error);
@@ -357,7 +358,6 @@ export const rememberMe = () => {
 }
 
 export const confirm = (mensaje, titulo, tipo, callBack) => {
-    console.log("llega a actions. callBack: " + callBack);
     return(
         {
             type: AppTypes.CONFIRM,
@@ -399,6 +399,7 @@ export const guardarPresupuesto = (presupuesto) => async (dispatch) => {
     usuario.data.TelefonoUsu = presupuesto.TelefonoPresu || '';
     usuario.data.ProvinciaUsu = presupuesto.ProvinciaPresu || '';
     usuario.data.CiudadUsu = presupuesto.CiudadPresu || '';
+    usuario.data.EmailUsu = presupuesto.EmailUsu || '';
     let reparacion = {};
     reparacion.data = {};
     reparacion.data.UsuarioRep = presupuesto.UsuarioPresu || '';
@@ -410,16 +411,20 @@ export const guardarPresupuesto = (presupuesto) => async (dispatch) => {
     reparacion.data.NombreUsu = presupuesto.NombrePresu,
     reparacion.data.TelefonoUsu = presupuesto.TelefonoPresu
     reparacion.data.FeConRep = Date.now();
-    reparacion.id = Date.now().toString();
+    // reparacion.id = Date.now().toString();
 
     return new Promise(async (resolve, reject) => {
-        await guardarReparacionPersistencia(reparacion)
-        .then(() => {
-            guardarUsuarioPersistencia(usuario)
+        await guardarUsuarioPersistencia(usuario)
+        .then(usuario => {
+            console.log("reparacion: " + JSON.stringify(reparacion));
+            console.log("usuario: " + JSON.stringify(usuario));
+            reparacion.data.UsuarioRep = usuario.id;
+            console.log("reparacion: " + JSON.stringify(reparacion));
+            guardarReparacionPersistencia(reparacion)
             .then(resolve())
-            .catch(error  => reject(error))
+            //.catch(error  => reject(error));
         })
-        .catch(error  => reject(error));
+        //.catch(error  => reject(error));
         dispatch(isFetchingCoplete());
     });
 }
@@ -499,5 +504,10 @@ export const setProvinciaCliente = (provincia) => ({
 
 export const clearCliente = () => ({
     type: AppTypes.CLEAR_CLIENTE,
+    payload: {}
+})
+
+export const clearPresupuesto = () => ({
+    type: AppTypes.CLEAR_PRESUPUESTO,
     payload: {}
 })
