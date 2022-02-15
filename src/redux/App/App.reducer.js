@@ -26,10 +26,22 @@ const INITIAL_STATE = {
     // Le voy a llamar usuario al usuario logueado, 
     // y cliente al usuario/cliente en general
     reparacion: {}, // La reparación que se muestra
+    presupuesto: {
+        usuario: {
+            id: null,
+            data: {}
+        },
+        reparacion: {
+            id: null,
+            data: {}
+        }
+    },
     cliente: {}, // Es el cliente que se muestra
     coleccionReparaciones: [], // Todas las reparaciones
     coleccionUsuarios: [], // Todos los usuarios
-    //provincias: [] // Las provincias usadas en los select
+    provinciasSelect: [], // Las provincias usadas en los select
+    localidadesSelect: [], // Las localidades usadas en los select
+    usuariosSelect: [] // Los usuarios usados en los select
 }
 
 // Todas las estructuras tiene un id del documento y un data del documento.
@@ -59,8 +71,8 @@ export default (state = INITIAL_STATE, action) => {
             return { 
                 ...state, 
                 cliente: {
-                    id: action.payload.id,
-                    data: action.payload.data
+                    id: action.payload.data.id,
+                    data: action.payload.data.data
                 }
             };
         case AppTypes.SET_ESTADO:
@@ -171,43 +183,43 @@ export default (state = INITIAL_STATE, action) => {
                 ...state,
                 confirm: action.payload.data.confirm
             };
-        case AppTypes.LOAD_USU_TO_PRESU:
+        // case AppTypes.LOAD_USU_TO_PRESU:
+        //     return {
+        //         ...state,
+        //         presupuesto: {
+        //             UsuarioPreu: action.payload.data.usuario?.id,
+        //             EmailPresu: action.payload.data.usuario.data?.EmailUsu,
+        //             NombrePresu: action.payload.data.usuario.data?.NombreUsu,
+        //             ApellidoPresu: action.payload.data.usuario.data?.ApellidoUsu,
+        //             TelefonoPresu: action.payload.data.usuario.data?.TelefonoUsu,
+        //             CiudadPresu: action.payload.data.usuario.data?.CiudadUsu,
+        //             ProvinciaPresu: action.payload.data.usuario.data?.ProvinciaUsu
+        //         }
+        //     }
+        case AppTypes.GET_PROVINCIAS_SELECT:
             return {
                 ...state,
-                presupuesto: {
-                    UsuarioPreu: action.payload.data.usuario?.id,
-                    EmailPresu: action.payload.data.usuario.data?.EmailUsu,
-                    NombrePresu: action.payload.data.usuario.data?.NombreUsu,
-                    ApellidoPresu: action.payload.data.usuario.data?.ApellidoUsu,
-                    TelefonoPresu: action.payload.data.usuario.data?.TelefonoUsu,
-                    CiudadPresu: action.payload.data.usuario.data?.CiudadUsu,
-                    ProvinciaPresu: action.payload.data.usuario.data?.ProvinciaUsu
-                }
+                provinciasSelect: action.payload.data
             }
-        case AppTypes.GET_PROVINCIAS:
+        case AppTypes.GET_LOCALIDADES_SELECT:
             return {
                 ...state,
-                provincias: action.payload.data
+                localidadesSelect: action.payload.data.localidadesSelect
             }
-        case AppTypes.GET_LOCALIDADES:
+        case AppTypes.GET_USUARIOS_SELECT:
             return {
                 ...state,
-                localidades: action.payload.data.localidades
+                usuariosSelect: action.payload.data
             }
         case AppTypes.SET_LOCALIDAD_PRESU:
             return {
                 ...state,
                 presupuesto: {
                     ...state.presupuesto,
-                    CiudadPresu: action.payload.data
-                },
-            }
-        case AppTypes.SET_PROVINCIA_PRESU:
-            return {
-                ...state,
-                presupuesto: {
-                    ...state.presupuesto,
-                    ProvinciaPresu: action.payload.data
+                    usuario: {
+                        ...state.presupuesto.usuario,
+                        CiudadUsu: action.payload.data
+                    }
                 },
             }
         case AppTypes.SET_LOCALIDAD_CLIENTE:
@@ -219,6 +231,7 @@ export default (state = INITIAL_STATE, action) => {
                         ...state.cliente.data,
                         CiudadUsu: action.payload.data
                     }
+                    
                 },
             }
         case AppTypes.SET_PROVINCIA_CLIENTE:
@@ -233,14 +246,11 @@ export default (state = INITIAL_STATE, action) => {
                     
                 },
             }
-        case AppTypes.CLEAR_CLIENTE:
+        case AppTypes.CLEAR_FORM:
             return {
                 ...state,
                 cliente: {},
-            }
-        case AppTypes.CLEAR_PRESUPUESTO:
-            return {
-                ...state,
+                reparacion: {},
                 presupuesto: {},
             }
         default:

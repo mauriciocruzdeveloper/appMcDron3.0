@@ -17,9 +17,10 @@ import {
     eliminarUsuarioPersistencia,
     getProvinciasSelectPersistencia,
     getLocPorProvPersistencia,
-    getUsuariosPersistencia
-// } from "../../persistencia/persistenciaFirebase";
-} from "../../persistencia/persistenciaNode";
+    getUsuariosPersistencia,
+    getClientePorEmailPersistencia
+} from "../../persistencia/persistenciaFirebase";
+// } from "../../persistencia/persistenciaNode";
 
 // import { async } from "@firebase/util";
 
@@ -33,8 +34,8 @@ export const isFetchingCoplete = () => (
 export const login = (email, password) => async (dispatch) => {
     dispatch(isFetchingStart());
     return new Promise(async (resolve, reject) => {
-        if(email!="" && password!=""){
-            await loginPersistencia(email, password)
+        if(email != "" && password != ""){
+            loginPersistencia(email, password)
             .then( usuario => {
                 console.log("llega al then del loginPersistencia: " + JSON.stringify(usuario));
                 dispatch({ 
@@ -53,8 +54,8 @@ export const login = (email, password) => async (dispatch) => {
                 console.log("llega al catch del loginPersistencia");
                 console.log("error.code: " + error.code);
                 reject(error);
-            });
-            dispatch(isFetchingCoplete());
+            })
+            .finally(() => dispatch(isFetchingCoplete()));
         }else{
             const error = {code: "email o password incorrectos"};
             return reject(error);
@@ -190,6 +191,13 @@ export const changeInputPresu = (target) => {
     }  
 };
 
+export const changeEmailUsuPresu = (inputEmailUsuPresu) => (
+    {
+        type: AppTypes.CHANGE_INPUT_PRESU,
+        payload: { input: target.id, data: target.value }
+    }
+)
+
 export const setEstado = (estado) => ({ 
     type: AppTypes.SET_ESTADO,
     payload: { data: estado }
@@ -198,7 +206,7 @@ export const setEstado = (estado) => ({
 export const getReparaciones = () => async (dispatch) => {
     dispatch( isFetchingStart());
     return new Promise(async (resolve, reject) => {
-        await getReparacionesPersistencia()
+        getReparacionesPersistencia()
         .then( reparaciones => {
             console.log("llega al then del getReparacionesPersistencia");
             dispatch({ 
@@ -213,15 +221,15 @@ export const getReparaciones = () => async (dispatch) => {
         .catch(error  => {
             console.log("llega al catch del getReparacionesPersistencia");
             reject(error);
-        });
-        dispatch(isFetchingCoplete());
+        })
+        .finally(() => dispatch(isFetchingCoplete()));
     });
 };
 
 export const getUsuarios = () => async (dispatch) => {
     dispatch( isFetchingStart());
     return new Promise(async (resolve, reject) => {
-        await getUsuariosPersistencia()
+        getUsuariosPersistencia()
         .then( usuarios => {
             console.log("llega al then del getUsuariosPersistencia");
             dispatch({ 
@@ -236,17 +244,18 @@ export const getUsuarios = () => async (dispatch) => {
         .catch(error  => {
             console.log("llega al catch del getUsuariosPersistencia");
             reject(error);
-        });
-        dispatch(isFetchingCoplete());
+        })
+        .finally(() => dispatch(isFetchingCoplete()));
     });
 };
 
 export const getReparacion = (id) => async (dispatch) => {
+    console.log("getReparacion()");
     dispatch( isFetchingStart());
     return new Promise(async (resolve, reject) => {
         await getReparacionPersistencia(id)
         .then( reparacion => {
-            console.log("llega al then del getReparacionPersistencia");
+            console.log("llega al then del getReparacion");
             dispatch({ 
                 type: AppTypes.GET_REPARACION, 
                 payload: {
@@ -255,13 +264,13 @@ export const getReparacion = (id) => async (dispatch) => {
                 }
             });
             // No hace falta devolver el usuario, pero lo hago por si sirve en otra ocación.
-            return resolve(reparacion); 
+            resolve(reparacion); 
         })
-        // .catch(error  => {
-        //     console.log("llega al catch del getReparacionPersistencia");
-        //     reject(error);
-        // });
-        dispatch(isFetchingCoplete());
+        .catch(error  => {
+            console.log("llega al catch del getReparacion");
+            reject(error);
+        })
+        .finally(() => dispatch(isFetchingCoplete()));
     });
 };
 
@@ -269,26 +278,199 @@ export const getCliente = (id) => async (dispatch) => {
     console.log("id cliente action: " + id);
     dispatch( isFetchingStart());
     return new Promise(async (resolve, reject) => {
-        await getClientePersistencia(id)
+        getClientePersistencia(id)
         .then( cliente => {
-            console.log("llega al then del getClientePersistencia");
+            console.log("llega al then del getClientePersistencia: " + JSON.stringify(cliente));
             dispatch({ 
                 type: AppTypes.GET_CLIENTE, 
                 payload: {
-                    id: id,
-                    data: cliente.data
+                    data: {
+                        id: id,
+                        data: cliente.data
+                    }
                 }
             });
             // No hace falta devolver el usuario, pero lo hago por si sirve en otra ocación.
-            return resolve(cliente); 
+            resolve(cliente); 
         })
         .catch(error  => {
             console.log("llega al catch del getClientePersistencia");
             reject(error);
-        });
-        dispatch(isFetchingCoplete());
+        })
+        .finally(() => dispatch(isFetchingCoplete()));
     });
 };
+
+export const rememberMe = () => {
+    localStorage.setItem('memoria', JSON.stringify( estado.display1 ));
+    const memoria = JSON.parse(localStorage.getItem('memoria')) || [];
+}
+
+export const confirm = (mensaje, titulo, tipo, callBack) => {
+    return(
+        {
+            type: AppTypes.CONFIRM,
+                payload: { 
+                    data: {
+                        confirm: {
+                            showConfirm: true,
+                            mensajeConfirm: mensaje,
+                            tituloConfirm: titulo,
+                            tipoConfirm: tipo,
+                            callBackConfirm: callBack
+                        }
+                    } 
+                }
+        }
+    )
+};
+
+export const loadUsuToPresu = (usuario) => {
+    return({
+        type: AppTypes.SET_USUARIO_PRESU,
+        payload: {
+            data: {
+                usuario
+            }
+        }
+    })
+};
+
+export const getProvinciasSelect = () => async (dispatch) => {
+    console.log("getProvinciasSelect");
+    dispatch(isFetchingStart());
+    return new Promise((resolve, reject) => {
+        getProvinciasSelectPersistencia()
+        .then(provinciasSelect => {
+            dispatch({
+                type: AppTypes.GET_PROVINCIAS_SELECT,
+                payload: {
+                    data: 
+                        provinciasSelect
+                    
+                }
+            });
+            resolve(provinciasSelect);
+        })
+        .catch(error  => reject(error))
+        .finally(() => dispatch(isFetchingCoplete()));
+    });
+}
+
+export const getUsuariosSelect = () => async (dispatch) => {
+    console.log("getUsuariosSelect");
+    dispatch(isFetchingStart());
+    return new Promise((resolve, reject) => {
+        getUsuariosPersistencia()
+        .then(usuarios => {
+            const usuariosSelect = usuarios.map(usuario => {
+                let dato = usuario.data.EmailUsu ? usuario.data.EmailUsu : usuario.id;
+                return { value: dato, label: dato }
+            });
+            dispatch({
+                type: AppTypes.GET_USUARIOS_SELECT,
+                payload: {
+                    data: usuariosSelect
+                }
+            });
+            resolve(usuariosSelect);
+        })
+        .catch(error  => reject(error))
+        .finally(() => dispatch(isFetchingCoplete()));
+    });
+}
+
+export const getLocalidadesPorProvincia = (provincia) => async (dispatch) => {
+    console.log("getLocalidadesPorProvincia");
+    dispatch(isFetchingStart());
+    return new Promise((resolve, reject) => {
+        getLocPorProvPersistencia(provincia)
+        .then(localidadesSelect => {
+            dispatch({
+                type: AppTypes.GET_LOCALIDADES_SELECT,
+                payload: {
+                    data: {
+                        localidadesSelect: localidadesSelect,
+                        provincia: provincia
+                    }
+                }
+            });
+            resolve(localidadesSelect);
+        })
+        .catch(error  => reject(error))
+        .finally(() => dispatch(isFetchingCoplete()));
+    });
+}
+
+export const setUsuarioPresu = (emailUsuario) => async (dispatch) => {
+    console.log("setUsuarioPresu: " + emailUsuario);
+    dispatch(isFetchingStart());
+    return new Promise((resolve, reject) => {
+        console.log("Promise: " + emailUsuario);
+        getClientePorEmailPersistencia(emailUsuario)
+        .then(usuario => {
+            console.log("usuario set: " + JSON.stringify(usuario));
+            dispatch({
+                type: AppTypes.GET_CLIENTE,
+                payload: {data: usuario}
+            });
+            resolve();
+        })
+        .catch(error  => reject(error))
+        .finally(() => dispatch(isFetchingCoplete()));
+    });
+}
+
+export const setLocalidadPresu = (localidad) => ({
+    type: AppTypes.SET_LOCALIDAD_PRESU,
+    payload: {data: localidad}
+})
+
+export const setProvinciaPresu = (provincia) => ({
+    type: AppTypes.SET_PROVINCIA_PRESU,
+    payload: {data: provincia}
+})
+
+export const setLocalidadCliente = (localidad) => ({
+    type: AppTypes.SET_LOCALIDAD_CLIENTE,
+    payload: {data: localidad}
+})
+
+export const setProvinciaCliente = (provincia) => ({
+    type: AppTypes.SET_PROVINCIA_CLIENTE,
+    payload: {data: provincia}
+})
+
+export const clearForm = () => ({
+    type: AppTypes.CLEAR_FORM,
+    payload: {}
+})
+
+
+
+////////////////////////////////////////////////////////////////////////
+// ESTAS SON ACTIONS CREATORS QUE SÓLO MODIFICAN EL ISFETCHING,
+// PERO PRINCIPALMENTE SE ENCARGAN DE MANEJAR LA PERSISTENCIA
+
+export const guardarPresupuesto = (presupuesto) => async (dispatch) => {
+    dispatch(isFetchingStart());
+
+    presupuesto.reparacion.data.EstadoRep = "Consulta";
+    presupuesto.reparacion.data.PrioridadRep = "1";
+    presupuesto.reparacion.data.FeConRep = Date.now();
+
+    return new Promise((resolve, reject) => {
+        guardarUsuarioPersistencia(presupuesto.usuario)
+        .then(usuario => {
+            presupuesto.reparacion.data.UsuarioRep = presupuesto.usuario.data.EmailUsu;
+            guardarReparacionPersistencia(presupuesto.reparacion)
+            .then(() => resolve())
+            .catch(error  => reject(error));
+        })
+        .catch(error  => reject(error))
+        .finally(() => dispatch(isFetchingCoplete()));
+    });
+}
 
 export const guardarReparacion = (reparacion) => async (dispatch) => {
     dispatch(isFetchingStart());
@@ -351,163 +533,3 @@ export const eliminarUsuario = (id) => async (dispatch) => {
         dispatch(isFetchingCoplete());
     });   
 }
-
-export const rememberMe = () => {
-    localStorage.setItem('memoria', JSON.stringify( estado.display1 ));
-    const memoria = JSON.parse(localStorage.getItem('memoria')) || [];
-}
-
-export const confirm = (mensaje, titulo, tipo, callBack) => {
-    return(
-        {
-            type: AppTypes.CONFIRM,
-                payload: { 
-                    data: {
-                        confirm: {
-                            showConfirm: true,
-                            mensajeConfirm: mensaje,
-                            tituloConfirm: titulo,
-                            tipoConfirm: tipo,
-                            callBackConfirm: callBack
-                        }
-                    } 
-                }
-        }
-    )
-};
-
-export const loadUsuToPresu = (usuario) => {
-    return({
-        type: AppTypes.LOAD_USU_TO_PRESU,
-        payload: {
-            data: {
-                usuario
-            }
-        }
-    })
-};
-
-export const guardarPresupuesto = (presupuesto) => async (dispatch) => {
-
-    dispatch(isFetchingStart());
-
-    let usuario = {};
-    usuario.data = {};
-    usuario.id = presupuesto.UsuarioPresu || '';
-    usuario.data.NombreUsu = presupuesto.NombrePresu || '';
-    usuario.data.ApellidoUsu = presupuesto.ApellidoPresu || '';
-    usuario.data.TelefonoUsu = presupuesto.TelefonoPresu || '';
-    usuario.data.ProvinciaUsu = presupuesto.ProvinciaPresu || '';
-    usuario.data.CiudadUsu = presupuesto.CiudadPresu || '';
-    usuario.data.EmailUsu = presupuesto.EmailUsu || '';
-    let reparacion = {};
-    reparacion.data = {};
-    reparacion.data.UsuarioRep = presupuesto.UsuarioPresu || '';
-    reparacion.data.DroneRep = presupuesto.DronePresu || '';
-    reparacion.data.DescripcionUsuRep = presupuesto.DescripcionPresu || '';
-    reparacion.data.EstadoRep = "Consulta";
-    reparacion.data.PrioridadRep = "1";
-    reparacion.data.ApellidoUsu = presupuesto.ApellidoPresu,
-    reparacion.data.NombreUsu = presupuesto.NombrePresu,
-    reparacion.data.TelefonoUsu = presupuesto.TelefonoPresu
-    reparacion.data.FeConRep = Date.now();
-    // reparacion.id = Date.now().toString();
-
-    return new Promise(async (resolve, reject) => {
-        await guardarUsuarioPersistencia(usuario)
-        .then(usuario => {
-            console.log("reparacion: " + JSON.stringify(reparacion));
-            console.log("usuario: " + JSON.stringify(usuario));
-            reparacion.data.UsuarioRep = usuario.id;
-            console.log("reparacion: " + JSON.stringify(reparacion));
-            guardarReparacionPersistencia(reparacion)
-            .then(resolve())
-            //.catch(error  => reject(error));
-        })
-        //.catch(error  => reject(error));
-        dispatch(isFetchingCoplete());
-    });
-}
-
-export const getProvinciasSelect = () => async (dispatch) => {
-    console.log("getProvinciasSelect");
-    dispatch(isFetchingStart());
-    return new Promise(async (resolve, reject) => {
-        await getProvinciasSelectPersistencia()
-        .then(provincias => {
-            dispatch({
-                type: AppTypes.GET_PROVINCIAS,
-                payload: {
-                    data: 
-                        provincias
-                    
-                }
-            });
-            resolve(provincias);
-        })
-        .catch(error  => reject(error));
-        dispatch(isFetchingCoplete());
-    });
-}
-
-export const getLocalidadesPorProvincia = (provincia) => async (dispatch) => {
-    console.log("getLocalidadesPorProvincia");
-    dispatch(isFetchingStart());
-    return new Promise(async (resolve, reject) => {
-        await getLocPorProvPersistencia(provincia)
-        .then(localidades => {
-            dispatch({
-                type: AppTypes.GET_LOCALIDADES,
-                payload: {
-                    data: {
-                        localidades: localidades,
-                        provincia: provincia
-                    }
-                }
-            });
-            resolve(localidades);
-        })
-        .catch(error  => reject(error));
-        dispatch(isFetchingCoplete());
-    });
-    // localidadesSelect = localidades.filter(localidad => (
-        //     localidad.provincia.nombre == e.value
-        // ))
-        // .map(localidad => {
-        //     return {
-        //         value: localidad.nombre,
-        //         label: localidad.nombre
-        //     }
-        // });
-}
-
-
-export const setLocalidadPresu = (localidad) => ({
-    type: AppTypes.SET_LOCALIDAD_PRESU,
-    payload: {data: localidad}
-})
-
-export const setProvinciaPresu = (provincia) => ({
-    type: AppTypes.SET_PROVINCIA_PRESU,
-    payload: {data: provincia}
-})
-
-export const setLocalidadCliente = (localidad) => ({
-    type: AppTypes.SET_LOCALIDAD_CLIENTE,
-    payload: {data: localidad}
-})
-
-export const setProvinciaCliente = (provincia) => ({
-    type: AppTypes.SET_PROVINCIA_CLIENTE,
-    payload: {data: provincia}
-})
-
-export const clearCliente = () => ({
-    type: AppTypes.CLEAR_CLIENTE,
-    payload: {}
-})
-
-export const clearPresupuesto = () => ({
-    type: AppTypes.CLEAR_PRESUPUESTO,
-    payload: {}
-})

@@ -34,9 +34,9 @@ const NavMcDron = ({ usuario }) => {
             height="50"
         > */}
             <img 
-                src={usuario?.data?.UrlFotoUsu}
+                src={usuario?.data?.UrlFotoUsu || "./img/logo1.png"}
                 width="50" 
-                height="50"
+                //height="50"
                 className="rounded-circle float-right" 
                 alt="Foto del usuario"
             />

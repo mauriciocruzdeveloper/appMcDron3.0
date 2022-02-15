@@ -6,9 +6,10 @@ import {
     getAuth, 
     signInWithEmailAndPassword,
     sendEmailVerification
-} from "firebase/auth"
+} from "firebase/auth";
 
-import { 
+import {
+    where,
     collection, 
     doc, 
     setDoc, 
@@ -111,7 +112,7 @@ export const getUsuariosPersistencia = () => {
         getDocs(q)
         .then(querySnapshot => {
             let usuarios = [];
-            querySnapshot.forEach(doc => usuarios.push({id: doc.id, data: doc.data()}))
+            querySnapshot.forEach(doc => usuarios.push({id: doc.id, data: { ...doc.data(), EmailUsu: doc.id}}))
             resolve(usuarios)
         })
         .catch(error => reject(error))
@@ -127,6 +128,7 @@ export const getReparacionPersistencia = (id) => {
             const docRefCliente = doc(firestore, 'USUARIOS', idCliente);
             getDoc(docRefCliente)
             .then(docSnapCliente => {
+                console.log("docSnapCliente: " + JSON.stringify(docSnapCliente.data()));
                 resolve({
                     id: id, 
                     data: {
@@ -144,21 +146,23 @@ export const getReparacionPersistencia = (id) => {
 };
 
 export const getClientePersistencia = (id) => {
-    console.log("id cliente: " + id);
     return new Promise((resolve, reject) => {
         const docRef = doc(firestore, 'USUARIOS', id);
         getDoc(docRef)
         .then(docSnap => {
-            resolve({id: id, data: docSnap.data()}) // Este objeto es una reparación.
+            resolve({id: id, data: { ...docSnap.data(), EmailUsu: id }}) // Este objeto es una reparación.
         })
         .catch(error => reject(error))
     });
 };
 
-export const guardarReparacionPersistencia = (reparacion) => {
+// En el caso de firebase es lo mismo, en node es diferente.
+export const getClientePorEmailPersistencia = getClientePersistencia;
 
+export const guardarReparacionPersistencia = (reparacion) => {
     return new Promise((resolve, reject) => {
-        console.log("Llega a guardarReparacionPersistencia");
+        // El id es el id o sino la fecha de consulta.
+        reparacion.id = (reparacion.id || reparacion.data?.FeConRep.toString());
         setDoc(
             doc(firestore, "REPARACIONES", reparacion.id), 
             reparacion.data
@@ -171,18 +175,19 @@ export const guardarReparacionPersistencia = (reparacion) => {
             console.log("Error: " + error);
             reject(error);
         });
-
     })
 };
 
 export const guardarUsuarioPersistencia = (usuario) => {
     return new Promise((resolve, reject) => {
         console.log("Llega a guardarUsuarioPersistencia");
+        // El id es el id o sino el email.
+        usuario.id = usuario.id || usuario.data?.EmailUsu;
         setDoc(
             doc(firestore, "USUARIOS", usuario.id), 
             usuario.data
         )
-        .then(() => {
+        .then(usuario => {
             console.log("actualizado usuario ok");
             resolve(usuario);
         })

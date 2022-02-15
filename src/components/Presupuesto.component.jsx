@@ -3,38 +3,47 @@ import { connect } from "react-redux";
 import TextareaAutosize from "react-textarea-autosize";
 import Select from 'react-select';
 import { 
-    changeInputPresu,
+    getCliente,
+    changeInputUsu,
+    changeInputRep,
     setEstado,
     guardarPresupuesto,
     abreModal,
     confirm,
-    loadUsuToPresu,
     getProvinciasSelect,
+    getUsuariosSelect,
     getLocalidadesPorProvincia,
-    setLocalidadPresu,
-    setProvinciaPresu,
-    clearPresupuesto
+    setLocalidadCliente,
+    setProvinciaCliente,
+    setUsuarioPresu,
+    clearForm
   } from "../redux/root-actions";
 
   import history from "../history";
 
 // import { provincias } from '../datos/provincias.json'; 
 
-const Presupuesto = ({ 
-    changeInputPresu, 
+const Presupuesto = ({
+    getCliente,
+    changeInputUsu,
+    changeInputRep, 
     presupuesto,
     usuario,
+    cliente,
+    reparacion,
     guardarPresupuesto,
     abreModal,
     confirm,
-    loadUsuToPresu,
     getProvinciasSelect,
+    getUsuariosSelect,
     getLocalidadesPorProvincia,
-    localidades,
-    provincias,
-    setLocalidadPresu,
-    setProvinciaPresu,
-    clearPresupuesto
+    localidadesSelect,
+    provinciasSelect,
+    usuariosSelect,
+    setLocalidadCliente,
+    setProvinciaCliente,
+    setUsuarioPresu,
+    clearForm
 }) => {
 
     console.log("PRESUPUESTO");
@@ -44,13 +53,16 @@ const Presupuesto = ({
     const initForm = useCallback(async () => {
         // Si el usuario es admin, deja todo en blanco para cargar cualquier usuario
         // sino cargo los datos del usuario logueado.
-        !usuario.data?.Admin ? await loadUsuToPresu(usuario) : null;
-        await getProvinciasSelect();
+        !usuario.data?.Admin ? await getCliente(usuario.id) : null; // Acá iría getCliente(usuario.id);
+        await getProvinciasSelect()
+            .catch(error => abreModal("Error buscando ProvinciasSelect ", `Código - ${error.code}`, "danger" ));
+        await getUsuariosSelect()
+        .catch(error => abreModal("Error buscando UsuariosSelect ", `Código - ${error.code}`, "danger" ));
     },[usuario]);
 
     useEffect(() => {
         initForm();
-        return () => clearPresupuesto();
+        return () => clearForm();
     }, [initForm]);
 
     //////////////////////////////////////////////////////////////
@@ -61,45 +73,48 @@ const Presupuesto = ({
             "Atención",
             "warning",
             () => {
+                const presupuesto = {
+                    usuario: cliente,
+                    reparacion: reparacion
+                }
                 guardarPresupuesto(presupuesto)
-                .then(reparacion => {
+                .then(() => {
                     abreModal("Presupuesto enviado!", "", "success" );
                     history.goBack();
                 })
-                //.catch(error => abreModal("Error al guardar ", "Código - " + error.code, "danger" ));
+                // .catch(error => abreModal("Error al guardar ", "Código - " + error.code, "danger" ));
             }
         );
     }
 
-    // console.log("provincias ANTES: " + JSON.stringify(provincias));
-
-    // const provinciasSelect = provincias.map(provincia => {
-    //     return {
-    //         value: provincia.provincia,
-    //         label: provincia.provincia
-    //     }
-    // });
-   
-
-    // let localidadesSelect = [];
 
     const handleOnChangeProvincias = async (e) => {
         console.log("e.target.value: " + JSON.stringify(e));
         await getLocalidadesPorProvincia(e.value);
-        await setProvinciaPresu(e.value);
-        // localidadesSelect = localidades.filter(localidad => (
-        //     localidad.provincia.nombre == e.value
-        // ))
-        // .map(localidad => {
-        //     return {
-        //         value: localidad.nombre,
-        //         label: localidad.nombre
-        //     }
-        // });
+        await setProvinciaCliente(e.value);
     }
 
     const handleOnChangeLocalidades = async (e) => {
-        await setLocalidadPresu(e.value);
+        await setLocalidadCliente(e.value);
+    }
+
+    const handleOnChangeUsuarios = async (e) => {
+        e ? await setUsuarioPresu(e.value) : null;
+    }
+
+    // Tengo que hacerlo mediante un handle porque el evento de onInputChange
+    // sólo contiene el valor del input, no es un evento.
+    // Abajo creo target con los atributos correctos para pasarlos como 
+    // parámetro del método changeInputPresu.
+    const handleOnInputChangeUsuarios = (inputEmailUsu, action) => {
+        const target = {};
+        target.id = "EmailUsu";
+        target.value = inputEmailUsu;
+        // solución para el borrado cuando blour. 
+        // https://github.com/JedWatson/react-select/issues/588#issuecomment-815133270
+        if(action.action === "input-change") changeInputUsu(target);
+        // Otra opción
+        //if (action?.action !== 'input-blur' && action?.action !== 'menu- close') changeInputUsu(target);
     }
 
     return(
@@ -123,80 +138,73 @@ const Presupuesto = ({
                     <h5 className="card-title bluemcdron">USUARIO</h5>
                     <div>
                         <label className="form-label">E-mail</label>
-                        <input 
-                            onChange={e => changeInputPresu(e.target)} 
-                            type="text" 
-                            className="form-control" 
-                            id="EmailUsu" 
-                            value={presupuesto?.EmailUsu || ""}
+                        {/* Crear un componente propio para otros usos que no se borre
+                        el contenido cuando se desenfoca. Ponerlo en una carpeta aparte 
+                        de componentes propios */}
+                        <Select 
+                            options={usuariosSelect}
+                            noOptionsMessage={() => null}
+                            onChange={e => handleOnChangeUsuarios(e)}
+                            onInputChange={handleOnInputChangeUsuarios}
+                            id="EmailUsu"
+                            value={{value: cliente.data?.EmailUsu, label: cliente.data?.EmailUsu}}
                         />
                     </div>
                     <div>
                         <label className="form-label">Nombre</label>
                         <input 
-                            onChange={e => changeInputPresu(e.target)} 
+                            onChange={e => changeInputUsu(e.target)} 
                             type="text" 
                             className="form-control" 
-                            id="NombrePresu" 
-                            value={presupuesto?.NombrePresu || ""}
+                            id="NombreUsu" 
+                            value={cliente.data?.NombreUsu || ""}
                         />
                     </div>
                     <div>
                         <label className="form-label">Apellido</label>
                         <input 
-                            onChange={e => changeInputPresu(e.target)} 
+                            onChange={e => changeInputUsu(e.target)} 
                             type="text" 
                             className="form-control" 
-                            id="ApellidoPresu" 
-                            value={presupuesto?.ApellidoPresu || ""}
+                            id="ApellidoUsu" 
+                            value={cliente.data?.ApellidoUsu || ""}
                         />
                     </div>
                     <div>
                         <label className="form-label">Teléfono</label>
                         <input 
-                            onChange={e => changeInputPresu(e.target)} 
+                            onChange={e => changeInputUsu(e.target)} 
                             type="text" 
                             className="form-control" 
-                            id="TelefonoPresu"
-                            value={presupuesto?.TelefonoPresu || ""}
+                            id="TelefonoUsu"
+                            value={cliente.data?.TelefonoUsu || ""}
                         />
                     </div>
                     <div>
                         <label className="form-label">Provincia</label>
                         <Select 
                             // onFocus={handleOnFocusSelect}
-                            options={provincias}
+                            options={provinciasSelect}
                             onChange={e => handleOnChangeProvincias(e)}
-                            id="ProvinciaPresu"
-                            value={{value: presupuesto?.ProvinciaPresu, label: presupuesto?.ProvinciaPresu}}
+                            id="ProvinciaUsu"
+                            value={{
+                                value: cliente.data?.ProvinciaUsu, 
+                                label: cliente.data?.ProvinciaUsu
+                            }}
                         />
-                        
-                        {/* <input 
-                            onChange={e => changeInputPresu(e.target)} 
-                            type="text" 
-                            className="form-control" 
-                            id="ProvinciaPresu"
-                            value={presupuesto?.ProvinciaPresu || ""}
-                        /> */}
                     </div>
                     <div>
                         <label className="form-label">Ciudad</label>
-
                         <Select 
                             // onFocus={handleOnFocusSelect}
-                            options={localidades}
+                            options={localidadesSelect}
                             onChange={e => handleOnChangeLocalidades(e)}
-                            id="CiudadPresu"
-                            // value={presupuesto?.CiudadPresu || ""}
-                            defaultValue={{value: presupuesto?.CiudadPresu, label: presupuesto?.CiudadPresu}}
+                            id="CiudadUsu"
+                            value={{
+                                value: cliente.data?.CiudadUsu, 
+                                label: cliente.data?.CiudadUsu
+                            }}
                         />
-                        {/* <input 
-                            onChange={e => changeInputPresu(e.target)} 
-                            type="text" 
-                            className="form-control" 
-                            id="CiudadPresu"
-                            value={presupuesto?.CiudadPresu || ""}
-                        /> */}
                     </div>
                 </div>
             </div>
@@ -207,21 +215,21 @@ const Presupuesto = ({
                     <div>
                         <label className="form-label">Modelo del Drone</label>
                         <input 
-                            onChange={e => changeInputPresu(e.target)} 
+                            onChange={e => changeInputRep(e.target)} 
                             type="text" 
                             className="form-control" 
-                            id="DronePresu"
-                            value={presupuesto?.DronePresu || ""}
+                            id="DroneRep"
+                            value={reparacion.data?.DroneRep || ""}
                         />
                     </div>
                     
                     <div>
                         <label className="form-label">Desperfectos o Roturas</label>
                         <TextareaAutosize
-                            onChange={e => changeInputPresu(e.target)} 
+                            onChange={e => changeInputRep(e.target)} 
                             className="form-control" 
-                            id="DescripcionPresu"
-                            value={presupuesto?.DescripcionPresu || ""}
+                            id="DescripcionUsuRep"
+                            value={reparacion.data?.DescripcionUsuRep || ""}
                         />
                     </div>
                 </div>
@@ -246,23 +254,29 @@ const Presupuesto = ({
 const mapStateToProps = (state) => ({
     presupuesto: state.app?.presupuesto,
     usuario: state.app?.usuario,
-    localidades: state.app?.localidades,
-    provincias: state.app?.provincias
+    cliente: state.app?.cliente,
+    reparacion: state.app?.reparacion,
+    localidadesSelect: state.app?.localidadesSelect,
+    provinciasSelect: state.app?.provinciasSelect,
+    usuariosSelect: state.app?.usuariosSelect
   });
 
 
 export default connect(
     mapStateToProps, 
-    { 
-        changeInputPresu, 
+    {
+        getCliente,
+        changeInputUsu,
+        changeInputRep, 
         setEstado, 
         guardarPresupuesto, 
         abreModal,
-        loadUsuToPresu,
         confirm,
         getProvinciasSelect,
+        getUsuariosSelect,
         getLocalidadesPorProvincia,
-        setLocalidadPresu,
-        setProvinciaPresu,
-        clearPresupuesto
+        setLocalidadCliente,
+        setProvinciaCliente,
+        setUsuarioPresu,
+        clearForm
     })(Presupuesto);

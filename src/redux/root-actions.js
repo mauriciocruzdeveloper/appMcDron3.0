@@ -20,16 +20,17 @@ import {
     loadUsuToPresu,
     guardarPresupuesto,
     getProvinciasSelect,
+    getUsuariosSelect,
     getLocalidadesPorProvincia,
     setLocalidadPresu,
     setProvinciaPresu,
+    setUsuarioPresu,
     setLocalidadCliente,
     setProvinciaCliente,
     getUsuarios,
     guardarUsuario,
     eliminarUsuario,
-    clearCliente,
-    clearPresupuesto
+    clearForm
     //getUsuario
 } from "./App/App.actions";
 
@@ -54,15 +55,16 @@ export {
     loadUsuToPresu,
     guardarPresupuesto,
     getProvinciasSelect,
+    getUsuariosSelect,
     getLocalidadesPorProvincia,
     setLocalidadPresu,
     setProvinciaPresu,
     setLocalidadCliente,
     setProvinciaCliente,
+    setUsuarioPresu,
     getUsuarios,
     guardarUsuario,
     eliminarUsuario,
-    clearCliente,
-    clearPresupuesto
+    clearForm
     //getUsuario
 }

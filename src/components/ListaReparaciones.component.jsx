@@ -13,8 +13,6 @@ import { Container, Button, lightColors, darkColors } from 'react-floating-actio
 const ListaReparaciones = ({ 
   getReparaciones, 
   coleccionReparaciones, 
-  isFetching,
-  match
 }) => {
 
   //PARA FORZAR LA CARGA DE LAS REPARACIONES AL INICIALIZAR

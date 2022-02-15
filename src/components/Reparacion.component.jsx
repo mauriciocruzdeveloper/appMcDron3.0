@@ -9,7 +9,8 @@ import {
     guardarReparacion,
     eliminarReparacion,
     abreModal,
-    confirm
+    confirm,
+    clearForm
   } from "../redux/root-actions";
 
 import { convertTimestampCORTO } from "../utils/utils";
@@ -30,17 +31,26 @@ const Reparacion = ({
     guardarReparacion,
     eliminarReparacion,
     abreModal,
-    confirm
+    confirm,
+    clearForm
 }) => {
 
     console.log("REPARACION");
 
     const { id } = useParams();
 
-    useEffect(async () => {
+    const inicializarFormulario = async () => {
         console.log("id: " + id);
         await getReparacion(id)
-        .catch(error => abreModal("Error buscando Reparación ", `Código - ${error.code}`, "danger" ));
+        .catch(error => {
+            abreModal("Error buscando Reparación ", `Código - ${error.code}`, "danger" );
+            history.goBack();
+        });
+    }
+
+    useEffect(() => {
+        inicializarFormulario();
+        return () => clearForm();
     }, [getReparacion]);
     
 
@@ -131,7 +141,7 @@ const Reparacion = ({
                     <div>
                         <label className="form-label">En lace a Drive</label>
 
-                        <div class="input-group">
+                        <div className="input-group">
                             <input 
                                 onChange={e => changeInputRep(e.target)} 
                                 type="text"
@@ -139,8 +149,8 @@ const Reparacion = ({
                                 id="DriveRep"
                                 value={reparacion?.data?.DriveRep} 
                             />
-                            <div class="input-group-append">
-                                <a href={reparacion?.data?.DriveRep}><button class="btn btn-outline-secondary bg-bluemcdron text-white" type="button">Ir</button></a>
+                            <div className="input-group-append">
+                                <a href={reparacion?.data?.DriveRep}><button className="btn btn-outline-secondary bg-bluemcdron text-white" type="button">Ir</button></a>
                             </div>
                         </div>
                     </div>
@@ -370,7 +380,7 @@ const Reparacion = ({
                             type="text" 
                             className="form-control" 
                             id="SeguimientoEntregaRep"
-                            value={reparacion?.data?.SeguimientoEntrega || ""}
+                            value={reparacion?.data?.SeguimientoEntregaRep || ""}
                             rows="5"
                         />
                     </div>
@@ -413,5 +423,6 @@ export default connect(
         guardarReparacion, 
         eliminarReparacion, 
         abreModal,
-        confirm
+        confirm,
+        clearForm
     })(Reparacion);

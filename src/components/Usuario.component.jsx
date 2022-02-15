@@ -14,7 +14,7 @@ import {
     getLocalidadesPorProvincia,
     setProvinciaCliente,
     setLocalidadCliente,
-    clearCliente
+    clearForm
   } from "../redux/root-actions";
 
 import { useParams } from "react-router-dom";
@@ -38,7 +38,7 @@ const Reparacion = ({
     getLocalidadesPorProvincia,
     setProvinciaCliente,
     setLocalidadCliente,
-    clearCliente
+    clearForm
 }) => {
 
     console.log("USUARIO");
@@ -49,12 +49,13 @@ const Reparacion = ({
 
     const inicializaFormulario = useCallback(async () => {
         await getProvinciasSelect();
-        await getCliente(id);
+        await getCliente(id)
+        // .catch(error => abreModal("Error buscando Cliente ", `Código - ${error.code}`, "danger" ));
     }, [id]);
 
     useEffect(() => {
         inicializaFormulario();
-        return () => clearCliente();
+        return () => clearForm();
     }, [inicializaFormulario]);
 
     ///////////////////////////////////////////////////////////////////
@@ -232,5 +233,5 @@ export default connect(
         getLocalidadesPorProvincia,
         setProvinciaCliente,
         setLocalidadCliente,
-        clearCliente
+        clearForm
     })(Reparacion);

@@ -1,6 +1,7 @@
 import axios from 'axios';
 
 import { token } from '../token';
+import store from "../redux/store";
 
 // import { config as firebaseConfig }  from '../configProd'; // Para producción
 // import { config as firebaseConfig }  from '../configDev'; // Para desarrollo
@@ -9,8 +10,9 @@ import { provincias } from '../datos/provincias.json';
 
 import { localidades } from '../datos/localidades.json';
 
-const SERVIDOR = 'http://localhost:5000';
 
+
+const SERVIDOR = 'http://localhost:5000';
 
 //////////////////// LOGIN //////////////////////
 
@@ -31,7 +33,7 @@ export const loginPersistencia = (email, password) => {
             return resolve({ id: email, data: response.data });
         }).catch(error => {
             console.log("Error en catch getLoginOkApi:" + error);
-            return reject({ ...error, code: `Error consulta codigo: ${error.response.status}` });
+            return reject({ ...error, code: `Error consulta codigo: ${error?.response?.status}` });
         });
     });
 };
@@ -59,10 +61,13 @@ export const getReparacionesPersistencia = (id) => {
 
 // Trae una reparación por id
 export const getReparacionPersistencia = (id) => {
+    console.log("getReparacionPersistencia()");
     return new Promise((resolve, reject) => {
+        console.log("llega a Promesa de getReparacionPersistencia");
         const headers = { 'autorization': token() }
         axios.get(`${SERVIDOR}/api/reparaciones/${id}`, { headers })
         .then(async response => {
+            console.log("llega al then de getReparacionPersistencia");
             let id = response.data._id;
             // Borro el id y el v para no pasar datos que no corresponden al cuerpo del objeto.
             delete response.data._id;
@@ -72,12 +77,16 @@ export const getReparacionPersistencia = (id) => {
             reparacion.data = response.data;
             await getUsuariosPersistencia(reparacion.UsuarioRep)
             .then(usuario => {
-                reparacion.data = { ...reparacion.data, ...usuario.data }
+                reparacion.data = { ...reparacion.data, ...usuario.data };
             })
-            .catch();
+            .catch(error => reject({ code: "Error en getReparacionPersistencia" }));
+            console.log("reparacion en gerReparacionPersistencia: " + JSON.stringify(reparacion));
             resolve(reparacion);
         })
-        .catch(error => reject({ ...error, code: `Error consulta codigo: ${error.response.status}` }));
+        .catch(error => {
+            console.log("llega al catch de getReparacionPersistencia");
+            reject({ ...error, code: `Error consulta codigo: ${error?.response?.status}` })
+        });
     });
 };
 
@@ -110,8 +119,9 @@ export const eliminarReparacionPersistencia = (id) => {
 
 // Trae todos los usuarios
 export const getUsuariosPersistencia = async () => {
+    console.log("llega a getUsuariosPersistencia()");
     return new Promise((resolve, reject) => {
-        // Acá agrego en el header el token para que el backend me autorice la consulta
+        // Acá agrego en el header el token() para que el backend me autorice la consulta
         const headers = { 'autorization': token() }
         axios.get(`${SERVIDOR}/api/usuarios`, { headers })
         .then(response => {
@@ -134,13 +144,17 @@ export const getClientePersistencia = (id) => {
     return new Promise((resolve, reject) => {
         const headers = { 'autorization': token() }
         axios.get(`${SERVIDOR}/api/usuarios/${id}`, { headers })
-        .then(response => {
-            let id = response.data._id;
-            // Borro el id para no pasar datos que no corresponden al cuerpo del objeto.
-            delete response.data._id;
-            delete response.data.__v;
-            resolve({ id: id, data: response.data })
-        })
+        .then(response => resolve(transformMongooseToApp(response)))
+        .catch(error => reject({ ...error, code: `Error consulta codigo: ${error.response.status}` }));
+    });
+};
+
+export const getClientePorEmailPersistencia = (id) => {
+    console.log("getClientePorEmailPersistencia: " + id);
+    return new Promise((resolve, reject) => {
+        const headers = { 'autorization': token() }
+        axios.get(`${SERVIDOR}/api/usuarioByEmail/${id}`, { headers })
+        .then(response => resolve(transformMongooseToApp(response)))
         .catch(error => reject({ ...error, code: `Error consulta codigo: ${error.response.status}` }));
     });
 };
@@ -151,13 +165,22 @@ export const guardarUsuarioPersistencia = (usuario) => {
     return new Promise((resolve, reject) => {
         const headers = {'autorization': token()}
         console.log("data: " + JSON.stringify(usuario.data));
-        usuario.id 
-        ? axios.patch(`${SERVIDOR}/api/usuarios/${usuario.id}`, usuario.data, { headers })
+        console.log("usuario.id: " + usuario.id);
+        if(usuario.id){
+            console.log("llega A PATCH");
+            axios.patch(`${SERVIDOR}/api/usuarios/${usuario.id}`, usuario.data, { headers })
             .then(response => resolve(transformMongooseToApp(response)))
-            .catch(error => reject(error))
-        : axios.post(SERVIDOR + '/api/usuarios', usuario.data, { headers })
+            .catch(() => reject( {code: `Error PATCH usu guardarUsuarioPersistencia` }))
+        }
+        else{
+            console.log("llega A POST: " + JSON.stringify(usuario.data));
+            axios.post(SERVIDOR + '/api/usuarios', usuario.data, { headers })
             .then(response => resolve(transformMongooseToApp(response)))
-            .catch(error => reject(error));
+            .catch(error => {
+                console.log("error: " + JSON.stringify(error.message));
+                reject({code: error.messaje})
+            });
+        };
     });
 };
 
@@ -189,7 +212,8 @@ export const getLocPorProvPersistencia = (provincia) => {
      console.log("getLocPorProvPersistencia");
      return new Promise((resolve, reject) => {
         resolve(
-            localidades.filter(localidad => (
+            localidades
+            .filter(localidad => (
                 localidad.provincia.nombre == provincia
             ))
             .map(localidad => {
