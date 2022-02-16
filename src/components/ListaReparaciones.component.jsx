@@ -18,11 +18,9 @@ const ListaReparaciones = ({
   escuchaReparaciones
 }) => {
 
-
+  // Busco las reparaciones al backup sólo cuando la colección está vacía.
   const iniciarFormulario = useCallback(async () => {
-    console.log("coleccion: " +coleccionReparaciones?.length);
     if(!coleccionReparaciones?.length) await escuchaReparaciones(); 
-    // Hay que actualizar la colección cuando cambia.
   }, [escuchaReparaciones]);
    
 

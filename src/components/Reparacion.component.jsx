@@ -25,9 +25,7 @@ import history from "../history";
 const Reparacion = ({ 
     changeInputRep, 
     getReparacion,
-    getCliente, 
-    reparacion,
-    cliente,
+    reparacion, // PARA USAR CON REDUX
     setEstado, 
     guardarReparacion,
     eliminarReparacion,
@@ -48,8 +46,24 @@ const Reparacion = ({
     // Además me ahorro todo lo del useEffect...
     //////////////////////////////
 
+    // !!!!!!!!!!!!!!!!!!!!!! USANDO VARIABLES !!!!!!!!!!!!!!!!!!!!!!!!!!
+    // De esta manera no renderiza cada vez que cambia la reparación
+    // Esto me trae problemas al cambiar de estado de reparación,
+    // que tendría que cambiar el color de los botones
+    //////////////////////////////////////////////////////////////////////
     // let reparacion = coleccionReparaciones.find(rep => rep.id == id);
 
+    // const handleOnChange = (target) => {
+    //     reparacion[target.id] = target.value;
+    // }
+    //////////////////////////////////////////////////////////////////////
+    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+
+    // !!!!!!!!!!!!!!!!!!!!!!!! USANDO REDUX !!!!!!!!!!!!!!!!!!!!!!!!!!!
+    // Con redux guardo absolutamente todo en el store. Todo sigue el mismo
+    // flujo, acción, reducer, nuevo estado.
+    //////////////////////////////////////////////////////////////
     const inicializarFormulario = useCallback(async () => {
         coleccionReparaciones?.length
         ? setReparacion(coleccionReparaciones.find(reparacion => reparacion.id == id))
@@ -67,7 +81,15 @@ const Reparacion = ({
         inicializarFormulario();
         return () => clearForm();
     }, [inicializarFormulario]);
+    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     
+
+    //!!!!!!!!!!!!!!!!!!!!!!!! USANDO STATE !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    // También se podría usar setState(reparacion) para manejar el estado localmente,
+    // algunos dicen que es lo correcto, y redux sólo para el estado global.
+    // Otros dicen que todo en redux es mejor porque es más mantenible y entendible.
+    //////////////////////////////////////////////////////////////////
+    //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
     let estadosArray = Object.values(estados);
 
@@ -100,8 +122,6 @@ const Reparacion = ({
             }
         );
     }
-
-    console.log("reparacion reparacion: " + JSON.stringify(reparacion));
 
     return(
         <div
@@ -160,7 +180,8 @@ const Reparacion = ({
 
                         <div className="input-group">
                             <input 
-                                onChange={e => changeInputRep(e.target)} 
+                                // onChange={e => handleOnChange(e.target)} // {e => changeInputRep(e.target)} 
+                                onChange={e => changeInputRep(e.target)}
                                 type="text"
                                 className="form-control" 
                                 id="DriveRep"
