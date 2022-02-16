@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useCallback } from "react";
 import { connect } from "react-redux";
 import TextareaAutosize from "react-textarea-autosize";
 import { 
@@ -10,7 +10,8 @@ import {
     eliminarReparacion,
     abreModal,
     confirm,
-    clearForm
+    clearForm,
+    setReparacion
   } from "../redux/root-actions";
 
 import { convertTimestampCORTO } from "../utils/utils";
@@ -32,26 +33,40 @@ const Reparacion = ({
     eliminarReparacion,
     abreModal,
     confirm,
-    clearForm
+    clearForm,
+    coleccionReparaciones,
+    setReparacion
 }) => {
 
     console.log("REPARACION");
 
     const { id } = useParams();
 
-    const inicializarFormulario = async () => {
-        console.log("id: " + id);
-        await getReparacion(id)
-        .catch(error => {
-            abreModal("Error buscando Reparación ", `Código - ${error.code}`, "danger" );
-            history.goBack();
-        });
-    }
+    ///////////////////////////////////////////////////
+    // relaciono "reparacion" con la reparación de la colección, para que,
+    // cuando se modifique la colección, se vea reflejado el cambio inmediatamente.
+    // Además me ahorro todo lo del useEffect...
+    //////////////////////////////
 
+    // let reparacion = coleccionReparaciones.find(rep => rep.id == id);
+
+    const inicializarFormulario = useCallback(async () => {
+        coleccionReparaciones?.length
+        ? setReparacion(coleccionReparaciones.find(reparacion => reparacion.id == id))
+        : await getReparacion(id)
+                .catch(error => {
+                    abreModal("Error buscando Reparación ", `Código - ${error.code}`, "danger" );
+                    history.goBack();
+                })
+    // Cuando cambia la colección de reparaciones, el escuchador lo ve, y se actualiza la colección
+    // entonces la pongo como dependencia del useCallback para que se vuelva a renderizar la función
+    // y vuelva a setear la reparación como está en la actualidad.
+    }, [coleccionReparaciones]);
+    
     useEffect(() => {
         inicializarFormulario();
         return () => clearForm();
-    }, [getReparacion]);
+    }, [inicializarFormulario]);
     
 
     let estadosArray = Object.values(estados);
@@ -85,6 +100,8 @@ const Reparacion = ({
             }
         );
     }
+
+    console.log("reparacion reparacion: " + JSON.stringify(reparacion));
 
     return(
         <div
@@ -388,13 +405,15 @@ const Reparacion = ({
             </div>
 
            <div className="text-center">
-                <button 
+                <button
+                    key="botonGuardar"
                     onClick={ handleGuardarReparacion }
                     className="w-100 mb-3 btn bg-bluemcdron text-white"
                 >
                     Guardar
                 </button>
-                <button 
+                <button
+                    key="botonEliminar"
                     onClick={ handleEliminarReparacion }
                     className="w-100 btn bg-danger text-white"
                 >
@@ -409,7 +428,8 @@ const Reparacion = ({
 
 const mapStateToProps = (state) => ({
     reparacion: state.app?.reparacion,
-    cliente: state.app?.cliente
+    cliente: state.app?.cliente,
+    coleccionReparaciones: state.app?.coleccionReparaciones
   });
 
 
@@ -424,5 +444,6 @@ export default connect(
         eliminarReparacion, 
         abreModal,
         confirm,
-        clearForm
+        clearForm,
+        setReparacion
     })(Reparacion);

@@ -14,7 +14,8 @@ import {
     getLocalidadesPorProvincia,
     setProvinciaCliente,
     setLocalidadCliente,
-    clearForm
+    clearForm,
+    setCliente
   } from "../redux/root-actions";
 
 import { useParams } from "react-router-dom";
@@ -38,7 +39,9 @@ const Reparacion = ({
     getLocalidadesPorProvincia,
     setProvinciaCliente,
     setLocalidadCliente,
-    clearForm
+    clearForm,
+    coleccionUsuarios,
+    setCliente
 }) => {
 
     console.log("USUARIO");
@@ -47,10 +50,17 @@ const Reparacion = ({
 
     // Esto inicializa el form al montar y limpia al desmontar ///////
 
+    // Inicializa los datos del formulario.
     const inicializaFormulario = useCallback(async () => {
-        await getProvinciasSelect();
-        await getCliente(id)
-        // .catch(error => abreModal("Error buscando Cliente ", `Código - ${error.code}`, "danger" ));
+        // Busca los datos en caso que no estén en el store.
+        !provincias?.length ? await getProvinciasSelect() : null;
+        coleccionUsuarios.length 
+        ? setCliente(coleccionUsuarios.find(usuario => usuario.id == id))
+        : await getCliente(id)
+                .catch(error => {
+                    abreModal("Error buscando Cliente ", `Código - ${error.code}`, "danger" );
+                    history.goBack();
+                });
     }, [id]);
 
     useEffect(() => {
@@ -98,8 +108,6 @@ const Reparacion = ({
     const handleOnChangeLocalidades = async (e) => {
         await setLocalidadCliente(e.value);
     }
-
-    console.log("cliente: " + JSON.stringify(cliente));
 
     return(
         <div
@@ -161,7 +169,7 @@ const Reparacion = ({
                         <label className="form-label">Teléfono</label>
                         <input 
                             onChange={e => changeInputUsu(e.target)} 
-                            type="number" 
+                            type="tel" 
                             className="form-control" 
                             id="TelefonoUsu"
                             value={cliente?.data?.TelefonoUsu || ""}
@@ -216,6 +224,7 @@ const mapStateToProps = (state) => ({
     cliente: state.app?.cliente,
     provincias: state.app?.provincias,
     localidades: state.app?.localidades,
+    coleccionUsuarios: state.app?.coleccionUsuarios
   });
 
 
@@ -233,5 +242,6 @@ export default connect(
         getLocalidadesPorProvincia,
         setProvinciaCliente,
         setLocalidadCliente,
-        clearForm
+        clearForm,
+        setCliente
     })(Reparacion);

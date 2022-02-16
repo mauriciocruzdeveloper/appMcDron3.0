@@ -1,5 +1,6 @@
 import { applyActionCode } from "firebase/auth";
 import { AppTypes } from "./App.types";
+import { Usuario } from "../../interfases/Usuario";
 
 const INITIAL_STATE = {
     isLoggedIn: false, // Para indicar si hay alguien logueado
@@ -49,17 +50,22 @@ const INITIAL_STATE = {
 // Reducer para el App
 export default (state = INITIAL_STATE, action) => {
     switch (action.type) {
-        case AppTypes.GET_REPARACIONES:
+        case AppTypes.GET_REPARACIONES:{
+            console.log("reparaciones en reducer: " + JSON.stringify(action.payload.data[0]));
             return { 
                 ...state, 
                 coleccionReparaciones: action.payload.data
             };
-        case AppTypes.GET_USUARIOS:
+        }
+        case AppTypes.GET_USUARIOS:{
+            console.log("usuarios en reducer: " + JSON.stringify(action.payload.data[0]));
             return { 
                 ...state, 
                 coleccionUsuarios: action.payload.data
             };
-        case AppTypes.GET_REPARACION:
+        }
+        case AppTypes.GET_REPARACION:{
+            console.log("reparacion red: " + JSON.stringify(action.payload.data))
             return { 
                 ...state, 
                 reparacion: {
@@ -67,14 +73,17 @@ export default (state = INITIAL_STATE, action) => {
                     data: action.payload.data
                 }
             };
-        case AppTypes.GET_CLIENTE:
+        }
+        case AppTypes.GET_CLIENTE:{
+            console.log("cliente red: " + JSON.stringify(action.payload.data))
             return { 
                 ...state, 
                 cliente: {
-                    id: action.payload.data.id,
-                    data: action.payload.data.data
+                    id: action.payload.id,
+                    data: action.payload.data
                 }
             };
+        }
         case AppTypes.SET_ESTADO:
             return { 
                 ...state, 

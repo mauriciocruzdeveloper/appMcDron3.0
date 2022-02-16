@@ -13,6 +13,7 @@ Ambas versiones no están terminadas, y ambas siguen desarrollándose.
 - React Floating Action Button
 - React Router Dom
 - Firebase
+- React-Select
 
 ### Floating Action Button
 - https://www.npmjs.com/package/react-floating-action-button
@@ -27,3 +28,4 @@ Ambas versiones no están terminadas, y ambas siguen desarrollándose.
 ## CARACTERÍSTICAS
 - Usa persistencia en caché (para Firebase) en caso que se pierda la conexión a internet
 - Para conectar los components con las actions y los states uso el patrón container-component.
+- La app escucha los cambios en las colecciones a nivel de persistencia, y actualiza las colecciones en redux automáticamente cuando éstas cambian, para así no leer todo el tiempo desde el backend.

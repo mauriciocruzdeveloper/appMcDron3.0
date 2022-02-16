@@ -17,7 +17,8 @@ import {
     guardarReparacion,
     eliminarReparacion,
     confirm,
-    loadUsuToPresu,
+    setCliente,
+    setReparacion,
     guardarPresupuesto,
     getProvinciasSelect,
     getUsuariosSelect,
@@ -30,7 +31,9 @@ import {
     getUsuarios,
     guardarUsuario,
     eliminarUsuario,
-    clearForm
+    clearForm,
+    escuchaUsuarios,
+    escuchaReparaciones
     //getUsuario
 } from "./App/App.actions";
 
@@ -52,7 +55,8 @@ export {
     guardarReparacion,
     eliminarReparacion,
     confirm,
-    loadUsuToPresu,
+    setCliente,
+    setReparacion,
     guardarPresupuesto,
     getProvinciasSelect,
     getUsuariosSelect,
@@ -65,6 +69,8 @@ export {
     getUsuarios,
     guardarUsuario,
     eliminarUsuario,
-    clearForm
+    clearForm,
+    escuchaUsuarios,
+    escuchaReparaciones
     //getUsuario
 }

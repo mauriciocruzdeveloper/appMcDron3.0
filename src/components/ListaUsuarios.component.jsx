@@ -1,8 +1,9 @@
-import { useEffect } from "react";
+import { useEffect, useCallback } from "react";
 import { connect } from "react-redux";
 import history from "../history";
 import { 
-  getUsuarios
+  getUsuarios,
+  escuchaUsuarios
 } from "../redux/root-actions";
 // JSON con los estados de las reparaciones
 import { estados } from '../datos/estados.json';
@@ -12,14 +13,27 @@ import { Container, Button, lightColors, darkColors } from 'react-floating-actio
 
 const ListaUsuarios = ({ 
   getUsuarios, 
-  coleccionUsuarios
+  coleccionUsuarios,
+  escuchaUsuarios
 }) => {
 
-  //PARA FORZAR LA CARGA DE LAS REPARACIONES AL INICIALIZAR
-  useEffect(async () => {
+  // iniciarFormulario contiene la lógica que va dentro del useEffect.
+  // Tiene que ser así porque no se recomienda usar funciones asincrónicas
+  // dentro del useEffect. Además hay que usar useCallback para que no se 
+  // ejecute una y otra vez, entrando en bucle, cuando se renderiza el componente.
+  const iniciarFormulario = useCallback(async () => {
+    console.log("coleccion: " + coleccionUsuarios?.length);
+    // Cuando la colección está vacía, se llena mediante el backend, y queda en escucha
+    // para cuando cambie la base de datos ésta actualice la colección en redux automáticamente.
+    if(!coleccionUsuarios?.length) await escuchaUsuarios(); 
+  }, [escuchaUsuarios]);
+
+  //PARA FORZAR LA CARGA DE LOS USUARIOS AL INICIALIZAR
+  useEffect(() => {
+    console.log("useEffect()");
     // Falta capturar los errores con el catch. getReparciones es una promesa.
-    await getUsuarios();
-  }, [getUsuarios]);
+    iniciarFormulario();
+  }, [iniciarFormulario]);
 
 
   return (
@@ -27,7 +41,7 @@ const ListaUsuarios = ({
       className="p-4" 
       style={{
         backgroundColor: "#EEEEEE",
-        height: "100vh",
+        height: "100%",
       }}>
       {coleccionUsuarios.map(usuario => (
         <div
@@ -53,4 +67,4 @@ const mapStateToProps = (state) => ({
   isFetching: state.app.isFetching
 });
 
-export default connect( mapStateToProps, { getUsuarios } )( ListaUsuarios );
+export default connect( mapStateToProps, { getUsuarios, escuchaUsuarios } )( ListaUsuarios );

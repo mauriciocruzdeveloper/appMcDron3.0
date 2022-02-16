@@ -9,6 +9,7 @@ import {
 } from "firebase/auth";
 
 import {
+    onSnapshot,
     where,
     collection, 
     doc, 
@@ -24,12 +25,13 @@ import {
     CACHE_SIZE_UNLIMITED // constante para caché ilimitada
 } from "firebase/firestore";
 
-// import { config as firebaseConfig }  from '../configProd'; // Para producción
-import { config as firebaseConfig }  from '../configDev'; // Para desarrollo
+import { config as firebaseConfig }  from '../configProd'; // Para producción
+// import { config as firebaseConfig }  from '../configDev'; // Para desarrollo
 
 import { provincias } from '../datos/provincias.json';
 
 import { localidades } from '../datos/localidades.json';
+
 
 // Initialize Firebase
 const firebaseApp = initializeApp(firebaseConfig);
@@ -271,6 +273,34 @@ export const getLocPorProvPersistencia = (provincia) => {
         );
     })
 };
+
+export const escuchaUsuariosPersistencia = (setUsuariosToRedux) => {
+    console.log("escuchaUsuariosPersistencia");
+    // const unsubscribe = null;
+
+    const q = query(collection(firestore, "USUARIOS"), orderBy("NombreUsu"));
+    const unsubscribeUsu = onSnapshot(q, (querySnapshot) => {
+        let usuarios = [];
+        querySnapshot.forEach(doc => usuarios.push({id: doc.id, data: { ...doc.data(), EmailUsu: doc.id}}))
+        console.log("usuarios en getUsuariosPersistencia(): " + JSON.stringify(usuarios[0]));
+        setUsuariosToRedux(usuarios);
+    });
+
+}
+
+export const escuchaReparacionesPersistencia = (setReparacionesToRedux) => {
+    console.log("escuchaReparacionesPersistencia");
+    // const unsubscribe = null;
+
+    const q = query(collection(firestore, "REPARACIONES"), orderBy("PrioridadRep"));
+    const unsubscribeRep = onSnapshot(q, (querySnapshot) => {
+        let reparaciones = [];
+        querySnapshot.forEach(doc => reparaciones.push({id: doc.id, data: doc.data()}));
+        console.log("usuarios en getReparacionesPersistencia(): " + JSON.stringify(reparaciones[0]));
+        setReparacionesToRedux(reparaciones);
+    });
+    
+}
 
 // VER DONDE AGREGARLO PARA QUE ME ACTUALICE LAS REPARACIONES
 // En lista reparaciones, en el effect, poner esto, y en el unmount del effect

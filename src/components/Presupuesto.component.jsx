@@ -174,7 +174,7 @@ const Presupuesto = ({
                         <label className="form-label">Teléfono</label>
                         <input 
                             onChange={e => changeInputUsu(e.target)} 
-                            type="text" 
+                            type="tel" 
                             className="form-control" 
                             id="TelefonoUsu"
                             value={cliente.data?.TelefonoUsu || ""}

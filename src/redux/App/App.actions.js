@@ -18,7 +18,9 @@ import {
     getProvinciasSelectPersistencia,
     getLocPorProvPersistencia,
     getUsuariosPersistencia,
-    getClientePorEmailPersistencia
+    getClientePorEmailPersistencia,
+    escuchaUsuariosPersistencia,
+    escuchaReparacionesPersistencia
 } from "../../persistencia/persistenciaFirebase";
 // } from "../../persistencia/persistenciaNode";
 
@@ -209,13 +211,7 @@ export const getReparaciones = () => async (dispatch) => {
         getReparacionesPersistencia()
         .then( reparaciones => {
             console.log("llega al then del getReparacionesPersistencia");
-            dispatch({ 
-                type: AppTypes.GET_REPARACIONES, 
-                payload: { 
-                    data: reparaciones
-                }
-            });
-            // No hace falta devolver el usuario, pero lo hago por si sirve en otra ocación.
+            dispatch(setReparacionesToRedux());
             return resolve(reparaciones); 
         })
         .catch(error  => {
@@ -227,17 +223,13 @@ export const getReparaciones = () => async (dispatch) => {
 };
 
 export const getUsuarios = () => async (dispatch) => {
-    dispatch( isFetchingStart());
+    console.log("getUsuarios()");
+    dispatch(isFetchingStart());
     return new Promise(async (resolve, reject) => {
         getUsuariosPersistencia()
         .then( usuarios => {
             console.log("llega al then del getUsuariosPersistencia");
-            dispatch({ 
-                type: AppTypes.GET_USUARIOS, 
-                payload: { 
-                    data: usuarios
-                }
-            });
+            dispatch(setUsuariosToRedux());
             // No hace falta devolver el usuario, pero lo hago por si sirve en otra ocación.
             return resolve(usuarios); 
         })
@@ -255,7 +247,6 @@ export const getReparacion = (id) => async (dispatch) => {
     return new Promise(async (resolve, reject) => {
         await getReparacionPersistencia(id)
         .then( reparacion => {
-            console.log("llega al then del getReparacion");
             dispatch({ 
                 type: AppTypes.GET_REPARACION, 
                 payload: {
@@ -267,7 +258,6 @@ export const getReparacion = (id) => async (dispatch) => {
             resolve(reparacion); 
         })
         .catch(error  => {
-            console.log("llega al catch del getReparacion");
             reject(error);
         })
         .finally(() => dispatch(isFetchingCoplete()));
@@ -275,26 +265,19 @@ export const getReparacion = (id) => async (dispatch) => {
 };
 
 export const getCliente = (id) => async (dispatch) => {
-    console.log("id cliente action: " + id);
+    console.log("getCliente()");
     dispatch( isFetchingStart());
     return new Promise(async (resolve, reject) => {
         getClientePersistencia(id)
         .then( cliente => {
-            console.log("llega al then del getClientePersistencia: " + JSON.stringify(cliente));
             dispatch({ 
                 type: AppTypes.GET_CLIENTE, 
-                payload: {
-                    data: {
-                        id: id,
-                        data: cliente.data
-                    }
-                }
+                payload: cliente 
             });
             // No hace falta devolver el usuario, pero lo hago por si sirve en otra ocación.
             resolve(cliente); 
         })
         .catch(error  => {
-            console.log("llega al catch del getClientePersistencia");
             reject(error);
         })
         .finally(() => dispatch(isFetchingCoplete()));
@@ -325,14 +308,19 @@ export const confirm = (mensaje, titulo, tipo, callBack) => {
     )
 };
 
-export const loadUsuToPresu = (usuario) => {
+export const setCliente = (cliente) => {
+    console.log("cliente SETuSU: " + JSON.stringify(usuario));
     return({
-        type: AppTypes.SET_USUARIO_PRESU,
-        payload: {
-            data: {
-                usuario
-            }
-        }
+        type: AppTypes.GET_CLIENTE,
+        payload: cliente
+    })
+};
+
+export const setReparacion = (reparacion) => {
+    console.log("reparacion SETuSU: " + JSON.stringify(reparacion));
+    return({
+        type: AppTypes.GET_REPARACION,
+        payload: reparacion
     })
 };
 
@@ -412,7 +400,7 @@ export const setUsuarioPresu = (emailUsuario) => async (dispatch) => {
             console.log("usuario set: " + JSON.stringify(usuario));
             dispatch({
                 type: AppTypes.GET_CLIENTE,
-                payload: {data: usuario}
+                payload: usuario
             });
             resolve();
         })
@@ -532,4 +520,40 @@ export const eliminarUsuario = (id) => async (dispatch) => {
         })
         dispatch(isFetchingCoplete());
     });   
+}
+
+// Esta función es para escuchar los cambios en la colección de usuarios,
+// y luego mandarlos a dispatch para actualizar el state en el store.
+export const escuchaUsuarios = () => async (dispatch) => {
+    console.log("escuchaUsuarios()");
+    dispatch(isFetchingStart());
+    await escuchaUsuariosPersistencia(
+        usuarios => dispatch(setUsuariosToRedux(usuarios))
+    );
+    dispatch(isFetchingCoplete());
+}
+
+export const setUsuariosToRedux = (usuarios) => {
+    console.log("setUsuriosToRedux(): " + JSON.stringify(usuarios[0]));
+    return { 
+        type: AppTypes.GET_USUARIOS, 
+        payload: { data: usuarios }
+    }
+};
+
+export const setReparacionesToRedux = (reparaciones) => {
+    console.log("setReparacionesToRedux(): " + JSON.stringify(reparaciones[0]));
+    return { 
+        type: AppTypes.GET_REPARACIONES, 
+        payload: { data: reparaciones }
+    }
+};
+
+export const escuchaReparaciones = () => async (dispatch) => {
+    console.log("escuchaReparaciones()");
+    dispatch(isFetchingStart());
+    await escuchaReparacionesPersistencia(
+        reparaciones => dispatch(setReparacionesToRedux(reparaciones))
+    );
+    dispatch(isFetchingCoplete());
 }
