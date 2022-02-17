@@ -1,4 +1,4 @@
-import { useEffect, useCallback } from "react";
+import { useEffect, useCallback, useState } from "react";
 import { connect } from "react-redux";
 import TextareaAutosize from "react-textarea-autosize";
 import { 
@@ -23,17 +23,17 @@ import { estados } from '../datos/estados.json';
 import history from "../history";
 
 const Reparacion = ({ 
-    changeInputRep, 
+    // changeInputRep, // PARA USAR CON REDUX
     getReparacion,
-    reparacion, // PARA USAR CON REDUX
-    setEstado, 
+    // reparacion, // PARA USAR CON REDUX
+    // setEstado, // PARA REDUX
     guardarReparacion,
     eliminarReparacion,
     abreModal,
     confirm,
     clearForm,
     coleccionReparaciones,
-    setReparacion
+    // setReparacion // PARA USAR CON REDUX
 }) => {
 
     console.log("REPARACION");
@@ -89,6 +89,28 @@ const Reparacion = ({
     // algunos dicen que es lo correcto, y redux sólo para el estado global.
     // Otros dicen que todo en redux es mejor porque es más mantenible y entendible.
     //////////////////////////////////////////////////////////////////
+    const [ reparacion, setReparacion ] = useState();
+
+    const changeInputRep = target => setReparacion({ 
+        ...reparacion, 
+        data: {
+            ...reparacion.data,
+            [target.id]: target.value
+        } 
+    });
+    // Tengo que hacer una función aparte porque cuando modifica el estado de la reparación
+    // también tengo que modificar la prioridad. Se podría hacer diferente quizás con 
+    // id, value y otra prop del botón.
+    const setEstado = estado => {
+        setReparacion({
+            ...reparacion, 
+            data: {
+                ...reparacion.data,
+                EstadoRep: estado.nombre, 
+                PrioridadRep: estado.prioridad 
+            }
+        });
+    }
     //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
     let estadosArray = Object.values(estados);
@@ -164,7 +186,7 @@ const Reparacion = ({
                                     width: "90px",
                                     height: "30px"
                                 }}
-                                onClick={ ()=>setEstado(estado) }
+                                onClick={ ()=>setEstado(estado) } // PARA REDUX, Y QUIZÁS PARA USESTATE
                             >
                                 {estado.nombre}
                             </button>
