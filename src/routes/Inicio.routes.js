@@ -6,7 +6,7 @@ import Inicio from "../components/Inicio.component";
 import ListaReparaciones from "../components/ListaReparaciones.component";
 import ListaUsuarios from "../components/ListaUsuarios.component";
 import Reparacion from "../components/Reparacion.component";
-import Usuario from "../components/Usuario.component";
+import Usuario from "../components/Usuario.container";
 import Presupuesto from "../components/Presupuesto.component";
 import NavMcDron from "../components/NavMcDron.component";
 

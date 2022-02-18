@@ -332,11 +332,7 @@ export const getProvinciasSelect = () => async (dispatch) => {
         .then(provinciasSelect => {
             dispatch({
                 type: AppTypes.GET_PROVINCIAS_SELECT,
-                payload: {
-                    data: 
-                        provinciasSelect
-                    
-                }
+                payload: { data: provinciasSelect }
             });
             resolve(provinciasSelect);
         })
