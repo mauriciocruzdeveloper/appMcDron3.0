@@ -5,8 +5,6 @@ Ambas versiones no están terminadas, y ambas siguen desarrollándose.
 
 ### Versión de prueba online (puede estar desactualizada)
 http://mauriciocruzdrones.com/app
-usuario: admin@mauriciocruzdrones.com
-password: 123456
 
 
 ## TECNOLOGÍAS:

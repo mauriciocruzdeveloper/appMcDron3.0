@@ -1,12 +1,15 @@
 import { connect } from "react-redux";
+
 import { 
   login, 
   emailOnChangeLogin, 
   passwordOnChangeLogin,
   abreModal
 } from "../redux/root-actions";
+
 import history from "../history";
 
+import { useEffect } from 'react';
 
 const Login = ({ 
   isFetching, 
@@ -18,6 +21,13 @@ const Login = ({
   showModal,
   abreModal
 }) => {
+
+
+  // PARA SETEAR EL USUARIO Y PASSWORD POR DEFECTO PARA HACER PRUEBAS.
+  useEffect(() => {
+    () => emailOnChangeLogin("admin@mauriciocruzdrones.com");
+    () => emailOnChangeLogin("123456");
+  },[])
 
   const handleLogin = async () => {
     await login(email, password)
