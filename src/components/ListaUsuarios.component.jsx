@@ -41,7 +41,7 @@ const ListaUsuarios = ({
       className="p-4" 
       style={{
         backgroundColor: "#EEEEEE",
-        height: "100%",
+        // height: "100%",
       }}>
       {coleccionUsuarios.map(usuario => (
         <div

@@ -1,4 +1,4 @@
-import { useEffect, useCallback } from "react";
+import { useEffect, useCallback, useState } from "react";
 import { connect } from "react-redux";
 import { 
     changeInputUsu,
@@ -25,10 +25,10 @@ import history from "../history";
 import Select from 'react-select';
 
 const Reparacion = ({ 
-    changeInputUsu, 
+    // changeInputUsu, 
     getCliente,
     // Cliente es el usuario que se está mostrando, usuario es el logueado
-    cliente,
+    // cliente,
     guardarUsuario,
     eliminarUsuario,
     abreModal,
@@ -41,7 +41,7 @@ const Reparacion = ({
     setLocalidadCliente,
     clearForm,
     coleccionUsuarios,
-    setCliente
+    // setCliente
 }) => {
 
     console.log("USUARIO");
@@ -68,6 +68,18 @@ const Reparacion = ({
         return () => clearForm();
     }, [inicializaFormulario]);
 
+    ///////////////////////////////////////////////////////////////////
+
+    const [ cliente, setCliente ] = useState();
+
+    const changeInputUsu = target => setCliente({ 
+        ...cliente, 
+        data: {
+            ...cliente.data,
+            [target.id]: target.value
+        } 
+    });
+    
     ///////////////////////////////////////////////////////////////////
 
     const handleGuardarUsuario = () => {

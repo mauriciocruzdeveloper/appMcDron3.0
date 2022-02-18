@@ -24,6 +24,7 @@ const App = ( { isFetching, isLoggedIn, admin, modal, confirm, alert }) => {
       style={{
         backgroundColor: "#EEEEEE",
         height: "100%",
+        minHeight: "100vh"
       }}
     >
 {/* Esto de poner los modales y confirmaciones acá quizás sea una chanchada. VER!! */}

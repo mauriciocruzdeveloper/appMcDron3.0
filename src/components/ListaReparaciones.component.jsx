@@ -36,7 +36,7 @@ const ListaReparaciones = ({
       className="p-4" 
       style={{
         backgroundColor: "#EEEEEE",
-        height: "100vh",
+        // height: "100vh",
       }}>
       {coleccionReparaciones.map(reparacion => (
         <div

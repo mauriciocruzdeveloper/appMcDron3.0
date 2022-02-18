@@ -3,6 +3,11 @@
 La versión anterior es la 2.0 que está siendo desarrollada en Framework7/Cordova/Firebase. La versión 3.0 está siendo desarrollada en Bootstrap/React/Cordova/Firebase.
 Ambas versiones no están terminadas, y ambas siguen desarrollándose.
 
+### Versión de prueba online (puede estar desactualizada)
+http://mauriciocruzdrones.com/app
+usuario: admin@mauriciocruzdrones.com
+password: 123456
+
 
 ## TECNOLOGÍAS:
 - Cordova
@@ -23,6 +28,21 @@ Ambas versiones no están terminadas, y ambas siguen desarrollándose.
 
 ### Redux Thunk
 - https://www.npmjs.com/package/redux-thunk
+
+### React Select
+- https://react-select.com
+
+### React Router Dom
+- https://reactrouter.com/
+
+### Cordova
+- https://cordova.apache.org/
+
+### React
+- https://es.reactjs.org/
+
+
+## MODELO DE FLUJO
 
 
 ## CARACTERÍSTICAS
