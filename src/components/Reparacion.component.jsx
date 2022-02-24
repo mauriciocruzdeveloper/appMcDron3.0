@@ -1,69 +1,37 @@
+// React
 import { useEffect, useCallback, useState } from "react";
+// 
 import { connect } from "react-redux";
+import { useParams } from "react-router-dom";
+import history from "../history";
+import { convertTimestampCORTO } from "../utils/utils";
+// Components
 import TextareaAutosize from "react-textarea-autosize";
+// Actions
 import { 
-    changeInputRep,
     getReparacion,
-    getCliente,
-    setEstado,
     guardarReparacion,
     eliminarReparacion,
     abreModal,
     confirm,
-    clearForm,
-    setReparacion
   } from "../redux/root-actions";
 
-import { convertTimestampCORTO } from "../utils/utils";
-
-import { useParams } from "react-router-dom";
-
+// No se si está bien. Me gusta más que lo traiga la persistencia mediante una acción.
 import { estados } from '../datos/estados.json';
 
-import history from "../history";
-
 const Reparacion = ({ 
-    // changeInputRep, // PARA USAR CON REDUX
     getReparacion,
-    // reparacion, // PARA USAR CON REDUX
-    // setEstado, // PARA REDUX
     guardarReparacion,
     eliminarReparacion,
     abreModal,
     confirm,
-    clearForm,
     coleccionReparaciones,
-    // setReparacion // PARA USAR CON REDUX
 }) => {
 
     console.log("REPARACION");
 
     const { id } = useParams();
 
-    ///////////////////////////////////////////////////
-    // relaciono "reparacion" con la reparación de la colección, para que,
-    // cuando se modifique la colección, se vea reflejado el cambio inmediatamente.
-    // Además me ahorro todo lo del useEffect...
-    //////////////////////////////
-
-    // !!!!!!!!!!!!!!!!!!!!!! USANDO VARIABLES !!!!!!!!!!!!!!!!!!!!!!!!!!
-    // De esta manera no renderiza cada vez que cambia la reparación
-    // Esto me trae problemas al cambiar de estado de reparación,
-    // que tendría que cambiar el color de los botones
-    //////////////////////////////////////////////////////////////////////
-    // let reparacion = coleccionReparaciones.find(rep => rep.id == id);
-
-    // const handleOnChange = (target) => {
-    //     reparacion[target.id] = target.value;
-    // }
-    //////////////////////////////////////////////////////////////////////
-    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-
-    // !!!!!!!!!!!!!!!!!!!!!!!! USANDO REDUX !!!!!!!!!!!!!!!!!!!!!!!!!!!
-    // Con redux guardo absolutamente todo en el store. Todo sigue el mismo
-    // flujo, acción, reducer, nuevo estado.
-    //////////////////////////////////////////////////////////////
     const inicializarFormulario = useCallback(async () => {
         coleccionReparaciones?.length
         ? setReparacion(coleccionReparaciones.find(reparacion => reparacion.id == id))
@@ -79,25 +47,29 @@ const Reparacion = ({
     
     useEffect(() => {
         inicializarFormulario();
-        return () => clearForm();
     }, [inicializarFormulario]);
-    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    
 
-    //!!!!!!!!!!!!!!!!!!!!!!!! USANDO STATE !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    // También se podría usar setState(reparacion) para manejar el estado localmente,
-    // algunos dicen que es lo correcto, y redux sólo para el estado global.
-    // Otros dicen que todo en redux es mejor porque es más mantenible y entendible.
-    //////////////////////////////////////////////////////////////////
     const [ reparacion, setReparacion ] = useState();
 
-    const changeInputRep = target => setReparacion({ 
-        ...reparacion, 
-        data: {
-            ...reparacion.data,
-            [target.id]: target.value
-        } 
-    });
+    
+    const changeInputRep = target => {
+        let value = null;
+        if(target.type == "date"){
+            let anio = target.value.substr(0, 4);
+            let mes = target.value.substr(5, 2)-1;
+            let dia = target.value.substr(8, 2);
+            value = new Date(anio, mes, dia).getTime()+10800001; // Se agrega este número para que de bien la fecha.
+        }else{
+            value = target.value;
+        };
+        setReparacion({ 
+            ...reparacion, 
+            data: {
+                ...reparacion.data,
+                [target.id]: value
+            } 
+        });
+    };
     // Tengo que hacer una función aparte porque cuando modifica el estado de la reparación
     // también tengo que modificar la prioridad. Se podría hacer diferente quizás con 
     // id, value y otra prop del botón.
@@ -111,7 +83,6 @@ const Reparacion = ({
             }
         });
     }
-    //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
     let estadosArray = Object.values(estados);
 
@@ -174,6 +145,7 @@ const Reparacion = ({
                     <div className="text-center">
                         {estadosArray.map(estado =>
                             <button 
+                                key={estado.nombre}
                                 className="m-2 btn btn-outline-secondary overflow-hidden"
                                 type="button"
                                 alt={estado.nombre}
@@ -202,12 +174,11 @@ const Reparacion = ({
 
                         <div className="input-group">
                             <input 
-                                // onChange={e => handleOnChange(e.target)} // {e => changeInputRep(e.target)} 
                                 onChange={e => changeInputRep(e.target)}
                                 type="text"
                                 className="form-control" 
                                 id="DriveRep"
-                                value={reparacion?.data?.DriveRep} 
+                                value={reparacion?.data?.DriveRep } 
                             />
                             <div className="input-group-append">
                                 <a href={reparacion?.data?.DriveRep}><button className="btn btn-outline-secondary bg-bluemcdron text-white" type="button">Ir</button></a>
@@ -235,7 +206,7 @@ const Reparacion = ({
                             type="text" 
                             className="form-control" 
                             id="UsuarioRep" 
-                            value={reparacion?.data?.UsuarioRep}
+                            value={reparacion?.data?.EmailUsu || reparacion?.data?.UsuarioRep}
                             disabled
                         />
                     </div>
@@ -470,23 +441,16 @@ const Reparacion = ({
 }
 
 const mapStateToProps = (state) => ({
-    reparacion: state.app?.reparacion,
-    cliente: state.app?.cliente,
     coleccionReparaciones: state.app?.coleccionReparaciones
-  });
+});
 
 
 export default connect(
     mapStateToProps, 
     {
-        changeInputRep, 
         getReparacion,
-        getCliente,
-        setEstado, 
         guardarReparacion, 
         eliminarReparacion, 
         abreModal,
         confirm,
-        clearForm,
-        setReparacion
     })(Reparacion);

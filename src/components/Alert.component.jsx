@@ -1,4 +1,4 @@
-import { Modal, Alert } from 'react-bootstrap';
+import { Modal } from 'react-bootstrap';
 
 //TIPOS
 // primary
@@ -14,7 +14,7 @@ import { Modal, Alert } from 'react-bootstrap';
 
 const AlertComponent = ({ show, titulo, mensaje, tipo }) => {
 
-    console.log('Llega a ErrorComponent ' + show);
+    console.log('ALERT COMPONENT ' + show);
 
     return(
         <Modal centered show={show}>

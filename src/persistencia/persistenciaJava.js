@@ -6,7 +6,9 @@ import { provincias } from '../datos/provincias.json';
 
 import { localidades } from '../datos/localidades.json';
 
-const SERVIDOR = 'http://localhost:5000';
+
+
+const SERVIDOR = 'http://localhost:8080';
 
 //////////////////// LOGIN //////////////////////
 

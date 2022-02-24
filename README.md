@@ -3,6 +3,10 @@
 La versión anterior es la 2.0 que está siendo desarrollada en Framework7/Cordova/Firebase. La versión 3.0 está siendo desarrollada en Bootstrap/React/Cordova/Firebase.
 Ambas versiones no están terminadas, y ambas siguen desarrollándose.
 
+## PRIMERA ETAPA
+
+En la primera etapa sólo se harán las funcionalidades relacionadas a las reparaciones y los usuarios. Se podrá pedir un presupuesto, y éste generará una nueva reparación en estado "Consulta" y guardará el usuario. Se podrá modificar o eliminar el usuario y/o la reparación.
+
 ### Versión de prueba online (puede estar desactualizada)
 http://mauriciocruzdrones.com/app
 
@@ -43,7 +47,10 @@ http://mauriciocruzdrones.com/app
 ## MODELO DE FLUJO
 
 
+## PATRÓN CONTENEDOR-PRESENTACIONAL
+
+
 ## CARACTERÍSTICAS
 - Usa persistencia en caché (para Firebase) en caso que se pierda la conexión a internet
 - Para conectar los components con las actions y los states uso el patrón container-component.
-- La app escucha los cambios en las colecciones a nivel de persistencia, y actualiza las colecciones en redux automáticamente cuando éstas cambian, para así no leer todo el tiempo desde el backend.
+- La app escucha los cambios en las colecciones a nivel de persistencia, y actualiza las colecciones en redux automáticamente cuando éstas cambian, lo que también actualiza automáticamente la presentación.

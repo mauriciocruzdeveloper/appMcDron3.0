@@ -1,3 +1,5 @@
+import { useState } from "react";
+
 import { connect } from "react-redux";
 
 import { 
@@ -16,24 +18,37 @@ const Login = ({
   login, 
   emailOnChangeLogin, 
   passwordOnChangeLogin, 
-  email, 
-  password,
+  // email, 
+  // password,
   showModal,
   abreModal
 }) => {
 
 
+
   // PARA SETEAR EL USUARIO Y PASSWORD POR DEFECTO PARA HACER PRUEBAS.
-  useEffect(() => {
-    () => emailOnChangeLogin("admin@mauriciocruzdrones.com");
-    () => emailOnChangeLogin("123456");
-  },[])
+  // useEffect(() => {
+  //   () => emailOnChangeLogin("admin@mauriciocruzdrones.com");
+  //   () => emailOnChangeLogin("123456");
+  // },[])
+
+  const [ loginData, setLoginData ] = useState({});
+
+  console.log("LOGIN");
+
+  const changeInputLogin = target => setLoginData({ 
+    ...loginData, 
+    [target.id]: target.value 
+  });
 
   const handleLogin = async () => {
-    await login(email, password)
+    console.log("loginData: " + JSON.stringify(loginData));
+    await login(loginData)
       .then(() => history.push("/"))
       .catch( error => abreModal("Error ", "Código - " + error.code, "danger" ));
   };
+
+
 
   return (
     <div 
@@ -53,10 +68,10 @@ const Login = ({
             <input 
               type="email" 
               className="form-control" 
-              id="floatingInput" 
+              id="email" 
               placeholder="name@example.com" 
-              value={ email }
-              onChange={ e => emailOnChangeLogin(e.target.value) }
+              value={ loginData.email }
+              onChange={ e => changeInputLogin(e.target) }
             />
             <label>Email address</label>
           </div>
@@ -64,10 +79,10 @@ const Login = ({
             <input 
               type="password" 
               className="form-control" 
-              id="floatingPassword" 
+              id="password" 
               placeholder="Password" 
-              value={ password }
-              onChange={ e => passwordOnChangeLogin(e.target.value) }
+              value={ loginData.password }
+              onChange={ e => changeInputLogin(e.target) }
             />
             <label>Password</label>
           </div>
@@ -99,10 +114,10 @@ const Login = ({
 };
 
 const mapStateToProps = (state) => ({
-  email: state.app.login.email,
-  password: state.app.login.password,
+  // email: state.app.login.email,
+  // password: state.app.login.password,
   isFetching: state.app.isFetching,
   showModal: state.app.showModal
 });
 
-export default connect(mapStateToProps, { login, emailOnChangeLogin, passwordOnChangeLogin, abreModal })(Login);
+export default connect(mapStateToProps, { login, abreModal })(Login);

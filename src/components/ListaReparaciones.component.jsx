@@ -2,8 +2,7 @@ import { useEffect } from "react";
 import { connect } from "react-redux";
 import history from "../history";
 import { 
-  getReparaciones,
-  escuchaReparaciones
+  getReparaciones
 } from "../redux/root-actions";
 // JSON con los estados de las reparaciones
 import { estados } from '../datos/estados.json';
@@ -14,14 +13,13 @@ import { useCallback } from "react";
 
 const ListaReparaciones = ({ 
   getReparaciones, 
-  coleccionReparaciones,
-  escuchaReparaciones
+  coleccionReparaciones
 }) => {
 
   // Busco las reparaciones al backup sólo cuando la colección está vacía.
   const iniciarFormulario = useCallback(async () => {
-    if(!coleccionReparaciones?.length) await escuchaReparaciones(); 
-  }, [escuchaReparaciones]);
+    if(!coleccionReparaciones?.length) await getReparaciones(); 
+  }, [getReparaciones]);
    
 
   //PARA FORZAR LA CARGA DE LAS REPARACIONES AL INICIALIZAR
@@ -77,4 +75,4 @@ const mapStateToProps = (state) => ({
   isFetching: state.app.isFetching
 });
 
-export default connect( mapStateToProps, { getReparaciones, escuchaReparaciones } )( ListaReparaciones );
+export default connect( mapStateToProps, { getReparaciones } )( ListaReparaciones );

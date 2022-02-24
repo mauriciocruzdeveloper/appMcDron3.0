@@ -2,19 +2,15 @@ import { useEffect, useCallback } from "react";
 import { connect } from "react-redux";
 import history from "../history";
 import { 
-  getUsuarios,
-  escuchaUsuarios
+  getUsuarios
 } from "../redux/root-actions";
-// JSON con los estados de las reparaciones
-import { estados } from '../datos/estados.json';
 // Estas son las importaciones de react-floating-action-button
 // lightColors y darkColors pueden estar buenos... hay que probarlos
 import { Container, Button, lightColors, darkColors } from 'react-floating-action-button';
 
 const ListaUsuarios = ({ 
-  getUsuarios, 
   coleccionUsuarios,
-  escuchaUsuarios
+  getUsuarios
 }) => {
 
   // iniciarFormulario contiene la lógica que va dentro del useEffect.
@@ -25,8 +21,8 @@ const ListaUsuarios = ({
     console.log("coleccion: " + coleccionUsuarios?.length);
     // Cuando la colección está vacía, se llena mediante el backend, y queda en escucha
     // para cuando cambie la base de datos ésta actualice la colección en redux automáticamente.
-    if(!coleccionUsuarios?.length) await escuchaUsuarios(); 
-  }, [escuchaUsuarios]);
+    if(!coleccionUsuarios?.length) await getUsuarios(); 
+  }, [getUsuarios]);
 
   //PARA FORZAR LA CARGA DE LOS USUARIOS AL INICIALIZAR
   useEffect(() => {
@@ -67,4 +63,4 @@ const mapStateToProps = (state) => ({
   isFetching: state.app.isFetching
 });
 
-export default connect( mapStateToProps, { getUsuarios, escuchaUsuarios } )( ListaUsuarios );
+export default connect(mapStateToProps, { getUsuarios })(ListaUsuarios);

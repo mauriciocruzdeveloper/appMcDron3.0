@@ -1,22 +1,15 @@
-import { useEffect, useCallback } from "react";
+import { useEffect, useCallback, useState } from "react";
 import { connect } from "react-redux";
 import TextareaAutosize from "react-textarea-autosize";
 import Select from 'react-select';
 import { 
     getCliente,
-    changeInputUsu,
-    changeInputRep,
-    setEstado,
     guardarPresupuesto,
     abreModal,
     confirm,
     getProvinciasSelect,
     getUsuariosSelect,
     getLocalidadesPorProvincia,
-    setLocalidadCliente,
-    setProvinciaCliente,
-    setUsuarioPresu,
-    clearForm
   } from "../redux/root-actions";
 
   import history from "../history";
@@ -25,12 +18,7 @@ import {
 
 const Presupuesto = ({
     getCliente,
-    changeInputUsu,
-    changeInputRep, 
-    presupuesto,
     usuario,
-    cliente,
-    reparacion,
     guardarPresupuesto,
     abreModal,
     confirm,
@@ -40,43 +28,83 @@ const Presupuesto = ({
     localidadesSelect,
     provinciasSelect,
     usuariosSelect,
-    setLocalidadCliente,
-    setProvinciaCliente,
-    setUsuarioPresu,
-    clearForm
 }) => {
 
     console.log("PRESUPUESTO");
 
     // Esto inicializa el form al montar y limpia al desmontar ///////
 
+    const [ presupuesto, setPresupuesto ] = useState(
+        { 
+            cliente: { id: '', data: {} }, 
+            reparacion: { id: '', data: {} } }
+        );
+    
+
+    const changeInputUsu = target => {
+        setPresupuesto({ 
+            ...presupuesto, 
+            cliente: {
+                ...presupuesto.cliente,
+                data: {
+                    ...presupuesto.cliente.data,
+                    [target.id]: value
+                } 
+            }
+        });
+    };
+
+    const changeInputRep = target => {
+        let value = null;
+        if(target.type == "date"){
+            let anio = target.value.substr(0, 4);
+            let mes = target.value.substr(5, 2)-1;
+            let dia = target.value.substr(8, 2);
+            value = new Date(anio, mes, dia).getTime()+10800001; // Se agrega este número para que de bien la fecha.
+        }else{
+            value = target.value;
+        };
+        setPresupuesto({ 
+            ...presupuesto, 
+            reparacion: {
+                ...presupuesto.reparacion,
+                data: {
+                    ...presupuesto.reparacion.data,
+                    [target.id]: value
+                } 
+            }
+        });
+    };
+
     const initForm = useCallback(async () => {
         // Si el usuario es admin, deja todo en blanco para cargar cualquier usuario
         // sino cargo los datos del usuario logueado.
         !usuario.data?.Admin ? await getCliente(usuario.id) : null; // Acá iría getCliente(usuario.id);
         await getProvinciasSelect()
-            .catch(error => abreModal("Error buscando ProvinciasSelect ", `Código - ${error.code}`, "danger" ));
+        .catch(error => abreModal("Error buscando ProvinciasSelect ", `Código - ${error.code}`, "danger" ));
         await getUsuariosSelect()
         .catch(error => abreModal("Error buscando UsuariosSelect ", `Código - ${error.code}`, "danger" ));
     },[usuario]);
 
     useEffect(() => {
         initForm();
-        return () => clearForm();
     }, [initForm]);
 
     //////////////////////////////////////////////////////////////
 
     const handleGuardarPresupuesto = () => {
         confirm(
-            "Guardar Reparación?",
+            "Guardar Presupuesto?",
             "Atención",
             "warning",
             () => {
                 const presupuesto = {
                     usuario: cliente,
                     reparacion: reparacion
-                }
+                };
+                presupuesto.reparacion.data.EstadoRep = "Consulta";
+                presupuesto.reparacion.data.PrioridadRep = "1";
+                presupuesto.reparacion.data.FeConRep = Date.now();
                 guardarPresupuesto(presupuesto)
                 .then(() => {
                     abreModal("Presupuesto enviado!", "", "success" );
@@ -89,19 +117,50 @@ const Presupuesto = ({
 
 
     const handleOnChangeProvincias = async (e) => {
-        console.log("e.target.value: " + JSON.stringify(e));
         await getLocalidadesPorProvincia(e.value);
-        await setProvinciaCliente(e.value);
+
+        console.log("provincia: " + e.value);
+        console.log
+
+        setPresupuesto({ 
+            ...presupuesto, 
+            cliente: {
+                ...presupuesto.cliente,
+                data: {
+                    ...presupuesto.cliente.data,
+                    ProvinciaUsu: e.value
+                } 
+            }
+        });
     }
 
-    const handleOnChangeLocalidades = async (e) => {
-        await setLocalidadCliente(e.value);
+    const handleOnChangeLocalidades = (e) => {
+        setPresupuesto({ 
+            ...presupuesto, 
+            cliente: {
+                ...presupuesto.cliente,
+                data: {
+                    ...presupuesto.cliente.data,
+                    CiudadUsu: e.value
+                } 
+            }
+        });
     }
 
+    
+    // Función que maneja el onChange del Select de usuarios cuando se selecciona
+    // un usuario/cliente de la lista que previamente se cargó en el Select
     const handleOnChangeUsuarios = async (e) => {
-        e ? await setUsuarioPresu(e.value) : null;
+        if(e){
+            let cliente = await getCliente(e.value);
+            setPresupuesto({ 
+                ...presupuesto, 
+                cliente: cliente 
+            });
+        }
     }
 
+    // Función que maneja los onChange de toda la vida, del Select de usuarios.
     // Tengo que hacerlo mediante un handle porque el evento de onInputChange
     // sólo contiene el valor del input, no es un evento.
     // Abajo creo target con los atributos correctos para pasarlos como 
@@ -116,6 +175,8 @@ const Presupuesto = ({
         // Otra opción
         //if (action?.action !== 'input-blur' && action?.action !== 'menu- close') changeInputUsu(target);
     }
+
+    const { cliente, reparacion } = presupuesto;
 
     return(
         <div
@@ -252,10 +313,7 @@ const Presupuesto = ({
 }
 
 const mapStateToProps = (state) => ({
-    presupuesto: state.app?.presupuesto,
     usuario: state.app?.usuario,
-    cliente: state.app?.cliente,
-    reparacion: state.app?.reparacion,
     localidadesSelect: state.app?.localidadesSelect,
     provinciasSelect: state.app?.provinciasSelect,
     usuariosSelect: state.app?.usuariosSelect
@@ -266,17 +324,10 @@ export default connect(
     mapStateToProps, 
     {
         getCliente,
-        changeInputUsu,
-        changeInputRep, 
-        setEstado, 
         guardarPresupuesto, 
         abreModal,
         confirm,
         getProvinciasSelect,
         getUsuariosSelect,
         getLocalidadesPorProvincia,
-        setLocalidadCliente,
-        setProvinciaCliente,
-        setUsuarioPresu,
-        clearForm
     })(Presupuesto);
