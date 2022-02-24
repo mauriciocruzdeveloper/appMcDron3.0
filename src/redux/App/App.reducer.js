@@ -26,18 +26,6 @@ const INITIAL_STATE = {
     usuario: {}, // Es el usuario logueado
     // Le voy a llamar usuario al usuario logueado, 
     // y cliente al usuario/cliente en general
-    reparacion: {}, // La reparación que se muestra
-    presupuesto: {
-        usuario: {
-            id: null,
-            data: {}
-        },
-        reparacion: {
-            id: null,
-            data: {}
-        }
-    },
-    cliente: {}, // Es el cliente que se muestra
     coleccionReparaciones: [], // Todas las reparaciones
     coleccionUsuarios: [], // Todos los usuarios
     provinciasSelect: [], // Las provincias usadas en los select
@@ -75,7 +63,6 @@ export default (state = INITIAL_STATE, action) => {
             };
         }
         case AppTypes.GET_CLIENTE:{
-            console.log("cliente red: " + JSON.stringify(action.payload.data))
             return { 
                 ...state, 
                 cliente: {
@@ -84,50 +71,50 @@ export default (state = INITIAL_STATE, action) => {
                 }
             };
         }
-        case AppTypes.SET_ESTADO:
-            return { 
-                ...state, 
-                reparacion: {
-                    ...state.reparacion,
-                    data: {
-                        ...state.reparacion.data,
-                        EstadoRep: action.payload.data.nombre,
-                        PrioridadRep: action.payload.data.prioridad
-                    }
-                }
-            };
-        case AppTypes.CHANGE_INPUT_REP:
-            return { 
-                ...state, 
-                reparacion: {
-                    ...state.reparacion,
-                    data: {
-                        ...state.reparacion.data,
-                        [action.payload.input]: action.payload.data
-                    }
+        // case AppTypes.SET_ESTADO:
+        //     return { 
+        //         ...state, 
+        //         reparacion: {
+        //             ...state.reparacion,
+        //             data: {
+        //                 ...state.reparacion.data,
+        //                 EstadoRep: action.payload.data.nombre,
+        //                 PrioridadRep: action.payload.data.prioridad
+        //             }
+        //         }
+        //     };
+        // case AppTypes.CHANGE_INPUT_REP:
+        //     return { 
+        //         ...state, 
+        //         reparacion: {
+        //             ...state.reparacion,
+        //             data: {
+        //                 ...state.reparacion.data,
+        //                 [action.payload.input]: action.payload.data
+        //             }
                     
-                }
-             };
-        case AppTypes.CHANGE_INPUT_USU:
-            return { 
-                ...state, 
-                cliente: {
-                    ...state.cliente,
-                    data: {
-                        ...state.cliente.data,
-                        [action.payload.input]: action.payload.data
-                    }
+        //         }
+        //      };
+        // case AppTypes.CHANGE_INPUT_USU:
+        //     return { 
+        //         ...state, 
+        //         cliente: {
+        //             ...state.cliente,
+        //             data: {
+        //                 ...state.cliente.data,
+        //                 [action.payload.input]: action.payload.data
+        //             }
                     
-                }
-            };
-        case AppTypes.CHANGE_INPUT_PRESU:
-            return { 
-                ...state, 
-                presupuesto: {
-                    ...state.presupuesto,
-                    [action.payload.input]: action.payload.data   
-                }
-            };
+        //         }
+        //     };
+        // case AppTypes.CHANGE_INPUT_PRESU:
+        //     return { 
+        //         ...state, 
+        //         presupuesto: {
+        //             ...state.presupuesto,
+        //             [action.payload.input]: action.payload.data   
+        //         }
+        //     };
         case AppTypes.ISFETCHING_START:
             return { 
                 ...state, 
@@ -166,22 +153,22 @@ export default (state = INITIAL_STATE, action) => {
                 ...state, 
                 isLoggedIn: action.payload.data.isLoggedIn
             }
-        case AppTypes.CHANGE_PASSWORD_LOGIN:
-            return {
-                ...state, 
-                login: {
-                    ...state.login,
-                    password: action.payload.data
-                }
-            };
-        case AppTypes.CHANGE_EMAIL_LOGIN:
-            return { 
-                ...state, 
-                login: {
-                    ...state.login,
-                    email: action.payload.data
-                }
-            };
+        // case AppTypes.CHANGE_PASSWORD_LOGIN:
+        //     return {
+        //         ...state, 
+        //         login: {
+        //             ...state.login,
+        //             password: action.payload.data
+        //         }
+        //     };
+        // case AppTypes.CHANGE_EMAIL_LOGIN:
+        //     return { 
+        //         ...state, 
+        //         login: {
+        //             ...state.login,
+        //             email: action.payload.data
+        //         }
+        //     };
         case AppTypes.MODAL:
             return { 
                 ...state,
@@ -220,48 +207,48 @@ export default (state = INITIAL_STATE, action) => {
                 ...state,
                 usuariosSelect: action.payload.data
             }
-        case AppTypes.SET_LOCALIDAD_PRESU:
-            return {
-                ...state,
-                presupuesto: {
-                    ...state.presupuesto,
-                    usuario: {
-                        ...state.presupuesto.usuario,
-                        CiudadUsu: action.payload.data
-                    }
-                },
-            }
-        case AppTypes.SET_LOCALIDAD_CLIENTE:
-            return {
-                ...state,
-                cliente: {
-                    ...state.cliente,
-                    data: {
-                        ...state.cliente.data,
-                        CiudadUsu: action.payload.data
-                    }
+        // case AppTypes.SET_LOCALIDAD_PRESU:
+        //     return {
+        //         ...state,
+        //         presupuesto: {
+        //             ...state.presupuesto,
+        //             usuario: {
+        //                 ...state.presupuesto.usuario,
+        //                 CiudadUsu: action.payload.data
+        //             }
+        //         },
+        //     }
+        // case AppTypes.SET_LOCALIDAD_CLIENTE:
+        //     return {
+        //         ...state,
+        //         cliente: {
+        //             ...state.cliente,
+        //             data: {
+        //                 ...state.cliente.data,
+        //                 CiudadUsu: action.payload.data
+        //             }
                     
-                },
-            }
-        case AppTypes.SET_PROVINCIA_CLIENTE:
-            return {
-                ...state,
-                cliente: {
-                    ...state.cliente,
-                    data: {
-                        ...state.cliente.data,
-                        ProvinciaUsu: action.payload.data
-                    }
+        //         },
+        //     }
+        // case AppTypes.SET_PROVINCIA_CLIENTE:
+        //     return {
+        //         ...state,
+        //         cliente: {
+        //             ...state.cliente,
+        //             data: {
+        //                 ...state.cliente.data,
+        //                 ProvinciaUsu: action.payload.data
+        //             }
                     
-                },
-            }
-        case AppTypes.CLEAR_FORM:
-            return {
-                ...state,
-                cliente: {},
-                reparacion: {},
-                presupuesto: {},
-            }
+        //         },
+        //     }
+        // case AppTypes.CLEAR_FORM:
+        //     return {
+        //         ...state,
+        //         cliente: {},
+        //         reparacion: {},
+        //         presupuesto: {},
+        //     }
         default:
             return state;
     }
