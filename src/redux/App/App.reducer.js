@@ -38,21 +38,18 @@ const INITIAL_STATE = {
 export default (state = INITIAL_STATE, action) => {
     switch (action.type) {
         case AppTypes.GET_REPARACIONES:{
-            console.log("reparaciones en reducer: " + JSON.stringify(action.payload.data[0]));
             return { 
                 ...state, 
                 coleccionReparaciones: action.payload.data
             };
         }
         case AppTypes.GET_USUARIOS:{
-            console.log("usuarios en reducer: " + JSON.stringify(action.payload.data[0]));
             return { 
                 ...state, 
                 coleccionUsuarios: action.payload.data
             };
         }
         case AppTypes.GET_REPARACION:{
-            console.log("reparacion red: " + JSON.stringify(action.payload.data))
             return { 
                 ...state, 
                 reparacion: {

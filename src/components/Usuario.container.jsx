@@ -37,26 +37,26 @@ const Usuario = ({
 
     const { id } = useParams();
 
+    const [ cliente, setCliente ] = useState();
+
     // Esto inicializa el form al montar y limpia al desmontar ///////
 
     // Inicializa los datos del formulario.
     const inicializaFormulario = useCallback(async () => {
         // Busca los datos en caso que no estén en el store.
         !provinciasSelect?.length ? await getProvinciasSelect() : null;
-        coleccionUsuarios.length 
+        coleccionUsuarios?.length 
         ? setCliente(coleccionUsuarios.find(usuario => usuario.id == id))
         : await getCliente(id)
                 .catch(error => {
                     abreModal("Error buscando Cliente ", `Código - ${error.code}`, "danger" );
                     history.goBack();
                 });
-    }, [id]);
+    }, [coleccionUsuarios]);
 
     useEffect(() => {
         inicializaFormulario();
     }, [inicializaFormulario]);
-
-    const [ cliente, setCliente ] = useState();
 
     const changeInputUsu = target => {
         setPresupuesto({ 
@@ -123,6 +123,8 @@ const Usuario = ({
     }
 
     return(
+                // Sólo se renderiza el commponente presentacional cuando están los datos necesarios ya cargados.
+        cliente && provinciasSelect.length ?
         <UsuarioPresentational 
             cliente={cliente}
             provinciasSelect={provinciasSelect}
@@ -132,7 +134,7 @@ const Usuario = ({
             changeInputUsu={changeInputUsu}
             handleOnChangeProvincias={handleOnChangeProvincias}
             handleOnChangeLocalidades={handleOnChangeLocalidades}
-        />
+        /> : null
     )
 }
 
