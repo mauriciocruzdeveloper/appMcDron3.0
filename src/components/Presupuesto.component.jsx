@@ -48,7 +48,7 @@ const Presupuesto = ({
                 ...presupuesto.cliente,
                 data: {
                     ...presupuesto.cliente.data,
-                    [target.id]: value
+                    [target.id]: target.value
                 } 
             }
         });
