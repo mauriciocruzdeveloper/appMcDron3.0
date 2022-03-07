@@ -35,10 +35,11 @@ const ListaUsuarios = ({
   return (
     <div 
       className="p-4" 
-      style={{
-        backgroundColor: "#EEEEEE",
-        // height: "100%",
-      }}>
+      // style={{
+      //   backgroundColor: "#EEEEEE",
+      //   // height: "100%",
+      // }}
+      >
       {coleccionUsuarios.map(usuario => (
         <div
           key={usuario.id}

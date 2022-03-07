@@ -4,23 +4,15 @@ import { connect } from "react-redux";
 
 import { 
   login, 
-  emailOnChangeLogin, 
-  passwordOnChangeLogin,
   abreModal
 } from "../redux/root-actions";
 
 import history from "../history";
 
-import { useEffect } from 'react';
+// import { useEffect } from 'react';
 
 const Login = ({ 
-  isFetching, 
-  login, 
-  emailOnChangeLogin, 
-  passwordOnChangeLogin, 
-  // email, 
-  // password,
-  showModal,
+  login,
   abreModal
 }) => {
 
@@ -43,26 +35,23 @@ const Login = ({
 
   const handleLogin = async () => {
     console.log("loginData: " + JSON.stringify(loginData));
-    await login(loginData)
-      .then(() => history.push("/"))
-      .catch( error => abreModal("Error ", "Código - " + error.code, "danger" ));
+    await login(loginData);
+    console.log("pasa el LOGIN");
+    history.push("/");
   };
 
+  const handleRegistrarse = () => {
+    history.push("/registro");
+  }
 
 
   return (
-    <div 
-      className="text-center"
-      style={{
-        backgroundColor: "#EEEEEE", 
-        height: "100vh",
-      }}
-    >
+    <div className="text-center">
       <main className="form-signin">
         <div className="text-center">
 
           <img className="mb-4" src="./img/logo.png" alt="" width="100%" />
-          <h1 className="h3 mb-3 fw-normal">Please sign in</h1>
+          <h1 className="h3 mb-3 fw-normal">Bienvenido!</h1>
       
           <div className="form-floating mb-2">
             <input 
@@ -98,11 +87,18 @@ const Login = ({
           </div>
 
           <button 
-            onClick={ () => handleLogin() }
-            className="w-100 btn btn-lg btn-primary bg-bluemcdron"
+            onClick={ handleLogin }
+            className="w-100 mb-3 btn btn-lg btn-primary bg-bluemcdron"
           >
-            Sign in
+            Login
           </button>
+
+          <a 
+            onClick={ handleRegistrarse }
+            className="w-100 bluemcdron"
+          >
+            <h5>Registrarse</h5>
+          </a>
 
           <p className="mt-5 mb-3 text-muted">© 2017–2021</p>
           
@@ -114,10 +110,7 @@ const Login = ({
 };
 
 const mapStateToProps = (state) => ({
-  // email: state.app.login.email,
-  // password: state.app.login.password,
   isFetching: state.app.isFetching,
-  showModal: state.app.showModal
 });
 
 export default connect(mapStateToProps, { login, abreModal })(Login);

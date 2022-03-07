@@ -7,7 +7,8 @@
 
 import { AppTypes } from "./App.types";
 import { 
-    loginPersistencia, 
+    loginPersistencia,
+    registroPersistencia,
     getReparacionesPersistencia,
     getReparacionPersistencia,
     getClientePersistencia,
@@ -21,6 +22,7 @@ import {
     getUsuariosPersistencia,
     getClientePorEmailPersistencia,
 } from "../../persistencia/persistenciaFirebase";
+// } from "../../persistencia/persistenciaJava";
 // } from "../../persistencia/persistenciaNode";
 
 
@@ -58,50 +60,20 @@ export const cierraConfirm = () => ({
     payload: { data: { confirm: { showConfirm: false}} }
 });
 
-// export const setLocalidadPresu = (localidad) => ({
-//     type: AppTypes.SET_LOCALIDAD_PRESU,
-//     payload: { data: localidad }
-// })
-
-// export const setProvinciaPresu = (provincia) => ({
-//     type: AppTypes.SET_PROVINCIA_PRESU,
-//     payload: { data: provincia }
-// })
-
-// export const setLocalidadCliente = (localidad) => ({
-//     type: AppTypes.SET_LOCALIDAD_CLIENTE,
-//     payload: { data: localidad }
-// })
-
-// export const setProvinciaCliente = (provincia) => ({
-//     type: AppTypes.SET_PROVINCIA_CLIENTE,
-//     payload: { data: provincia }
-// })
-
-// export const clearForm = () => ({
-//     type: AppTypes.CLEAR_FORM,
-//     payload: {}
-// })
-
 export const setUsuariosToRedux = (usuarios) => ({ 
     type: AppTypes.GET_USUARIOS, 
     payload: { data: usuarios }
 });
 
-export const setCliente = (cliente) => ({
-    type: AppTypes.GET_CLIENTE,
-    payload: cliente
-});
-
-export const setReparacion = (reparacion) => ({
-    type: AppTypes.GET_REPARACION,
-    payload: reparacion
-});
-
-// export const setEstado = (estado) => ({ 
-//     type: AppTypes.SET_ESTADO,
-//     payload: { data: estado }
+// export const setCliente = (cliente) => ({
+//     type: AppTypes.GET_CLIENTE,
+//     payload: cliente
 // });
+
+export const setUsuario = (usuario) => ({
+    type: AppTypes.SET_USUARIO,
+    payload: usuario
+});
 
 export const setReparacionesToRedux = (reparaciones) => ({ 
     type: AppTypes.GET_REPARACIONES, 
@@ -131,208 +103,224 @@ export const confirm = (mensaje, titulo, tipo, callBack) => {
     })
 };
 
-// export const changeInputRep = (target) => {
-//     // En caso que el input sea tipo date, sino es el value tal cual del target
-//     let data = 0;
-//     if(target.type == "date"){
-//         let anio = target.value.substr(0, 4);
-//         let mes = target.value.substr(5, 2)-1;
-//         let dia = target.value.substr(8, 2);
-//         data = new Date(anio, mes, dia).getTime()+10800001; // Se agrega este número para que de bien la fecha.
-//     }else{
-//         data = target.value;
-//     };
-//     return({ 
-//         type: AppTypes.CHANGE_INPUT_REP,
-//         payload: { input: target.id, data: data }
-//     })
-// };
-
-// export const changeInputUsu = (target) => {
-//     // En caso que el input sea tipo date, sino es el value tal cual del target
-//     let data = 0;
-//     if(target.type == "date"){
-//         let anio = target.value.substr(0, 4);
-//         let mes = target.value.substr(5, 2)-1;
-//         let dia = target.value.substr(8, 2);
-//         data = new Date(anio, mes, dia).getTime()+10800001; // Se agrega este número para que de bien la fecha.
-//     }else{
-//         data = target.value;
-//     };
-//     return({ 
-//         type: AppTypes.CHANGE_INPUT_USU,
-//         payload: { input: target.id, data: data }
-//     })
-// };
-
-// export const changeInputPresu = (target) => {
-//     // En caso que el input sea tipo date, sino es el value tal cual del target
-//     let data = 0;
-//     if(target.type == "date"){
-//         let anio = target.value.substr(0, 4);
-//         let mes = target.value.substr(5, 2)-1;
-//         let dia = target.value.substr(8, 2);
-//         data = new Date(anio, mes, dia).getTime()+10800001; // Se agrega este número para que de bien la fecha.
-//     }else{
-//         data = target.value;
-//     };
-//     return({ 
-//         type: AppTypes.CHANGE_INPUT_PRESU,
-//         payload: { input: target.id, data: data }
-//     }) 
-// };
-
-
 /////////////////////////////////////////////////
 // FUNCIONES PARA CONECTARSE A LA PERSISTENCIA //
 /////////////////////////////////////////////////
 
 // LOGIN
-export const login = (login) => async (dispatch) => {
+export const login = (login) => (dispatch) => {
+    console.log("login()");
     const { email, password } = login;
     dispatch(isFetchingStart());
     return new Promise((resolve, reject) => {
         if(email != "" && password != ""){
             loginPersistencia(email, password)
-            .then( usuario => {
+            .then(usuario => {
                 dispatch(loginAction(usuario));
                 resolve(usuario); 
             })
-            .catch(() => reject({ code: "Login incorrecto en login()" }))
+            .catch(error => {
+                dispatch(abreModal("Error ", "Código - " + error.code, "danger"));
+                reject();
+            })
             .finally(() => dispatch(isFetchingCoplete()));
         }else{
             dispatch(isFetchingCoplete());
-            reject({ code: "Email o password vacios" });
+            dispatch(abreModal("Error", "Email o password vacios", "danger"));
+            reject();
+        };
+    });
+};
+
+// REGISTRO
+export const registro = (registro) => (dispatch) => {
+    console.log("registro()");
+    const { email, password, password2, NombreUsu } = registro;
+
+    dispatch(isFetchingStart());
+    return new Promise((resolve, reject) => {
+        if(
+            email != "" 
+            && password != "" 
+            && password2 != ""
+            && NombreUsu != ""
+        ){ 
+            if(password == password2){
+                registroPersistencia(registro)
+                .then(() => {
+                    dispatch(abreModal("Usuario Registrado", "Verifique su casilla de email para completar el registro", "warning"));
+                    resolve();
+                })
+                .catch(error => {
+                    dispatch(abreModal("Error", "Error en registro(), en registroPersistencia() - " + error, "danger"));
+                    reject();
+                })
+                .finally(() => dispatch(isFetchingCoplete()));
+            }else{
+                dispatch(isFetchingCoplete());
+                dispatch(abreModal("Error", "Los password deben ser iguales", "danger"));
+                reject();
+            }
+        }else{
+            dispatch(isFetchingCoplete());
+            dispatch(abreModal("Error", "Completar todos los campos obligatorios (*)", "danger"));
+            reject();
         };
     });
 };
 
 // GET Cliente/Usuario por id
-export const getCliente = (id) => async (dispatch) => {
+export const getCliente = (id) => (dispatch) => {
     console.log("getCliente()");
-    dispatch( isFetchingStart());
+    dispatch(isFetchingStart());
     return new Promise(async (resolve, reject) => {
         getClientePersistencia(id)
-        .then(cliente => {
-            dispatch(setCliente(cliente));
-            // No hace falta devolver el usuario, pero lo hago por si sirve en otra ocación.
-            resolve(cliente); 
-        })
+        .then(cliente => resolve(cliente))
         .catch(() => reject({ code: "Error al obtener cliente en getCliente()" }))
         .finally(() => dispatch(isFetchingCoplete()));
     });
 };
 
 // GET Reparación por id
-export const getReparacion = (id) => async (dispatch) => {
+export const getReparacion = (id) => (dispatch) => {
     console.log("getReparacion()");
-    dispatch( isFetchingStart());
+    dispatch(isFetchingStart());
     return new Promise((resolve, reject) => {
         getReparacionPersistencia(id)
-        .then(reparacion => {
-            dispatch(setReparacion(reparacion));
-            // No hace falta devolver la reparación, pero lo hago por si sirve en otra ocación.
-            resolve(reparacion); 
-        })
+        .then(reparacion =>resolve(reparacion))
         .catch(() => reject({ code: "Error en getReparacion() al buscar una Reparacion"}))
         .finally(() => dispatch(isFetchingCoplete()));
     });
 };
 
 // GUARDA Presupuesto
-export const guardarPresupuesto = (presupuesto) => async (dispatch) => {
+export const guardarPresupuesto = (presupuesto) => (dispatch) => {
     console.log("guardarPersupuesto()");
     dispatch(isFetchingStart());
     return new Promise((resolve, reject) => {
         guardarPresupuestoPersistencia(presupuesto)
-        .then(presupuesto => resolve(presupuesto))
-        .catch(()  => reject({ code: "Error en guardarPresupuesto() al guardar Presupuesto"}))
+        .then(() => {
+            dispatch(abreModal("Presupuesto enviado!", "", "success" ));
+            dispatch(setUsuario(presupuesto.usuario));
+            resolve(presupuesto);
+        })
+        .catch(error => {
+            reject(abreModal("Error al guardar ", "Código - " + error, "danger" ));
+            reject(error);
+        })
         .finally(() => dispatch(isFetchingCoplete()));
     });
 }
 
 // GUARDA Reparación
-export const guardarReparacion = (reparacion) => async (dispatch) => {
+export const guardarReparacion = (reparacion) => (dispatch) => {
     console.log("guardarReparacion()");
     dispatch(isFetchingStart());
     return new Promise((resolve, reject) => {
         guardarReparacionPersistencia(reparacion)
-        .then(reparacion => resolve(reparacion))
-        .catch(()  => reject({ code: "Error en guardarReparacion() al guardar Reparación"}))
+        .then(reparacion => {
+            dispatch(abreModal("Guardado con éxito", "Reparación: " + reparacion.id, "success" ));
+            resolve(reparacion);
+        })
+        .catch(error => {
+            dispatch(abreModal("Error al guardar ", "Código - " + error, "danger" ));
+            reject(error);
+        })
         .finally(() => dispatch(isFetchingCoplete()));
-    });   
+    });
 }
 
 // GUARDA Usuario
-export const guardarUsuario = (usuario) => async (dispatch) => {
+export const guardarUsuario = (usuario) => (dispatch) => {
     console.log("guardarUsuario()");
     dispatch(isFetchingStart());
     return new Promise((resolve, reject) => {
         guardarUsuarioPersistencia(usuario)
-        .then(usuario => resolve(usuario))
-        .catch(() => reject({ code: "Error en guardarUsuario() al guardar Usuario"}))
+        .then(usuario => {
+            dispatch(abreModal("Guardado con éxito", "Usuario: " + usuario.id, "success" ));
+            resolve(usuario);
+        })
+        .catch(error => {
+            dispatch(abreModal("Error al guardar ", "Código - " + error, "danger" ));
+            reject(error);
+        })
         .finally(() => dispatch(isFetchingCoplete()));
-    });   
+    }); 
 }
 
 // DELETE Reparación
-export const eliminarReparacion = (id) => async (dispatch) => {
+export const eliminarReparacion = (id) => (dispatch) => {
     console.log("eliminarReparacion()");
     dispatch(isFetchingStart());
     return new Promise((resolve, reject) => {
         eliminarReparacionPersistencia(id)
-        .then(id => resolve(id))
-        .catch(()  => reject({ code: "Error en eliminarReparacion() al eliminar Reparación"}))
+        .then(id => {
+            dispatch(abreModal("Reparación eliminada con éxito", "Reparación: " + id, "success" ));
+            resolve(id);
+        })
+        .catch(error => {
+            dispatch(abreModal("Error al eliminar ", "Error en eliminarReparación() - Código - " + error.code, "danger" ));
+            reject(error);
+        })
         .finally(() => dispatch(isFetchingCoplete()));
-    });   
+    }); 
 }
 
 // DELETE Usuario
-export const eliminarUsuario = (id) => async (dispatch) => {
+export const eliminarUsuario = (id) => (dispatch) => {
     console.log("eliminarUsuarios()");
     dispatch(isFetchingStart());
     return new Promise((resolve, reject) => {
         eliminarUsuarioPersistencia(id)
-        .then(id => resolve(id))
-        .catch(() => reject({ code: "Error en eliminarUsuario() al eliminar Usuario"}))
+        .then(id => {
+            dispatch(abreModal("Usuario eliminado con éxito", "Usuario: " + id, "success" ));
+            resolve(id);
+        })
+        .catch(error => {
+            dispatch(abreModal("Error al eliminar ", "Error en eliminarUsuario() - Código - " + error.code, "danger" ));
+            reject(error);
+        })
         .finally(() => dispatch(isFetchingCoplete()));
-    });   
+    }); 
 }
 
 // GET de todos los Usuarios
-export const getUsuarios = () => async (dispatch) => {
+export const getUsuarios = () => (dispatch) => {
     console.log("getUsuarios()");
     dispatch(isFetchingStart());
+    // Se pasa como argumento una función callback para que se ejecute el dispatch
+    // cada vez que se actualiza la DB
     return new Promise((resolve, reject) => {
-        // Se pasa como argumento una función callback para que se ejecute el dispatch
-        // cada vez que se actualiza la DB
         getUsuariosPersistencia(usuarios => dispatch(setUsuariosToRedux(usuarios)))
-        .then(usuarios => resolve(usuarios))
-        .catch(() => reject({ code: "Error en getUsuarios() al buscar los Usuarios"}))
+        .then(() => resolve())
+        .catch(() => {
+            dispatch(abreModal("Error", "getUsuario() en getUsuariosPersistencia()", "danger"));
+            reject()
+        })
         .finally(() => dispatch(isFetchingCoplete()));
     });
 }
 
 // GET de todas las Reparaciones
-export const getReparaciones = () => async (dispatch) => {
+export const getReparaciones = (usuario) => (dispatch) => {
     console.log("getReparaciones()");
     dispatch(isFetchingStart());
     return new Promise((resolve, reject) => {
-        getReparacionesPersistencia(reparaciones => dispatch(setReparacionesToRedux(reparaciones)))
-        .then(reparaciones => resolve(reparaciones))
-        .catch(() => reject({ code: "Error en getReparaciones() al buscar las Reparaciones"}))
+        getReparacionesPersistencia(reparaciones => dispatch(setReparacionesToRedux(reparaciones)), usuario)
+        .then(() => resolve())
+        .catch(() => {
+            dispatch(abreModal("Error", "Error en getReparaciones() al buscar las Reparaciones", "danger"));
+            reject();
+        })
         .finally(() => dispatch(isFetchingCoplete()));
     });
 }
-
 
 ////////////////////////////////////////////////////
 // FUNCIONES PARA PARA POSIBLES REFACTORIZACIONES //
 ////////////////////////////////////////////////////
 
-
-
-export const getProvinciasSelect = () => async (dispatch) => {
+export const getProvinciasSelect = () => (dispatch) => {
     console.log("getProvinciasSelect");
     dispatch(isFetchingStart());
     return new Promise((resolve, reject) => {
@@ -349,7 +337,7 @@ export const getProvinciasSelect = () => async (dispatch) => {
     });
 }
 
-export const getUsuariosSelect = () => async (dispatch) => {
+export const getUsuariosSelect = () => (dispatch) => {
     console.log("getUsuariosSelect");
     dispatch(isFetchingStart());
     return new Promise((resolve, reject) => {
@@ -372,7 +360,7 @@ export const getUsuariosSelect = () => async (dispatch) => {
     });
 }
 
-export const getLocalidadesPorProvincia = (provincia) => async (dispatch) => {
+export const getLocalidadesPorProvincia = (provincia) => (dispatch) => {
     console.log("getLocalidadesPorProvincia");
     dispatch(isFetchingStart());
     return new Promise((resolve, reject) => {
@@ -398,20 +386,3 @@ export const rememberMe = () => {
     localStorage.setItem('memoria', JSON.stringify( estado.display1 ));
     const memoria = JSON.parse(localStorage.getItem('memoria')) || [];
 }
-
-// export const emailOnChangeLogin = ( data ) => ({ 
-//     type: AppTypes.CHANGE_EMAIL_LOGIN,
-//     payload: { data }
-// });
-
-// export const passwordOnChangeLogin = ( data ) => ({ 
-//     type: AppTypes.CHANGE_PASSWORD_LOGIN,
-//     payload: { data }
-// });
-
-// export const changeEmailUsuPresu = (inputEmailUsuPresu) => (
-//     {
-//         type: AppTypes.CHANGE_INPUT_PRESU,
-//         payload: { input: target.id, data: target.value }
-//     }
-// )

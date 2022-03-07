@@ -1,5 +1,5 @@
 import { AppTypes } from "./App.types";
-import { Usuario } from "../../interfases/Usuario";
+// import { Usuario } from "../../interfaces/Usuario";
 
 const INITIAL_STATE = {
     isLoggedIn: false, // Para indicar si hay alguien logueado
@@ -49,24 +49,24 @@ export default (state = INITIAL_STATE, action) => {
                 coleccionUsuarios: action.payload.data
             };
         }
-        case AppTypes.GET_REPARACION:{
-            return { 
-                ...state, 
-                reparacion: {
-                    id: action.payload.id,
-                    data: action.payload.data
-                }
-            };
-        }
-        case AppTypes.GET_CLIENTE:{
-            return { 
-                ...state, 
-                cliente: {
-                    id: action.payload.id,
-                    data: action.payload.data
-                }
-            };
-        }
+        // case AppTypes.GET_REPARACION:{
+        //     return { 
+        //         ...state, 
+        //         reparacion: {
+        //             id: action.payload.id,
+        //             data: action.payload.data
+        //         }
+        //     };
+        // }
+        // case AppTypes.GET_CLIENTE:{
+        //     return { 
+        //         ...state, 
+        //         cliente: {
+        //             id: action.payload.id,
+        //             data: action.payload.data
+        //         }
+        //     };
+        // }
         case AppTypes.ISFETCHING_START:
             return { 
                 ...state, 
@@ -77,6 +77,11 @@ export default (state = INITIAL_STATE, action) => {
                 ...state, 
                 isFetching: false 
             };
+        case AppTypes.SET_USUARIO:
+            return {
+                ...state,
+                usuario: action.payload
+            }
         // HAY QUE ESTABLECER EL ESTÁNDAR DE USUARIO COMO ESTÁ EN LA BASE DE DATOS
         // DE FIRESTORE COMO EL ESTÁNDAR DEL FRONTEND. LAS OTRAS DB TENDRÁN QUE USAR
         // ESOS NOMBRES, O SINO LA PERSISTENCIA TENDRÁ QUE CAMBIAR LOS NOSMBRES PARA
@@ -90,10 +95,7 @@ export default (state = INITIAL_STATE, action) => {
                 usuario: action.payload.data.usuario
             }
         case AppTypes.LOGOUT:
-            return {
-                ...state, 
-                isLoggedIn: action.payload.data.isLoggedIn
-            }
+            return INITIAL_STATE;
         case AppTypes.MODAL:
             return { 
                 ...state,

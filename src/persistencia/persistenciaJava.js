@@ -6,33 +6,47 @@ import { provincias } from '../datos/provincias.json';
 
 import { localidades } from '../datos/localidades.json';
 
-
-
 const SERVIDOR = 'http://localhost:8080';
 
 //////////////////// LOGIN //////////////////////
 
 export const loginPersistencia = (email, password) => {
     return new Promise((resolve, reject) => {
-        console.log("email en login api: " + email);
-        console.log("password en login api: " + password);
-        // Se pasa por post en el body para que no se vea el usuario ni el password en la url
-        axios.post(SERVIDOR + '/api/login', 
-            {
-                email: email,
-                password: password
-            }
-        ).then(response => {
-            console.log("entra al then de getLoginOkApi en Empleados.utils");
-            // En data está el token, que va a guardarse entre los datos del 
-            // usaruio logueado.
-            return resolve({ id: email, data: response.data });
-        }).catch(error => {
-            console.log("Error en catch getLoginOkApi:" + error);
-            return reject({ ...error, code: `Error consulta codigo: ${error?.response?.status}` });
-        });
+        // console.log("email en login api: " + email);
+        // console.log("password en login api: " + password);
+        // // Se pasa por post en el body para que no se vea el usuario ni el password en la url
+        // axios.post(SERVIDOR + '/login', 
+        //     {
+        //         email: email,
+        //         password: password
+        //     }
+        // ).then(response => {
+        //     console.log("entra al then de getLoginOkApi en Empleados.utils");
+        //     // En data está el token, que va a guardarse entre los datos del 
+        //     // usaruio logueado.
+            return resolve({ id: email, data: { NombreUsu: "Mauricio", Nick: "admin" } });
+        // }).catch(error => {
+        //     console.log("Error en catch getLoginOkApi:" + error);
+        //     return reject({ ...error, code: `Error consulta codigo: ${error?.response?.status}` });
+        // });
     });
 };
+
+/////////////////// PRESUPUESTO /////////////////////////////
+
+export const guardarPresupuestoPersistencia = (presupuesto) => {
+    let { usuario, reparacion } = presupuesto;
+    return new Promise((resolve, reject) => {
+        guardarUsuarioPersistencia(usuario)
+        .then(usuario => {
+            reparacion.data.UsuarioRep = usuario.id
+            guardarReparacionPersistencia(reparacion)
+            .then(() => resolve())
+            .catch(() => reject({ code: "Error en guardarPresupuestoPersistencia() al guardar Reparación" }));
+        })
+        .catch(()  => reject({ code: "Error en guardarPresupuestoPersistencia() al guardar Usuario" }));
+    });
+}
 
 //////////////////// REPARACIONES //////////////////////
 
@@ -40,52 +54,29 @@ export const loginPersistencia = (email, password) => {
 export const getReparacionesPersistencia = (setReparacionesToRedux) => {
     return new Promise((resolve, reject) => {
         const headers = { 'autorization': token() }
-        axios.get(`${SERVIDOR}/api/reparaciones`, { headers })
+        axios.get(`${SERVIDOR}/reparaciones`, { headers })
         .then(response => {
             let reparaciones = [];
             response.data.forEach(doc => {
-                let id = doc._id;
-                delete doc._id;
-                delete response.data.__v;
-                reparaciones.push({id: id, data: doc});
+                reparaciones.push(transformReparacionJavaToApp(doc));
             });
             // Esto lo tuve que agregar para que funcione más o menos igual
             // que la versión de Firebase.
             setReparacionesToRedux(reparaciones);
             resolve(reparaciones);
         })
-        .catch(error => reject({ ...error, code: `Error consulta codigo: ${error?.response?.status}` }));
+        .catch(() => reject({ code: `Error en getReparacionesPersistencia()` }));
     });
 };
 
 // Trae una reparación por id
 export const getReparacionPersistencia = (id) => {
-    console.log("getReparacionPersistencia()");
     return new Promise((resolve, reject) => {
-        console.log("llega a Promesa de getReparacionPersistencia");
         const headers = { 'autorization': token() }
-        axios.get(`${SERVIDOR}/api/reparaciones/${id}`, { headers })
-        .then(async response => {
-            console.log("llega al then de getReparacionPersistencia");
-            let id = response.data._id;
-            // Borro el id y el v para no pasar datos que no corresponden al cuerpo del objeto.
-            delete response.data._id;
-            delete response.data.__v;
-            let reparacion = {};
-            reparacion.id = id;
-            reparacion.data = response.data;
-            await getUsuariosPersistencia(reparacion.UsuarioRep)
-            .then(usuario => {
-                reparacion.data = { ...reparacion.data, ...usuario.data };
-            })
-            .catch(error => reject({ code: "Error en getReparacionPersistencia" }));
-            console.log("reparacion en gerReparacionPersistencia: " + JSON.stringify(reparacion));
-            resolve(reparacion);
-        })
-        .catch(error => {
-            console.log("llega al catch de getReparacionPersistencia");
-            reject({ ...error, code: `Error consulta codigo: ${error?.response?.status}` })
-        });
+        axios.get(`${SERVIDOR}/reparaciones/${id}`, { headers })
+        // devuelvo el response, pero transformado a objeto de mi app
+        .then(response => resolve(transformReparacionJavaToApp(response.data)))
+        .catch(() => reject({ code: `Error en getReparacionPersistencia() en axios` }));
     });
 };
 
@@ -93,14 +84,15 @@ export const getReparacionPersistencia = (id) => {
 export const guardarReparacionPersistencia = (reparacion) => {
     return new Promise((resolve, reject) => {
         const headers = {'autorization': token()}
-        console.log("data: " + JSON.stringify(reparacion.data));
-        reparacion.id 
-        ? axios.patch(`${SERVIDOR}/api/reparaciones/${reparacion.id}`, reparacion.data, { headers })
-            .then(response => resolve(response.data))
+        if(reparacion.id){
+             axios.patch(`${SERVIDOR}/reparaciones/${reparacion.id}`, transformReparacionAppToJava(reparacion), { headers })
+            .then(response => resolve(transformReparacionJavaToApp(response.data)))
             .catch(error => reject(error))
-        : axios.post(`${SERVIDOR}/api/reparaciones`, reparacion.data, { headers })
+        }else{
+            axios.post(`${SERVIDOR}/reparaciones`, transformReparacionAppToJava(reparacion), { headers })
             .then(response => resolve(response.data))
             .catch(error => reject(error));
+        };
     });
 };
 
@@ -108,7 +100,7 @@ export const guardarReparacionPersistencia = (reparacion) => {
 export const eliminarReparacionPersistencia = (id) => {
     return new Promise((resolve, reject) => {
         const headers = {'autorization': token()}
-        axios.delete(`${SERVIDOR}/api/reparaciones/${id}`, { headers })
+        axios.delete(`${SERVIDOR}/reparaciones/${id}`, { headers })
         .then(() => resolve(id))
         .catch(error => reject(error));
     });
@@ -118,19 +110,13 @@ export const eliminarReparacionPersistencia = (id) => {
 
 // Trae todos los usuarios
 export const getUsuariosPersistencia = async (setUsuariosToRedux) => {
-    console.log("llega a getUsuariosPersistencia()");
     return new Promise((resolve, reject) => {
         // Acá agrego en el header el token() para que el backend me autorice la consulta
         const headers = { 'autorization': token() }
-        axios.get(`${SERVIDOR}/api/usuarios`, { headers })
+        axios.get(`${SERVIDOR}/usuarios`, { headers })
         .then(response => {
             let usuarios = [];
-            response.data.forEach(doc => {
-                let id = doc._id;
-                delete doc._id;
-                delete response.data.__v;
-                usuarios.push({id: id, data: doc});
-            });
+            response.data.forEach(doc => usuarios.push(transformUsuarioJavaToApp(doc)));
             setUsuariosToRedux(usuarios);
             resolve(usuarios);
         })
@@ -143,18 +129,18 @@ export const getUsuariosPersistencia = async (setUsuariosToRedux) => {
 export const getClientePersistencia = (id) => {
     return new Promise((resolve, reject) => {
         const headers = { 'autorization': token() }
-        axios.get(`${SERVIDOR}/api/usuarios/${id}`, { headers })
-        .then(response => resolve(transformMongooseToApp(response)))
+        axios.get(`${SERVIDOR}/usuarios/${id}`, { headers })
+        .then(response => resolve(transformUsuarioJavaToApp(response)))
         .catch(error => reject({ ...error, code: `Error consulta codigo: ${error.response.status}` }));
     });
 };
 
+// Busca un cliente por email
 export const getClientePorEmailPersistencia = (id) => {
-    console.log("getClientePorEmailPersistencia: " + id);
     return new Promise((resolve, reject) => {
         const headers = { 'autorization': token() }
-        axios.get(`${SERVIDOR}/api/usuarioByEmail/${id}`, { headers })
-        .then(response => resolve(transformMongooseToApp(response)))
+        axios.get(`${SERVIDOR}/usuarioByEmail/${id}`, { headers })
+        .then(response => resolve(transformUsuarioJavaToApp(response)))
         .catch(error => reject({ ...error, code: `Error consulta codigo: ${error.response.status}` }));
     });
 };
@@ -164,18 +150,15 @@ export const getClientePorEmailPersistencia = (id) => {
 export const guardarUsuarioPersistencia = (usuario) => {
     return new Promise((resolve, reject) => {
         const headers = {'autorization': token()}
-        console.log("data: " + JSON.stringify(usuario.data));
-        console.log("usuario.id: " + usuario.id);
         if(usuario.id){
             console.log("llega A PATCH");
-            axios.patch(`${SERVIDOR}/api/usuarios/${usuario.id}`, usuario.data, { headers })
-            .then(response => resolve(transformMongooseToApp(response)))
+            axios.patch(`${SERVIDOR}/usuarios/${usuario.id}`, transformUsuarioAppToJava(usuario), { headers })
+            .then(response => resolve(transformUsuarioJavaToApp(response.data)))
             .catch(() => reject( {code: `Error PATCH usu guardarUsuarioPersistencia` }))
         }
         else{
-            console.log("llega A POST: " + JSON.stringify(usuario.data));
-            axios.post(SERVIDOR + '/api/usuarios', usuario.data, { headers })
-            .then(response => resolve(transformMongooseToApp(response)))
+            axios.post(SERVIDOR + '/usuarios', transformUsuarioAppToJava(usuario), { headers })
+            .then(response => resolve(transformUsuarioJavaToApp(response.data)))
             .catch(error => {
                 console.log("error: " + JSON.stringify(error.message));
                 reject({code: error.messaje})
@@ -188,7 +171,7 @@ export const guardarUsuarioPersistencia = (usuario) => {
 export const eliminarUsuarioPersistencia = (id) => {
     return new Promise((resolve, reject) => {
         const headers = {'autorization': token()}
-        axios.delete(`${SERVIDOR}/api/usuarios/${id}`, { headers })
+        axios.delete(`${SERVIDOR}/usuarios/${id}`, { headers })
         .then(() => resolve(id))
         .catch(error => reject(error));
     });
@@ -226,12 +209,163 @@ export const getLocPorProvPersistencia = (provincia) => {
     })
 };
 
-// Quita _id y __v de response.data.
-const transformMongooseToApp = (response) => {
-    let objeto = {};
-    objeto.id = response.data._id;
-    delete response.data._id;
-    delete response.data.__v;
-    objeto.data = response.data;
-    return objeto;
+// transforma el objeto de como viene del backend de java a app o al revés
+
+const transformReparacionJavaToApp = ({
+    id,
+    estadoRep,
+    prioridadRep,
+    driveRep,
+    feConRep,
+    usuarioRep,
+    droneRep,
+    descripcionUsuRep,
+    feRecRep,
+    numeroSerieRep,
+    descripcionTecRep,
+    presuMoRep,
+    presuReRep,
+    presuFiRep,
+    presuDiRep,
+    txtRepuestosRep,
+    informeRep,
+    feFinRep,
+    feEntRep,
+    txtEntregaRep,
+    seguimientoEntregaRep }) => {
+
+    return {
+        id: id,
+        data: {
+            EstadoRep: estadoRep,
+            PrioridadRep: prioridadRep,
+            DriveRep: driveRep,
+            FeConRep: feConRep,
+            UsuarioRep: usuarioRep,
+            DroneRep: droneRep,
+            DescripcionUsuRep: descripcionUsuRep,
+            FeRecRep: feRecRep,
+            NumeroSerieRep: numeroSerieRep,
+            DescripcionTecRep: descripcionTecRep,
+            PresuMoRep: presuMoRep,
+            PresuReRep: presuReRep,
+            PresuFiRep: presuFiRep,
+            PresuDiRep: presuDiRep,
+            TxtRepuestosRep: txtRepuestosRep,
+            InformeRep: informeRep,
+            FeFinRep: feFinRep,
+            FeEntRep: feEntRep,
+            TxtEntregaRep: txtEntregaRep,
+            SeguimientoEntregaRep: seguimientoEntregaRep
+        }
+    };
+};
+
+const transformReparacionAppToJava = (reparacion) => {
+
+    console.log("REPARACIONNNNNN: " + JSON.stringify(reparacion));
+
+    const {
+        EstadoRep,
+        PrioridadRep,
+        DriveRep,
+        FeConRep,
+        UsuarioRep,
+        DroneRep,
+        DescripcionUsuRep,
+        FeRecRep,
+        NumeroSerieRep,
+        DescripcionTecRep,
+        PresuMoRep,
+        PresuReRep,
+        PresuFiRep,
+        PresuDiRep,
+        TxtRepuestosRep,
+        InformeRep,
+        FeFinRep,
+        FeEntRep,
+        TxtEntregaRep,
+        SeguimientoEntregaRep 
+    } = reparacion.data;
+
+    return {
+        id: reparacion?.id,
+        estadoRep: EstadoRep,
+        prioridadRep: PrioridadRep,
+        driveRep: DriveRep,
+        feConRep: FeConRep,
+        usuarioRep: UsuarioRep,
+        droneRep: DroneRep,
+        descripcionUsuRep: DescripcionUsuRep,
+        feRecRep: FeRecRep,
+        numeroSerieRep: NumeroSerieRep,
+        descripcionTecRep: DescripcionTecRep,
+        presuMoRep: PresuMoRep,
+        presuReRep: PresuReRep,
+        presuFiRep: PresuFiRep,
+        presuDiRep: PresuDiRep,
+        txtRepuestosRep: TxtRepuestosRep,
+        informeRep: InformeRep,
+        feFinRep: FeFinRep,
+        feEntRep: FeEntRep,
+        txtEntregaRep: TxtEntregaRep,
+        seguimientoEntregaRep: SeguimientoEntregaRep
+    };
+};
+
+const transformUsuarioAppToJava = (usuario) => {
+
+    const {
+        NombreUsu,
+        ApellidoUsu,
+        EmailUsu,
+        ProvinciaUsu,
+        CiudadUsu,
+        Admin,
+        Nick,
+        TelefonoUsu,
+        UrlFotoUsu
+    } = usuario.data;
+
+    return {
+        id: usuario?.id,
+        nombreUsu: NombreUsu,
+        apellidoUsu: ApellidoUsu,
+        emailUsu: EmailUsu,
+        provinciaUsu: ProvinciaUsu,
+        ciudadUsu: CiudadUsu,
+        admin: Admin,
+        nick: Nick,
+        telefonoUsu: TelefonoUsu,
+        urlFotoUsu: UrlFotoUsu
+    }
+}
+
+const transformUsuarioJavaToApp = ({
+    id,
+    nombreUsu,
+    apellidoUsu,
+    emailUsu,
+    provinciaUsu,
+    ciudadUsu,
+    admin,
+    nick,
+    telefonoUsu,
+    urlFotoUsu
+}) => {
+
+    return {
+        id: id,
+        data: {
+            NombreUsu: nombreUsu,
+            ApellidoUsu: apellidoUsu,
+            EmailUsu: emailUsu,
+            ProvinciaUsu: provinciaUsu,
+            CiudadUsu: ciudadUsu,
+            Admin: admin,
+            Nick: nick,
+            TelefonoUsu: telefonoUsu,
+            UrlFotoUsu: urlFotoUsu
+        }
+    }
 }

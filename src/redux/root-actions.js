@@ -1,6 +1,7 @@
 // Este archivo centraliza las acciones
 import { 
-    login, 
+    login,
+    registro,
     logout,
     cierraModal,
     abreModal,
@@ -11,8 +12,6 @@ import {
     guardarReparacion,
     eliminarReparacion,
     confirm,
-    setCliente,
-    setReparacion,
     guardarPresupuesto,
     getProvinciasSelect,
     getUsuariosSelect,
@@ -24,6 +23,7 @@ import {
 
 export { 
     login,
+    registro,
     logout, 
     cierraModal,
     abreModal,
@@ -34,8 +34,6 @@ export {
     guardarReparacion,
     eliminarReparacion,
     confirm,
-    setCliente,
-    setReparacion,
     guardarPresupuesto,
     getProvinciasSelect,
     getUsuariosSelect,

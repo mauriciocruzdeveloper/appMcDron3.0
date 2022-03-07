@@ -3,13 +3,10 @@ import { useEffect, useCallback, useState } from "react";
 // 
 import { connect } from "react-redux";
 import { useParams } from "react-router-dom";
-import history from "../history";
 // Actions
 import { 
-    getReparacion,
     guardarReparacion,
     eliminarReparacion,
-    abreModal,
     confirm,
   } from "../redux/root-actions";
 // No se si está bien. Me gusta más que lo traiga la persistencia mediante una acción.
@@ -18,12 +15,11 @@ import { estados } from '../datos/estados.json';
 import ReparacionPresentational from './Reparacion.presentational';
 
 const Reparacion = ({ 
-    getReparacion,
     guardarReparacion,
     eliminarReparacion,
-    abreModal,
     confirm,
     coleccionReparaciones,
+    admin
 }) => {
 
     console.log("REPARACION container");
@@ -33,13 +29,7 @@ const Reparacion = ({
     const [ reparacion, setReparacion ] = useState();
 
     const inicializarFormulario = useCallback(async () => {
-        coleccionReparaciones?.length
-        ? setReparacion(coleccionReparaciones.find(reparacion => reparacion.id == id))
-        : await getReparacion(id)
-                .catch(error => {
-                    abreModal("Error buscando Reparación ", `Código - ${error.code}`, "danger" );
-                    history.goBack();
-                })
+        setReparacion(coleccionReparaciones.find(reparacion => reparacion.id == id))
     // Cuando cambia la colección de reparaciones, el escuchador lo ve, y se actualiza la colección
     // entonces la pongo como dependencia del useCallback para que se vuelva a renderizar la función
     // y vuelva a setear la reparación como está en la actualidad.
@@ -86,11 +76,7 @@ const Reparacion = ({
             "Guardar Reparación?",
             "Atención",
             "warning",
-            () => {
-                guardarReparacion(reparacion)
-                .then(reparacion => abreModal("Guardado con éxito", "Reparación: " + reparacion.id, "success" ))
-                .catch(error => abreModal("Error al guardar ", `Código - ${error.code}`, "danger" ));
-            }
+            () => guardarReparacion(reparacion)
         );
     }
 
@@ -99,15 +85,7 @@ const Reparacion = ({
             "Eliminar Reparación?",
             "Atención",
             "danger",
-            () => {
-                console.log("llega al callBacK de confirm") ;
-                eliminarReparacion(reparacion.id)
-                .then(id => {
-                        abreModal("Reparación eliminada con éxito", "Reparación: " + id, "success" );
-                        history.goBack();
-                })
-                .catch(error => abreModal("Error al guardar ", `Código - ${error.code}`, "danger" ))
-            }
+            () => eliminarReparacion(reparacion.id)
         );
     }
 
@@ -115,6 +93,7 @@ const Reparacion = ({
         // Sólo se renderiza el commponente presentacional cuando están los datos necesarios ya cargados.
         estados && reparacion ?
         <ReparacionPresentational
+            admin={admin}
             reparacion={reparacion}
             estados={estados}
             setEstado={setEstado}
@@ -133,9 +112,7 @@ const mapStateToProps = (state) => ({
 export default connect(
     mapStateToProps, 
     {
-        getReparacion,
         guardarReparacion, 
         eliminarReparacion, 
-        abreModal,
         confirm,
     })(Reparacion);

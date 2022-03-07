@@ -3,7 +3,8 @@ import { initializeApp } from "firebase/app";
 import { 
     getAuth, 
     signInWithEmailAndPassword,
-    sendEmailVerification
+    sendEmailVerification,
+    createUserWithEmailAndPassword
 } from "firebase/auth";
 
 import {
@@ -22,8 +23,8 @@ import {
     CACHE_SIZE_UNLIMITED // constante para caché ilimitada
 } from "firebase/firestore";
 
-import { config as firebaseConfig }  from '../configProd'; // Para producción
-// import { config as firebaseConfig }  from '../configDev'; // Para desarrollo
+// import { config as firebaseConfig }  from '../configProd'; // Para producción
+import { config as firebaseConfig }  from '../configDev'; // Para desarrollo
 
 import { provincias } from '../datos/provincias.json';
 import { localidades } from '../datos/localidades.json';
@@ -51,7 +52,7 @@ export const loginPersistencia = (emailParametro, passwordParametro) => {
     return new Promise((resolve, reject) => {
         console.log(emailParametro,passwordParametro);
         const auth = getAuth();
-        signInWithEmailAndPassword(auth, emailParametro,passwordParametro)
+        signInWithEmailAndPassword(auth, emailParametro, passwordParametro)
         .then(async () => {
             console.log("Se logueó");
             let userAuth = auth.currentUser;
@@ -61,43 +62,81 @@ export const loginPersistencia = (emailParametro, passwordParametro) => {
                 console.log('Pasa el ref:');
                 await getDoc(usuarioRef)
                 .then(doc => {
-                    console.log('Entra al then get');
                     if(doc.exists){
-                        console.log('Entra al doc.exists');
                         let usuario = {};
                         usuario.id = doc.id;
                         usuario.data = doc.data();
                         return resolve(usuario);
+                    }else{
+                        reject({ code: "Problema en doc.exist en loginPersistencia()"});
                     }
                 })
-                .catch(error => reject(error));
+                .catch(() => reject({ code: "problema en el logueo" }));
                 return resolve(); // ESTA LÍNEA PUEDE ESTAR MAL
             }else{
                 console.log('Email no verificado');
                 await sendEmailVerification(userAuth)
-                .then(reject({code: "Email no verificado. Se envió email de verificación a su casilla de correos"}))
-                .catch(error => reject(error));
-            }
+                .then(() => reject({code: "Email no verificado. Se envió email de verificación a su casilla de correos"}))
+                .catch(() => reject({ code: "No se pudo enviar el email de verificación" }));
+            };
         })
-        .catch(error => {
-            reject(error = {...error, code: "problema en el logueo"});
-        });
+        .catch((error) => reject({ code: error.code }));
     });
 };
+
+
+// Registro
+export const registroPersistencia = (registro) => {
+
+    const { email, password, admin, NombreUsu, ApellidoUsu } = registro;
+
+    const usuario = {
+        id: email,
+        data: {
+            Admin: admin,
+            EmailUsu: email,
+            NombreUsu: NombreUsu,
+            ApellidoUsu: ApellidoUsu
+        }
+    }
+
+    return new Promise((resolve, reject) => {
+        const auth = getAuth();
+        createUserWithEmailAndPassword(auth, email, password)
+        .then(async (userCredential) => {
+            // Signed in
+            const user = userCredential.user;
+            await guardarUsuarioPersistencia(usuario);
+            await sendEmailVerification(user);
+            resolve(user);
+        })
+        .catch((error) => {
+            const errorCode = error.code;
+            reject(errorCode);
+        });
+    });
+}
+
 
 //////////////////////// REPARACIONES ///////////////////////////////////////////////////////////////
 
 // GET todas las Reparaciones
-export const getReparacionesPersistencia = (setReparacionesToRedux) => {
+export const getReparacionesPersistencia = (setReparacionesToRedux, usuario) => {
     console.log("getReparacionesPersistencia");
+    console.log("USUARIO: " + JSON.stringify(usuario));
     return new Promise((resolve, reject) => {
         // const unsubscribe = null;
-        const q = query(collection(firestore, "REPARACIONES"), orderBy("PrioridadRep"));
+        let q = "";
+        if(usuario?.data?.Admin) {
+            q = query(collection(firestore, "REPARACIONES"), orderBy("PrioridadRep"));
+        } else {
+            q = query(collection(firestore, "REPARACIONES"), where("UsuarioRep", "==", usuario.id));
+        };
         try{
             const unsubscribeRep = onSnapshot(q, (querySnapshot) => {
+                console.log("querysnapshot: " + JSON.stringify(querySnapshot));
                 let reparaciones = [];
                 querySnapshot.forEach(doc => reparaciones.push({id: doc.id, data: doc.data()}));
-                // console.log("reparaciones en getReparacionesPersistencia(): " + JSON.stringify(reparaciones[0]));
                 setReparacionesToRedux(reparaciones);
                 resolve(reparaciones);
             });
@@ -143,9 +182,9 @@ export const guardarReparacionPersistencia = (reparacion) => {
             doc(firestore, "REPARACIONES", reparacion.id), 
             reparacion.data
         )
-        .then(() => {
+        .then(docReparacion => {
             console.log("actualizado reparación ok");
-            resolve(reparacion);
+            resolve(docReparacion || reparacion);
         })
         .catch(error => {
             console.log("Error: " + error);
@@ -186,7 +225,6 @@ export const getUsuariosPersistencia = (setUsuariosToRedux) => {
                 querySnapshot.forEach(doc => usuarios.push({id: doc.id, data: { ...doc.data(), EmailUsu: doc.id}}))
                 // console.log("usuarios en getUsuariosPersistencia(): " + JSON.stringify(usuarios[0]));
                 // Esta función es una callback. Se llama igual que el action creator
-                console.log(JSON.stringify(setUsuariosToRedux));
                 setUsuariosToRedux(usuarios);
                 resolve(usuarios);
             });
@@ -216,9 +254,9 @@ export const guardarUsuarioPersistencia = (usuario) => {
         // El id es el id o sino el email.
         usuario.id = usuario.id || usuario.data?.EmailUsu;
         setDoc(doc(firestore, "USUARIOS", usuario.id), usuario.data)
-        .then(usuario => {
+        .then(docUsuario => {
             console.log("actualizado usuario ok");
-            resolve(usuario);
+            resolve(docUsuario || usuario);
         })
         .catch(error => {
             console.log("Error: " + error);

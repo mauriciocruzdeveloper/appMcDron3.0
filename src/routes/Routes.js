@@ -4,19 +4,15 @@ import { connect } from "react-redux";
 
 // Componenst
 import Login from '../components/Login.component';
-// import Modal from "../components/Modal.component";
-
-// import Turno from "../components/Turno.components";
-// import Resumen from "../components/Resumen.component";
+import Registro from '../components/Registro.component';
 
 //Routes
 import InicioRoutes from "./Inicio.routes";
-// import TiposJornadaRoutes from "./TiposJornada/TiposJornada.routes";
 
 // Actions
 import { login, logout } from "../redux/root-actions";
 
-const Routes = ({ isLoggedIn, admin, isFetching }) => {
+const Routes = ({ isLoggedIn, admin }) => {
 
     console.log("ROUTES");
 
@@ -30,7 +26,12 @@ const Routes = ({ isLoggedIn, admin, isFetching }) => {
 
             <Route path="/login" render = {props => <Login {...props} /> }/>
 
-            <Route path="/inicio" render = {props => <InicioRoutes {...props} isLoggedIn = { isLoggedIn } admin = { admin } /> }/>
+            <Route path="/inicio" render = {props => <InicioRoutes {...props} isLoggedIn = {isLoggedIn} admin = {admin} /> }/>
+
+            <Route path="/registro" render = {
+                isLoggedIn 
+                ? props => <InicioRoutes {...props} isLoggedIn = {isLoggedIn} admin = {admin} />
+                : props => <Registro {...props} /> }/>
 
         </Switch>
     </>)

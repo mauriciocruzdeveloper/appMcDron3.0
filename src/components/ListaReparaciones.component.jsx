@@ -13,12 +13,13 @@ import { useCallback } from "react";
 
 const ListaReparaciones = ({ 
   getReparaciones, 
-  coleccionReparaciones
+  coleccionReparaciones,
+  usuario
 }) => {
 
   // Busco las reparaciones al backup sólo cuando la colección está vacía.
   const iniciarFormulario = useCallback(async () => {
-    if(!coleccionReparaciones?.length) await getReparaciones(); 
+    if(!coleccionReparaciones?.length) await getReparaciones(usuario); 
   }, [getReparaciones]);
    
 
@@ -28,14 +29,15 @@ const ListaReparaciones = ({
     iniciarFormulario();
   }, [iniciarFormulario]);
 
+  console.log("LISTA REPARACIONES");
 
   return (
     <div 
       className="p-4" 
-      style={{
-        backgroundColor: "#EEEEEE",
-        // height: "100vh",
-      }}>
+      // style={{
+      //   backgroundColor: "#EEEEEE",
+      // }}
+      >
       {coleccionReparaciones.map(reparacion => (
         <div
           key={reparacion.id}
@@ -72,7 +74,8 @@ const ListaReparaciones = ({
 
 const mapStateToProps = (state) => ({
   coleccionReparaciones: state.app.coleccionReparaciones,
-  isFetching: state.app.isFetching
+  isFetching: state.app.isFetching,
+  usuario: state.app.usuario
 });
 
 export default connect( mapStateToProps, { getReparaciones } )( ListaReparaciones );

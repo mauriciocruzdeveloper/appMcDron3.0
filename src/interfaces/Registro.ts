@@ -1,8 +1,8 @@
-import { DocumentData } from "firebase/firestore";
-
-export interface Usuario {
-    id: string;
-    data: DocumentData;
+export interface Registro {
+    email: string,
+    pasword: string,
+    password2: string
+    usuario: {}
     // {
     //   NombreUsu: string,
     //   ApellidoUsu: string,

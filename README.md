@@ -10,6 +10,16 @@ En la primera etapa sólo se harán las funcionalidades relacionadas a las repar
 ### Versión de prueba online (puede estar desactualizada)
 http://mauriciocruzdrones.com/app
 
+Administrador
+usuario: admin@mauriciocruzdrones.com
+password: 123456
+
+Invitado
+usuario: invitado@mauriciocruzdrones.com
+password: 123456
+
+O sino puede registrarse y tendrá una cuenta como invitado.
+
 
 ## TECNOLOGÍAS:
 - Cordova

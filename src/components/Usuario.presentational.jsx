@@ -24,10 +24,10 @@ const UsuarioPresentational = ({
         >
             <div 
                 className="card mb-3"
-                style={{
-                    backgroundColor: "#CCCCCC",
+                // style={{
+                //     backgroundColor: "#CCCCCC",
 
-                }}
+                // }}
             >
                 <div className="card-body">
                     <h3 className="card-title">

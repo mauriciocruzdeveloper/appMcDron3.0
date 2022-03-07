@@ -32,8 +32,6 @@ const Presupuesto = ({
 
     console.log("PRESUPUESTO");
 
-    // Esto inicializa el form al montar y limpia al desmontar ///////
-
     const [ presupuesto, setPresupuesto ] = useState(
         { 
             cliente: { id: '', data: {} }, 
@@ -79,7 +77,10 @@ const Presupuesto = ({
     const initForm = useCallback(async () => {
         // Si el usuario es admin, deja todo en blanco para cargar cualquier usuario
         // sino cargo los datos del usuario logueado.
-        !usuario.data?.Admin ? await getCliente(usuario.id) : null; // Acá iría getCliente(usuario.id);
+        //!usuario.data?.Admin ? await getCliente(usuario.id) : null; // Acá iría getCliente(usuario.id);
+        !usuario.data?.Admin 
+        ? setPresupuesto({ ...presupuesto, cliente: usuario }) 
+        : null; // Acá iría getCliente(usuario.id);
         await getProvinciasSelect()
         .catch(error => abreModal("Error buscando ProvinciasSelect ", `Código - ${error.code}`, "danger" ));
         await getUsuariosSelect()
@@ -97,7 +98,7 @@ const Presupuesto = ({
             "Guardar Presupuesto?",
             "Atención",
             "warning",
-            () => {
+            async () => {
                 const presupuesto = {
                     usuario: cliente,
                     reparacion: reparacion
@@ -105,12 +106,9 @@ const Presupuesto = ({
                 presupuesto.reparacion.data.EstadoRep = "Consulta";
                 presupuesto.reparacion.data.PrioridadRep = "1";
                 presupuesto.reparacion.data.FeConRep = Date.now();
-                guardarPresupuesto(presupuesto)
-                .then(() => {
-                    abreModal("Presupuesto enviado!", "", "success" );
-                    history.goBack();
-                })
-                // .catch(error => abreModal("Error al guardar ", "Código - " + error.code, "danger" ));
+
+                await guardarPresupuesto(presupuesto)
+                history.goBack();
             }
         );
     }
@@ -181,10 +179,10 @@ const Presupuesto = ({
     return(
         <div
             className="p-4"
-            style={{
-                backgroundColor: "#EEEEEE",
+            // style={{
+            //     backgroundColor: "#EEEEEE",
 
-              }}
+            //   }}
         >
 
             <div className="card mb-3 bg-bluemcdron">

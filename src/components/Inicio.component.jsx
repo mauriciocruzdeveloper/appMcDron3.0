@@ -8,15 +8,18 @@ import { logout } from "../redux/root-actions";
 import history from "../history";
 
 // match es una parámetro de las props
-const Inicio = ({ logout, admin, match }) => {
+const Inicio = ({ admin, match }) => {
+
+  console.log("INICIO");
+
     return (
 
         <div 
           className="p-4" 
-          style={{
-            backgroundColor: "#EEEEEE", 
-            height: "100vh",
-          }}
+          // style={{
+          //   backgroundColor: "#EEEEEE", 
+          //   height: "100vh",
+          // }}
         > 
             <img className="mb-4" src="./img/logo.png" alt="" width="100%" max-width="100px" />   
 
@@ -28,20 +31,22 @@ const Inicio = ({ logout, admin, match }) => {
               <div className="text-white text-center">REPARACIONES</div>
             </button>
 
-            <button 
-              className="mb-3 btn w-100 bg-bluemcdron"
-              style={{height: "100px"}}
-              onClick={() => history.push(`${match.path}/presupuesto`)}
-            >      
-              <div className="text-white text-center">PRESUPUESTO</div>
-            </button>
-
+            {admin ?
             <button 
               className="mb-3 btn w-100 bg-bluemcdron"
               style={{height: "100px"}}
               onClick={() => history.push(`${match.path}/usuarios`)}
             >      
               <div className="text-white text-center">USUARIOS</div>
+            </button>
+            : null}
+
+            <button 
+              className="mb-3 btn w-100 bg-bluemcdron"
+              style={{height: "100px"}}
+              onClick={() => history.push(`${match.path}/presupuesto`)}
+            >      
+              <div className="text-white text-center">PRESUPUESTO</div>
             </button>
 
         </div>

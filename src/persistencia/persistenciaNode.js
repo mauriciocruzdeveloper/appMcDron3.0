@@ -72,7 +72,7 @@ export const getReparacionPersistencia = (id) => {
             let reparacion = {};
             reparacion.id = id;
             reparacion.data = response.data;
-            await getUsuariosPersistencia(reparacion.UsuarioRep)
+            await getUsuariosPersistencia(reparacion.data.UsuarioRep)
             .then(usuario => {
                 reparacion.data = { ...reparacion.data, ...usuario.data };
             })
@@ -108,7 +108,7 @@ export const eliminarReparacionPersistencia = (id) => {
         const headers = {'autorization': token()}
         axios.delete(`${SERVIDOR}/api/reparaciones/${id}`, { headers })
         .then(() => resolve(id))
-        .catch(error => reject(error));
+        .catch(() => reject( {code: `Error POST usu guardarUsuarioPersistencia` }));
     });
 };
 
@@ -123,17 +123,11 @@ export const getUsuariosPersistencia = async (setUsuariosToRedux) => {
         axios.get(`${SERVIDOR}/api/usuarios`, { headers })
         .then(response => {
             let usuarios = [];
-            response.data.forEach(doc => {
-                let id = doc._id;
-                delete doc._id;
-                delete response.data.__v;
-                usuarios.push({id: id, data: doc});
-            });
+            response.data.forEach(doc => usuarios.push(transformMongooseToApp(doc)));
             setUsuariosToRedux(usuarios);
             resolve(usuarios);
         })
-        // Da error cuando intenta leer status
-        .catch(error => reject({ ...error, code: `Error consulta codigo: ${error?.response?.status}` }));
+        .catch(() => reject({ code: `Error en getUsuariosPersistencia() al hacer get con axios` }));
     });
 };
 
@@ -143,7 +137,7 @@ export const getClientePersistencia = (id) => {
         const headers = { 'autorization': token() }
         axios.get(`${SERVIDOR}/api/usuarios/${id}`, { headers })
         .then(response => resolve(transformMongooseToApp(response)))
-        .catch(error => reject({ ...error, code: `Error consulta codigo: ${error.response.status}` }));
+        .catch(() => reject({ code: `Error en getUsuariosPersistencia() al hacer get con axios` }));
     });
 };
 
@@ -153,7 +147,7 @@ export const getClientePorEmailPersistencia = (id) => {
         const headers = { 'autorization': token() }
         axios.get(`${SERVIDOR}/api/usuarioByEmail/${id}`, { headers })
         .then(response => resolve(transformMongooseToApp(response)))
-        .catch(error => reject({ ...error, code: `Error consulta codigo: ${error.response.status}` }));
+        .catch(() => reject({ code: `Error en getUsuariosPersistencia() al hacer get con axios` }));
     });
 };
 
@@ -168,16 +162,13 @@ export const guardarUsuarioPersistencia = (usuario) => {
             console.log("llega A PATCH");
             axios.patch(`${SERVIDOR}/api/usuarios/${usuario.id}`, usuario.data, { headers })
             .then(response => resolve(transformMongooseToApp(response)))
-            .catch(() => reject( {code: `Error PATCH usu guardarUsuarioPersistencia` }))
+            .catch(() => reject( {code: `Error PATCH usu guardarUsuarioPersistencia()` }));
         }
         else{
             console.log("llega A POST: " + JSON.stringify(usuario.data));
             axios.post(SERVIDOR + '/api/usuarios', usuario.data, { headers })
             .then(response => resolve(transformMongooseToApp(response)))
-            .catch(error => {
-                console.log("error: " + JSON.stringify(error.message));
-                reject({code: error.messaje})
-            });
+            .catch(() => reject( {code: `Error POST usu guardarUsuarioPersistencia()` }));
         };
     });
 };
@@ -188,9 +179,15 @@ export const eliminarUsuarioPersistencia = (id) => {
         const headers = {'autorization': token()}
         axios.delete(`${SERVIDOR}/api/usuarios/${id}`, { headers })
         .then(() => resolve(id))
-        .catch(error => reject(error));
+        .catch(() => reject( {code: `Error DELETE en eliminarUsuarioPersistencia()` }));
     });
 };
+
+
+///////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////
+
 
 // Obtengo las provincias desde un archivo propio
 export const getProvinciasSelectPersistencia = () => {

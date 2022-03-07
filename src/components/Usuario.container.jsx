@@ -8,10 +8,8 @@ import history from "../history";
 import { 
     // Cliente y Usuario es lo mismo, pero Usuario se usa para referirse
     // al usuario logueado, y Cliente para el usuario en un ABMC
-    getCliente,
     guardarUsuario,
     eliminarUsuario,
-    abreModal,
     confirm,
     getProvinciasSelect,
     getLocalidadesPorProvincia,
@@ -21,10 +19,8 @@ import UsuarioPresentational from './Usuario.presentational'
 
 
 const Usuario = ({ 
-    getCliente,
     guardarUsuario,
     eliminarUsuario,
-    abreModal,
     confirm,
     provinciasSelect,
     localidadesSelect,
@@ -45,13 +41,7 @@ const Usuario = ({
     const inicializaFormulario = useCallback(async () => {
         // Busca los datos en caso que no estén en el store.
         !provinciasSelect?.length ? await getProvinciasSelect() : null;
-        coleccionUsuarios?.length 
-        ? setCliente(coleccionUsuarios.find(usuario => usuario.id == id))
-        : await getCliente(id)
-                .catch(error => {
-                    abreModal("Error buscando Cliente ", `Código - ${error.code}`, "danger" );
-                    history.goBack();
-                });
+        setCliente(coleccionUsuarios.find(usuario => usuario.id == id))
     }, [coleccionUsuarios]);
 
     useEffect(() => {
@@ -59,15 +49,12 @@ const Usuario = ({
     }, [inicializaFormulario]);
 
     const changeInputUsu = target => {
-        setPresupuesto({ 
-            ...presupuesto, 
-            cliente: {
-                ...presupuesto.cliente,
-                data: {
-                    ...presupuesto.cliente.data,
-                    [target.id]: value
-                } 
-            }
+        setCliente({ 
+            ...cliente, 
+            data: {
+                ...cliente.data,
+                [target.id]: target.value
+            } 
         });
     };
 
@@ -76,11 +63,7 @@ const Usuario = ({
             "Guardar Usuario?",
             "Atención",
             "warning",
-            () => {
-                guardarUsuario(cliente)
-                .then(reparacion => abreModal("Guardado con éxito", "Usuario: " + cliente.id, "success" ))
-                .catch(error => abreModal("Error al guardar ", "Código - " + error.code, "danger" ));
-            }
+            () => guardarUsuario(cliente)
         );
     }
 
@@ -89,15 +72,7 @@ const Usuario = ({
             "Eliminar Reparación?",
             "Atención",
             "danger",
-            () => {
-                console.log("llega al callBakc de confirm") ;
-                eliminarUsuario(cliente.id)
-                .then(id => {
-                    abreModal("Usuario eliminado con éxito", "Usuario: " + id, "success" );
-                    history.goBack();
-                })
-                .catch(error => abreModal("Error al guardar ", "Código - " + error.code, "danger" ))
-            }
+            () => eliminarUsuario(cliente.id)
         );
     }
 
@@ -149,10 +124,8 @@ const mapStateToProps = (state) => ({
 export default connect(
     mapStateToProps, 
     {
-        getCliente,
         guardarUsuario,
         eliminarUsuario, 
-        abreModal,
         confirm,
         getProvinciasSelect,
         getLocalidadesPorProvincia,

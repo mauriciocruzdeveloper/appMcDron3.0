@@ -1,7 +1,7 @@
 // Módulo para conectar con redux
 import { connect } from "react-redux";
 // Actions
-import { logout } from "../redux/root-actions";
+import { logout, confirm } from "../redux/root-actions";
 // Componentes
 // import Calendario from "./Calendario/Calendario.component";
 // import PantallaAdministrador from "./PantallaAdministrador";
@@ -11,9 +11,19 @@ import { ArrowLeftShort } from 'react-bootstrap-icons';
 
 import history from "../history";
 
-const NavMcDron = ({ usuario }) => {
 
-    // console.log("USUARIO: " + JSON.stringify(usuario));
+
+const NavMcDron = ({ usuario, logout, confirm }) => {
+
+    console.log("history LOCATION: " + JSON.stringify(history.location));
+
+    const handleBack = () => {
+        if (history.location.pathname == "/inicio"){
+            confirm("Desloguearse???", "Atención", "warning", () => logout());
+        }else{
+            history.goBack()
+        };
+    }
 
     return (
     // La prop sticky es para que el navbar quede arriba, pero "ocupando" un espacio
@@ -22,11 +32,11 @@ const NavMcDron = ({ usuario }) => {
         <ArrowLeftShort 
             width="50" 
             height="50"
-            onClick={() => history.goBack()}
+            onClick={handleBack}
             color="white"
         />
         <h4 className="text-white m-0 float-left">
-            Hola {usuario?.data?.Nick || "amigo"}!
+            Hola {usuario?.data?.NombreUsu || "amigo"}!
         </h4>
         {/* <div 
             className="imageContainer rounded-circle float-right"
@@ -49,4 +59,4 @@ const mapStateToProps = (state) => ({
     usuario: state.app?.usuario
 });
 
-export default connect(mapStateToProps, { logout })(NavMcDron);
+export default connect(mapStateToProps, { logout, confirm })(NavMcDron);
