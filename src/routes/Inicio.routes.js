@@ -9,6 +9,7 @@ import Reparacion from "../components/Reparacion.container";
 import Usuario from "../components/Usuario.container";
 import Presupuesto from "../components/Presupuesto.component";
 import NavMcDron from "../components/NavMcDron.component";
+import Mensajes from "../components/Mensajes.container";
 
 
 const InicioRoutes = ({ match, isLoggedIn, admin }) => {
@@ -27,7 +28,8 @@ const InicioRoutes = ({ match, isLoggedIn, admin }) => {
                 <Route exact path={`${match.path}/reparaciones/:id`} render = {props => <Reparacion {...props} admin={admin}/>} />
                 <Route exact path={`${match.path}/usuarios`} render = {admin ? props => <ListaUsuarios {...props} /> : () => <h1>ACCESO NO AUTORIZADO</h1>} />
                 <Route exact path={`${match.path}/usuarios/:id`} render = {props => <Usuario {...props}/>} />
-                <Route exact path={`${match.path}/presupuesto`} render = {props => <Presupuesto {...props}/>} />
+                <Route exact path={`${match.path}/presupuesto`} render = {props => <Presupuesto {...props} admin={admin}/>} />
+                <Route exact path={`${match.path}/mensajes`} render = {props => <Mensajes {...props} admin={admin}/>} />
             </Switch>
         </>
         : <Redirect to="/login" />        

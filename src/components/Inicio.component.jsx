@@ -1,7 +1,5 @@
 // Módulo para conectar con redux
-import { connect } from "react-redux";
 // Actions
-import { logout } from "../redux/root-actions";
 // Componentes
 // Transitions
 // Servicios
@@ -16,10 +14,6 @@ const Inicio = ({ admin, match }) => {
 
         <div 
           className="p-4" 
-          // style={{
-          //   backgroundColor: "#EEEEEE", 
-          //   height: "100vh",
-          // }}
         > 
             <img className="mb-4" src="./img/logo.png" alt="" width="100%" max-width="100px" />   
 
@@ -49,8 +43,16 @@ const Inicio = ({ admin, match }) => {
               <div className="text-white text-center">PRESUPUESTO</div>
             </button>
 
+            <button 
+              className="mb-3 btn w-100 bg-bluemcdron"
+              style={{height: "100px"}}
+              onClick={() => history.push(`${match.path}/mensajes`)}
+            >      
+              <div className="text-white text-center">MENSAJES</div>
+            </button>
+
         </div>
     )
 };
 
-export default connect( null, { logout } )( Inicio );
+export default Inicio;

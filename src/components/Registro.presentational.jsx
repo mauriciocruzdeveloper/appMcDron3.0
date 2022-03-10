@@ -1,39 +1,10 @@
-import { useState } from "react";
-
-import { connect } from "react-redux";
-
-import { 
-  registro, 
-  abreModal
-} from "../redux/root-actions";
-
-import history from "../history";
-
-import { useEffect } from 'react';
-
-const Registro = ({ 
-  registro,
-  abreModal
+const RegistroPresentational = ({ 
+  registroData,
+  changeInputRegistro,
+  handleLoguearse,
+  handleRegistro
 }) => {
-
-  const [ registroData, setRegistroData ] = useState({ admin: false, ApellidoUsu: null });
-
-  console.log("REGISTRO");
-
-  const changeInputRegistro = target => setRegistroData({ 
-    ...registroData, 
-    [target.id]: target.value 
-  });
-
-  const handleRegistro = async () => {
-    await registro(registroData);
-    history.push("/login");
-  };
-
-  const handleLoguearse = () => {
-    history.push("/login");
-  }
-
+  console.log("REGISTRO presentational");
 
   return (
     <div className="text-center">
@@ -124,8 +95,4 @@ const Registro = ({
   );
 };
 
-const mapStateToProps = (state) => ({
-  isFetching: state.app.isFetching,
-});
-
-export default connect(mapStateToProps, { registro, abreModal })(Registro);
+export default RegistroPresentational;

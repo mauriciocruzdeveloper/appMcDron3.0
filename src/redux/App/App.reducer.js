@@ -26,6 +26,7 @@ const INITIAL_STATE = {
     // Le voy a llamar usuario al usuario logueado, 
     // y cliente al usuario/cliente en general
     coleccionReparaciones: [], // Todas las reparaciones
+    coleccionMensajes: [], // Todas los mensajes
     coleccionUsuarios: [], // Todos los usuarios
     provinciasSelect: [], // Las provincias usadas en los select
     localidadesSelect: [], // Las localidades usadas en los select
@@ -47,6 +48,12 @@ export default (state = INITIAL_STATE, action) => {
             return { 
                 ...state, 
                 coleccionUsuarios: action.payload.data
+            };
+        }
+        case AppTypes.GET_MESSAGES:{
+            return { 
+                ...state, 
+                coleccionMensajes: action.payload.data
             };
         }
         // case AppTypes.GET_REPARACION:{

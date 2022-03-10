@@ -21,6 +21,8 @@ import {
     getLocPorProvPersistencia,
     getUsuariosPersistencia,
     getClientePorEmailPersistencia,
+    getMessagesPersistencia,
+    sendMessagePersistencia
 } from "../../persistencia/persistenciaFirebase";
 // } from "../../persistencia/persistenciaJava";
 // } from "../../persistencia/persistenciaNode";
@@ -63,6 +65,11 @@ export const cierraConfirm = () => ({
 export const setUsuariosToRedux = (usuarios) => ({ 
     type: AppTypes.GET_USUARIOS, 
     payload: { data: usuarios }
+});
+
+export const setMessagesToRedux = (messages) => ({ 
+    type: AppTypes.GET_MESSAGES, 
+    payload: { data: messages }
 });
 
 // export const setCliente = (cliente) => ({
@@ -201,7 +208,6 @@ export const guardarPresupuesto = (presupuesto) => (dispatch) => {
         guardarPresupuestoPersistencia(presupuesto)
         .then(() => {
             dispatch(abreModal("Presupuesto enviado!", "", "success" ));
-            dispatch(setUsuario(presupuesto.usuario));
             resolve(presupuesto);
         })
         .catch(error => {
@@ -245,6 +251,19 @@ export const guardarUsuario = (usuario) => (dispatch) => {
             reject(error);
         })
         .finally(() => dispatch(isFetchingCoplete()));
+    }); 
+}
+
+// GUARDA Mensaje
+export const sendMessage = (message) => (dispatch) => {
+    console.log("sendMessage()");
+    return new Promise((resolve, reject) => {
+        sendMessagePersistencia(message)
+        .then(message => resolve(message))
+        .catch(error => {
+            dispatch(abreModal("Mensaje no enviado", "Código - " + error, "danger" ));
+            reject(error);
+        })
     }); 
 }
 
@@ -312,6 +331,21 @@ export const getReparaciones = (usuario) => (dispatch) => {
             dispatch(abreModal("Error", "Error en getReparaciones() al buscar las Reparaciones", "danger"));
             reject();
         })
+        .finally(() => dispatch(isFetchingCoplete()));
+    });
+}
+
+// GET de todos los Mensajes
+export const getMessages = (email) => (dispatch) => {
+    console.log("getMessages()");
+    dispatch(isFetchingStart());
+    return new Promise((resolve, reject) => {
+        getMessagesPersistencia(email, mensajes => dispatch(setMessagesToRedux(mensajes)))
+        .then(() => resolve())
+        // .catch(() => {
+        //     dispatch(abreModal("Error", "getMessages() en getUsuariosPersistencia()", "danger"));
+        //     reject()
+        // })
         .finally(() => dispatch(isFetchingCoplete()));
     });
 }

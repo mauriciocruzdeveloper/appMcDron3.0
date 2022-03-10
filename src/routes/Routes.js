@@ -3,8 +3,8 @@ import { Route, Switch, Redirect } from "react-router-dom";
 import { connect } from "react-redux";
 
 // Componenst
-import Login from '../components/Login.component';
-import Registro from '../components/Registro.component';
+import Login from '../components/Login.container';
+import Registro from '../components/Registro.container';
 
 //Routes
 import InicioRoutes from "./Inicio.routes";

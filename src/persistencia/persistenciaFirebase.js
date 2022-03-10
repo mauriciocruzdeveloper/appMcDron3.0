@@ -15,6 +15,7 @@ import {
     setDoc, 
     initializeFirestore,
     getDoc,
+    addDoc,
     getDocs,
     query, 
     orderBy,
@@ -59,7 +60,6 @@ export const loginPersistencia = (emailParametro, passwordParametro) => {
             if(userAuth.emailVerified) {
                 console.log('Email is verified ' + emailParametro);
                 let usuarioRef = doc(collection(firestore, "USUARIOS"), emailParametro);
-                console.log('Pasa el ref:');
                 await getDoc(usuarioRef)
                 .then(doc => {
                     if(doc.exists){
@@ -134,7 +134,6 @@ export const getReparacionesPersistencia = (setReparacionesToRedux, usuario) => 
         };
         try{
             const unsubscribeRep = onSnapshot(q, (querySnapshot) => {
-                console.log("querysnapshot: " + JSON.stringify(querySnapshot));
                 let reparaciones = [];
                 querySnapshot.forEach(doc => reparaciones.push({id: doc.id, data: doc.data()}));
                 setReparacionesToRedux(reparaciones);
@@ -156,7 +155,6 @@ export const getReparacionPersistencia = (id) => {
             const docRefCliente = doc(firestore, 'USUARIOS', idCliente);
             getDoc(docRefCliente)
             .then(docSnapCliente => {
-                console.log("docSnapCliente: " + JSON.stringify(docSnapCliente.data()));
                 resolve({
                     id: id, 
                     data: {
@@ -250,7 +248,6 @@ export const getClientePorEmailPersistencia = getClientePersistencia;
 // GUARDAR Cliente
 export const guardarUsuarioPersistencia = (usuario) => {
     return new Promise((resolve, reject) => {
-        console.log("Llega a guardarUsuarioPersistencia");
         // El id es el id o sino el email.
         usuario.id = usuario.id || usuario.data?.EmailUsu;
         setDoc(doc(firestore, "USUARIOS", usuario.id), usuario.data)
@@ -262,7 +259,7 @@ export const guardarUsuarioPersistencia = (usuario) => {
             console.log("Error: " + error);
             reject(error);
         });
-    })
+    });
 };
 
 // DELETE Cliente
@@ -280,6 +277,49 @@ export const eliminarUsuarioPersistencia = (id) => {
 
     })
 };
+
+
+////////////////////// MENSAJES ////////////////////////////////////////////
+
+// GET todos los mensajes
+export const getMessagesPersistencia = (email, setMessagesToRedux) => {
+    console.log("getMessagesPersistencia");
+    return new Promise((resolve, reject) => {
+        // const unsubscribe = null;
+        // const docRef = doc(firestore, "MENSAJES", email)
+        console.log("EMAIL EN PERSISTENCIA: " + email);
+        const colRef = collection(firestore, `MENSAJES/${email}/mensajes`);
+        const q = query(colRef, orderBy("date"));
+        try {
+            const unsubscribeMessages = onSnapshot(q, (querySnapshot) => {
+                let messages = [];
+                querySnapshot.forEach(doc => messages.push({id: doc.id, data: { ...doc.data()}}))
+                console.log("MENSAJES EN PERSISTENCIA: " +JSON.stringify(messages));
+                setMessagesToRedux(messages);
+                resolve(messages);
+            });
+        }catch(error){
+            () => reject(error);
+        }
+    });
+}
+
+export const sendMessagePersistencia = async (message) => {
+    return new Promise((resolve, reject) => {
+        const docRef = doc(firestore, "MENSAJES", message.data.from);
+        const colRef = collection(docRef, "mensajes")
+        addDoc(colRef, message.data)
+        .then(docMessage => {
+            console.log("Mensaje guardado");
+            resolve(docMessage || 'mensaje');
+        })
+        .catch(error => {
+            console.log("Error: " + error);
+            reject(error);
+        });
+    });
+};
+
 
 ///////////// PRESUPUESTO ///////////////////////////////////////////////////
 

@@ -1,6 +1,7 @@
 // React
 import { useEffect, useCallback, useState } from "react";
-// 
+//
+import history from "../history";
 import { connect } from "react-redux";
 import { useParams } from "react-router-dom";
 // Actions
@@ -85,7 +86,10 @@ const Reparacion = ({
             "Eliminar Reparación?",
             "Atención",
             "danger",
-            () => eliminarReparacion(reparacion.id)
+            async () => { 
+                await eliminarReparacion(reparacion.id);
+                history.goBack();
+            }
         );
     }
 

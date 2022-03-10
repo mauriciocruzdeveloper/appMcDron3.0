@@ -1,49 +1,11 @@
-import { useState } from "react";
-
-import { connect } from "react-redux";
-
-import { 
-  login, 
-  abreModal
-} from "../redux/root-actions";
-
-import history from "../history";
-
-// import { useEffect } from 'react';
-
-const Login = ({ 
-  login,
-  abreModal
+const LoginPresentational = ({ 
+  loginData,
+  changeInputLogin,
+  handleLogin,
+  handleRegistrarse
 }) => {
 
-
-
-  // PARA SETEAR EL USUARIO Y PASSWORD POR DEFECTO PARA HACER PRUEBAS.
-  // useEffect(() => {
-  //   () => emailOnChangeLogin("admin@mauriciocruzdrones.com");
-  //   () => emailOnChangeLogin("123456");
-  // },[])
-
-  const [ loginData, setLoginData ] = useState({});
-
-  console.log("LOGIN");
-
-  const changeInputLogin = target => setLoginData({ 
-    ...loginData, 
-    [target.id]: target.value 
-  });
-
-  const handleLogin = async () => {
-    console.log("loginData: " + JSON.stringify(loginData));
-    await login(loginData);
-    console.log("pasa el LOGIN");
-    history.push("/");
-  };
-
-  const handleRegistrarse = () => {
-    history.push("/registro");
-  }
-
+  console.log("LOGIN presentational:" + JSON.stringify(loginData));
 
   return (
     <div className="text-center">
@@ -75,7 +37,7 @@ const Login = ({
             />
             <label>Password</label>
           </div>
-      
+     
           <div className="checkbox mb-3">
             <label>
               <input 
@@ -109,8 +71,4 @@ const Login = ({
   );
 };
 
-const mapStateToProps = (state) => ({
-  isFetching: state.app.isFetching,
-});
-
-export default connect(mapStateToProps, { login, abreModal })(Login);
+export default LoginPresentational;

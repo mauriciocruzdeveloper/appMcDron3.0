@@ -72,7 +72,10 @@ const Usuario = ({
             "Eliminar Reparación?",
             "Atención",
             "danger",
-            () => eliminarUsuario(cliente.id)
+            async () => {
+                await eliminarUsuario(cliente.id);
+                history.goBack();
+            }
         );
     }
 

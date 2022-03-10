@@ -10,6 +10,7 @@ import {
     getProvinciasSelect,
     getUsuariosSelect,
     getLocalidadesPorProvincia,
+    setUsuario
   } from "../redux/root-actions";
 
   import history from "../history";
@@ -17,6 +18,8 @@ import {
 // import { provincias } from '../datos/provincias.json'; 
 
 const Presupuesto = ({
+    admin,
+    setUsuario,
     getCliente,
     usuario,
     guardarPresupuesto,
@@ -108,6 +111,8 @@ const Presupuesto = ({
                 presupuesto.reparacion.data.FeConRep = Date.now();
 
                 await guardarPresupuesto(presupuesto)
+                console.log(JSON.stringify(presupuesto));
+                !admin ? setUsuario(presupuesto.usuario) : null;
                 history.goBack();
             }
         );
@@ -207,6 +212,7 @@ const Presupuesto = ({
                             onInputChange={handleOnInputChangeUsuarios}
                             id="EmailUsu"
                             value={{value: cliente.data?.EmailUsu, label: cliente.data?.EmailUsu}}
+                            isDisabled={!admin}
                         />
                     </div>
                     <div>
@@ -321,6 +327,7 @@ const mapStateToProps = (state) => ({
 export default connect(
     mapStateToProps, 
     {
+        setUsuario,
         getCliente,
         guardarPresupuesto, 
         abreModal,
