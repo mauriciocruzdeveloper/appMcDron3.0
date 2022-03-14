@@ -1,11 +1,14 @@
 // Módulo para conectar con redux
 import { connect } from "react-redux";
 // Actions
-import { logout, confirm, notificacionesPorMensajes } from "../redux/root-actions";
+import { logout, confirm } from "../redux/root-actions";
 // Componentes
 
 import { Navbar } from 'react-bootstrap';
 import { ArrowLeftShort } from 'react-bootstrap-icons';
+
+// Esta función no debería salir de acá...
+import { notificacionesPorMensajesPersistencia } from '../persistencia/persistenciaFirebase';
 
 import history from "../history";
 
@@ -15,7 +18,7 @@ const NavMcDron = ({ usuario, logout, confirm }) => {
 
     console.log("NavMcDron");
 
-    notificacionesPorMensajes(usuario.data.EmailUsu);
+    // notificacionesPorMensajesPersistencia(usuario.data.EmailUsu);
 
     const handleBack = () => {
         if (history.location.pathname == "/inicio"){
