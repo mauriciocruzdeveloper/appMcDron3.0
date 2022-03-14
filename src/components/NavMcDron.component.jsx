@@ -1,10 +1,8 @@
 // Módulo para conectar con redux
 import { connect } from "react-redux";
 // Actions
-import { logout, confirm } from "../redux/root-actions";
+import { logout, confirm, notificacionesPorMensajes } from "../redux/root-actions";
 // Componentes
-// import Calendario from "./Calendario/Calendario.component";
-// import PantallaAdministrador from "./PantallaAdministrador";
 
 import { Navbar } from 'react-bootstrap';
 import { ArrowLeftShort } from 'react-bootstrap-icons';
@@ -15,7 +13,9 @@ import history from "../history";
 
 const NavMcDron = ({ usuario, logout, confirm }) => {
 
-    console.log("history LOCATION: " + JSON.stringify(history.location));
+    console.log("NavMcDron");
+
+    notificacionesPorMensajes(usuario.data.EmailUsu);
 
     const handleBack = () => {
         if (history.location.pathname == "/inicio"){

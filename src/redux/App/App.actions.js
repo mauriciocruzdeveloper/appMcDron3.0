@@ -336,16 +336,16 @@ export const getReparaciones = (usuario) => (dispatch) => {
 }
 
 // GET de todos los Mensajes
-export const getMessages = (email) => (dispatch) => {
+export const getMessages = (emailUsu, emailCli) => (dispatch) => {
     console.log("getMessages()");
     dispatch(isFetchingStart());
     return new Promise((resolve, reject) => {
-        getMessagesPersistencia(email, mensajes => dispatch(setMessagesToRedux(mensajes)))
+        getMessagesPersistencia(emailUsu, emailCli, mensajes => dispatch(setMessagesToRedux(mensajes)))
         .then(() => resolve())
-        // .catch(() => {
-        //     dispatch(abreModal("Error", "getMessages() en getUsuariosPersistencia()", "danger"));
-        //     reject()
-        // })
+        .catch(() => {
+            dispatch(abreModal("Error", "getMessages() en getUsuariosPersistencia()", "danger"));
+            reject()
+        })
         .finally(() => dispatch(isFetchingCoplete()));
     });
 }

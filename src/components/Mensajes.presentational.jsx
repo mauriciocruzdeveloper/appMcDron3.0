@@ -1,44 +1,91 @@
-const MensajesPresentational = ({ 
-  admin,
-  messageData,
-  coleccionMensajes,
-  changeInputMessage,
-  handleSendMessage
-}) => {
+import Select from 'react-select';
+import { MessageBox } from 'react-chat-elements';
 
-  console.log("MENSAJES presentational");
+const MensajesPresentational = (props) => {
 
+  const { 
+    admin,
+    cliente,
+    messageData,
+    coleccionMensajes,
+    changeInputMessage,
+    handleSendMessage,
+    handleOnChangeUsuarios,
+    usuariosSelect,
+  } = props;
+  console.table("MENSAJES presentational: " + JSON.stringify(props)); 
+  // console.log("Cliente: " + JSON.stringify(cliente));
+  // console.log("usuariosSelect: " + JSON.stringify(usuariosSelect));
+  // console.log("coleccionMensajes: " + JSON.stringify(coleccionMensajes));
+  // console.log("messageData: " + JSON.stringify(messageData));
 
   return (
-    <div>
+    <div className="p-4" >
 
-      <div 
-        className="p-4" 
-        >
-        {coleccionMensajes.map(message => (
-          <div
-            key={message.id}
-            className="card mb-3 p-1" 
-            aria-current="true"
-            // onClick={() => history.push(`/inicio/usuarios/${usuario.id}`)}
-          >
-            <div className="d-flex w-100 justify-content-between">
-              <h5 className="mb-1">Mensaje: {message.data.content}</h5>
-            </div>
-            <small>{message.data.date.now}</small>
+      {admin && cliente && usuariosSelect ?
+      <div className="card mb-3">
+        <div className="card-body">
+          <h5 className="card-title bluemcdron">CLIENTE</h5>
+          <div>
+              <label className="form-label">E-mail</label>
+              <Select 
+                  options={usuariosSelect}
+                  noOptionsMessage={() => null}
+                  onChange={e => handleOnChangeUsuarios(e)}
+                  id="EmailUsu"
+                  value={{
+                    value: `${cliente.data?.NombreUsu || ''} - ${cliente.data?.EmailUsu || ''}`, 
+                    label: `${cliente.data?.NombreUsu || ''} - ${cliente.data?.EmailUsu || ''}`
+                  }}
+              />
           </div>
-        ))}
+        </div>
       </div>
+      : null }
 
-      <input 
-        type="text" 
-        value={messageData}
-        id="newMessage"
-        onChange={e => changeInputMessage(e.target)}
-      />
-      <button type="submit" onClick={handleSendMessage}>Send</button>
 
+      <div className="d-flex flex-column-reverse">
+        {coleccionMensajes.map(message => (
+            <div
+              key={message.id}
+              className="card mb-3 p-1" 
+              aria-current="true"
+              style=
+              { 
+                { 
+                  backgroundColor: 
+                  (message.data.from == (cliente.data?.EmailUsu || "admin@mauriciocruzdrones.com")) 
+                    ? "#88CCEE" 
+                    : "#FFFFFF" 
+                }
+              }
+            >
+              <div className="w-100 justify-content-between">
+                <strong className="mb-1">{message.data.from}</strong>
+                <p className='mb-1'>{message.data.content}</p>
+              </div>
+              <small>{new Date(message.data.date).toLocaleString()}</small>
+            </div>
+        ))}
+
+
+
+        <div className="card mb-3 p-1"  aria-current="true">
+          <div className="d-flex w-100 justify-content-between">
+            <input 
+              className="d-flex w-100 justify-content-between"
+              type="text" 
+              value={messageData}
+              id="newMessage"
+              onChange={e => changeInputMessage(e.target)}
+            />
+            <button type="submit" onClick={handleSendMessage}>Send</button>
+          </div>
+        </div>
+      </div>
     </div>
+
+
   );
 };
 

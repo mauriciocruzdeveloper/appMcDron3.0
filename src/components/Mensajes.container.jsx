@@ -2,7 +2,9 @@ import { useState, useEffect, useCallback } from "react";
 import { connect } from "react-redux";
 import { 
   getMessages,
-  sendMessage
+  getCliente,
+  sendMessage,
+  getUsuariosSelect
 } from "../redux/root-actions";
 import history from "../history";
 import MensajesPresentational from './Mensajes.presentational';
@@ -10,25 +12,48 @@ import MensajesPresentational from './Mensajes.presentational';
 
 const Mensajes = ({
   admin,
-  usuario, 
+  usuario, // El usuario logueado, cliente es el cliente seleccionado
   coleccionMensajes,
   getMessages,
-  sendMessage
+  getCliente,
+  sendMessage,
+  getUsuariosSelect,
+  usuariosSelect
 }) => {
 
   console.log("MENSAJES container");
 
+  // MODIFICANDO UN POCO EL CÓDIGO, SIRVA PARA ENVIAR MENSAJES ENTRE CLIENTES
+
   const INIT_MESSAGE_DATA = '';
+  const INIT_CLIENTE = {
+    id: '',
+    data: {}
+  }
 
   const [ messageData, setMessageData ] = useState(INIT_MESSAGE_DATA);
+  const [ cliente, setCliente ] = useState(INIT_CLIENTE); // Es el cliente seleccionado cuando soy admin
 
+  // El useCallback tiene como dependencia el cliente, cuando elijo otro cliente, se actualiza.
   const initForm = useCallback(async () => {
-    if(!coleccionMensajes?.length) await getMessages(usuario.data.EmailUsu); 
-  }, [getMessages]);
+    await getMessages(usuario.data.EmailUsu, cliente.data.EmailUsu || "admin@mauriciocruzdrones.com");
+    if(!usuariosSelect?.length && admin) await getUsuariosSelect();
+  }, [cliente]);
 
+  // initForm es la dependencia del useEffect que se vuelve a ejecutar cuando cambia initForm, que cambia cuando 
+  // se actualiza el useCallback, cuando a su vez cambia el cliente.
   useEffect(() => {
     initForm();
   }, [initForm]);
+
+
+  const handleOnChangeUsuarios = async (e) => {
+    if(e){
+      const cliente = await getCliente(e.value);
+      setCliente(cliente);
+    }
+  }
+
 
   const changeInputMessage = target => setMessageData(target.value);
 
@@ -36,34 +61,43 @@ const Mensajes = ({
     const message = {
       id: '',
       data: {
-        date: new Date(),
+        date: new Date().getTime(),
         content: messageData,
-        from: admin ? "admin@mauriciocruzdrones.com" : usuario.data.EmailUsu,
+        from: usuario.data.EmailUsu,
         // Si es admin, envío al invitado (PARA PROBAR). LUEGO HACER SELECT PARA ELEGIR EL CLIENTE
-        to: admin ? "invitado@mauriciocruzdrones.com" : "admin@mauriciocruzdrones.com"
+        to: cliente.data.EmailUsu || "admin@mauriciocruzdrones.com"
       }
     }
     setMessageData(INIT_MESSAGE_DATA);
     await sendMessage(message);
-    
   };
 
-  console.log("Mensaje: " + JSON.stringify(messageData));
+  
 
   return (
     <MensajesPresentational 
+      cliente={cliente}
       admin={admin}
       messageData={messageData}
       coleccionMensajes={coleccionMensajes}
       changeInputMessage={changeInputMessage}
       handleSendMessage={handleSendMessage}
+      handleOnChangeUsuarios={handleOnChangeUsuarios}
+      usuariosSelect={usuariosSelect}
     />
   );
+
 };
 
 const mapStateToProps = (state) => ({
   usuario: state.app.usuario,
-  coleccionMensajes: state.app.coleccionMensajes
+  coleccionMensajes: state.app.coleccionMensajes,
+  usuariosSelect: state.app.usuariosSelect
 });
 
-export default connect(mapStateToProps, { sendMessage, getMessages })(Mensajes);
+export default connect(mapStateToProps, { 
+  sendMessage, 
+  getMessages,
+  getCliente,
+  getUsuariosSelect
+})(Mensajes);

@@ -20,11 +20,12 @@ const App = ( { isFetching, isLoggedIn, admin, modal, confirm, alert }) => {
     // No funciona porque cuando entra a listareparaciones, por ejemplo
     // se ejcuta una y otra vez el useEffect, que causa un isfetchin que causa volver
     // a carga listareparaciones que causa nuevamente el useEffect...
-    <div
+    <div className="mx-auto"
       style={{
         backgroundColor: "#EEEEEE",
         height: "100%",
-        minHeight: "100vh"
+        minHeight: "100vh",
+        maxWidth: "600px"
       }}
     >
 {/* Esto de poner los modales y confirmaciones acá quizás sea una chanchada. VER!! */}
