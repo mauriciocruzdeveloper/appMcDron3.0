@@ -286,9 +286,6 @@ export const eliminarUsuarioPersistencia = (id) => {
 export const getMessagesPersistencia = (emailUsu, emailCli, setMessagesToRedux) => {
     console.log("getMessagesPersistencia");
     return new Promise((resolve, reject) => {
-        // const unsubscribe = null;
-        // const docRef = doc(firestore, "MENSAJES", email)
-        console.log("EMAIL EN PERSISTENCIA: " + emailUsu);
         const colRef = collection(firestore, `MENSAJES/${emailUsu}/${emailCli}`);
         const q = query(colRef, orderBy("date"));
         try {
@@ -305,7 +302,7 @@ export const getMessagesPersistencia = (emailUsu, emailCli, setMessagesToRedux) 
                 }))
                 setMessagesToRedux(messages);
 
-                resolve(messages);
+                resolve(unsubscribeMessages); // Devuelvo la función de cancelación de suscripción
             });
         }catch(error){
             () => reject(error);
@@ -313,28 +310,33 @@ export const getMessagesPersistencia = (emailUsu, emailCli, setMessagesToRedux) 
     });
 }
 
-export const notificacionesPorMensajesPersistencia = (emailUsu) => {
-    const colRef = collection(firestore, `MENSAJES/${emailUsu}`);
-    const q = query(colRef, orderBy("date","desc"), limit(1));
-    try {
-        const unsubscribeNotificationMenssages = onSnapshot(q, (querySnapshot) => {
-            const doc = querySnapshot.docs[0];
-            !doc.wasSend ? triggerNotification() : null;
-            resolve();
-        });
-    }catch(error){
-        () => reject(error);
-    }
-}
+// Esta función probablemente no debería estar acá ////////////////////////
+// export const notificacionesPorMensajesPersistencia = (emailUsu) => {
+//     const colRef = collection(firestore, `MENSAJES`);
+//     const q = query(colRef);
+//     try {
+//         const unsubscribeNotificationMenssages = onSnapshot(q, (querySnapshot) => {
+//             //const doc = querySnapshot.docs[0];
+//             //!doc.wasSend ? 
+//             triggerNotification() 
+//             //: null;
+//             resolve();
+//         });
+//     }catch(error){
+//         () => reject(error);
+//     }
+// }
 
-const triggerNotification = () => {
-    console.log("envia notificacion");
-    cordova.plugins.notification.local.schedule({
-        title: doc.data().CuerpoMensaje,
-        foreground: true,
-        vibrate: true
-    });
-}
+// const triggerNotification = () => {
+//     console.log("envia notificacion");
+//     navigator;
+//     cordova.plugins.notification.local.schedule({
+//         title: "Título",
+//         foreground: true,
+//         vibrate: true
+//     });
+// }
+////////////////////////////////////////////////////////////////////////
 
 export const sendMessagePersistencia = (message) => {
     return new Promise(async (resolve, reject) => {
