@@ -342,7 +342,7 @@ export const getMessages = (emailUsu, emailCli) => (dispatch) => {
     return new Promise((resolve, reject) => {
         getMessagesPersistencia(emailUsu, emailCli, mensajes => dispatch(setMessagesToRedux(mensajes)))
         // podría ubicar unsubscribeMessages en el store así puedo accederla desde cualquier lado
-        .then(() => resolve(unsubscribeMessages)) 
+        .then((unsubscribeMessages) => resolve(unsubscribeMessages)) 
         .catch(() => {
             dispatch(abreModal("Error", "getMessages() en getUsuariosPersistencia()", "danger"));
             reject()

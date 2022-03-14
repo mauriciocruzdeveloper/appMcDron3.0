@@ -18,6 +18,7 @@ import {
     getDoc,
     addDoc,
     getDocs,
+    updateDoc,
     query, 
     orderBy,
     deleteDoc,
@@ -286,9 +287,10 @@ export const eliminarUsuarioPersistencia = (id) => {
 export const getMessagesPersistencia = (emailUsu, emailCli, setMessagesToRedux) => {
     console.log("getMessagesPersistencia");
     return new Promise((resolve, reject) => {
-        const colRef = collection(firestore, `MENSAJES/${emailUsu}/${emailCli}`);
+        const docRef = doc(firestore, `MENSAJES/${emailUsu}/TO/${emailCli}`)
+        const colRef = collection(docRef,`mensajes`);
         const q = query(colRef, orderBy("date"));
-        try {
+        try {             
             const unsubscribeMessages = onSnapshot(q, (querySnapshot) => {
                 let messages = [];
                 querySnapshot.forEach(doc => messages.push({
@@ -296,14 +298,18 @@ export const getMessagesPersistencia = (emailUsu, emailCli, setMessagesToRedux) 
                     data: {
                         date: doc.data().date,
                         content: doc.data().content,
+                        sender: doc.data().sender,
                         from: doc.data().wasSend ? emailUsu : emailCli, // wasSend == true, enviado, == false, recibido
                         to: doc.data.wasSend ? emailCli : emailUsu
                     }
                 }))
                 setMessagesToRedux(messages);
-
-                resolve(unsubscribeMessages); // Devuelvo la función de cancelación de suscripción
+                // Cuando leo los mensajes, marco los mensajes del cliente como leídos
             });
+            // updateDoc(docRef, {
+            //     isRead: true
+            // });
+            resolve(unsubscribeMessages); // Devuelvo la función de cancelación de suscripción.
         }catch(error){
             () => reject(error);
         }
@@ -311,53 +317,53 @@ export const getMessagesPersistencia = (emailUsu, emailCli, setMessagesToRedux) 
 }
 
 // Esta función probablemente no debería estar acá ////////////////////////
-// export const notificacionesPorMensajesPersistencia = (emailUsu) => {
-//     const colRef = collection(firestore, `MENSAJES`);
-//     const q = query(colRef);
-//     try {
-//         const unsubscribeNotificationMenssages = onSnapshot(q, (querySnapshot) => {
-//             //const doc = querySnapshot.docs[0];
-//             //!doc.wasSend ? 
-//             triggerNotification() 
-//             //: null;
-//             resolve();
-//         });
-//     }catch(error){
-//         () => reject(error);
-//     }
-// }
+export const notificacionesPorMensajesPersistencia = (emailUsu) => {
+    const docRef = doc(firestore, `MENSAJES/${emailUsu}`);
+    const q = query(docRef);
+    try {
+        const unsubscribeNotificationMenssages = onSnapshot(q, (querySnapshot) => {
+            //const doc = querySnapshot.docs[0];
+            //!doc.wasSend ? 
+            triggerNotification() 
+            //: null;
+            //resolve();
+        });
+    }catch(error){
+        () => reject(error);
+    }
+}
 
-// const triggerNotification = () => {
-//     console.log("envia notificacion");
-//     navigator;
-//     cordova.plugins.notification.local.schedule({
-//         title: "Título",
-//         foreground: true,
-//         vibrate: true
-//     });
-// }
+const triggerNotification = () => {
+    console.log("envia notificacion");
+    if(window.cordova) {
+        cordova.plugins.notification.local.schedule({
+            title: "PRUEBA DE MENSAJE", //doc.data().CuerpoMensaje,
+            // foreground: true,
+            // vibrate: true
+        });
+    };
+}
 ////////////////////////////////////////////////////////////////////////
 
+// VER EL PROBLEMA DE LOS LEÍDOS Y NO LEÍDOS
 export const sendMessagePersistencia = (message) => {
     return new Promise(async (resolve, reject) => {
-        let docRef = doc(firestore, "MENSAJES", message.data.from);
-        let colRef = collection(docRef, message.data.to)
+        let docRef = doc(firestore, `MENSAJES/${message.data.from}/TO/${message.data.to}`)
+        let colRef = collection(docRef, `mensajes`);
         let data = {
             content: message.data.content,
+            sender: message.data.sender,
             date: message.data.date,
             wasSend: true
         };
-        await addDoc(colRef, data)
-        .catch(error => reject(error));
-        docRef = doc(firestore, "MENSAJES", message.data.to);
-        colRef = collection(docRef, message.data.from)
-        data = {
-            content: message.data.content,
-            date: message.data.date,
-            wasSend: false
-        };
-        await addDoc(colRef, data)
-        .catch(error => reject(error));
+        await addDoc(colRef, data).catch(error => reject(error));
+        // await updateDoc(docRef, { isRead: true });
+
+        docRef = doc(firestore, `MENSAJES/${message.data.to}/TO/${message.data.from}`);
+        colRef = collection(docRef, `mensajes`);
+        data = { ...message.data, wasSend: false };
+        await addDoc(colRef, data).catch(error => reject(error));
+        // await updateDoc(docRef, { isRead: false });
         resolve();
     });
 };

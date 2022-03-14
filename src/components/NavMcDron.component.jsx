@@ -18,7 +18,7 @@ const NavMcDron = ({ usuario, logout, confirm }) => {
 
     console.log("NavMcDron");
 
-    // notificacionesPorMensajesPersistencia(usuario.data.EmailUsu);
+    notificacionesPorMensajesPersistencia(usuario.data.EmailUsu);
 
     const handleBack = () => {
         if (history.location.pathname == "/inicio"){

@@ -13,7 +13,7 @@ const MensajesPresentational = (props) => {
     handleOnChangeUsuarios,
     usuariosSelect,
   } = props;
-  console.table("MENSAJES presentational: " + JSON.stringify(props)); 
+  console.table("MENSAJES presentational"); 
   // console.log("Cliente: " + JSON.stringify(cliente));
   // console.log("usuariosSelect: " + JSON.stringify(usuariosSelect));
   // console.log("coleccionMensajes: " + JSON.stringify(coleccionMensajes));
@@ -54,14 +54,14 @@ const MensajesPresentational = (props) => {
               { 
                 { 
                   backgroundColor: 
-                  (message.data.from == (cliente.data?.EmailUsu || "admin@mauriciocruzdrones.com")) 
+                  (message.data.sender != cliente.data.NombreUsu) 
                     ? "#88CCEE" 
                     : "#FFFFFF" 
                 }
               }
             >
               <div className="w-100 justify-content-between">
-                <strong className="mb-1">{message.data.from}</strong>
+                <strong className="mb-1">{message.data.sender}</strong>
                 <p className='mb-1'>{message.data.content}</p>
               </div>
               <small>{new Date(message.data.date).toLocaleString()}</small>

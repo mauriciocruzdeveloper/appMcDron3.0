@@ -18,10 +18,10 @@ const startApp = () => {
 }
 
 // Si se ejecuta con cordova, la app arranca luego de deviceready.
-if(!window.cordova) {
-    console.log("start NORMAL");
-    startApp()
-} else {
+if(window.cordova) {
     console.log("start DEVICEREADY");
     document.addEventListener('deviceready', startApp, false)
+} else {
+    console.log("start NORMAL");
+    startApp()
 }
