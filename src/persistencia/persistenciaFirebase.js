@@ -10,6 +10,7 @@ import {
 import {
     onSnapshot,
     where,
+    limit,
     collection, 
     doc, 
     setDoc, 
@@ -282,20 +283,28 @@ export const eliminarUsuarioPersistencia = (id) => {
 ////////////////////// MENSAJES ////////////////////////////////////////////
 
 // GET todos los mensajes
-export const getMessagesPersistencia = (email, setMessagesToRedux) => {
+export const getMessagesPersistencia = (emailUsu, emailCli, setMessagesToRedux) => {
     console.log("getMessagesPersistencia");
     return new Promise((resolve, reject) => {
         // const unsubscribe = null;
         // const docRef = doc(firestore, "MENSAJES", email)
-        console.log("EMAIL EN PERSISTENCIA: " + email);
-        const colRef = collection(firestore, `MENSAJES/${email}/mensajes`);
+        console.log("EMAIL EN PERSISTENCIA: " + emailUsu);
+        const colRef = collection(firestore, `MENSAJES/${emailUsu}/${emailCli}`);
         const q = query(colRef, orderBy("date"));
         try {
             const unsubscribeMessages = onSnapshot(q, (querySnapshot) => {
                 let messages = [];
-                querySnapshot.forEach(doc => messages.push({id: doc.id, data: { ...doc.data()}}))
-                console.log("MENSAJES EN PERSISTENCIA: " +JSON.stringify(messages));
+                querySnapshot.forEach(doc => messages.push({
+                    id: doc.id, 
+                    data: {
+                        date: doc.data().date,
+                        content: doc.data().content,
+                        from: doc.data().wasSend ? emailUsu : emailCli, // wasSend == true, enviado, == false, recibido
+                        to: doc.data.wasSend ? emailCli : emailUsu
+                    }
+                }))
                 setMessagesToRedux(messages);
+
                 resolve(messages);
             });
         }catch(error){
@@ -304,19 +313,50 @@ export const getMessagesPersistencia = (email, setMessagesToRedux) => {
     });
 }
 
-export const sendMessagePersistencia = async (message) => {
-    return new Promise((resolve, reject) => {
-        const docRef = doc(firestore, "MENSAJES", message.data.from);
-        const colRef = collection(docRef, "mensajes")
-        addDoc(colRef, message.data)
-        .then(docMessage => {
-            console.log("Mensaje guardado");
-            resolve(docMessage || 'mensaje');
-        })
-        .catch(error => {
-            console.log("Error: " + error);
-            reject(error);
+export const notificacionesPorMensajesPersistencia = (emailUsu) => {
+    const colRef = collection(firestore, `MENSAJES/${emailUsu}`);
+    const q = query(colRef, orderBy("date","desc"), limit(1));
+    try {
+        const unsubscribeNotificationMenssages = onSnapshot(q, (querySnapshot) => {
+            const doc = querySnapshot.docs[0];
+            !doc.wasSend ? triggerNotification() : null;
+            resolve();
         });
+    }catch(error){
+        () => reject(error);
+    }
+}
+
+const triggerNotification = () => {
+    console.log("envia notificacion");
+    cordova.plugins.notification.local.schedule({
+        title: doc.data().CuerpoMensaje,
+        foreground: true,
+        vibrate: true
+    });
+}
+
+export const sendMessagePersistencia = (message) => {
+    return new Promise(async (resolve, reject) => {
+        let docRef = doc(firestore, "MENSAJES", message.data.from);
+        let colRef = collection(docRef, message.data.to)
+        let data = {
+            content: message.data.content,
+            date: message.data.date,
+            wasSend: true
+        };
+        await addDoc(colRef, data)
+        .catch(error => reject(error));
+        docRef = doc(firestore, "MENSAJES", message.data.to);
+        colRef = collection(docRef, message.data.from)
+        data = {
+            content: message.data.content,
+            date: message.data.date,
+            wasSend: false
+        };
+        await addDoc(colRef, data)
+        .catch(error => reject(error));
+        resolve();
     });
 };
 
