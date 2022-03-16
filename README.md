@@ -36,7 +36,12 @@ Se empezarán a incorporar las notificaciones. Primero para los mensajes y luego
 
 ## TERCERA ETAPA
 
+Se incorporarán notificaciones para los cambios de estado de las reparaciones, para informar el presupuesto, para avisar la recepció no envío del drone, etc.
 
+
+## CUARTA ETAPA
+
+Otras mejoras.
 
 
 ## TECNOLOGÍAS:
