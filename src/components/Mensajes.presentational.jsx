@@ -6,6 +6,7 @@ const MensajesPresentational = (props) => {
   const { 
     admin,
     cliente,
+    usuario,
     messageData,
     coleccionMensajes,
     changeInputMessage,
@@ -54,14 +55,14 @@ const MensajesPresentational = (props) => {
               { 
                 { 
                   backgroundColor: 
-                  (message.data.sender != cliente.data.NombreUsu) 
+                  (message.data.senderName == usuario.data.NombreUsu) 
                     ? "#88CCEE" 
                     : "#FFFFFF" 
                 }
               }
             >
               <div className="w-100 justify-content-between">
-                <strong className="mb-1">{message.data.sender}</strong>
+                <strong className="mb-1">{message.data.senderName}</strong>
                 <p className='mb-1'>{message.data.content}</p>
               </div>
               <small>{new Date(message.data.date).toLocaleString()}</small>

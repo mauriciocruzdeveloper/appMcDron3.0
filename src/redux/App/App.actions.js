@@ -343,10 +343,10 @@ export const getMessages = (emailUsu, emailCli) => (dispatch) => {
         getMessagesPersistencia(emailUsu, emailCli, mensajes => dispatch(setMessagesToRedux(mensajes)))
         // podría ubicar unsubscribeMessages en el store así puedo accederla desde cualquier lado
         .then((unsubscribeMessages) => resolve(unsubscribeMessages)) 
-        .catch(() => {
-            dispatch(abreModal("Error", "getMessages() en getUsuariosPersistencia()", "danger"));
-            reject()
-        })
+        // .catch(() => {
+        //     dispatch(abreModal("Error", "getMessages() en getMensajesPersistencia()", "danger"));
+        //     reject()
+        // })
         .finally(() => dispatch(isFetchingCoplete()));
     });
 }
@@ -372,24 +372,26 @@ export const getProvinciasSelect = () => (dispatch) => {
     });
 }
 
+// Esta función no tiene mucho sentido. Habría que verlo bien.
 export const getUsuariosSelect = () => (dispatch) => {
     console.log("getUsuariosSelect");
     dispatch(isFetchingStart());
     return new Promise((resolve, reject) => {
-        getUsuariosPersistencia(usuarios => dispatch(setUsuariosToRedux(usuarios)))
-        .then(usuarios => {
-            const usuariosSelect = usuarios.map(usuario => {
-                let dato = usuario.data.EmailUsu ? usuario.data.EmailUsu : usuario.id;
-                return { value: dato, label: dato }
-            });
-            dispatch({
-                type: AppTypes.GET_USUARIOS_SELECT,
-                payload: {
-                    data: usuariosSelect
-                }
-            });
-            resolve(usuariosSelect);
-        })
+        getUsuariosPersistencia(
+            // Esta es la función callback que actualiza usuariosSelect
+            usuarios => {
+                const usuariosSelect = usuarios.map(usuario => {
+                    let dato = usuario.data.EmailUsu ? usuario.data.EmailUsu : usuario.id;
+                    return { value: dato, label: dato }
+                });
+                dispatch({
+                    type: AppTypes.GET_USUARIOS_SELECT,
+                    payload: {
+                        data: usuariosSelect
+                    }
+                });
+            }
+        )
         .catch(error  => reject(error))
         .finally(() => dispatch(isFetchingCoplete()));
     });

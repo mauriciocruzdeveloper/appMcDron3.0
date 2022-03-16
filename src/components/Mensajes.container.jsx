@@ -63,10 +63,10 @@ const Mensajes = ({
       data: {
         date: new Date().getTime(),
         content: messageData,
-        sender: usuario.data.NombreUsu,
+        senderName: usuario.data.NombreUsu,
         from: usuario.data.EmailUsu,
         // Si es admin, envío al invitado (PARA PROBAR). LUEGO HACER SELECT PARA ELEGIR EL CLIENTE
-        to: cliente.data.EmailUsu || "admin@mauriciocruzdrones.com"
+        to: cliente.data.EmailUsu || "admin@mauriciocruzdrones.com",
       }
     }
     setMessageData(INIT_MESSAGE_DATA);
@@ -78,6 +78,7 @@ const Mensajes = ({
   return (
     <MensajesPresentational 
       cliente={cliente}
+      usuario={usuario}
       admin={admin}
       messageData={messageData}
       coleccionMensajes={coleccionMensajes}

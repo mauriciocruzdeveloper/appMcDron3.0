@@ -44,9 +44,9 @@ const firestore = initializeFirestore(firebaseApp, {
 
 
 // Habilita la persistensia sin conexión
-enableIndexedDbPersistence(firestore)
-  .then(() => console.log("Persistencia habilitada"))
-  .catch(err => console.log("Error en persistencia: " + err));
+// enableIndexedDbPersistence(firestore)
+//   .then(() => console.log("Persistencia habilitada"))
+//   .catch(err => console.log("Error en persistencia: " + err));
 
 
 // Login
@@ -285,11 +285,10 @@ export const eliminarUsuarioPersistencia = (id) => {
 
 // GET todos los mensajes
 export const getMessagesPersistencia = (emailUsu, emailCli, setMessagesToRedux) => {
-    console.log("getMessagesPersistencia");
+    console.log("getMessagesPersistencia: " + emailUsu + ' ' + emailCli);
     return new Promise((resolve, reject) => {
-        const docRef = doc(firestore, `MENSAJES/${emailUsu}/TO/${emailCli}`)
-        const colRef = collection(docRef,`mensajes`);
-        const q = query(colRef, orderBy("date"));
+        const colRef = collection(firestore, 'USUARIOS', emailUsu, 'messages');
+        const q = query(colRef, where('emailCli', '==', emailCli), orderBy("date"));
         try {             
             const unsubscribeMessages = onSnapshot(q, (querySnapshot) => {
                 let messages = [];
@@ -298,9 +297,10 @@ export const getMessagesPersistencia = (emailUsu, emailCli, setMessagesToRedux) 
                     data: {
                         date: doc.data().date,
                         content: doc.data().content,
-                        sender: doc.data().sender,
-                        from: doc.data().wasSend ? emailUsu : emailCli, // wasSend == true, enviado, == false, recibido
-                        to: doc.data.wasSend ? emailCli : emailUsu
+                        senderName: doc.data().senderName,
+                        from: doc.data().sender,
+                        // Si el que envió es el usuario, el to es el cliente, si el que envió es el cliente, el to es el usuario
+                        to: doc.data().sender == emailUsu ? emailCli : emailUsu
                     }
                 }))
                 setMessagesToRedux(messages);
@@ -318,14 +318,26 @@ export const getMessagesPersistencia = (emailUsu, emailCli, setMessagesToRedux) 
 
 // Esta función probablemente no debería estar acá ////////////////////////
 export const notificacionesPorMensajesPersistencia = (emailUsu) => {
-    const docRef = doc(firestore, `MENSAJES/${emailUsu}`);
-    const q = query(docRef);
+    console.log("emailUsu: " + emailUsu);
+    const colRef = collection(firestore, 'USUARIOS', emailUsu, 'messages');
     try {
-        const unsubscribeNotificationMenssages = onSnapshot(q, (querySnapshot) => {
+        const unsubscribeNotificationMenssages = onSnapshot(colRef, (querySnapshot) => {
             //const doc = querySnapshot.docs[0];
-            //!doc.wasSend ? 
-            triggerNotification() 
-            //: null;
+            querySnapshot.docChanges().forEach(change => {
+                if(change.doc.data().sender != emailUsu){
+                    const notification = {
+                        title: "Nuevo Mensaje de " + change.doc.data().senderName,
+                        text: change.doc.data().content,
+                        foreground: true,
+                        vibrate: true
+                    }
+                    triggerNotification(notification);
+                }
+            })
+            
+ 
+            
+
             //resolve();
         });
     }catch(error){
@@ -333,13 +345,14 @@ export const notificacionesPorMensajesPersistencia = (emailUsu) => {
     }
 }
 
-const triggerNotification = () => {
+const triggerNotification = ({ title, text, foreground, vibrate }) => {
     console.log("envia notificacion");
     if(window.cordova) {
         cordova.plugins.notification.local.schedule({
-            title: "PRUEBA DE MENSAJE", //doc.data().CuerpoMensaje,
-            // foreground: true,
-            // vibrate: true
+            title: title,
+            text: text,
+            foreground: foreground,
+            vibrate: vibrate
         });
     };
 }
@@ -347,23 +360,34 @@ const triggerNotification = () => {
 
 // VER EL PROBLEMA DE LOS LEÍDOS Y NO LEÍDOS
 export const sendMessagePersistencia = (message) => {
+    console.log("sendMessagePersistencia()");
     return new Promise(async (resolve, reject) => {
-        let docRef = doc(firestore, `MENSAJES/${message.data.from}/TO/${message.data.to}`)
-        let colRef = collection(docRef, `mensajes`);
-        let data = {
-            content: message.data.content,
-            sender: message.data.sender,
+        // Usu es el que está logueado, Cli es al que se le envía el mensaje
+        let colRefUsu = collection(firestore, 'USUARIOS', message.data.from, 'messages');
+        let colRefCli = collection(firestore, 'USUARIOS', message.data.to, 'messages');
+        let dataUsu = {
             date: message.data.date,
-            wasSend: true
+            content: message.data.content,
+            // Para el Usu, el Cli es el to
+            emailCli: message.data.to,
+            // El que envía siempre es el from
+            sender: message.data.from,
+            senderName: message.data.senderName,
+            isRead: false 
         };
-        await addDoc(colRef, data).catch(error => reject(error));
-        // await updateDoc(docRef, { isRead: true });
-
-        docRef = doc(firestore, `MENSAJES/${message.data.to}/TO/${message.data.from}`);
-        colRef = collection(docRef, `mensajes`);
-        data = { ...message.data, wasSend: false };
-        await addDoc(colRef, data).catch(error => reject(error));
-        // await updateDoc(docRef, { isRead: false });
+        let dataCli = {
+            date: message.data.date,
+            content: message.data.content,
+            // Para el Cli, el Cli es el from
+            emailCli: message.data.from,
+            // El que envía siempre es el from
+            sender: message.data.from,
+            senderName: message.data.senderName,
+            isRead: false 
+        };
+        // Actualiza los mensajes del Usu y del Cli (el qué envía y el que recibe)
+        await addDoc(colRefUsu, dataUsu).catch(error => reject(error));
+        await addDoc(colRefCli, dataCli).catch(error => reject(error));
         resolve();
     });
 };
@@ -433,6 +457,18 @@ export const getLocPorProvPersistencia = (provincia) => {
     })
 };
 
+////////////////////// FUNCIONES UTILS ///////////////////////////
+
+// Hash simple para generar los ids de los chats
+function hash_method(inputAHash, inputBHash) { return inputAHash ^ inputBHash };
+
+
+
+
+
+
+
+/////////////////////////////////////////////////////////////////////
 
 
 /////////////// FUNCIONES A DESCARTAR /////////////////////////////

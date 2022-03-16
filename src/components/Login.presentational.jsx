@@ -5,7 +5,7 @@ const LoginPresentational = ({
   handleRegistrarse
 }) => {
 
-  console.log("LOGIN presentational:" + JSON.stringify(loginData));
+  console.log("LOGIN presentational");
 
   return (
     <div className="text-center">

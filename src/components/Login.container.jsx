@@ -37,8 +37,6 @@ const Login = ({ login }) => {
     history.push("/registro");
   }
 
-  console.log("loginData:" + JSON.stringify(loginData));
-
   return (
     loginData ?
     <LoginPresentational 
