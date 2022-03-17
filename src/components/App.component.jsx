@@ -12,6 +12,8 @@ import AlertComponent from "./Alert.component"; // Sólo se usa para "Cargando..
 
 const App = ( { isFetching, isLoggedIn, admin, modal, confirm, alert }) => {
 
+  console.log("APP")
+
   const { showModal, mensajeModal, tituloModal, tipoModal } = modal;
   const { showConfirm, mensajeConfirm, tituloConfirm, tipoConfirm, callBackConfirm } = confirm;
 

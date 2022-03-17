@@ -18,7 +18,6 @@ const ListaUsuarios = ({
   // dentro del useEffect. Además hay que usar useCallback para que no se 
   // ejecute una y otra vez, entrando en bucle, cuando se renderiza el componente.
   const iniciarFormulario = useCallback(async () => {
-    console.log("coleccion: " + coleccionUsuarios?.length);
     // Cuando la colección está vacía, se llena mediante el backend, y queda en escucha
     // para cuando cambie la base de datos ésta actualice la colección en redux automáticamente.
     if(!coleccionUsuarios?.length) await getUsuarios(); 
@@ -51,7 +50,6 @@ const ListaUsuarios = ({
         </div>
       ))}
     </div>
-
   );
 };
 

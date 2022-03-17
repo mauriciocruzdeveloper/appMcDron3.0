@@ -23,7 +23,7 @@ import { cierraConfirm } from '../redux/root-actions.js';
 
 const ConfirmComponent = ({ show, titulo, mensaje, tipo, onConfirm, cierraConfirm }) => {
 
-    console.log('CONFIRM COMPONENT ' + onConfirm);
+    console.log('CONFIRM COMPONENT');
 
     const handleOnConfirm = () => {
         onConfirm();

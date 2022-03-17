@@ -25,19 +25,13 @@ const ListaReparaciones = ({
 
   //PARA FORZAR LA CARGA DE LAS REPARACIONES AL INICIALIZAR
   useEffect(() => {
-    // Falta capturar los errores con el catch. getReparciones es una promesa.
     iniciarFormulario();
   }, [iniciarFormulario]);
 
   console.log("LISTA REPARACIONES");
 
   return (
-    <div 
-      className="p-4" 
-      // style={{
-      //   backgroundColor: "#EEEEEE",
-      // }}
-      >
+    <div className="p-4">
       {coleccionReparaciones.map(reparacion => (
         <div
           key={reparacion.id}

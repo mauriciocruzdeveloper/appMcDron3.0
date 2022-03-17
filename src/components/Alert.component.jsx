@@ -14,13 +14,11 @@ import { Modal } from 'react-bootstrap';
 
 const AlertComponent = ({ show, titulo, mensaje, tipo }) => {
 
-    console.log('ALERT COMPONENT ' + show);
+    console.log('ALERT COMPONENT');
 
     return(
-        <Modal centered show={show}>
-            
+        <Modal centered show={show}>  
             <Modal.Body><span class="spinner-grow float-right" role="status"></span></Modal.Body>
-            
         </Modal>
     )
 }

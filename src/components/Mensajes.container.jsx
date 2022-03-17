@@ -9,7 +9,6 @@ import {
 import history from "../history";
 import MensajesPresentational from './Mensajes.presentational';
 
-
 const Mensajes = ({
   admin,
   usuario, // El usuario logueado, cliente es el cliente seleccionado
@@ -23,7 +22,7 @@ const Mensajes = ({
 
   console.log("MENSAJES container");
 
-  // MODIFICANDO UN POCO EL CÓDIGO, SIRVA PARA ENVIAR MENSAJES ENTRE CLIENTES
+  // MODIFICANDO UN POCO EL CÓDIGO, SIRVe PARA ENVIAR MENSAJES ENTRE CLIENTES
 
   const INIT_MESSAGE_DATA = '';
   const INIT_CLIENTE = {

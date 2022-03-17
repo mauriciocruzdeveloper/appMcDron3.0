@@ -3,6 +3,7 @@ import { MessageBox } from 'react-chat-elements';
 
 const MensajesPresentational = (props) => {
 
+  // Para hacer pruebas, luego desectructurar dentro de los parámetros de la función anónima.
   const { 
     admin,
     cliente,
@@ -14,11 +15,8 @@ const MensajesPresentational = (props) => {
     handleOnChangeUsuarios,
     usuariosSelect,
   } = props;
+
   console.table("MENSAJES presentational"); 
-  // console.log("Cliente: " + JSON.stringify(cliente));
-  // console.log("usuariosSelect: " + JSON.stringify(usuariosSelect));
-  // console.log("coleccionMensajes: " + JSON.stringify(coleccionMensajes));
-  // console.log("messageData: " + JSON.stringify(messageData));
 
   return (
     <div className="p-4" >
@@ -68,8 +66,6 @@ const MensajesPresentational = (props) => {
               <small>{new Date(message.data.date).toLocaleString()}</small>
             </div>
         ))}
-
-
 
         <div className="card mb-3 p-1"  aria-current="true">
           <div className="d-flex w-100 justify-content-between">

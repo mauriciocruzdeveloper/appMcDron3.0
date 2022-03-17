@@ -24,14 +24,14 @@ O sino puede registrarse y tendrá una cuenta como invitado.
 
 ## PRIMERA ETAPA
 
-En la primera etapa sólo se harán las funcionalidades relacionadas a las reparaciones y los usuarios. Se podrá pedir un presupuesto, y éste generará una nueva reparación en estado "Consulta" y guardará el usuario. Se podrá modificar o eliminar el usuario y/o la reparación.
+En la primera etapa sólo se harán las funcionalidades relacionadas a las REPARACIONES y los USUARIOS. Se podrá pedir un PRESUPUESTO, y éste generará una nueva reparación en estado "Consulta" y guardará el usuario. Se podrá modificar o eliminar el usuario y/o la reparación.
 
 
 ## SEGUNDA ETAPA
 
 Se agregó la funcionalidad e MENSAJES. En un principio, para enviar y recibir mensajes entre el cliente y el administrador. Está hecho de tal manera que permitiría, con pocas modificaciones, enviar mensajes también entre clientes.
 
-Se empezarán a incorporar las notificaciones. Primero para los mensajes y luego para las actualizaciones de los estados de las reparaciones.
+Se empezarán a incorporar las NOTIFICACIONES. Primero para los mensajes y luego para las actualizaciones de los estados de las reparaciones.
 
 
 ## TERCERA ETAPA
@@ -45,6 +45,7 @@ Otras mejoras.
 
 
 ## TECNOLOGÍAS:
+
 - Cordova
 - React
 - Redux Thunk
@@ -56,33 +57,44 @@ Otras mejoras.
 - React-Select
 
 ### Floating Action Button
+
 - https://www.npmjs.com/package/react-floating-action-button
 
 ### React Bootstrap
+
 - https://www.npmjs.com/package/react-bootstrap
 
 ### Redux Thunk
+
 - https://www.npmjs.com/package/redux-thunk
 
 ### React Select
+
 - https://react-select.com
 
 ### React Router Dom
+
 - https://reactrouter.com/
 
 ### Cordova
+
 - https://cordova.apache.org/
 
 ### React
+
 - https://es.reactjs.org/
 
 
 ## MODELO DE FLUJO
-El flujo es como el flujo de redux. El componente presentacional 
+
+El flujo es como el de redux. Las acciones se originan en el componente presetacional, luego se pasan los parámetros del evento mediante callbacks al componente container. El container llama a las "action creators" conectadas mediante connect(). Las "action creators" llaman al backend de manera asincrónica, si es el caso, o hacen lo que tengan que hacer para luego crear la acción y dispacharla al reducer. El reducer modifica el estado. El estado pasa al componente container, y el container pasa los parámetros que necesita el componente presentacional. El componente presentacional muestra la vista según el estado del store.
+
+Los estados de los componentes tipo formularios se manejan de manera local con el hook useState.
 
 
 ## PATRÓN CONTENEDOR-PRESENTACIONAL
 Falta implementarlo en algunos componentes. La idea es poder cambiar la capa de presentación prácticamente sin modificar el resto de la app.
+
 
 ## CARACTERÍSTICAS
 - Usa persistencia en caché (para Firebase) en caso que se pierda la conexión a internet

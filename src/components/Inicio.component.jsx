@@ -1,8 +1,3 @@
-// Módulo para conectar con redux
-// Actions
-// Componentes
-// Transitions
-// Servicios
 import history from "../history";
 
 // match es una parámetro de las props
