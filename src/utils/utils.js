@@ -1,3 +1,7 @@
+import {
+    notificacionesPorMensajesPersistencia
+} from '../persistencia/persistenciaFirebase';
+
 export const convertTimestampCORTO = (timestamp) => {
     let d = new Date(parseInt(timestamp)*1), // Convert the passed timestamp to milliseconds
     yyyy = d.getFullYear(),
@@ -7,3 +11,11 @@ export const convertTimestampCORTO = (timestamp) => {
       
     return time;
 };
+
+export const actualizarLeidos = () => {
+
+}
+
+export const notificacionesPorMensajes = (EmailUsu) => {
+    notificacionesPorMensajesPersistencia(EmailUsu);
+}

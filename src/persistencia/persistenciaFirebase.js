@@ -26,8 +26,8 @@ import {
     CACHE_SIZE_UNLIMITED // constante para caché ilimitada
 } from "firebase/firestore";
 
-// import { config as firebaseConfig }  from '../configProd'; // Para producción
-import { config as firebaseConfig }  from '../configDev'; // Para desarrollo
+import { config as firebaseConfig }  from '../configProd'; // Para producción
+// import { config as firebaseConfig }  from '../configDev'; // Para desarrollo
 
 import { provincias } from '../datos/provincias.json';
 import { localidades } from '../datos/localidades.json';
@@ -44,9 +44,9 @@ const firestore = initializeFirestore(firebaseApp, {
 
 
 // Habilita la persistensia sin conexión
-// enableIndexedDbPersistence(firestore)
-//   .then(() => console.log("Persistencia habilitada"))
-//   .catch(err => console.log("Error en persistencia: " + err));
+enableIndexedDbPersistence(firestore)
+  .then(() => console.log("Persistencia habilitada"))
+  .catch(err => console.log("Error en persistencia: " + err));
 
 
 // Login
@@ -266,16 +266,29 @@ export const guardarUsuarioPersistencia = (usuario) => {
 
 // DELETE Cliente
 export const eliminarUsuarioPersistencia = (id) => {
-    return new Promise((resolve, reject) => {
-        deleteDoc(doc(firestore, "USUARIOS", id))
-        .then(() => {
-            console.log("borrando usuario ok");
-            resolve(id);
-        })
-        .catch(error => {
-            console.log("Error: " + error);
-            reject(error);
+    return new Promise(async (resolve, reject) => {
+        // Busco si hay alguna reparación relacionada al usuario a eliminar
+        const refCol = collection(firestore, "REPARACIONES");
+        const q = query(refCol, where("UsuarioRep", "==", id));
+        const querySnapshot = await getDocs(q);
+        // Si la consulta no arroja ningún resultado, se elimina, sino da error y muestra reparación relacionada.
+        if(querySnapshot.empty){
+            deleteDoc(doc(firestore, "USUARIOS", id))
+            .then(() => {
+                console.log("borrando usuario ok");
+                resolve(id);
+            })
+            .catch(error => {
+                reject(error);
+            });
+        }else{
+            reject({ 
+                code: 
+                    "No se puede borrar este usuario. Reparación relacionada: "
+                    // Muestra en el mesaje de error los ids de las reparaciones relacionadas al usuario
+                    + querySnapshot.docs.map(doc => doc.id).toString()
         });
+        }
 
     })
 };
@@ -300,7 +313,8 @@ export const getMessagesPersistencia = (emailUsu, emailCli, setMessagesToRedux) 
                         senderName: doc.data().senderName,
                         from: doc.data().sender,
                         // Si el que envió es el usuario, el to es el cliente, si el que envió es el cliente, el to es el usuario
-                        to: doc.data().sender == emailUsu ? emailCli : emailUsu
+                        to: doc.data().sender == emailUsu ? emailCli : emailUsu,
+                        isRead: doc.data().isRead
                     }
                 }))
                 setMessagesToRedux(messages);

@@ -31,9 +31,9 @@ const ReparacionPresentational = ({
                     <h3 className="card-title">
                         REPARACIÓN
                     </h3>
-                    <div>Estado: {reparacion?.data?.EstadoRep}</div>
+                    <div>id: {reparacion?.id}</div>
                     <div>Drone: {reparacion?.data?.DroneRep}</div>
-                    <div>Cliente: {reparacion?.data?.NombreUsu} {reparacion?.data?.ApellidoUsu}</div>
+                    <div>Cliente: {reparacion?.data?.NombreUsu || reparacion?.data.UsuarioRep} {reparacion?.data?.ApellidoUsu}</div>
                 </div>
             </div>
 
@@ -87,6 +87,30 @@ const ReparacionPresentational = ({
                 </div>
             </div>
             : null }
+
+            { admin ? // Sólo para administrador
+            <div 
+                className="card mb-3"
+                style={{
+                    backgroundColor: "#FF0000"
+                }}
+            >
+                <div className="card-body">
+                <h5 className="card-title bluemcdron">ANOTACIONES CONFIDENCIALES</h5>
+                    <div>
+                        <label className="form-label text-white">Anotaciones varias</label>
+                        <TextareaAutosize
+                            onChange={e => changeInputRep(e.target)} 
+                            className="form-control" 
+                            id="AnotacionesRep"
+                            value={reparacion?.data?.AnotacionesRep || ""}
+                            rows="5"
+                        />
+                    </div>
+                </div>
+            </div>
+            : null }
+
             <div className="card mb-3">
                 <div className="card-body">
                 <h5 className="card-title bluemcdron">CONSULTA - PRIMEROS DATOS</h5>

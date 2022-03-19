@@ -72,6 +72,10 @@ const Mensajes = ({
     await sendMessage(message);
   };
 
+  // Actualiza mensajes leídos. Ver si acá es el mejor lugar.
+  let mensajesLeidos = coleccionMensajes.filter(mensaje => (mensaje.data.isRead==false));
+  actualizarLeidos(mensajesLeidos);
+
   
 
   return (

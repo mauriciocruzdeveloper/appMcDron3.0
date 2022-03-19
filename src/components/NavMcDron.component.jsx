@@ -18,6 +18,7 @@ const NavMcDron = ({ usuario, logout, confirm }) => {
 
     console.log("NavMcDron");
 
+    // Esto hay que ver donde lo ponemos...
     notificacionesPorMensajesPersistencia(usuario.data.EmailUsu);
 
     const handleBack = () => {
