@@ -26,8 +26,8 @@ import {
     CACHE_SIZE_UNLIMITED // constante para caché ilimitada
 } from "firebase/firestore";
 
-import { config as firebaseConfig }  from '../configProd'; // Para producción
-// import { config as firebaseConfig }  from '../configDev'; // Para desarrollo
+// import { config as firebaseConfig }  from '../configProd'; // Para producción
+import { config as firebaseConfig }  from '../configDev'; // Para desarrollo
 
 import { provincias } from '../datos/provincias.json';
 import { localidades } from '../datos/localidades.json';
