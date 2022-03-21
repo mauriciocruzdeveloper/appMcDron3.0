@@ -118,9 +118,9 @@ export const confirm = (mensaje, titulo, tipo, callBack) => {
 export const login = (login) => (dispatch) => {
     console.log("login()");
     const { email, password } = login;
-    dispatch(isFetchingStart());
     return new Promise((resolve, reject) => {
         if(email != "" && password != ""){
+            dispatch(isFetchingStart());
             loginPersistencia(email, password)
             .then(usuario => {
                 dispatch(loginAction(usuario));
@@ -132,7 +132,7 @@ export const login = (login) => (dispatch) => {
             })
             .finally(() => dispatch(isFetchingCoplete()));
         }else{
-            dispatch(isFetchingCoplete());
+            // dispatch(isFetchingCoplete());
             dispatch(abreModal("Error", "Email o password vacios", "danger"));
             reject();
         };
@@ -321,16 +321,17 @@ export const getUsuarios = () => (dispatch) => {
 }
 
 // GET de todas las Reparaciones
-export const getReparaciones = (usuario) => (dispatch) => {
+// EstadoRep en el futuro puede reemplazarse por un Array con los estados por los cuales quiero filtrar
+export const getReparaciones = (usuario, EstadoRep) => (dispatch) => {
     console.log("getReparaciones()");
     dispatch(isFetchingStart());
     return new Promise((resolve, reject) => {
-        getReparacionesPersistencia(reparaciones => dispatch(setReparacionesToRedux(reparaciones)), usuario)
+        getReparacionesPersistencia(reparaciones => dispatch(setReparacionesToRedux(reparaciones)), usuario, EstadoRep)
         .then(() => resolve())
-        .catch(() => {
-            dispatch(abreModal("Error", "Error en getReparaciones() al buscar las Reparaciones", "danger"));
-            reject();
-        })
+        // .catch(() => {
+        //     dispatch(abreModal("Error", "Error en getReparaciones() al buscar las Reparaciones", "danger"));
+        //     reject();
+        // })
         .finally(() => dispatch(isFetchingCoplete()));
     });
 }

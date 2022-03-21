@@ -26,8 +26,8 @@ import {
     CACHE_SIZE_UNLIMITED // constante para caché ilimitada
 } from "firebase/firestore";
 
-// import { config as firebaseConfig }  from '../configProd'; // Para producción
-import { config as firebaseConfig }  from '../configDev'; // Para desarrollo
+import { config as firebaseConfig }  from '../configProd'; // Para producción
+// import { config as firebaseConfig }  from '../configDev'; // Para desarrollo
 
 import { provincias } from '../datos/provincias.json';
 import { localidades } from '../datos/localidades.json';
@@ -123,14 +123,15 @@ export const registroPersistencia = (registro) => {
 //////////////////////// REPARACIONES ///////////////////////////////////////////////////////////////
 
 // GET todas las Reparaciones
-export const getReparacionesPersistencia = (setReparacionesToRedux, usuario) => {
-    console.log("getReparacionesPersistencia");
-    console.log("USUARIO: " + JSON.stringify(usuario));
+export const getReparacionesPersistencia = (setReparacionesToRedux, usuario, EstadoRep = '') => {
+    console.log("getReparacionesPersistencia()");
+    console.log("EstadoRep: " + EstadoRep);
     return new Promise((resolve, reject) => {
         // const unsubscribe = null;
         let q = "";
         if(usuario?.data?.Admin) {
-            q = query(collection(firestore, "REPARACIONES"), orderBy("PrioridadRep"));
+            // con el not-in se podría hacer un array con los que no quiero que estén, o con el in los que sí quiero.
+            q = query(collection(firestore, "REPARACIONES"), where("EstadoRep", "!=", EstadoRep)); // , orderBy("PrioridadRep"));
         } else {
             q = query(collection(firestore, "REPARACIONES"), where("UsuarioRep", "==", usuario.id));
         };
@@ -139,6 +140,8 @@ export const getReparacionesPersistencia = (setReparacionesToRedux, usuario) => 
                 let reparaciones = [];
                 querySnapshot.forEach(doc => reparaciones.push({id: doc.id, data: doc.data()}));
                 setReparacionesToRedux(reparaciones);
+                // Ordeno por prioridad porque firebase no me deja ordenar y filtrar por distintos campos.
+                reparaciones.sort((a, b) => a.data.PrioridadRep - b.data.PrioridadRep);
                 resolve(reparaciones);
             });
         }catch(error){
@@ -296,82 +299,7 @@ export const eliminarUsuarioPersistencia = (id) => {
 
 ////////////////////// MENSAJES ////////////////////////////////////////////
 
-// GET todos los mensajes
-export const getMessagesPersistencia = (emailUsu, emailCli, setMessagesToRedux) => {
-    console.log("getMessagesPersistencia: " + emailUsu + ' ' + emailCli);
-    return new Promise((resolve, reject) => {
-        const colRef = collection(firestore, 'USUARIOS', emailUsu, 'messages');
-        const q = query(colRef, where('emailCli', '==', emailCli), orderBy("date"));
-        try {             
-            const unsubscribeMessages = onSnapshot(q, (querySnapshot) => {
-                let messages = [];
-                querySnapshot.forEach(doc => messages.push({
-                    id: doc.id, 
-                    data: {
-                        date: doc.data().date,
-                        content: doc.data().content,
-                        senderName: doc.data().senderName,
-                        from: doc.data().sender,
-                        // Si el que envió es el usuario, el to es el cliente, si el que envió es el cliente, el to es el usuario
-                        to: doc.data().sender == emailUsu ? emailCli : emailUsu,
-                        isRead: doc.data().isRead
-                    }
-                }))
-                setMessagesToRedux(messages);
-                // Cuando leo los mensajes, marco los mensajes del cliente como leídos
-            });
-            // updateDoc(docRef, {
-            //     isRead: true
-            // });
-            resolve(unsubscribeMessages); // Devuelvo la función de cancelación de suscripción.
-        }catch(error){
-            () => reject(error);
-        }
-    });
-}
-
-// Esta función probablemente no debería estar acá ////////////////////////
-export const notificacionesPorMensajesPersistencia = (emailUsu) => {
-    console.log("emailUsu: " + emailUsu);
-    const colRef = collection(firestore, 'USUARIOS', emailUsu, 'messages');
-    try {
-        const unsubscribeNotificationMenssages = onSnapshot(colRef, (querySnapshot) => {
-            //const doc = querySnapshot.docs[0];
-            querySnapshot.docChanges().forEach(change => {
-                if(change.doc.data().sender != emailUsu){
-                    const notification = {
-                        title: "Nuevo Mensaje de " + change.doc.data().senderName,
-                        text: change.doc.data().content,
-                        foreground: true,
-                        vibrate: true
-                    }
-                    triggerNotification(notification);
-                }
-            })
-            
- 
-            
-
-            //resolve();
-        });
-    }catch(error){
-        () => reject(error);
-    }
-}
-
-const triggerNotification = ({ title, text, foreground, vibrate }) => {
-    console.log("envia notificacion");
-    if(window.cordova) {
-        cordova.plugins.notification.local.schedule({
-            title: title,
-            text: text,
-            foreground: foreground,
-            vibrate: vibrate
-        });
-    };
-}
-////////////////////////////////////////////////////////////////////////
-
+// SEND de un mensaje
 // VER EL PROBLEMA DE LOS LEÍDOS Y NO LEÍDOS
 export const sendMessagePersistencia = (message) => {
     console.log("sendMessagePersistencia()");
@@ -405,6 +333,148 @@ export const sendMessagePersistencia = (message) => {
         resolve();
     });
 };
+
+// GET todos los mensajes
+export const getMessagesPersistencia = (emailUsu, emailCli, setMessagesToRedux) => {
+    console.log("getMessagesPersistencia: " + emailUsu + ' ' + emailCli);
+    return new Promise((resolve, reject) => {
+        const colRef = collection(firestore, 'USUARIOS', emailUsu, 'messages');
+        const q = query(colRef, where('emailCli', '==', emailCli), orderBy("date"));
+        try {             
+            const unsubscribeMessages = onSnapshot(q, (querySnapshot) => {
+                let messages = [];
+                querySnapshot.forEach(doc => messages.push({
+                    id: doc.id, 
+                    data: {
+                        date: doc.data().date,
+                        content: doc.data().content,
+                        senderName: doc.data().senderName,
+                        from: doc.data().sender,
+                        // Si el que envió es el usuario, el to es el cliente, si el que envió es el cliente, el to es el usuario
+                        to: doc.data().sender == emailUsu ? emailCli : emailUsu,
+                        isRead: doc.data().isRead,
+                        // emailUsu es el dueño del mensaje. Sirve para la ruta al buscar.
+                        emailUsu: emailUsu
+                    }
+                }))
+                setMessagesToRedux(messages);
+                // Cuando leo los mensajes, marco los mensajes del cliente como leídos
+            });
+            // updateDoc(docRef, {
+            //     isRead: true
+            // });
+            resolve(unsubscribeMessages); // Devuelvo la función de cancelación de suscripción.
+        }catch(error){
+            () => reject(error);
+        }
+    });
+}
+
+export const actualizarLeidosPersistencia = (mensajesLeidos) => {
+    mensajesLeidos.forEach(async mensaje => {
+        const docRef = doc(collection(firestore, `USUARIOS/${mensaje.data.emailUsu}/messages`), mensaje.id);
+        await updateDoc(docRef, {isRead: true});
+    });
+};
+
+// Esta función probablemente no debería estar acá ////////////////////////
+export const notificacionesPorMensajesPersistencia = (emailUsu) => {
+
+
+    var options = {
+        "datePrefix": '__DATE:',
+        "fieldValueDelete": "__DELETE",
+        "fieldValueServerTimestamp" : "__SERVERTIMESTAMP",
+        "persist": true,
+        // "config" : {}
+    };
+      
+    
+    options.config = firebaseConfig;  
+      
+    Firestore.initialise(options).then(function(db) {
+    // Add a second document with a generated ID.
+        const colRef = db.collection("USUARIOS").doc(emailUsu).collection(messages);
+        const query = colRef.where("isRead", "==", false).where("sender", "!=", emailUsu);
+        query.onSnapshot(querySnapshot => {
+            querySnapshot.docChanges().forEach(change => {
+                if(change.doc.data().sender != emailUsu){
+                    const notification = {
+                        title: "Nuevo Mensaje de " + change.doc.data().senderName,
+                        text: change.doc.data().content,
+                        foreground: true,
+                        vibrate: true
+                    }
+                    triggerNotification(notification);
+                }
+            })
+            //resolve();
+        })
+        .catch(function(error) {
+            console.error("Error adding document: ", error);
+        });
+    });
+
+
+
+    // console.log("emailUsu: " + emailUsu);
+    // const colRef = collection(firestore, 'USUARIOS', emailUsu, 'messages');
+    // const q = query(colRef, where("isRead", "==", false), where("sender", "!=", emailUsu));
+    // try {
+    //     const unsubscribeNotificationMenssages = onSnapshot(q, (querySnapshot) => {
+    //         //const doc = querySnapshot.docs[0];
+    //         querySnapshot.docChanges().forEach(change => {
+    //             if(change.doc.data().sender != emailUsu){
+    //                 const notification = {
+    //                     title: "Nuevo Mensaje de " + change.doc.data().senderName,
+    //                     text: change.doc.data().content,
+    //                     foreground: true,
+    //                     vibrate: true
+    //                 }
+    //                 triggerNotification(notification);
+    //             }
+    //         })
+    //         //resolve();
+    //     });
+    // }catch(error){
+    //     () => reject(error);
+    // }
+}
+
+const triggerNotification = ({ title, text, foreground, vibrate }) => {
+    console.log("envia notificacion");
+    if(window.cordova) {
+        cordova.plugins.notification.local.schedule({
+            title: title,
+            text: text,
+            foreground: foreground,
+            vibrate: vibrate
+        });
+    };
+}
+
+// VER PARA MANDAR NOTIFICACIONES DE UNA CONVERSACION AGRUPADAS POR REMITENTE
+// cordova.plugins.notification.local.schedule({
+//     id: 15,
+//     title: 'Chat with Irish',
+//     icon: 'http://climberindonesia.com/assets/icon/ionicons-2.0.1/png/512/android-chat.png',
+//     text: [
+//         { message: 'I miss you' },
+//         { person: 'Irish', message: 'I miss you more!' },
+//         { message: 'I always miss you more by 10%' }
+//     ]
+// });
+
+// O SINO
+// cordova.plugins.notification.local.schedule([
+//     { id: 0, title: 'Design team meeting', ... },
+//     { id: 1, summary: 'me@gmail.com', group: 'email', groupSummary: true },
+//     { id: 2, title: 'Please take all my money', ... group: 'email' },
+//     { id: 3, title: 'A question regarding this plugin', ... group: 'email' },
+//     { id: 4, title: 'Wellcome back home', ... group: 'email' }
+// ]);
+
+////////////////////////////////////////////////////////////////////////
 
 
 ///////////// PRESUPUESTO ///////////////////////////////////////////////////

@@ -1,5 +1,6 @@
 import {
-    notificacionesPorMensajesPersistencia
+    notificacionesPorMensajesPersistencia,
+    actualizarLeidosPersistencia
 } from '../persistencia/persistenciaFirebase';
 
 export const convertTimestampCORTO = (timestamp) => {
@@ -12,8 +13,8 @@ export const convertTimestampCORTO = (timestamp) => {
     return time;
 };
 
-export const actualizarLeidos = () => {
-
+export const actualizarLeidos = (mensajesLeidos) => {
+    actualizarLeidosPersistencia(mensajesLeidos);
 }
 
 export const notificacionesPorMensajes = (EmailUsu) => {

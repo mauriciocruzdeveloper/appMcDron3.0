@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { connect } from "react-redux";
 import history from "../history";
 import { 
@@ -17,9 +17,12 @@ const ListaReparaciones = ({
   usuario
 }) => {
 
+  const [ filter, setFilter ] = useState(true);
+
   // Busco las reparaciones al backup sólo cuando la colección está vacía.
   const iniciarFormulario = useCallback(async () => {
-    if(!coleccionReparaciones?.length) await getReparaciones(usuario); 
+    console.log("iniciarFormulario()");
+    if(!coleccionReparaciones?.length) await getReparaciones(usuario, filter ? "Entregado" : null); 
   }, [getReparaciones]);
    
 
@@ -28,11 +31,34 @@ const ListaReparaciones = ({
     iniciarFormulario();
   }, [iniciarFormulario]);
 
+  const handleOnChange = (value) => {
+    // Seteo el filter en el estado local para que persista las renderizaciones.
+    setFilter(value);
+    // Filtra sólo por no entregados solamente por ahora, luego modificar.
+    const EstadoRep = !filter ? "Entregado" : null;
+    // Vuelvo a traer las reparaciones desde el backend, sólo las filtradas.
+    getReparaciones(usuario, EstadoRep);
+  }
+
   console.log("LISTA REPARACIONES");
 
   return (
-    <div className="p-4">
-      {coleccionReparaciones.map(reparacion => (
+      <div className="p-4">
+
+        <div className="card mb-3">
+          <div className="card-body d-flex justify-content-between">
+            <label className="custom-control-label">Filtrar Entregadas</label>
+            <input 
+                type="checkbox" 
+                className="custom-control-input" 
+                id="customCheck1"
+                checked={filter}
+                onChange={e => handleOnChange(!filter)}
+            />
+          </div>
+        </div>
+              
+        {coleccionReparaciones.map(reparacion => (
         <div
           key={reparacion.id}
           value={reparacion.id} 

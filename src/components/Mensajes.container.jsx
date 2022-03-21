@@ -8,6 +8,7 @@ import {
 } from "../redux/root-actions";
 import history from "../history";
 import MensajesPresentational from './Mensajes.presentational';
+import { actualizarLeidos } from "../utils/utils";
 
 const Mensajes = ({
   admin,
@@ -74,6 +75,7 @@ const Mensajes = ({
 
   // Actualiza mensajes leídos. Ver si acá es el mejor lugar.
   let mensajesLeidos = coleccionMensajes.filter(mensaje => (mensaje.data.isRead==false));
+  console.log("mensajesLeidos: " + JSON.stringify(mensajesLeidos));
   actualizarLeidos(mensajesLeidos);
 
   

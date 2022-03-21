@@ -39,7 +39,7 @@ const ReparacionPresentational = ({
 
             <div className="card mb-3">
                 <div className="card-body">
-                <h5 className="card-title bluemcdron">ESTADO DE LA REPARACIÓN</h5>
+                    <h5 className="card-title bluemcdron">ESTADO DE LA REPARACIÓN</h5>
                     <div className="text-center">
                         {Object.values(estados).map(estado =>
                             <button 
