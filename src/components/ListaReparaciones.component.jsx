@@ -35,9 +35,9 @@ const ListaReparaciones = ({
     // Seteo el filter en el estado local para que persista las renderizaciones.
     setFilter(value);
     // Filtra sólo por no entregados solamente por ahora, luego modificar.
-    const EstadoRep = !filter ? "Entregado" : null;
+    const filtros = !filter ? [ "Entregado", "Liquidacion" ] : [ null ];
     // Vuelvo a traer las reparaciones desde el backend, sólo las filtradas.
-    getReparaciones(usuario, EstadoRep);
+    getReparaciones(usuario, filtros);
   }
 
   console.log("LISTA REPARACIONES");
