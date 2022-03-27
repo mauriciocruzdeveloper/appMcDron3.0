@@ -8,7 +8,9 @@ const UsuarioPresentational = ({
     handleEliminarUsuario,
     changeInputUsu,
     handleOnChangeProvincias,
-    handleOnChangeLocalidades
+    handleOnChangeLocalidades,
+    handleSendEmail,
+    handleSendSms
 }) => {
 
     
@@ -22,13 +24,7 @@ const UsuarioPresentational = ({
                 backgroundColor: "#EEEEEE"
             }}
         >
-            <div 
-                className="card mb-3"
-                // style={{
-                //     backgroundColor: "#CCCCCC",
-
-                // }}
-            >
+            <div className="card mb-3">
                 <div className="card-body">
                     <h3 className="card-title">
                         USUARIO
@@ -41,15 +37,24 @@ const UsuarioPresentational = ({
             <div className="card mb-3">
                 <div className="card-body">
                 <h5 className="card-title bluemcdron">DATOS DEL USUARIO</h5>
-                <div>
+                    <div>
                         <label className="form-label">E-mail</label>
-                        <input 
-                            onChange={e => changeInputUsu(e.target)} 
-                            type="text" 
-                            className="form-control" 
-                            id="EmailUsu" 
-                            value={cliente?.data?.EmailUsu || ""}
-                        />
+                        <div className="d-flex w-100 justify-content-between">
+                            <input 
+                                onChange={e => changeInputUsu(e.target)} 
+                                type="text" 
+                                className="form-control" 
+                                id="EmailUsu" 
+                                value={cliente?.data?.EmailUsu || ""}
+                            />
+                            <button 
+                                type="submit" 
+                                className="btn btn-outline-secondary bg-bluemcdron text-white" 
+                                onClick={handleSendEmail}
+                            >
+                                <i class="bi bi-envelope"></i>
+                            </button>
+                        </div>
                     </div>
                     <div>
                         <label className="form-label">Nombre</label>
@@ -73,13 +78,22 @@ const UsuarioPresentational = ({
                     </div>
                     <div>
                         <label className="form-label">Teléfono</label>
-                        <input 
-                            onChange={e => changeInputUsu(e.target)} 
-                            type="tel" 
-                            className="form-control" 
-                            id="TelefonoUsu"
-                            value={cliente?.data?.TelefonoUsu || ""}
-                        />
+                        <div className="d-flex w-100 justify-content-between">
+                            <input 
+                                onChange={e => changeInputUsu(e.target)} 
+                                type="tel" 
+                                className="form-control" 
+                                id="TelefonoUsu"
+                                value={cliente?.data?.TelefonoUsu || ""}
+                            />
+                            <button 
+                                    type="submit" 
+                                    className="btn btn-outline-secondary bg-bluemcdron text-white" 
+                                    onClick={handleSendSms}
+                                >
+                                   <i class="bi bi-chat-left-text"></i>
+                            </button>
+                        </div>
                     </div>
                     <div>
                         <label className="form-label">Provincia</label>

@@ -21,7 +21,6 @@ const startApp = () => {
 if(window.cordova) {
     console.log("start DEVICEREADY");
     document.addEventListener('deviceready', () => {
-        cordova.plugins.backgroundMode.enable();
         startApp();
     }, false)
 } else {

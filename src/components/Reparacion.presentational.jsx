@@ -1,6 +1,7 @@
 import { convertTimestampCORTO } from "../utils/utils";
 // Components
 import TextareaAutosize from "react-textarea-autosize";
+import "bootstrap-icons/font/bootstrap-icons.css";
 
 const ReparacionPresentational = ({
     admin,
@@ -10,6 +11,8 @@ const ReparacionPresentational = ({
     changeInputRep,
     handleGuardarReparacion,
     handleEliminarReparacion,
+    handleSendEmail,
+    handleSendSms
 }) => {
 
     console.log("REPARACION presentational");
@@ -126,13 +129,22 @@ const ReparacionPresentational = ({
                     </div>
                     <div>
                         <label className="form-label">Email Cliente</label>
-                        <input 
-                            type="text" 
-                            className="form-control" 
-                            id="UsuarioRep" 
-                            value={reparacion?.data?.EmailUsu || reparacion?.data?.UsuarioRep}
-                            disabled
-                        />
+                        <div className="d-flex w-100 justify-content-between">
+                            <input 
+                                type="text" 
+                                className="form-control" 
+                                id="UsuarioRep" 
+                                value={reparacion?.data?.EmailUsu || reparacion?.data?.UsuarioRep}
+                                disabled
+                            />
+                            <button 
+                                type="submit" 
+                                className="btn btn-outline-secondary bg-bluemcdron text-white" 
+                                onClick={handleSendEmail}
+                            >
+                                <i class="bi bi-envelope"></i>
+                            </button>
+                        </div>
                     </div>
                     <div>
                         <label className="form-label">Nombre Cliente</label>
@@ -156,13 +168,22 @@ const ReparacionPresentational = ({
                     </div>
                     <div>
                         <label className="form-label">Teléfono Cliente</label>
-                        <input 
-                            type="tel" 
-                            className="form-control" 
-                            id="TelefonoUsu" 
-                            value={reparacion?.data?.TelefonoUsu}
-                            disabled
-                        />
+                        <div className="d-flex w-100 justify-content-between">
+                            <input 
+                                type="tel" 
+                                className="form-control" 
+                                id="TelefonoUsu" 
+                                value={reparacion?.data?.TelefonoUsu}
+                                disabled
+                            />
+                            <button 
+                                    type="submit" 
+                                    className="btn btn-outline-secondary bg-bluemcdron text-white" 
+                                    onClick={handleSendSms}
+                                >
+                                    <i class="bi bi-chat-left-text"></i>
+                            </button>
+                        </div>
                     </div>
                     <div>
                         <label className="form-label">Modelo del Drone</label>

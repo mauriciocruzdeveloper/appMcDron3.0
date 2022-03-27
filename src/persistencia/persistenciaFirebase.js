@@ -26,8 +26,10 @@ import {
     CACHE_SIZE_UNLIMITED // constante para caché ilimitada
 } from "firebase/firestore";
 
-import { config as firebaseConfig }  from '../configProd'; // Para producción
-// import { config as firebaseConfig }  from '../configDev'; // Para desarrollo
+import { triggerNotification } from '../utils/utils';
+
+// import { config as firebaseConfig }  from '../configProd'; // Para producción
+import { config as firebaseConfig }  from '../configDev'; // Para desarrollo
 
 import { provincias } from '../datos/provincias.json';
 import { localidades } from '../datos/localidades.json';
@@ -372,57 +374,33 @@ export const getMessagesPersistencia = (emailUsu, emailCli, setMessagesToRedux) 
 
 export const actualizarLeidosPersistencia = (mensajesLeidos) => {
     mensajesLeidos.forEach(async mensaje => {
+        console.log("actualiza leidos, mensaje: " +     JSON.stringify(mensaje));
         const docRef = doc(collection(firestore, `USUARIOS/${mensaje.data.emailUsu}/messages`), mensaje.id);
-        await updateDoc(docRef, {isRead: true});
+        await updateDoc(docRef, {isRead: true}).then(console.log("ACTUALIZADO")).catch(error => console.log("ERROR: " + error.code));
     });
 };
 
 // Esta función probablemente no debería estar acá ////////////////////////
 export const notificacionesPorMensajesPersistencia = (emailUsu) => {
 
+    // PLUGIN cordova-plugin-firestore (no funciona el plugin) //////////////////////////////////////////
 
-    var options = {
-        "datePrefix": '__DATE:',
-        "fieldValueDelete": "__DELETE",
-        "fieldValueServerTimestamp" : "__SERVERTIMESTAMP",
-        "persist": true,
-        // "config" : {}
-    };
+    // var options = {
+    //     "datePrefix": '__DATE:',
+    //     "fieldValueDelete": "__DELETE",
+    //     "fieldValueServerTimestamp" : "__SERVERTIMESTAMP",
+    //     "persist": true,
+    //     // "config" : {}
+    // };
       
     
-    options.config = firebaseConfig;  
+    // options.config = firebaseConfig;  
       
-    Firestore.initialise(options).then(function(db) {
-    // Add a second document with a generated ID.
-        const colRef = db.collection("USUARIOS").doc(emailUsu).collection(messages);
-        const query = colRef.where("isRead", "==", false).where("sender", "!=", emailUsu);
-        query.onSnapshot(querySnapshot => {
-            querySnapshot.docChanges().forEach(change => {
-                if(change.doc.data().sender != emailUsu){
-                    const notification = {
-                        title: "Nuevo Mensaje de " + change.doc.data().senderName,
-                        text: change.doc.data().content,
-                        foreground: true,
-                        vibrate: true
-                    }
-                    triggerNotification(notification);
-                }
-            })
-            //resolve();
-        })
-        .catch(function(error) {
-            console.error("Error adding document: ", error);
-        });
-    });
-
-
-
-    // console.log("emailUsu: " + emailUsu);
-    // const colRef = collection(firestore, 'USUARIOS', emailUsu, 'messages');
-    // const q = query(colRef, where("isRead", "==", false), where("sender", "!=", emailUsu));
-    // try {
-    //     const unsubscribeNotificationMenssages = onSnapshot(q, (querySnapshot) => {
-    //         //const doc = querySnapshot.docs[0];
+    // Firestore.initialise(options).then(function(db) {
+    // // Add a second document with a generated ID.
+    //     const colRef = db.collection("USUARIOS").doc(emailUsu).collection(messages);
+    //     const query = colRef.where("isRead", "==", false).where("sender", "!=", emailUsu);
+    //     query.onSnapshot(querySnapshot => {
     //         querySnapshot.docChanges().forEach(change => {
     //             if(change.doc.data().sender != emailUsu){
     //                 const notification = {
@@ -435,22 +413,38 @@ export const notificacionesPorMensajesPersistencia = (emailUsu) => {
     //             }
     //         })
     //         //resolve();
+    //     })
+    //     .catch(function(error) {
+    //         console.error("Error adding document: ", error);
     //     });
-    // }catch(error){
-    //     () => reject(error);
-    // }
-}
+    // });
 
-const triggerNotification = ({ title, text, foreground, vibrate }) => {
-    console.log("envia notificacion");
-    if(window.cordova) {
-        cordova.plugins.notification.local.schedule({
-            title: title,
-            text: text,
-            foreground: foreground,
-            vibrate: vibrate
+    ///////////////////////////////////////////////////////
+
+
+
+    console.log("emailUsu: " + emailUsu);
+    const colRef = collection(firestore, 'USUARIOS', emailUsu, 'messages');
+    const q = query(colRef, where("isRead", "==", false), where("sender", "!=", emailUsu));
+    try {
+        const unsubscribeNotificationMenssages = onSnapshot(q, (querySnapshot) => {
+            //const doc = querySnapshot.docs[0];
+            querySnapshot.docChanges().forEach(change => {
+                if(change.doc.data().sender != emailUsu){
+                    const notification = {
+                        title: "Nuevo Mensaje de " + change.doc.data().senderName,
+                        text: change.doc.data().content,
+                        foreground: true,
+                        vibrate: true
+                    }
+                    triggerNotification(notification);
+                }
+            })
+            //resolve();
         });
-    };
+    }catch(error){
+        () => reject(error);
+    }
 }
 
 // VER PARA MANDAR NOTIFICACIONES DE UNA CONVERSACION AGRUPADAS POR REMITENTE

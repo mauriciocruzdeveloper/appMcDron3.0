@@ -14,6 +14,11 @@ import {
     getProvinciasSelect,
     getLocalidadesPorProvincia,
   } from "../redux/root-actions";
+// Utils
+import { 
+    enviarEmail,
+    enviarSms
+} from "../utils/utils";
 // Components
 import UsuarioPresentational from './Usuario.presentational'
 
@@ -100,6 +105,37 @@ const Usuario = ({
         });
     }
 
+    const handleSendEmail = () => {
+        const data = {
+            to: cliente.data.EmailUsu,
+            cc: 'info@mauriciocruzdrones.com',
+            bcc: [],
+            subject: '',
+            body:    ''
+        };
+        enviarEmail(data);
+    }
+
+    const handleSendSms = () => {
+        const data = {
+            number: cliente.data.TelefonoUsu, /* iOS: ensure number is actually a string */
+            message: 'Prueba de sms',
+    
+            //CONFIGURATION
+            options: {
+                replaceLineBreaks: false, // true to replace \n by a new line, false by default
+                android: {
+                    intent: 'INTENT'  // send SMS with the native android SMS messaging
+                    //intent: '' // send SMS without opening any other app, require : android.permission.SEND_SMS and android.permission.READ_PHONE_STATE
+                }
+            },
+    
+            success: () => alert('Message sent successfully'),
+            error: e => alert('Message Failed:' + e)
+        };
+        enviarSms(data);
+    }
+
     return(
                 // Sólo se renderiza el commponente presentacional cuando están los datos necesarios ya cargados.
         cliente && provinciasSelect.length ?
@@ -112,6 +148,8 @@ const Usuario = ({
             changeInputUsu={changeInputUsu}
             handleOnChangeProvincias={handleOnChangeProvincias}
             handleOnChangeLocalidades={handleOnChangeLocalidades}
+            handleSendEmail={handleSendEmail}
+            handleSendSms={handleSendSms}
         /> : null
     )
 }

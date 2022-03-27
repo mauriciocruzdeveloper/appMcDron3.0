@@ -20,3 +20,23 @@ export const actualizarLeidos = (mensajesLeidos) => {
 export const notificacionesPorMensajes = (EmailUsu) => {
     notificacionesPorMensajesPersistencia(EmailUsu);
 }
+
+export const enviarEmail = (data) => {
+    cordova.plugins.email.open(data);
+}
+
+export const enviarSms = ({ number, message, options, success, error }) => {
+    sms.send(number, message, options, success, error);
+}
+
+export const triggerNotification = ({ title, text, foreground, vibrate }) => {
+    console.log("envia notificacion");
+    if(window.cordova) {
+        cordova.plugins.notification.local.schedule({
+            title: title,
+            text: text,
+            foreground: foreground,
+            vibrate: vibrate
+        });
+    };
+}

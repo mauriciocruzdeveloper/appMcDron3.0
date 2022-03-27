@@ -22,6 +22,11 @@ password: 123456
 O sino puede registrarse y tendrá una cuenta como invitado.
 
 
+## PROBLEMAS
+
+El complemento cordova-plugin-firestore da problemas al compilar. Por ejemplo, en la línea 128 de RunTransactionHandler.java no encuentra NonNull. Hay que modificar ese archivo para solucionar el problema importando la clase NonNull correctamente.
+
+
 ## PRIMERA ETAPA
 
 En la primera etapa sólo se harán las funcionalidades relacionadas a las REPARACIONES y los USUARIOS. Se podrá pedir un PRESUPUESTO, y éste generará una nueva reparación en estado "Consulta" y guardará el usuario. Se podrá modificar o eliminar el usuario y/o la reparación.
@@ -54,7 +59,8 @@ Otras mejoras.
 - React Floating Action Button
 - React Router Dom
 - Firebase
-- React-Select
+- React Select
+- React Textarea Autosize
 
 ### Floating Action Button
 
@@ -83,6 +89,25 @@ Otras mejoras.
 ### React
 
 - https://es.reactjs.org/
+
+### React Textarea Autosize
+
+- https://www.npmjs.com/package/react-textarea-autosize
+
+
+## PLUGINS
+
+- cordova-plugin-local-notification
+
+https://www.npmjs.com/package/cordova-plugin-local-notification
+
+- cordova-plugin-email
+
+https://www.npmjs.com/package/cordova-plugin-email
+
+- cordova-sms-plugin
+
+https://www.npmjs.com/package/cordova-sms-plugin
 
 
 ## MODELO DE FLUJO

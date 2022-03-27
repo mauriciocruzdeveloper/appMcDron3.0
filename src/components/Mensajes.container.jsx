@@ -38,6 +38,9 @@ const Mensajes = ({
   const initForm = useCallback(async () => {
     await getMessages(usuario.data.EmailUsu, cliente.data.EmailUsu || "admin@mauriciocruzdrones.com");
     if(!usuariosSelect?.length && admin) await getUsuariosSelect();
+    let mensajesLeidos = coleccionMensajes.filter(mensaje => (mensaje.data.isRead==false));
+    console.log("mensajesLeidos: " + JSON.stringify(mensajesLeidos));
+    actualizarLeidos(mensajesLeidos);
   }, [cliente]);
 
   // initForm es la dependencia del useEffect que se vuelve a ejecutar cuando cambia initForm, que cambia cuando 
@@ -70,13 +73,14 @@ const Mensajes = ({
       }
     }
     setMessageData(INIT_MESSAGE_DATA);
-    await sendMessage(message);
+    // Envía el mensaje si no está vacío, y si el remitente y el destinatario no es el mismo.
+    if(message.data.to != message.data.from && message.data.content) await sendMessage(message);
   };
 
   // Actualiza mensajes leídos. Ver si acá es el mejor lugar.
-  let mensajesLeidos = coleccionMensajes.filter(mensaje => (mensaje.data.isRead==false));
-  console.log("mensajesLeidos: " + JSON.stringify(mensajesLeidos));
-  actualizarLeidos(mensajesLeidos);
+  // let mensajesLeidos = coleccionMensajes.filter(mensaje => (mensaje.data.isRead==false));
+  // console.log("mensajesLeidos: " + JSON.stringify(mensajesLeidos));
+  // actualizarLeidos(mensajesLeidos);
 
   
 
