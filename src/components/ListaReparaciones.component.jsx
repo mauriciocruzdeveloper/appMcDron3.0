@@ -22,7 +22,7 @@ const ListaReparaciones = ({
   // Busco las reparaciones al backup sólo cuando la colección está vacía.
   const iniciarFormulario = useCallback(async () => {
     console.log("iniciarFormulario()");
-    if(!coleccionReparaciones?.length) await getReparaciones(usuario, filter ? "Entregado" : null); 
+    if(!coleccionReparaciones?.length) await getReparaciones(usuario, filter ? [ "Entregado", "Liquidación" ] : null); 
   }, [getReparaciones]);
    
 
@@ -35,7 +35,7 @@ const ListaReparaciones = ({
     // Seteo el filter en el estado local para que persista las renderizaciones.
     setFilter(value);
     // Filtra sólo por no entregados solamente por ahora, luego modificar.
-    const filtros = !filter ? [ "Entregado", "Liquidacion" ] : [ null ];
+    const filtros = !filter ? [ "Entregado", "Liquidación" ] : [ '' ];
     // Vuelvo a traer las reparaciones desde el backend, sólo las filtradas.
     getReparaciones(usuario, filtros);
   }

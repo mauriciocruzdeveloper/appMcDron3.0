@@ -125,15 +125,15 @@ export const registroPersistencia = (registro) => {
 //////////////////////// REPARACIONES ///////////////////////////////////////////////////////////////
 
 // GET todas las Reparaciones
-export const getReparacionesPersistencia = (setReparacionesToRedux, usuario, EstadoRep = '') => {
+export const getReparacionesPersistencia = (setReparacionesToRedux, usuario, filtros = [ '' ]) => {
     console.log("getReparacionesPersistencia()");
-    console.log("EstadoRep: " + EstadoRep);
+    console.log("filtros: " + filtros);
     return new Promise((resolve, reject) => {
         // const unsubscribe = null;
         let q = "";
         if(usuario?.data?.Admin) {
             // con el not-in se podría hacer un array con los que no quiero que estén, o con el in los que sí quiero.
-            q = query(collection(firestore, "REPARACIONES"), where("EstadoRep", "!=", EstadoRep)); // , orderBy("PrioridadRep"));
+            q = query(collection(firestore, "REPARACIONES"), where("EstadoRep", "not-in", filtros)); // , orderBy("PrioridadRep"));
         } else {
             q = query(collection(firestore, "REPARACIONES"), where("UsuarioRep", "==", usuario.id));
         };
