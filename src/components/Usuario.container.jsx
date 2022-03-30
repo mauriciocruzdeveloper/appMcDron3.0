@@ -130,7 +130,7 @@ const Usuario = ({
                 }
             },
     
-            success: () => alert('Message sent successfully'),
+            success: () => null,
             error: e => alert('Message Failed:' + e)
         };
         enviarSms(data);

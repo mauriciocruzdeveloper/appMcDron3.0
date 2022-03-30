@@ -19,10 +19,13 @@ const ListaReparaciones = ({
 
   const [ filter, setFilter ] = useState(true);
 
+  // Filtros de la casilla de verificación
+  const noPrioritarios = [ "Entregado", "Liquidación", "Trabado" ];
+
   // Busco las reparaciones al backup sólo cuando la colección está vacía.
   const iniciarFormulario = useCallback(async () => {
     console.log("iniciarFormulario()");
-    if(!coleccionReparaciones?.length) await getReparaciones(usuario, filter ? [ "Entregado", "Liquidación" ] : null); 
+    if(!coleccionReparaciones?.length) await getReparaciones(usuario, filter ? noPrioritarios : null); 
   }, [getReparaciones]);
    
 
@@ -34,10 +37,8 @@ const ListaReparaciones = ({
   const handleOnChange = (value) => {
     // Seteo el filter en el estado local para que persista las renderizaciones.
     setFilter(value);
-    // Filtra sólo por no entregados solamente por ahora, luego modificar.
-    const filtros = !filter ? [ "Entregado", "Liquidación" ] : [ '' ];
     // Vuelvo a traer las reparaciones desde el backend, sólo las filtradas.
-    getReparaciones(usuario, filtros);
+    getReparaciones(usuario, !filter ? noPrioritarios : [ '' ]);
   }
 
   console.log("LISTA REPARACIONES");
@@ -47,7 +48,7 @@ const ListaReparaciones = ({
 
         <div className="card mb-3">
           <div className="card-body d-flex justify-content-between">
-            <label className="custom-control-label">Filtrar Entregadas</label>
+            <label className="custom-control-label">Filtrar No Prioritarios</label>
             <input 
                 type="checkbox" 
                 className="custom-control-input" 

@@ -109,9 +109,10 @@ const Reparacion = ({
         enviarEmail(datosEmail);
     }
 
+    // Estas funciones, acá y en usuario, hay que modificarlas y hacer todo dentro de enviarSms()
     const handleSendSms = () => {
         const data = {
-            number: cliente.data.TelefonoUsu, /* iOS: ensure number is actually a string */
+            number: reparacion?.data?.TelefonoUsu || '', /* iOS: ensure number is actually a string */
             message: 'Prueba de sms',
     
             //CONFIGURATION
@@ -123,7 +124,7 @@ const Reparacion = ({
                 }
             },
     
-            success: () => alert('Message sent successfully'),
+            success: () => null,
             error: e => alert('Message Failed:' + e)
         };
         enviarSms(data);
