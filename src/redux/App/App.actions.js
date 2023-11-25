@@ -83,7 +83,7 @@ export const setUsuario = (usuario) => ({
 });
 
 export const setReparacionesToRedux = (reparaciones) => ({ 
-    type: AppTypes.GET_REPARACIONES, 
+    type: AppTypes.SET_REPARACIONES, 
     payload: { data: reparaciones }
 });
 

@@ -38,7 +38,7 @@ const INITIAL_STATE = {
 // Reducer para el App
 export default (state = INITIAL_STATE, action) => {
     switch (action.type) {
-        case AppTypes.GET_REPARACIONES:{
+        case AppTypes.SET_REPARACIONES:{
             return { 
                 ...state, 
                 coleccionReparaciones: action.payload.data

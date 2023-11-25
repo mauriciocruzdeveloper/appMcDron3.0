@@ -130,17 +130,24 @@ export const getReparacionesPersistencia = (setReparacionesToRedux, usuario, fil
     console.log("filtros: " + filtros);
     return new Promise((resolve, reject) => {
         // const unsubscribe = null;
-        let q = "";
+        let queryReparaciones = "";
         if(usuario?.data?.Admin) {
             // con el not-in se podría hacer un array con los que no quiero que estén, o con el in los que sí quiero.
-            q = query(collection(firestore, "REPARACIONES"), where("EstadoRep", "not-in", filtros)); // , orderBy("PrioridadRep"));
+            queryReparaciones = query(collection(firestore, "REPARACIONES"), where("EstadoRep", "not-in", filtros)); // , orderBy("PrioridadRep"));
         } else {
-            q = query(collection(firestore, "REPARACIONES"), where("UsuarioRep", "==", usuario.id));
+            queryReparaciones = query(collection(firestore, "REPARACIONES"), where("UsuarioRep", "==", usuario.id));
         };
         try{
-            const unsubscribeRep = onSnapshot(q, (querySnapshot) => {
+            const unsubscribeRep = onSnapshot(queryReparaciones, (querySnapshot) => {
+                console.log('!!!onSnapshot', querySnapshot);
                 let reparaciones = [];
-                querySnapshot.forEach(doc => reparaciones.push({id: doc.id, data: doc.data()}));
+                querySnapshot.forEach(doc => reparaciones.push(
+                    {
+                        id: doc.id,
+                        data: doc.data()
+                    }
+                ));
+                console.log('!!!reparaciones ANTES DE SET', reparaciones);
                 setReparacionesToRedux(reparaciones);
                 // Ordeno por prioridad porque firebase no me deja ordenar y filtrar por distintos campos.
                 reparaciones.sort((a, b) => a.data.PrioridadRep - b.data.PrioridadRep);
@@ -158,7 +165,7 @@ export const getReparacionPersistencia = (id) => {
         const docRef = doc(firestore, 'REPARACIONES', id);
         getDoc(docRef)
         .then(docSnap => {
-            const idCliente = docSnap.data().UsuarioRep;
+            const idCliente = docSnap.data()?.UsuarioRep || '';
             const docRefCliente = doc(firestore, 'USUARIOS', idCliente);
             getDoc(docRefCliente)
             .then(docSnapCliente => {
@@ -166,10 +173,10 @@ export const getReparacionPersistencia = (id) => {
                     id: id, 
                     data: {
                         ...docSnap.data(),
-                        NombreUsu: docSnapCliente.data().NombreUsu,
-                        ApellidoUsu: docSnapCliente.data().ApellidoUsu,
-                        TelefonoUsu: docSnapCliente.data().TelefonoUsu,
-                        EmailUsu: docSnapCliente.data().EmailUsu
+                        NombreUsu: docSnapCliente.data()?.NombreUsu,
+                        ApellidoUsu: docSnapCliente.data()?.ApellidoUsu,
+                        TelefonoUsu: docSnapCliente.data()?.TelefonoUsu,
+                        EmailUsu: docSnapCliente.data()?.EmailUsu
                     }
                 })
             })
@@ -180,8 +187,10 @@ export const getReparacionPersistencia = (id) => {
 
 // GUARDAR Reparación
 export const guardarReparacionPersistencia = (reparacion) => {
+    console.log('!!!guardarReparacionPersistencia', reparacion);
     return new Promise((resolve, reject) => {
         // El id es el id o sino la fecha de consulta.
+        console.log('!!!reparacion', reparacion);
         reparacion.id = (reparacion.id || reparacion.data?.FeConRep.toString());
         setDoc(
             doc(firestore, "REPARACIONES", reparacion.id), 
@@ -239,6 +248,7 @@ export const getUsuariosPersistencia = (setUsuariosToRedux) => {
     });
 }
 
+
 // GET Cliente por id
 export const getClientePersistencia = (id) => {
     return new Promise((resolve, reject) => {
@@ -253,14 +263,52 @@ export const getClientePersistencia = (id) => {
 export const getClientePorEmailPersistencia = getClientePersistencia;
 
 // GUARDAR Cliente
+const triggerUsuarioReparaciones = (usuario) => {
+    console.log("triggerUsuarioReparaciones()");
+    return new Promise(async (resolve, reject) => {
+        try {
+            console.log("enter try triggerUsuarioReparaciones()");
+            console.log("enter promise triggerUsuarioReparaciones()");
+            const q = query(collection(firestore, "REPARACIONES"), where("UsuarioRep", "==", usuario.id));
+            const docs = await getDocs(q);
+                
+            console.log('!!!docs', docs);
+            docs.forEach(doc => {
+                console.log('!!!reparacion', doc.data());
+                guardarReparacionPersistencia({
+                    id: doc.id,
+                    data: {
+                        ...doc.data(),
+                        NombreUsu: usuario.data.NombreUsu,
+                        ApellidoUsu: usuario.data.ApellidoUsu,
+                        TelefonoUsu: usuario.data.TelefonoUsu,
+                        EmailUsu: usuario.data.EmailUsu
+                    }
+                });                
+            });
+            resolve();
+        }catch(error){
+            console.log("error triggerUsuarioReparaciones()", error);
+            () => reject(error);
+        }
+    });
+}
+
 export const guardarUsuarioPersistencia = (usuario) => {
     return new Promise((resolve, reject) => {
         // El id es el id o sino el email.
         usuario.id = usuario.id || usuario.data?.EmailUsu;
         setDoc(doc(firestore, "USUARIOS", usuario.id), usuario.data)
         .then(docUsuario => {
-            console.log("actualizado usuario ok");
-            resolve(docUsuario || usuario);
+            triggerUsuarioReparaciones(usuario)
+            .then(() => {
+                console.log("actualizado usuario ok");
+                resolve(docUsuario || usuario);
+            })
+            .catch((error) => {
+                console.log("Error en triggerUsuarioReparaciones() al guardar Usuario", error);
+                reject({ code: "Error en triggerUsuarioReparaciones() al guardar Usuario" })
+            });
         })
         .catch(error => {
             console.log("Error: " + error);
