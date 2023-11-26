@@ -22,9 +22,25 @@ password: 123456
 O sino puede registrarse y tendrá una cuenta como invitado.
 
 
+## COMANZAR
+
+- cordova run browser: Para levantar con Cordova
+- npm start: Para levantar con React
+
+
 ## PROBLEMAS
 
-El complemento cordova-plugin-firestore da problemas al compilar. Por ejemplo, en la línea 128 de RunTransactionHandler.java no encuentra NonNull. Hay que modificar ese archivo para solucionar el problema importando la clase NonNull correctamente.
+- El complemento cordova-plugin-firestore da problemas al compilar. Por ejemplo, en la línea 128 de RunTransactionHandler.java no encuentra NonNull. Hay que modificar ese archivo para solucionar el problema importando la clase NonNull correctamente.
+
+- Instalar Java8, Android Studio y Gradle: https://stackoverflow.com/questions/66864889/how-to-solve-android-sdk-root-undefined-recommended-setting-and-android-home-u
+
+- Setear variables de entorno.
+export ANDROID_SDK_ROOT="/home/mauricio/Android/Sdk/"
+export JAVA_HOME="/usr/java/jdk1.8.0_202"
+
+- Para ver si están exportadas las variables de entorno
+echo $ANDROID_SDK_ROOT
+echo $JAVA_HOME
 
 
 ## PRIMERA ETAPA
