@@ -2,7 +2,7 @@
 import { Route, Switch, Redirect } from "react-router-dom";
 
 // Components
-import Inicio from "../components/Inicio.component";
+import Inicio from "../pages/Inicio.page";
 import ListaReparaciones from "../components/ListaReparaciones.component";
 import ListaUsuarios from "../components/ListaUsuarios.component";
 import Reparacion from "../components/Reparacion.container";

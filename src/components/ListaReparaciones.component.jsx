@@ -94,7 +94,6 @@ const ListaReparaciones = ({
 
 const mapStateToProps = (state) => ({
   coleccionReparaciones: state.app.coleccionReparaciones,
-  isFetching: state.app.isFetching,
   usuario: state.app.usuario
 });
 

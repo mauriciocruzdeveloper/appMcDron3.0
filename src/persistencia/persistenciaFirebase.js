@@ -28,8 +28,8 @@ import {
 
 import { triggerNotification } from '../utils/utils';
 
-// import { config as firebaseConfig }  from '../configProd'; // Para producción
-import { config as firebaseConfig }  from '../configDev'; // Para desarrollo
+import { config as firebaseConfig }  from '../configProd'; // Para producción
+// import { config as firebaseConfig }  from '../configDev'; // Para desarrollo
 
 import { provincias } from '../datos/provincias.json';
 import { localidades } from '../datos/localidades.json';

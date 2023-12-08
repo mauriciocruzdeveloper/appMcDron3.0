@@ -1,7 +1,9 @@
+import { NODOS_INITIAL_STATE } from "../../nodos/nodojs.model";
 import { AppTypes } from "./App.types";
 // import { Usuario } from "../../interfaces/Usuario";
 
 const INITIAL_STATE = {
+    nodos: NODOS_INITIAL_STATE,
     isLoggedIn: false, // Para indicar si hay alguien logueado
     isFetching: false, // Para indicar si está leyendo en la nube
     modal: { // Los parámetros para el modal tipo alert

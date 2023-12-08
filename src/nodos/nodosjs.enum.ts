@@ -1,0 +1,8 @@
+export enum NodosEnum {
+    INICIO = 'INICIO',
+    REPARACIONES = 'REPARACIONES',
+    REPARACION = 'REPARACION',
+    USUARIOS = 'USUARIOS',
+    USUARIO = 'USUARIO',
+    MENSAJES = 'MENSAJES',
+}
