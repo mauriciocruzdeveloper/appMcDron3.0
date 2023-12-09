@@ -3,17 +3,30 @@ import { convertTimestampCORTO } from "../utils/utils";
 import TextareaAutosize from "react-textarea-autosize";
 import "bootstrap-icons/font/bootstrap-icons.css";
 
-const ReparacionPresentational = ({
-    admin,
-    reparacion,
-    estados,
-    setEstado,
-    changeInputRep,
-    handleGuardarReparacion,
-    handleEliminarReparacion,
-    handleSendEmail,
-    handleSendSms
-}) => {
+interface ReparacionPresentationalProps {
+    admin: string;
+    reparacion: Reparacion;
+    estados: Estados;
+    setEstado: (estado: Estado) => void;
+    changeInputRep: any;
+    handleGuardarReparacion: () => void;
+    handleEliminarReparacion: () => void;
+    handleSendEmail: () => void;
+    handleSendSms: () => void;
+}
+
+const ReparacionPresentational = (props: ReparacionPresentationalProps) => {
+    const {
+        admin,
+        reparacion,
+        estados,
+        setEstado,
+        changeInputRep,
+        handleGuardarReparacion,
+        handleEliminarReparacion,
+        handleSendEmail,
+        handleSendSms
+    } = props;
 
     console.log("REPARACION presentational");
 
@@ -49,7 +62,6 @@ const ReparacionPresentational = ({
                                 key={estado.nombre}
                                 className="m-2 btn btn-outline-secondary overflow-hidden"
                                 type="button"
-                                alt={estado.nombre}
                                 style={{
                                     backgroundColor: 
                                         estado.nombre == reparacion?.data?.EstadoRep?
@@ -107,7 +119,7 @@ const ReparacionPresentational = ({
                             className="form-control" 
                             id="AnotacionesRep"
                             value={reparacion?.data?.AnotacionesRep || ""}
-                            rows="5"
+                            rows={5}
                         />
                     </div>
                 </div>
@@ -142,7 +154,7 @@ const ReparacionPresentational = ({
                                 className="btn btn-outline-secondary bg-bluemcdron text-white" 
                                 onClick={handleSendEmail}
                             >
-                                <i class="bi bi-envelope"></i>
+                                <i className="bi bi-envelope"></i>
                             </button>
                         </div>
                     </div>
@@ -181,7 +193,7 @@ const ReparacionPresentational = ({
                                     className="btn btn-outline-secondary bg-bluemcdron text-white" 
                                     onClick={handleSendSms}
                                 >
-                                    <i class="bi bi-chat-left-text"></i>
+                                    <i className="bi bi-chat-left-text"></i>
                             </button>
                         </div>
                     </div>
@@ -245,7 +257,7 @@ const ReparacionPresentational = ({
                             className="form-control" 
                             id="DescripcionTecRep"
                             value={reparacion?.data?.DescripcionTecRep || ""}
-                            rows="5"
+                            rows={5}
                             disabled={!admin}
                         />
                     </div>
@@ -306,7 +318,7 @@ const ReparacionPresentational = ({
                             className="form-control" 
                             id="TxtRepuestosRep"
                             value={reparacion?.data?.TxtRepuestosRep || ""} //Esto es lo correcto
-                            rows="5"
+                            rows={5}
                         />
                     </div>
                 </div>
@@ -322,7 +334,7 @@ const ReparacionPresentational = ({
                             className="form-control" 
                             id="InformeRep"
                             value={reparacion?.data?.InformeRep || ""}
-                            rows="5"
+                            rows={5}
                             disabled={!admin}
                         />
                     </div>
@@ -360,7 +372,7 @@ const ReparacionPresentational = ({
                             className="form-control" 
                             id="TxtEntregaRep"
                             value={reparacion?.data?.TxtEntregaRep || ""}
-                            rows="5"
+                            rows={5}
                             disabled={!admin}
                         />
                     </div>
@@ -372,7 +384,6 @@ const ReparacionPresentational = ({
                             className="form-control" 
                             id="SeguimientoEntregaRep"
                             value={reparacion?.data?.SeguimientoEntregaRep || ""}
-                            rows="5"
                             disabled={!admin}
                         />
                     </div>

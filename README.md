@@ -141,3 +141,10 @@ Falta implementarlo en algunos componentes. La idea es poder cambiar la capa de 
 - Usa persistencia en caché (para Firebase) en caso que se pierda la conexión a internet
 - Para conectar los components con las actions y los states uso el patrón container-component.
 - La app escucha los cambios en las colecciones a nivel de persistencia, y actualiza las colecciones en redux automáticamente cuando éstas cambian, lo que también actualiza automáticamente la presentación.
+
+
+## NOTAS - CASO DE USO - EJEMPLO
+
+- El usuario guarda en estado
+
+USUAIRO --estadoSeleccionadoId--> SISTEMA FRONT --estadoSeleccionadId+Fecha--> PERSISTENCIA

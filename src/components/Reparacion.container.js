@@ -35,7 +35,8 @@ const Reparacion = ({
     const [ reparacion, setReparacion ] = useState();
 
     const inicializarFormulario = useCallback(async () => {
-        setReparacion(coleccionReparaciones.find(reparacion => reparacion.id == id))
+        reparacion = await coleccionReparaciones.find(reparacion => reparacion.id == id);
+        setReparacion(reparacion);
     // Cuando cambia la colección de reparaciones, el escuchador lo ve, y se actualiza la colección
     // entonces la pongo como dependencia del useCallback para que se vuelva a renderizar la función
     // y vuelva a setear la reparación como está en la actualidad.
@@ -66,13 +67,36 @@ const Reparacion = ({
     // Tengo que hacer una función aparte porque cuando modifica el estado de la reparación
     // también tengo que modificar la prioridad. Se podría hacer diferente quizás con 
     // id, value y otra prop del botón.
-    const setEstado = estado => {
+    const setEstado = (estado) => {
+        let campofecha = null;
+
+        switch(estado.nombre){
+            case "En Espera":
+                campofecha = "FechaEsperaRep";
+                break;
+            case "En Reparación":
+                campofecha = "FechaReparacionRep";
+                break;
+            case "Reparado":
+                campofecha = "FechaReparadoRep";
+                break;
+            case "Entregado":
+                campofecha = "FechaEntregadoRep";
+                break;
+            case "Cancelado":
+                campofecha = "FechaCanceladoRep";
+                break;
+            default:
+                break;
+        }
+
         setReparacion({
             ...reparacion, 
             data: {
                 ...reparacion.data,
                 EstadoRep: estado.nombre, 
-                PrioridadRep: estado.prioridad 
+                PrioridadRep: estado.prioridad,
+                [campofecha]: new Date().getTime()+10800001
             }
         });
     }
