@@ -1,75 +1,78 @@
-// React
-import { useEffect, useCallback, useState } from "react";
-//
+import { useEffect, useCallback, useState, FC } from "react";
 import history from "../history";
 import { connect } from "react-redux";
 import { useParams } from "react-router-dom";
-// Actions
 import { 
     guardarReparacion,
     eliminarReparacion,
     confirm,
   } from "../redux/root-actions";
-// Utils
-import { 
+import {
     enviarEmail,
     enviarSms
 } from "../utils/utils";
-// No se si está bien. Me gusta más que lo traiga la persistencia mediante una acción.
 import { estados } from '../datos/estados.json';
-// Components
 import ReparacionPresentational from './Reparacion.presentational';
+import { RootState } from "../redux/App/App.reducer";
+import { Estado } from "../types/estado";
+import { ReparacionType } from "../types/reparacion";
 
-const Reparacion = ({ 
-    guardarReparacion,
-    eliminarReparacion,
-    confirm,
-    coleccionReparaciones,
-    admin
-}) => {
+interface ReparacionProps {
+    guardarReparacion: (reparacion: any) => void;
+    eliminarReparacion: (id: string) => void;
+    confirm: (message: string, title: string, type: string, callback: () => void) => void;
+    coleccionReparaciones: ReparacionType[];
+    admin: boolean;
+}
+
+interface ParamTypes {
+    id: string;
+}
+
+const Reparacion: FC<ReparacionProps> = (props) => {
+
+    const {
+        guardarReparacion,
+        eliminarReparacion,
+        confirm,
+        coleccionReparaciones,
+        admin,
+    } = props;
 
     console.log("REPARACION container");
 
-    const { id } = useParams();
+    const { id } = useParams<ParamTypes>();
 
-    const [ reparacion, setReparacion ] = useState();
+    const [ reparacion, setReparacion ] = useState<ReparacionType>();
 
     const inicializarFormulario = useCallback(async () => {
-        reparacion = await coleccionReparaciones.find(reparacion => reparacion.id == id);
-        setReparacion(reparacion);
-    // Cuando cambia la colección de reparaciones, el escuchador lo ve, y se actualiza la colección
-    // entonces la pongo como dependencia del useCallback para que se vuelva a renderizar la función
-    // y vuelva a setear la reparación como está en la actualidad.
+        console.log("!!!inicializarFormulario", coleccionReparaciones);
+        if (!coleccionReparaciones) return;
+        const rep = await coleccionReparaciones.find(reparacion => String(reparacion.id) === id);
+        setReparacion(rep);
     }, [coleccionReparaciones]);
     
     useEffect(() => {
         inicializarFormulario();
     }, [inicializarFormulario]);
     
-    const changeInputRep = target => {
-        let value = null;
-        if(target.type == "date"){
-            let anio = target.value.substr(0, 4);
-            let mes = target.value.substr(5, 2)-1;
-            let dia = target.value.substr(8, 2);
-            value = new Date(anio, mes, dia).getTime()+10800001; // Se agrega este número para que de bien la fecha.
-        }else{
-            value = target.value;
-        };
+    const changeInputRep = (field: string, value: string) => {
+        if (!reparacion) return;
         setReparacion({ 
             ...reparacion, 
             data: {
                 ...reparacion.data,
-                [target.id]: value
+                [field]: value
             } 
         });
     };
     // Tengo que hacer una función aparte porque cuando modifica el estado de la reparación
     // también tengo que modificar la prioridad. Se podría hacer diferente quizás con 
     // id, value y otra prop del botón.
-    const setEstado = (estado) => {
-        let campofecha = null;
+    const setEstado = (estado: Estado) => {
+        if (!reparacion) return;
 
+        let campofecha = null;
         switch(estado.nombre){
             case "En Espera":
                 campofecha = "FechaEsperaRep";
@@ -87,7 +90,7 @@ const Reparacion = ({
                 campofecha = "FechaCanceladoRep";
                 break;
             default:
-                break;
+                return;
         }
 
         setReparacion({
@@ -111,6 +114,8 @@ const Reparacion = ({
     }
 
     const handleEliminarReparacion = () => {
+        if (!reparacion) return;
+
         confirm(
             "Eliminar Reparación?",
             "Atención",
@@ -123,6 +128,8 @@ const Reparacion = ({
     }
 
     const handleSendEmail = () => {
+        if (!reparacion) return;
+
         const datosEmail = {
             to: reparacion.data.UsuarioRep,
             cc: 'info@mauriciocruzdrones.com',
@@ -149,7 +156,7 @@ const Reparacion = ({
             },
     
             success: () => null,
-            error: e => alert('Message Failed:' + e)
+            error: (e: any) => alert('Message Failed:' + e)
         };
         enviarSms(data);
     }
@@ -169,10 +176,10 @@ const Reparacion = ({
             handleSendSms={handleSendSms}
         /> : null
     )
-}
+};
 
-const mapStateToProps = (state) => ({
-    coleccionReparaciones: state.app?.coleccionReparaciones
+const mapStateToProps = (state: RootState) => ({
+    coleccionReparaciones: state.app.coleccionReparaciones
 });
 
 

@@ -1,6 +1,7 @@
 // TODO: habría que hacer un objeto aparte para el Usuario. Quizás o mismo para el estado.
-interface DataReparacion {
+export interface DataReparacion {
     EstadoRep: string;
+    PrioridadRep: number;
     DroneRep: string;
     NombreUsu: string;
     ApellidoUsu: string;
@@ -26,7 +27,7 @@ interface DataReparacion {
     SeguimientoEntregaRep: string;
 }
 
-interface Reparacion {
-  id: number;
+export interface ReparacionType {
+  id: string;
   data: DataReparacion;
 }

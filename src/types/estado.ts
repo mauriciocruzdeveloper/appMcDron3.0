@@ -1,10 +1,10 @@
-interface Estado {
+export interface Estado {
     nombre: string;
     prioridad: number;
     accion: string;
     color: string;
 }
 
-interface Estados {
+export interface Estados {
     [key: string]: Estado;
 }

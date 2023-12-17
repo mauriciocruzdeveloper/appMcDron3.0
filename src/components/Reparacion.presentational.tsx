@@ -2,13 +2,17 @@ import { convertTimestampCORTO } from "../utils/utils";
 // Components
 import TextareaAutosize from "react-textarea-autosize";
 import "bootstrap-icons/font/bootstrap-icons.css";
+import { ChangeEvent } from "react";
+import { InputType } from "../types/types";
+import { ReparacionType } from "../types/reparacion";
+import { Estado, Estados } from "../types/estado";
 
 interface ReparacionPresentationalProps {
-    admin: string;
-    reparacion: Reparacion;
+    admin: boolean;
+    reparacion: ReparacionType;
     estados: Estados;
     setEstado: (estado: Estado) => void;
-    changeInputRep: any;
+    changeInputRep: (field: string, value: string) => void;
     handleGuardarReparacion: () => void;
     handleEliminarReparacion: () => void;
     handleSendEmail: () => void;
@@ -29,6 +33,20 @@ const ReparacionPresentational = (props: ReparacionPresentationalProps) => {
     } = props;
 
     console.log("REPARACION presentational");
+
+    const handleOnChange = (event: ChangeEvent<InputType>) => {
+        const target = event.target;
+
+        let value = target.value;
+        if(target.type == "date"){
+            let anio = Number(target.value.substr(0, 4));
+            let mes = Number(target.value.substr(5, 2)) - 1;
+            let dia = Number(target.value.substr(8, 2));
+            value = String(Number(new Date(anio, mes, dia).getTime()) + 10800001); // Se agrega este número para que de bien la fecha.
+        };
+        const field = target.id;
+        changeInputRep(field, value);
+    }
 
     return(
         <div
@@ -88,7 +106,7 @@ const ReparacionPresentational = (props: ReparacionPresentationalProps) => {
 
                         <div className="input-group">
                             <input 
-                                onChange={e => changeInputRep(e.target)}
+                                onChange={handleOnChange}
                                 type="text"
                                 className="form-control" 
                                 id="DriveRep"
@@ -115,7 +133,7 @@ const ReparacionPresentational = (props: ReparacionPresentationalProps) => {
                     <div>
                         <label className="form-label text-white">Anotaciones varias</label>
                         <TextareaAutosize
-                            onChange={e => changeInputRep(e.target)} 
+                            onChange={handleOnChange} 
                             className="form-control" 
                             id="AnotacionesRep"
                             value={reparacion?.data?.AnotacionesRep || ""}
@@ -200,7 +218,7 @@ const ReparacionPresentational = (props: ReparacionPresentationalProps) => {
                     <div>
                         <label className="form-label">Modelo del Drone</label>
                         <input 
-                            onChange={e => changeInputRep(e.target)} 
+                            onChange={handleOnChange} 
                             type="text" 
                             className="form-control" 
                             id="DroneRep"
@@ -211,7 +229,7 @@ const ReparacionPresentational = (props: ReparacionPresentationalProps) => {
                     <div>
                         <label className="form-label">Desperfectos o Roturas</label>
                         <TextareaAutosize
-                            onChange={e => changeInputRep(e.target)} 
+                            onChange={handleOnChange} 
                             className="form-control" 
                             id="DescripcionUsuRep"
                             value={reparacion?.data?.DescripcionUsuRep || ""}
@@ -226,7 +244,7 @@ const ReparacionPresentational = (props: ReparacionPresentationalProps) => {
                     <div>
                         <label className="form-label">Fecha de Recepción</label>
                         <input 
-                            onChange={e => changeInputRep(e.target)} 
+                            onChange={handleOnChange} 
                             type="date" 
                             className="form-control" 
                             id="FeRecRep"
@@ -242,7 +260,7 @@ const ReparacionPresentational = (props: ReparacionPresentationalProps) => {
                     <div>
                         <label className="form-label">Número de Serie</label>
                         <input 
-                            onChange={e => changeInputRep(e.target)} 
+                            onChange={handleOnChange} 
                             type="text" 
                             className="form-control" 
                             id="NumeroSerieRep"
@@ -253,7 +271,7 @@ const ReparacionPresentational = (props: ReparacionPresentationalProps) => {
                     <div>
                         <label className="form-label">Observaciones del Técnico</label>
                         <TextareaAutosize
-                            onChange={e => changeInputRep(e.target)} 
+                            onChange={handleOnChange} 
                             className="form-control" 
                             id="DescripcionTecRep"
                             value={reparacion?.data?.DescripcionTecRep || ""}
@@ -264,7 +282,7 @@ const ReparacionPresentational = (props: ReparacionPresentationalProps) => {
                     <div>
                         <label className="form-label">Presupuesto Mano de Obra $</label>
                         <input 
-                            onChange={e => changeInputRep(e.target)} 
+                            onChange={handleOnChange} 
                             type="number" 
                             className="form-control" 
                             id="PresuMoRep" 
@@ -275,7 +293,7 @@ const ReparacionPresentational = (props: ReparacionPresentationalProps) => {
                     <div>
                         <label className="form-label">Presupuesto Repuestos $</label>
                         <input 
-                            onChange={e => changeInputRep(e.target)} 
+                            onChange={handleOnChange} 
                             type="number" 
                             className="form-control" 
                             id="PresuReRep"
@@ -286,7 +304,7 @@ const ReparacionPresentational = (props: ReparacionPresentationalProps) => {
                     <div>
                         <label className="form-label">Presupuesto Final $</label>
                         <input 
-                            onChange={e => changeInputRep(e.target)} 
+                            onChange={handleOnChange} 
                             type="number" 
                             className="form-control" 
                             id="PresuFiRep"
@@ -297,7 +315,7 @@ const ReparacionPresentational = (props: ReparacionPresentationalProps) => {
                     <div>
                         <label className="form-label">Diagnóstico $</label>
                         <input 
-                            onChange={e => changeInputRep(e.target)} 
+                            onChange={handleOnChange} 
                             type="number" 
                             className="form-control" 
                             id="PresuDiRep"
@@ -314,7 +332,7 @@ const ReparacionPresentational = (props: ReparacionPresentationalProps) => {
                     <div>
                         <label className="form-label">Qué repuesto, seguimiento, transportista</label>
                         <TextareaAutosize
-                            onChange={e => changeInputRep(e.target)} 
+                            onChange={handleOnChange} 
                             className="form-control" 
                             id="TxtRepuestosRep"
                             value={reparacion?.data?.TxtRepuestosRep || ""} //Esto es lo correcto
@@ -330,7 +348,7 @@ const ReparacionPresentational = (props: ReparacionPresentationalProps) => {
                     <div>
                         <label className="form-label">Informe de Reparación o Diagnóstico</label>
                         <TextareaAutosize
-                            onChange={e => changeInputRep(e.target)} 
+                            onChange={handleOnChange} 
                             className="form-control" 
                             id="InformeRep"
                             value={reparacion?.data?.InformeRep || ""}
@@ -341,7 +359,7 @@ const ReparacionPresentational = (props: ReparacionPresentationalProps) => {
                     <div>
                         <label className="form-label">Fecha Finalizacion</label>
                         <input 
-                            onChange={e => changeInputRep(e.target)} 
+                            onChange={handleOnChange} 
                             type="date" 
                             className="form-control" 
                             id="FeFinRep"
@@ -357,7 +375,7 @@ const ReparacionPresentational = (props: ReparacionPresentationalProps) => {
                     <div>
                         <label className="form-label">Fecha Entrega</label>
                         <input 
-                            onChange={e => changeInputRep(e.target)} 
+                            onChange={handleOnChange} 
                             type="date" 
                             className="form-control" 
                             id="FeEntRep"
@@ -368,7 +386,7 @@ const ReparacionPresentational = (props: ReparacionPresentationalProps) => {
                     <div>
                         <label className="form-label">Cliente, Comisionista, Correo, Seguimiento</label>
                         <TextareaAutosize
-                            onChange={e => changeInputRep(e.target)} 
+                            onChange={handleOnChange} 
                             className="form-control" 
                             id="TxtEntregaRep"
                             value={reparacion?.data?.TxtEntregaRep || ""}
@@ -379,7 +397,7 @@ const ReparacionPresentational = (props: ReparacionPresentationalProps) => {
                     <div>
                         <label className="form-label">Nro. de Seguimiento</label>
                         <input 
-                            onChange={e => changeInputRep(e.target)} 
+                            onChange={handleOnChange} 
                             type="text" 
                             className="form-control" 
                             id="SeguimientoEntregaRep"

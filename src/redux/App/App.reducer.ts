@@ -1,42 +1,81 @@
+import { ReparacionType } from "../../types/reparacion";
 import { AppTypes } from "./App.types";
 // import { Usuario } from "../../interfaces/Usuario";
 
+export interface RootState {
+    app: AppState;
+}
+
+export interface AppState {
+    isLoggedIn: boolean;
+    isFetching: boolean;
+    modal: {
+        showModal: boolean;
+        mensajeModal: string;
+        tituloModal: string;
+        tipoModal: string;
+    };
+    confirm: {
+        showConfirm: boolean;
+        mensajeConfirm: string;
+        tituloConfirm: string;
+        tipoConfirm: string;
+        callBakcConfirm: any;
+    };
+    login: {
+        email: string;
+        password: string;
+        token: string;
+    };
+    usuario: any;
+    coleccionReparaciones: ReparacionType[];
+    coleccionMensajes: any[];
+    coleccionUsuarios: any[];
+    provinciasSelect: any[];
+    localidadesSelect: any[];
+    usuariosSelect: any[];
+}
+
 const INITIAL_STATE = {
-    isLoggedIn: false, // Para indicar si hay alguien logueado
-    isFetching: false, // Para indicar si está leyendo en la nube
-    modal: { // Los parámetros para el modal tipo alert
+    isLoggedIn: false,
+    isFetching: false,
+    modal: {
         showModal: false,
         mensajeModal: '',
         tituloModal: '',
         tipoModal: ''
     },
-    confirm: { // Los parámetros para el modal confirm
+    confirm: {
         showConfirm: false,
         mensajeConfirm: '',
         tituloConfirm: '',
         tipoConfirm: '',
         callBakcConfirm: null
     },
-    login: { // Son los datos de usuario y contraseña
+    login: {
         email: '',
         password: '',
         token: ''
     },
-    usuario: {}, // Es el usuario logueado
-    // Le voy a llamar usuario al usuario logueado, 
-    // y cliente al usuario/cliente en general
-    coleccionReparaciones: [], // Todas las reparaciones
-    coleccionMensajes: [], // Todas los mensajes
-    coleccionUsuarios: [], // Todos los usuarios
-    provinciasSelect: [], // Las provincias usadas en los select
-    localidadesSelect: [], // Las localidades usadas en los select
-    usuariosSelect: [] // Los usuarios usados en los select
+    usuario: {},
+    coleccionReparaciones: [],
+    coleccionMensajes: [],
+    coleccionUsuarios: [],
+    provinciasSelect: [],
+    localidadesSelect: [],
+    usuariosSelect: []
 }
 
 // Todas las estructuras tiene un id del documento y un data del documento.
 
+// Type for action
+export interface ReduxAction {
+    type: string;
+    payload: any;
+}
+
 // Reducer para el App
-export default (state = INITIAL_STATE, action) => {
+export default (state = INITIAL_STATE, action: ReduxAction) => {
     switch (action.type) {
         case AppTypes.SET_REPARACIONES:{
             return { 
