@@ -6,7 +6,6 @@ import {
   sendMessage,
   getUsuariosSelect
 } from "../redux/root-actions";
-import history from "../history";
 import MensajesPresentational from './Mensajes.presentational';
 import { actualizarLeidos } from "../utils/utils";
 

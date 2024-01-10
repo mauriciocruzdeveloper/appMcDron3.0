@@ -11,14 +11,14 @@ import {
     enviarEmail,
     enviarSms
 } from "../utils/utils";
-import { estados } from '../datos/estados.json';
+import { estados } from '../datos/estados.js';
 import ReparacionPresentational from './Reparacion.presentational';
 import { RootState } from "../redux/App/App.reducer";
 import { Estado } from "../types/estado";
 import { ReparacionType } from "../types/reparacion";
 
 interface ReparacionProps {
-    guardarReparacion: (reparacion: any) => void;
+    guardarReparacion: (reparacion: ReparacionType) => void;
     eliminarReparacion: (id: string) => void;
     confirm: (message: string, title: string, type: string, callback: () => void) => void;
     coleccionReparaciones: ReparacionType[];
@@ -51,6 +51,8 @@ const Reparacion: FC<ReparacionProps> = (props) => {
         const rep = await coleccionReparaciones.find(reparacion => String(reparacion.id) === id);
         setReparacion(rep);
     }, [coleccionReparaciones]);
+
+    if (!reparacion) return null;
     
     useEffect(() => {
         inicializarFormulario();

@@ -1,10 +1,7 @@
-// React
 import { useEffect, useCallback, useState } from "react";
-//
 import { connect } from "react-redux";
 import { useParams } from "react-router-dom";
 import history from "../history";
-// Actions
 import { 
     // Cliente y Usuario es lo mismo, pero Usuario se usa para referirse
     // al usuario logueado, y Cliente para el usuario en un ABMC
@@ -14,51 +11,65 @@ import {
     getProvinciasSelect,
     getLocalidadesPorProvincia,
   } from "../redux/root-actions";
-// Utils
 import { 
     enviarEmail,
     enviarSms
 } from "../utils/utils";
-// Components
-import UsuarioPresentational from './Usuario.presentational'
+import ClientePresentational from './Cliente.presentational'
+import { ClienteType } from "../types/usuario";
+import { RootState } from "../redux/App/App.reducer";
+import { SelectType } from "../types/types";
 
+export interface UsuarioProps {
+    guardarUsuario: (usuario: ClienteType) => void;
+    eliminarUsuario: (id: string) => void;
+    confirm: (message: string, title: string, type: string, callback: () => void) => void;
+    provinciasSelect: SelectType[];
+    localidadesSelect: SelectType[];
+    getProvinciasSelect: () => void;
+    getLocalidadesPorProvincia: (provincia: string) => void;
+    coleccionUsuarios: any[];
+}
 
-const Usuario = ({ 
-    guardarUsuario,
-    eliminarUsuario,
-    confirm,
-    provinciasSelect,
-    localidadesSelect,
-    getProvinciasSelect,
-    getLocalidadesPorProvincia,
-    coleccionUsuarios,
-}) => {
+interface ParamTypes {
+    id: string;
+}
+
+const Usuario = (props: UsuarioProps) => {
+    const { 
+        guardarUsuario,
+        eliminarUsuario,
+        confirm,
+        provinciasSelect,
+        localidadesSelect,
+        getProvinciasSelect,
+        getLocalidadesPorProvincia,
+        coleccionUsuarios,
+    } = props;
 
     console.log("USUARIO container");
 
-    const { id } = useParams();
+    const { id } = useParams<ParamTypes>();
 
-    const [ cliente, setCliente ] = useState();
+    const [ cliente, setCliente ] = useState<ClienteType>();
 
-    // Esto inicializa el form al montar y limpia al desmontar ///////
-
-    // Inicializa los datos del formulario.
     const inicializaFormulario = useCallback(async () => {
-        // Busca los datos en caso que no estén en el store.
-        !provinciasSelect?.length ? await getProvinciasSelect() : null;
+        if (!provinciasSelect?.length) await getProvinciasSelect();
         setCliente(coleccionUsuarios.find(usuario => usuario.id == id))
     }, [coleccionUsuarios]);
 
     useEffect(() => {
         inicializaFormulario();
     }, [inicializaFormulario]);
+    
+    if (!cliente) return null;
 
-    const changeInputUsu = target => {
+    const changeInputUsu = (field: string, value: string) => {
         setCliente({ 
             ...cliente, 
             data: {
                 ...cliente.data,
-                [target.id]: target.value
+                [field]: value
             } 
         });
     };
@@ -84,23 +95,25 @@ const Usuario = ({
         );
     }
 
-    const handleOnChangeProvincias = async (e) => {
-        await getLocalidadesPorProvincia(e.value);
+    const handleOnChangeProvincias = async (value: string) => {
+        if (!cliente) return;
+
+        await getLocalidadesPorProvincia(value);
         setCliente({ 
             ...cliente, 
             data: {
                 ...cliente.data,
-                ProvinciaUsu: e.value
+                ProvinciaUsu: value
             } 
         });
     }
 
-    const handleOnChangeLocalidades = (e) => {
+    const handleOnChangeLocalidades = (value: string) => {
         setCliente({ 
             ...cliente, 
             data: {
                 ...cliente.data,
-                CiudadUsu: e.value
+                CiudadUsu: value
             } 
         });
     }
@@ -131,7 +144,7 @@ const Usuario = ({
             },
     
             success: () => null,
-            error: e => alert('Message Failed:' + e)
+            error: (e: any) => alert('Message Failed:' + e)
         };
         enviarSms(data);
     }
@@ -139,23 +152,22 @@ const Usuario = ({
     return(
                 // Sólo se renderiza el commponente presentacional cuando están los datos necesarios ya cargados.
         cliente && provinciasSelect.length ?
-        <UsuarioPresentational 
+        <ClientePresentational 
             cliente={cliente}
             provinciasSelect={provinciasSelect}
             localidadesSelect={localidadesSelect}
             handleGuardarUsuario={handleGuardarUsuario}
             handleEliminarUsuario={handleEliminarUsuario}
             changeInputUsu={changeInputUsu}
-            handleOnChangeProvincias={handleOnChangeProvincias}
-            handleOnChangeLocalidades={handleOnChangeLocalidades}
+            onChangeProvincias={handleOnChangeProvincias}
+            onChangeLocalidades={handleOnChangeLocalidades}
             handleSendEmail={handleSendEmail}
             handleSendSms={handleSendSms}
         /> : null
     )
 }
 
-const mapStateToProps = (state) => ({
-    cliente: state.app?.cliente,
+const mapStateToProps = (state: RootState) => ({
     provinciasSelect: state.app?.provinciasSelect,
     localidadesSelect: state.app?.localidadesSelect,
     coleccionUsuarios: state.app?.coleccionUsuarios

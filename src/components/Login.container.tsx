@@ -6,22 +6,26 @@ import { login } from "../redux/root-actions";
 // Components
 import LoginPresentational from './Login.presentational'; // componente "no inteligente" de presentación
 
+export interface LoginData {
+  email: string;
+  password: string;
+}
+
+// Valor inicial para el useState de loginData
+const INIT_LOGIN_DATA: LoginData = {
+  email: '',
+  password: ''
+};
+
 const Login = ({ login }) => {
-
   console.log("LOGIN container");
-
-  // Valor inicial para el useState de loginData
-  const INIT_LOGIN_DATA = {
-    email: '',
-    password: ''
-  }
 
   const [ loginData, setLoginData ] = useState(INIT_LOGIN_DATA);
 
   // Actualiza los valores de los input cuando éstos cambian y los guarda en el state local.
-  const changeInputLogin = target => setLoginData({ 
+  const changeInputLogin = (field: string, value: string) => setLoginData({ 
     ...loginData, 
-    [target.id]: target.value 
+    [field]: value 
   });
 
   // Manejador para el botón login. 

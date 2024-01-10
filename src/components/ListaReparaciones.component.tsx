@@ -4,39 +4,44 @@ import history from "../history";
 import { 
   getReparaciones
 } from "../redux/root-actions";
-// JSON con los estados de las reparaciones
-import { estados } from '../datos/estados.json';
+import { estados } from '../datos/estados.js';
 // Estas son las importaciones de react-floating-action-button
 // lightColors y darkColors pueden estar buenos... hay que probarlos
 import { useCallback } from "react";
+import { ReparacionType } from "../types/reparacion";
+import { ClienteType } from "../types/usuario";
+import { RootState } from "../redux/App/App.reducer";
 
-const ListaReparaciones = ({ 
-  getReparaciones, 
-  coleccionReparaciones,
-  usuario
-}) => {
+interface ListaReparacionesProps {
+  getReparaciones: (usuario: ClienteType, filter: string[] | null) => void; // TODO: Revisar los tipos de los argumentos.
+  coleccionReparaciones: ReparacionType[];
+  isFetching: boolean;
+  usuario: ClienteType;
+}
 
-  const [ filter, setFilter ] = useState(true);
+const ListaReparaciones = (props: ListaReparacionesProps) => {
+  const { 
+    getReparaciones, 
+    coleccionReparaciones,
+    usuario
+  } = props;
 
-  // Filtros de la casilla de verificación
+  const [ filter, setFilter ] = useState<boolean>(true);
+
+  // TODO: Hacer enum de estados.
   const noPrioritarios = [ "Entregado", "Liquidación", "Trabado" ];
 
-  // Busco las reparaciones al backup sólo cuando la colección está vacía.
   const iniciarFormulario = useCallback(async () => {
     console.log("iniciarFormulario()");
     if(!coleccionReparaciones?.length) await getReparaciones(usuario, filter ? noPrioritarios : null); 
   }, [getReparaciones]);
    
-
-  //PARA FORZAR LA CARGA DE LAS REPARACIONES AL INICIALIZAR
   useEffect(() => {
     iniciarFormulario();
   }, [iniciarFormulario]);
 
-  const handleOnChange = (value) => {
-    // Seteo el filter en el estado local para que persista las renderizaciones.
+  const handleOnChange = (value: boolean) => {
     setFilter(value);
-    // Vuelvo a traer las reparaciones desde el backend, sólo las filtradas.
     getReparaciones(usuario, !filter ? noPrioritarios : [ '' ]);
   }
 
@@ -61,7 +66,6 @@ const ListaReparaciones = ({
         {coleccionReparaciones.map(reparacion => (
         <div
           key={reparacion.id}
-          value={reparacion.id} 
           className="card mb-3 p-1" 
           aria-current="true"
           onClick={() => history.push(`/inicio/reparaciones/${reparacion.id}`)}
@@ -92,7 +96,7 @@ const ListaReparaciones = ({
   );
 };
 
-const mapStateToProps = (state) => ({
+const mapStateToProps = (state: RootState) => ({
   coleccionReparaciones: state.app.coleccionReparaciones,
   isFetching: state.app.isFetching,
   usuario: state.app.usuario

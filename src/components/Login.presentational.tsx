@@ -1,3 +1,10 @@
+interface LoginPresentationalProps {
+  loginData: LoginType;
+  changeInputLogin: (target: any) => void;
+  handleLogin: () => void;
+  handleRegistrarse: () => void;
+}
+
 const LoginPresentational = ({ 
   loginData,
   changeInputLogin,

@@ -131,7 +131,7 @@ export const getReparacionesPersistencia = (setReparacionesToRedux, usuario, fil
     return new Promise((resolve, reject) => {
         // const unsubscribe = null;
         let queryReparaciones = "";
-        if(usuario?.data?.Admin) {
+        if(usuario?.data?.Admin) { // TODO: Esto es una regla de negocio. No va acá.
             // con el not-in se podría hacer un array con los que no quiero que estén, o con el in los que sí quiero.
             queryReparaciones = query(collection(firestore, "REPARACIONES"), where("EstadoRep", "not-in", filtros)); // , orderBy("PrioridadRep"));
         } else {

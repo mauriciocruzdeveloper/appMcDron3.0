@@ -412,14 +412,14 @@ const ReparacionPresentational = (props: ReparacionPresentationalProps) => {
             <div className="text-center">
                 <button
                     key="botonGuardar"
-                    onClick={ handleGuardarReparacion }
+                    onClick={handleGuardarReparacion}
                     className="w-100 mb-3 btn bg-bluemcdron text-white"
                 >
                     Guardar
                 </button>
                 <button
                     key="botonEliminar"
-                    onClick={ handleEliminarReparacion }
+                    onClick={handleEliminarReparacion}
                     className="w-100 btn bg-danger text-white"
                 >
                     Eliminar

@@ -6,11 +6,10 @@ import Inicio from "../components/Inicio.component";
 import ListaReparaciones from "../components/ListaReparaciones.component";
 import ListaUsuarios from "../components/ListaUsuarios.component";
 import Reparacion from "../components/Reparacion.container";
-import Usuario from "../components/Usuario.container";
+import Usuario from "../components/Cliente.container";
 import Presupuesto from "../components/Presupuesto.component";
 import NavMcDron from "../components/NavMcDron.component";
 import Mensajes from "../components/Mensajes.container";
-
 
 const InicioRoutes = ({ match, isLoggedIn, admin }) => {
 
@@ -21,7 +20,8 @@ const InicioRoutes = ({ match, isLoggedIn, admin }) => {
     return (
         isLoggedIn ?
         <>
-            <NavMcDron />
+            {/* TODO: Verificar si Nav debe ir acá, quizás en App */}
+            <NavMcDron /> 
             <Switch>
                 <Route exact path={`${match.path}`} render = {props => <Inicio {...props} admin = {admin}/>} />
                 <Route exact path={`${match.path}/reparaciones`} render = {props => <ListaReparaciones {...props} admin={admin}/>} />

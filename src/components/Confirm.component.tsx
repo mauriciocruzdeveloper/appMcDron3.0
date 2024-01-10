@@ -18,10 +18,26 @@ import { cierraConfirm } from '../redux/root-actions.js';
 // En esta app, la función callBack va a estar en redux. A redux va a llegar a través de la
 // acción confirmaEliminación, que va a recibir la función callBack par pasarla al reducer
 // y éste la ubicará en el state.
+// TODO: No se debe guardar en redux una función. Probar otra cosa, quizás un contexto. Hacer un contexto para agregar conocimientos al proyecto.
 
+interface ConfirmComponentProps {
+    show: boolean;
+    titulo: string;
+    mensaje: string;
+    tipo: string;
+    onConfirm: () => void;
+    cierraConfirm: () => void;
+}
 
-
-const ConfirmComponent = ({ show, titulo, mensaje, tipo, onConfirm, cierraConfirm }) => {
+const ConfirmComponent = (props: ConfirmComponentProps) => {
+    const { 
+        show, 
+        titulo, 
+        mensaje, 
+        tipo, 
+        onConfirm, 
+        cierraConfirm 
+    } = props;
 
     console.log('CONFIRM COMPONENT');
 

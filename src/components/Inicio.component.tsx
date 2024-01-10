@@ -1,7 +1,13 @@
 import history from "../history";
+import { MatchType } from "../types/types";
 
-// match es una parámetro de las props
-const Inicio = ({ admin, match }) => {
+interface InicioProps {
+  admin: boolean;
+  match: MatchType;
+}
+
+const Inicio = (props: InicioProps) => {
+  const { admin, match } = props;
 
   console.log("INICIO");
 

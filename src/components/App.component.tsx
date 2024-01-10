@@ -6,11 +6,18 @@ import Routes from "../routes/Routes";
 
 import ModalComponent from "./Modal.component";
 import ConfirmComponent from "./Confirm.component";
-import AlertComponent from "./Alert.component"; // Sólo se usa para "Cargando..."
+import { ConfirmType, RootState } from "../redux/App/App.reducer";
 
-// import '../../node_modules/bootstrap-icons/icons';
+interface AppProps {
+  isFetching: boolean;
+  isLoggedIn: boolean;
+  admin: boolean;
+  modal: any;
+  confirm: ConfirmType;
+}
 
-const App = ( { isFetching, isLoggedIn, admin, modal, confirm, alert }) => {
+const App = (props: AppProps) => {
+  const { isFetching, isLoggedIn, admin, modal, confirm } = props;
 
   console.log("APP")
 
@@ -18,10 +25,6 @@ const App = ( { isFetching, isLoggedIn, admin, modal, confirm, alert }) => {
   const { showConfirm, mensajeConfirm, tituloConfirm, tipoConfirm, callBackConfirm } = confirm;
 
   return (
-    // isFetching ? <h3>cargando ....</h3> : 
-    // No funciona porque cuando entra a listareparaciones, por ejemplo
-    // se ejcuta una y otra vez el useEffect, que causa un isfetchin que causa volver
-    // a carga listareparaciones que causa nuevamente el useEffect...
     <div className="mx-auto"
       style={{
         backgroundColor: "#EEEEEE",
@@ -30,7 +33,6 @@ const App = ( { isFetching, isLoggedIn, admin, modal, confirm, alert }) => {
         maxWidth: "600px"
       }}
     >
-{/* Esto de poner los modales y confirmaciones acá quizás sea una chanchada. VER!! */}
         <ModalComponent 
           show = {showModal} 
           mensaje = {mensajeModal} 
@@ -44,7 +46,6 @@ const App = ( { isFetching, isLoggedIn, admin, modal, confirm, alert }) => {
           tipo = {tipoConfirm}
           onConfirm = {callBackConfirm}
         />
-{/* Esto de poner los modales y confirmaciones acá quizás sea una chanchada. VER!! */}
         <Router history = {history} >
           <Routes isLoggedIn = {isLoggedIn} admin = {admin}/>
         </Router>
@@ -67,12 +68,11 @@ const App = ( { isFetching, isLoggedIn, admin, modal, confirm, alert }) => {
   );
 };
 
-const mapStateToProps = ( state ) => ({
+const mapStateToProps = ( state: RootState ) => ({
   isLoggedIn: state.app.isLoggedIn,
   isFetching: state.app.isFetching,
   admin: state.app.usuario?.data?.Admin || false,
   modal: state.app.modal,
-  alert: state.app.alert,
   confirm: state.app.confirm
 });
 

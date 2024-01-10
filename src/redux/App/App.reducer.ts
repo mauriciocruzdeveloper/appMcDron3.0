@@ -1,9 +1,18 @@
 import { ReparacionType } from "../../types/reparacion";
+import { SelectType } from "../../types/types";
+import { ClienteType } from "../../types/usuario";
 import { AppTypes } from "./App.types";
-// import { Usuario } from "../../interfaces/Usuario";
 
 export interface RootState {
     app: AppState;
+}
+
+export interface ConfirmType {
+    showConfirm: boolean;
+    mensajeConfirm: string;
+    tituloConfirm: string;
+    tipoConfirm: string;
+    callBackConfirm: () => void;
 }
 
 export interface AppState {
@@ -15,13 +24,7 @@ export interface AppState {
         tituloModal: string;
         tipoModal: string;
     };
-    confirm: {
-        showConfirm: boolean;
-        mensajeConfirm: string;
-        tituloConfirm: string;
-        tipoConfirm: string;
-        callBakcConfirm: any;
-    };
+    confirm: ConfirmType;
     login: {
         email: string;
         password: string;
@@ -30,9 +33,9 @@ export interface AppState {
     usuario: any;
     coleccionReparaciones: ReparacionType[];
     coleccionMensajes: any[];
-    coleccionUsuarios: any[];
-    provinciasSelect: any[];
-    localidadesSelect: any[];
+    coleccionUsuarios: ClienteType[];
+    provinciasSelect: SelectType[];
+    localidadesSelect: SelectType[];
     usuariosSelect: any[];
 }
 
@@ -50,7 +53,7 @@ const INITIAL_STATE = {
         mensajeConfirm: '',
         tituloConfirm: '',
         tipoConfirm: '',
-        callBakcConfirm: null
+        callBackConfirm: null
     },
     login: {
         email: '',
