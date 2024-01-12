@@ -139,7 +139,6 @@ export const getReparacionesPersistencia = (setReparacionesToRedux, usuario, fil
         };
         try{
             const unsubscribeRep = onSnapshot(queryReparaciones, (querySnapshot) => {
-                console.log('!!!onSnapshot', querySnapshot);
                 let reparaciones = [];
                 querySnapshot.forEach(doc => reparaciones.push(
                     {
@@ -147,7 +146,6 @@ export const getReparacionesPersistencia = (setReparacionesToRedux, usuario, fil
                         data: doc.data()
                     }
                 ));
-                console.log('!!!reparaciones ANTES DE SET', reparaciones);
                 setReparacionesToRedux(reparaciones);
                 // Ordeno por prioridad porque firebase no me deja ordenar y filtrar por distintos campos.
                 reparaciones.sort((a, b) => a.data.PrioridadRep - b.data.PrioridadRep);
@@ -187,10 +185,8 @@ export const getReparacionPersistencia = (id) => {
 
 // GUARDAR Reparación
 export const guardarReparacionPersistencia = (reparacion) => {
-    console.log('!!!guardarReparacionPersistencia', reparacion);
     return new Promise((resolve, reject) => {
         // El id es el id o sino la fecha de consulta.
-        console.log('!!!reparacion', reparacion);
         reparacion.id = (reparacion.id || reparacion.data?.FeConRep.toString());
         setDoc(
             doc(firestore, "REPARACIONES", reparacion.id), 
@@ -272,9 +268,7 @@ const triggerUsuarioReparaciones = (usuario) => {
             const q = query(collection(firestore, "REPARACIONES"), where("UsuarioRep", "==", usuario.id));
             const docs = await getDocs(q);
                 
-            console.log('!!!docs', docs);
             docs.forEach(doc => {
-                console.log('!!!reparacion', doc.data());
                 guardarReparacionPersistencia({
                     id: doc.id,
                     data: {
