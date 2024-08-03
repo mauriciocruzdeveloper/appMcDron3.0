@@ -22,7 +22,12 @@ password: 123456
 O sino puede registrarse y tendrá una cuenta como invitado.
 
 
-## COMANZAR
+## COMENZAR
+
+### INSTALAR CORDOVA
+ npm install -g cordova
+
+
 
 - cordova run browser: Para levantar con Cordova
 - npm start: Para levantar con React

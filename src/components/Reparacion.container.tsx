@@ -11,7 +11,7 @@ import {
     enviarEmail,
     enviarSms
 } from "../utils/utils";
-import { estados } from '../datos/estados.js';
+import { estados } from '../datos/estados';
 import ReparacionPresentational from './Reparacion.presentational';
 import { RootState } from "../redux/App/App.reducer";
 import { Estado } from "../types/estado";
@@ -46,7 +46,6 @@ const Reparacion: FC<ReparacionProps> = (props) => {
     const [ reparacion, setReparacion ] = useState<ReparacionType>();
 
     const inicializarFormulario = useCallback(async () => {
-        console.log("!!!inicializarFormulario", coleccionReparaciones);
         if (!coleccionReparaciones) return;
         const rep = await coleccionReparaciones.find(reparacion => String(reparacion.id) === id);
         setReparacion(rep);

@@ -324,9 +324,11 @@ export const getUsuarios = () => (dispatch) => {
 // EstadoRep en el futuro puede reemplazarse por un Array con los estados por los cuales quiero filtrar
 export const getReparaciones = (usuario, filtros) => (dispatch) => {
     console.log("getReparaciones() FILTROS: " + JSON.stringify(filtros));
+    const noPrioritarios = ["Entregado", "Liquidación", "Trabado"];
+    const estadosNoIncluidos = filtros.estadosPrioritarios ? noPrioritarios : [''];
     dispatch(isFetchingStart());
     return new Promise((resolve, reject) => {
-        getReparacionesPersistencia(reparaciones => dispatch(setReparacionesToRedux(reparaciones)), usuario, filtros)
+        getReparacionesPersistencia(reparaciones => dispatch(setReparacionesToRedux(reparaciones)), usuario, estadosNoIncluidos)
         .then(() => resolve())
         // .catch(() => {
         //     dispatch(abreModal("Error", "Error en getReparaciones() al buscar las Reparaciones", "danger"));

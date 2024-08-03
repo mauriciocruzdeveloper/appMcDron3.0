@@ -1,6 +1,8 @@
+import { LoginData } from "./Login.container";
+
 interface LoginPresentationalProps {
-  loginData: LoginType;
-  changeInputLogin: (target: any) => void;
+  loginData: LoginData;
+  changeInputLogin: (field: string, value: string) => void;
   handleLogin: () => void;
   handleRegistrarse: () => void;
 }
@@ -10,7 +12,7 @@ const LoginPresentational = ({
   changeInputLogin,
   handleLogin,
   handleRegistrarse
-}) => {
+}: LoginPresentationalProps) => {
 
   console.log("LOGIN presentational");
 
@@ -29,7 +31,7 @@ const LoginPresentational = ({
               id="email" 
               placeholder="name@example.com" 
               value={ loginData.email }
-              onChange={ e => changeInputLogin(e.target) }
+              onChange={ e => changeInputLogin(e.target.id, e.target.value) }
             />
             <label>Email address</label>
           </div>
@@ -40,7 +42,7 @@ const LoginPresentational = ({
               id="password" 
               placeholder="Password" 
               value={ loginData.password }
-              onChange={ e => changeInputLogin(e.target) }
+              onChange={ e => changeInputLogin(e.target.id, e.target.value) }
             />
             <label>Password</label>
           </div>

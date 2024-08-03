@@ -1,72 +1,75 @@
 import { useEffect, useState } from "react";
 import { connect } from "react-redux";
 import history from "../history";
-import { 
+import {
   getReparaciones
 } from "../redux/root-actions";
-import { estados } from '../datos/estados.js';
+import { estados } from '../datos/estados';
 // Estas son las importaciones de react-floating-action-button
 // lightColors y darkColors pueden estar buenos... hay que probarlos
 import { useCallback } from "react";
 import { ReparacionType } from "../types/reparacion";
 import { ClienteType } from "../types/usuario";
 import { RootState } from "../redux/App/App.reducer";
+import { Filtro } from "../interfaces/Filtro";
 
 interface ListaReparacionesProps {
-  getReparaciones: (usuario: ClienteType, filter: string[] | null) => void; // TODO: Revisar los tipos de los argumentos.
+  getReparaciones: (usuario: ClienteType, filter: Filtro | null) => void; // TODO: Revisar los tipos de los argumentos.
   coleccionReparaciones: ReparacionType[];
   isFetching: boolean;
   usuario: ClienteType;
 }
 
 const ListaReparaciones = (props: ListaReparacionesProps) => {
-  const { 
-    getReparaciones, 
+  const {
+    getReparaciones,
     coleccionReparaciones,
-    usuario
+    usuario,
   } = props;
 
-  const [ filter, setFilter ] = useState<boolean>(true);
-
-  // TODO: Hacer enum de estados.
-  const noPrioritarios = [ "Entregado", "Liquidación", "Trabado" ];
+  const [filter, setFilter] = useState<Filtro>({
+    estadosPrioritarios: false,
+    search: ''
+  });
 
   const iniciarFormulario = useCallback(async () => {
-    console.log("iniciarFormulario()");
-    if(!coleccionReparaciones?.length) await getReparaciones(usuario, filter ? noPrioritarios : null); 
+    if (!coleccionReparaciones?.length) await getReparaciones(usuario, filter);
   }, [getReparaciones]);
-   
+
   useEffect(() => {
     iniciarFormulario();
   }, [iniciarFormulario]);
 
-  const handleOnChange = (value: boolean) => {
-    setFilter(value);
-    getReparaciones(usuario, !filter ? noPrioritarios : [ '' ]);
+  const handleOnChange = () => {
+    setFilter({
+      ...filter,
+      estadosPrioritarios: !filter.estadosPrioritarios,
+    });
+    getReparaciones(usuario, filter);
   }
 
   console.log("LISTA REPARACIONES");
 
   return (
-      <div className="p-4">
+    <div className="p-4">
 
-        <div className="card mb-3">
-          <div className="card-body d-flex justify-content-between">
-            <label className="custom-control-label">Filtrar No Prioritarios</label>
-            <input 
-                type="checkbox" 
-                className="custom-control-input" 
-                id="customCheck1"
-                checked={filter}
-                onChange={e => handleOnChange(!filter)}
-            />
-          </div>
+      <div className="card mb-3">
+        <div className="card-body d-flex justify-content-between">
+          <label className="custom-control-label">Filtrar No Prioritarios</label>
+          <input
+            type="checkbox"
+            className="custom-control-input"
+            id="customCheck1"
+            checked={filter.estadosPrioritarios}
+            onChange={handleOnChange}
+          />
         </div>
-              
-        {coleccionReparaciones.map(reparacion => (
+      </div>
+
+      {coleccionReparaciones.map(reparacion => (
         <div
           key={reparacion.id}
-          className="card mb-3 p-1" 
+          className="card mb-3 p-1"
           aria-current="true"
           onClick={() => history.push(`/inicio/reparaciones/${reparacion.id}`)}
         >
@@ -74,15 +77,15 @@ const ListaReparaciones = (props: ListaReparacionesProps) => {
             <h5 className="mb-1">{reparacion.data.DroneRep}</h5>
           </div>
           <small>{reparacion.data?.NombreUsu || reparacion.data?.UsuarioRep}</small>
-          <p 
-            className="mb-1" 
-            style={{backgroundColor: estados[reparacion.data.EstadoRep].color}}
+          <p
+            className="mb-1"
+            style={{ backgroundColor: estados[reparacion.data.EstadoRep].color }}
           >
             {reparacion.data.EstadoRep} - {estados[reparacion.data.EstadoRep].accion}
           </p>
         </div>
       ))}
-    {/* <Container>
+      {/* <Container>
       <Button
         className="bg-bluemcdron"
         styles={{
@@ -102,4 +105,4 @@ const mapStateToProps = (state: RootState) => ({
   usuario: state.app.usuario
 });
 
-export default connect( mapStateToProps, { getReparaciones } )( ListaReparaciones );
+export default connect(mapStateToProps, { getReparaciones })(ListaReparaciones);

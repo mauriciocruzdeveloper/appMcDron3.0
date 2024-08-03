@@ -5,6 +5,7 @@ import history from "../history";
 import { login } from "../redux/root-actions";
 // Components
 import LoginPresentational from './Login.presentational'; // componente "no inteligente" de presentación
+import { RootState } from "../redux/App/App.reducer";
 
 export interface LoginData {
   email: string;
@@ -17,7 +18,11 @@ const INIT_LOGIN_DATA: LoginData = {
   password: ''
 };
 
-const Login = ({ login }) => {
+export interface LoginProps {
+  login: (loginData: LoginData) => void;
+}
+
+const Login = ({ login }: LoginProps) => {
   console.log("LOGIN container");
 
   const [ loginData, setLoginData ] = useState(INIT_LOGIN_DATA);
@@ -46,14 +51,14 @@ const Login = ({ login }) => {
     loginData ?
     <LoginPresentational 
       loginData={loginData}
-      changeInputLogin={changeInputLogin}
       handleLogin={handleLogin}
+      changeInputLogin={changeInputLogin}
       handleRegistrarse={handleRegistrarse}
     /> : null 
   );
 };
 
-const mapStateToProps = (state) => ({
+const mapStateToProps = (state: RootState) => ({
   isFetching: state.app.isFetching,
 });
 
