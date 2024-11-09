@@ -121,10 +121,7 @@ const Presupuesto = ({
 
     const handleOnChangeProvincias = async (e) => {
         await getLocalidadesPorProvincia(e.value);
-
-        console.log("provincia: " + e.value);
-        console.log
-
+        
         setPresupuesto({ 
             ...presupuesto, 
             cliente: {

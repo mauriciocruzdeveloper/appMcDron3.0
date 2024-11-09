@@ -28,7 +28,7 @@ const ListaReparaciones = (props: ListaReparacionesProps) => {
   } = props;
 
   const [filter, setFilter] = useState<Filtro>({
-    estadosPrioritarios: false,
+    estadosPrioritarios: true,
     search: ''
   });
 
@@ -40,12 +40,15 @@ const ListaReparaciones = (props: ListaReparacionesProps) => {
     iniciarFormulario();
   }, [iniciarFormulario]);
 
+  useEffect(() => {
+    getReparaciones(usuario, filter);
+  }, [filter]);
+
   const handleOnChange = () => {
     setFilter({
       ...filter,
       estadosPrioritarios: !filter.estadosPrioritarios,
     });
-    getReparaciones(usuario, filter);
   }
 
   console.log("LISTA REPARACIONES");
@@ -55,7 +58,7 @@ const ListaReparaciones = (props: ListaReparacionesProps) => {
 
       <div className="card mb-3">
         <div className="card-body d-flex justify-content-between">
-          <label className="custom-control-label">Filtrar No Prioritarios</label>
+          <label className="custom-control-label">Estados Prioritarios</label>
           <input
             type="checkbox"
             className="custom-control-input"

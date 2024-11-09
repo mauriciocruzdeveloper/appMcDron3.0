@@ -2,11 +2,11 @@ import { useEffect, useCallback, useState, FC } from "react";
 import history from "../history";
 import { connect } from "react-redux";
 import { useParams } from "react-router-dom";
-import { 
+import {
     guardarReparacion,
     eliminarReparacion,
     confirm,
-  } from "../redux/root-actions";
+} from "../redux/root-actions";
 import {
     enviarEmail,
     enviarSms
@@ -16,10 +16,12 @@ import ReparacionPresentational from './Reparacion.presentational';
 import { RootState } from "../redux/App/App.reducer";
 import { Estado } from "../types/estado";
 import { ReparacionType } from "../types/reparacion";
+import { setReparacionesToRedux } from "../redux/App/App.actions";
 
 interface ReparacionProps {
     guardarReparacion: (reparacion: ReparacionType) => void;
     eliminarReparacion: (id: string) => void;
+    setReparacionesToRedux: (reparaciones: ReparacionType[]) => void;
     confirm: (message: string, title: string, type: string, callback: () => void) => void;
     coleccionReparaciones: ReparacionType[];
     admin: boolean;
@@ -35,6 +37,7 @@ const Reparacion: FC<ReparacionProps> = (props) => {
         guardarReparacion,
         eliminarReparacion,
         confirm,
+        setReparacionesToRedux,
         coleccionReparaciones,
         admin,
     } = props;
@@ -43,28 +46,24 @@ const Reparacion: FC<ReparacionProps> = (props) => {
 
     const { id } = useParams<ParamTypes>();
 
-    const [ reparacion, setReparacion ] = useState<ReparacionType>();
+    const [reparacion, setReparacion] = useState<ReparacionType>();
 
-    const inicializarFormulario = useCallback(async () => {
+    useEffect(() => {
         if (!coleccionReparaciones) return;
-        const rep = await coleccionReparaciones.find(reparacion => String(reparacion.id) === id);
+        const rep = coleccionReparaciones.find(reparacion => String(reparacion.id) === id);
         setReparacion(rep);
-    }, [coleccionReparaciones]);
+    }, [coleccionReparaciones, id]);
 
     if (!reparacion) return null;
-    
-    useEffect(() => {
-        inicializarFormulario();
-    }, [inicializarFormulario]);
-    
+
     const changeInputRep = (field: string, value: string) => {
         if (!reparacion) return;
-        setReparacion({ 
-            ...reparacion, 
+        setReparacion({
+            ...reparacion,
             data: {
                 ...reparacion.data,
                 [field]: value
-            } 
+            }
         });
     };
     // Tengo que hacer una función aparte porque cuando modifica el estado de la reparación
@@ -74,7 +73,7 @@ const Reparacion: FC<ReparacionProps> = (props) => {
         if (!reparacion) return;
 
         let campofecha = null;
-        switch(estado.nombre){
+        switch (estado.nombre) {
             case "En Espera":
                 campofecha = "FechaEsperaRep";
                 break;
@@ -95,12 +94,12 @@ const Reparacion: FC<ReparacionProps> = (props) => {
         }
 
         setReparacion({
-            ...reparacion, 
+            ...reparacion,
             data: {
                 ...reparacion.data,
-                EstadoRep: estado.nombre, 
+                EstadoRep: estado.nombre,
                 PrioridadRep: estado.prioridad,
-                [campofecha]: new Date().getTime()+10800001
+                [campofecha]: new Date().getTime() + 10800001
             }
         });
     }
@@ -110,8 +109,20 @@ const Reparacion: FC<ReparacionProps> = (props) => {
             "Guardar Reparación?",
             "Atención",
             "warning",
-            () => guardarReparacion(reparacion)
+            () => {
+                guardarReparacion(reparacion)
+                // TODO: Verficiar esto. La idea es guardar en el state de redux la reparación modificada a la vez que en la base de datos.
+                // esto debería estar en el action creator de guardarReparacion
+                // También hay que agregar un mecanismo para que cuando se guarde o no se guarde, redux se actualice.
+                // O quizás intenar guardar varias veces hasta que se consiga, y si no se consigue, mostrar un mensaje de error.
+                const newColleccionReparaciones = coleccionReparaciones.map(rep => {
+                    if (rep.id === reparacion.id) return reparacion;
+                    return rep;
+                });
+                setReparacionesToRedux(newColleccionReparaciones);
+            }
         );
+
     }
 
     const handleEliminarReparacion = () => {
@@ -121,7 +132,7 @@ const Reparacion: FC<ReparacionProps> = (props) => {
             "Eliminar Reparación?",
             "Atención",
             "danger",
-            async () => { 
+            async () => {
                 await eliminarReparacion(reparacion.id);
                 history.goBack();
             }
@@ -136,7 +147,7 @@ const Reparacion: FC<ReparacionProps> = (props) => {
             cc: 'info@mauriciocruzdrones.com',
             bcc: [],
             subject: '',
-            body:    ''
+            body: ''
         };
         enviarEmail(datosEmail);
     }
@@ -146,7 +157,7 @@ const Reparacion: FC<ReparacionProps> = (props) => {
         const data = {
             number: reparacion?.data?.TelefonoUsu || '', /* iOS: ensure number is actually a string */
             message: 'Prueba de sms',
-    
+
             //CONFIGURATION
             options: {
                 replaceLineBreaks: false, // true to replace \n by a new line, false by default
@@ -155,27 +166,27 @@ const Reparacion: FC<ReparacionProps> = (props) => {
                     //intent: '' // send SMS without opening any other app, require : android.permission.SEND_SMS and android.permission.READ_PHONE_STATE
                 }
             },
-    
+
             success: () => null,
             error: (e: any) => alert('Message Failed:' + e)
         };
         enviarSms(data);
     }
 
-    return(
+    return (
         // Sólo se renderiza el commponente presentacional cuando están los datos necesarios ya cargados.
         estados && reparacion ?
-        <ReparacionPresentational
-            admin={admin}
-            reparacion={reparacion}
-            estados={estados}
-            setEstado={setEstado}
-            changeInputRep={changeInputRep}
-            handleGuardarReparacion={handleGuardarReparacion}
-            handleEliminarReparacion={handleEliminarReparacion}
-            handleSendEmail={handleSendEmail}
-            handleSendSms={handleSendSms}
-        /> : null
+            <ReparacionPresentational
+                admin={admin}
+                reparacion={reparacion}
+                estados={estados}
+                setEstado={setEstado}
+                changeInputRep={changeInputRep}
+                handleGuardarReparacion={handleGuardarReparacion}
+                handleEliminarReparacion={handleEliminarReparacion}
+                handleSendEmail={handleSendEmail}
+                handleSendSms={handleSendSms}
+            /> : null
     )
 };
 
@@ -185,9 +196,10 @@ const mapStateToProps = (state: RootState) => ({
 
 
 export default connect(
-    mapStateToProps, 
+    mapStateToProps,
     {
-        guardarReparacion, 
-        eliminarReparacion, 
+        guardarReparacion,
+        eliminarReparacion,
         confirm,
+        setReparacionesToRedux,
     })(Reparacion);
