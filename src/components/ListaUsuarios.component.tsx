@@ -1,5 +1,5 @@
 import React from 'react';
-import { useEffect, useCallback } from 'react';
+import { useEffect, useCallback, useState } from 'react';
 import { connect } from 'react-redux';
 import history from '../history';
 import { 
@@ -23,6 +23,9 @@ const ListaUsuarios = (props: ListaUsuariosProps) => {
     getUsuarios
   } = props;
 
+  const [filter, setFilter] = useState<string>('');
+  const [usuariosList, setUsuariosList] = useState<ClienteType[]>([]);
+
   const iniciarFormulario = useCallback(async () => {
     if(!coleccionUsuarios?.length) await getUsuarios(); 
   }, [getUsuarios]);
@@ -31,12 +34,43 @@ const ListaUsuarios = (props: ListaUsuariosProps) => {
     iniciarFormulario();
   }, [iniciarFormulario]);
 
+  useEffect(() => {
+    if (coleccionUsuarios.length) {
+      const usuarios = coleccionUsuarios.filter(usuario => {
+        let incluirPorSearch = true;
+        if (filter) {
+          incluirPorSearch = usuario.data.NombreUsu?.toLowerCase().includes(filter.toLowerCase())
+            || usuario.data.ApellidoUsu?.toLowerCase().includes(filter.toLowerCase())
+            || usuario.data.EmailUsu?.toLowerCase().includes(filter.toLowerCase())
+            || usuario.data.TelefonoUsu?.toLowerCase().includes(filter.toLowerCase());
+        }
+        return incluirPorSearch;
+      });
+      setUsuariosList(usuarios);
+    }
+  }, [coleccionUsuarios, filter]);
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFilter(e.target.value);
+  }
 
   return (
-    <div 
-      className='p-4' 
-      >
-      {coleccionUsuarios.map(usuario => (
+    <div className='p-4'>
+      <div className='card mb-3'>
+        <div className='card-body'>
+          <div className='form-group'>
+            <input
+              type='text'
+              className='form-control'
+              placeholder='Buscar usuarios...'
+              value={filter}
+              onChange={handleSearchChange}
+            />
+          </div>
+        </div>
+      </div>
+
+      {usuariosList.map(usuario => (
         <div
           key={usuario.id}
           className='card mb-3 p-1' 

@@ -35,7 +35,7 @@ const ListaReparaciones = (props: ListaReparacionesProps) => {
   const [reparacionesList, setReparacionesList] = useState<ReparacionType[]>([]);
 
   const iniciarFormulario = useCallback(async () => {
-    if (!coleccionReparaciones?.length) await getReparaciones(usuario, filter);
+    if (!coleccionReparaciones?.length) await getReparaciones(usuario, filter); // TODO: Investigar si corresponde await
   }, [getReparaciones]);
 
   useEffect(() => {
