@@ -135,7 +135,7 @@ export const login = (login) => (dispatch) => {
             // dispatch(isFetchingCoplete());
             dispatch(abreModal("Error", "Email o password vacios", "danger"));
             reject();
-        };
+        }
     });
 };
 
@@ -172,7 +172,7 @@ export const registro = (registro) => (dispatch) => {
             dispatch(isFetchingCoplete());
             dispatch(abreModal("Error", "Completar todos los campos obligatorios (*)", "danger"));
             reject();
-        };
+        }
     });
 };
 
@@ -420,7 +420,7 @@ export const getLocalidadesPorProvincia = (provincia) => (dispatch) => {
     });
 }
 
-export const rememberMe = () => {
-    localStorage.setItem('memoria', JSON.stringify( estado.display1 ));
-    const memoria = JSON.parse(localStorage.getItem('memoria')) || [];
-}
+// export const rememberMe = () => {
+//     localStorage.setItem('memoria', JSON.stringify( estado.display1 ));
+//     const memoria = JSON.parse(localStorage.getItem('memoria')) || [];
+// }

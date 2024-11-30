@@ -32,7 +32,7 @@ const NavMcDron = (props: NavMcDronProps) => {
             confirm("Desloguearse???", "Atención", "warning", () => logout());
         }else{
             history.goBack()
-        };
+        }
     }
 
     return (

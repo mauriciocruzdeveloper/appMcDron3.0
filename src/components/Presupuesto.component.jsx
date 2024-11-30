@@ -64,7 +64,7 @@ const Presupuesto = ({
             value = new Date(anio, mes, dia).getTime()+10800001; // Se agrega este número para que de bien la fecha.
         }else{
             value = target.value;
-        };
+        }
         setPresupuesto({ 
             ...presupuesto, 
             reparacion: {
@@ -121,7 +121,7 @@ const Presupuesto = ({
 
     const handleOnChangeProvincias = async (e) => {
         await getLocalidadesPorProvincia(e.value);
-        
+
         setPresupuesto({ 
             ...presupuesto, 
             cliente: {

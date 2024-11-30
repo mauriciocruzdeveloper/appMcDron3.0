@@ -39,11 +39,11 @@ const ReparacionPresentational = (props: ReparacionPresentationalProps) => {
 
         let value = target.value;
         if(target.type == "date"){
-            let anio = Number(target.value.substr(0, 4));
-            let mes = Number(target.value.substr(5, 2)) - 1;
-            let dia = Number(target.value.substr(8, 2));
+            const anio = Number(target.value.substr(0, 4));
+            const mes = Number(target.value.substr(5, 2)) - 1;
+            const dia = Number(target.value.substr(8, 2));
             value = String(Number(new Date(anio, mes, dia).getTime()) + 10800001); // Se agrega este número para que de bien la fecha.
-        };
+        }
         const field = target.id;
         changeInputRep(field, value);
     }

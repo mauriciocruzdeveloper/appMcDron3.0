@@ -22,21 +22,24 @@ export const notificacionesPorMensajes = (EmailUsu) => {
 }
 
 export const enviarEmail = (data) => {
+    // eslint-disable-next-line no-undef
     cordova.plugins.email.open(data);
 }
 
 export const enviarSms = ({ number, message, options, success, error }) => {
+    // eslint-disable-next-line no-undef
     sms.send(number, message, options, success, error);
 }
 
 export const triggerNotification = ({ title, text, foreground, vibrate }) => {
     console.log("envia notificacion");
     if(window.cordova) {
+        // eslint-disable-next-line no-undef
         cordova.plugins.notification.local.schedule({
             title: title,
             text: text,
             foreground: foreground,
             vibrate: vibrate
         });
-    };
+    }
 }

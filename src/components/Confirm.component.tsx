@@ -1,4 +1,5 @@
-import { connect } from "react-redux";
+import React from 'react';
+import { connect } from 'react-redux';
 import { Modal, Button, Alert } from 'react-bootstrap';
 import { cierraConfirm } from '../redux/root-actions.js';
 
@@ -51,10 +52,10 @@ const ConfirmComponent = (props: ConfirmComponentProps) => {
             <Modal.Title><Alert variant={tipo}>{titulo}</Alert></Modal.Title>
             <Modal.Body>{mensaje}</Modal.Body>
             <Modal.Footer>
-                <Button className="bg-bluemcdron" onClick={cierraConfirm}>
+                <Button className='bg-bluemcdron' onClick={cierraConfirm}>
                     Cerrar
                 </Button>
-                <Button className="bg-bluemcdron" onClick={handleOnConfirm}>
+                <Button className='bg-bluemcdron' onClick={handleOnConfirm}>
                     Confirmar
                 </Button>
             </Modal.Footer>

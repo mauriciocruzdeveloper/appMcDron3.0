@@ -1,13 +1,14 @@
-import { useState, useEffect, useCallback } from "react";
-import { connect } from "react-redux";
+import React from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import { connect } from 'react-redux';
 import { 
   getMessages,
   getCliente,
   sendMessage,
   getUsuariosSelect
-} from "../redux/root-actions";
+} from '../redux/root-actions';
 import MensajesPresentational from './Mensajes.presentational';
-import { actualizarLeidos } from "../utils/utils";
+import { actualizarLeidos } from '../utils/utils';
 
 const Mensajes = ({
   admin,
@@ -20,7 +21,7 @@ const Mensajes = ({
   usuariosSelect
 }) => {
 
-  console.log("MENSAJES container");
+  console.log('MENSAJES container');
 
   // MODIFICANDO UN POCO EL CÓDIGO, SIRVe PARA ENVIAR MENSAJES ENTRE CLIENTES
 
@@ -35,10 +36,10 @@ const Mensajes = ({
 
   // El useCallback tiene como dependencia el cliente, cuando elijo otro cliente, se actualiza.
   const initForm = useCallback(async () => {
-    await getMessages(usuario.data.EmailUsu, cliente.data.EmailUsu || "admin@mauriciocruzdrones.com");
+    await getMessages(usuario.data.EmailUsu, cliente.data.EmailUsu || 'admin@mauriciocruzdrones.com');
     if(!usuariosSelect?.length && admin) await getUsuariosSelect();
     let mensajesLeidos = coleccionMensajes.filter(mensaje => (mensaje.data.isRead==false));
-    console.log("mensajesLeidos: " + JSON.stringify(mensajesLeidos));
+    console.log('mensajesLeidos: ' + JSON.stringify(mensajesLeidos));
     actualizarLeidos(mensajesLeidos);
   }, [cliente]);
 
@@ -68,7 +69,7 @@ const Mensajes = ({
         senderName: usuario.data.NombreUsu,
         from: usuario.data.EmailUsu,
         // Si es admin, envío al invitado (PARA PROBAR). LUEGO HACER SELECT PARA ELEGIR EL CLIENTE
-        to: cliente.data.EmailUsu || "admin@mauriciocruzdrones.com",
+        to: cliente.data.EmailUsu || 'admin@mauriciocruzdrones.com',
       }
     }
     setMessageData(INIT_MESSAGE_DATA);
@@ -78,7 +79,7 @@ const Mensajes = ({
 
   // Actualiza mensajes leídos. Ver si acá es el mejor lugar.
   // let mensajesLeidos = coleccionMensajes.filter(mensaje => (mensaje.data.isRead==false));
-  // console.log("mensajesLeidos: " + JSON.stringify(mensajesLeidos));
+  // console.log('mensajesLeidos: ' + JSON.stringify(mensajesLeidos));
   // actualizarLeidos(mensajesLeidos);
 
   

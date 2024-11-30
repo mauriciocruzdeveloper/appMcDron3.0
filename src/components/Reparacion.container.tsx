@@ -21,7 +21,6 @@ import { setReparacionesToRedux } from "../redux/App/App.actions";
 interface ReparacionProps {
     guardarReparacion: (reparacion: ReparacionType) => void;
     eliminarReparacion: (id: string) => void;
-    setReparacionesToRedux: (reparaciones: ReparacionType[]) => void;
     confirm: (message: string, title: string, type: string, callback: () => void) => void;
     coleccionReparaciones: ReparacionType[];
     admin: boolean;
@@ -37,7 +36,6 @@ const Reparacion: FC<ReparacionProps> = (props) => {
         guardarReparacion,
         eliminarReparacion,
         confirm,
-        setReparacionesToRedux,
         coleccionReparaciones,
         admin,
     } = props;
@@ -119,7 +117,6 @@ const Reparacion: FC<ReparacionProps> = (props) => {
                     if (rep.id === reparacion.id) return reparacion;
                     return rep;
                 });
-                setReparacionesToRedux(newColleccionReparaciones);
             }
         );
 
@@ -201,5 +198,4 @@ export default connect(
         guardarReparacion,
         eliminarReparacion,
         confirm,
-        setReparacionesToRedux,
     })(Reparacion);

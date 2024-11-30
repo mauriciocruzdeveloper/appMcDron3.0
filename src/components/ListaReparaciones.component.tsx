@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import React from "react";
+import { useEffect, useState, useRef } from "react";
 import { connect } from "react-redux";
 import history from "../history";
 import {
@@ -51,21 +52,42 @@ const ListaReparaciones = (props: ListaReparacionesProps) => {
     });
   }
 
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFilter({
+      ...filter,
+      search: e.target.value,
+    });
+  }
+
+
   console.log("LISTA REPARACIONES");
 
   return (
     <div className="p-4">
 
       <div className="card mb-3">
-        <div className="card-body d-flex justify-content-between">
-          <label className="custom-control-label">Estados Prioritarios</label>
-          <input
-            type="checkbox"
-            className="custom-control-input"
-            id="customCheck1"
-            checked={filter.estadosPrioritarios}
-            onChange={handleOnChange}
-          />
+        <div className="card-body">
+          <div className="d-flex justify-content-between">
+            <label className="custom-control-label">Estados Prioritarios</label>
+            <input
+              type="checkbox"
+              className="custom-control-input"
+              id="customCheck1"
+              checked={filter.estadosPrioritarios}
+              onChange={handleOnChange}
+            />
+          </div>
+          <div className="form-group">
+            <label htmlFor="searchInput">Buscar Reparaciones</label>
+            <input
+              type="text"
+              className="form-control"
+              id="searchInput"
+              placeholder="Escriba para buscar..."
+              value={filter.search}
+              onChange={handleSearchChange}
+            />
+          </div>
         </div>
       </div>
 
@@ -105,7 +127,7 @@ const ListaReparaciones = (props: ListaReparacionesProps) => {
 const mapStateToProps = (state: RootState) => ({
   coleccionReparaciones: state.app.coleccionReparaciones,
   isFetching: state.app.isFetching,
-  usuario: state.app.usuario
+  usuario: state.app.usuario,
 });
 
 export default connect(mapStateToProps, { getReparaciones })(ListaReparaciones);

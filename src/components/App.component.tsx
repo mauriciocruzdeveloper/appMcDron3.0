@@ -1,12 +1,11 @@
-import { Router } from "react-router-dom";
-import history from "../history";
-import { connect } from "react-redux";
-
-import Routes from "../routes/Routes";
-
-import ModalComponent from "./Modal.component";
-import ConfirmComponent from "./Confirm.component";
-import { ConfirmType, RootState } from "../redux/App/App.reducer";
+import React from 'react';
+import { Router } from 'react-router-dom';
+import history from '../history';
+import { connect } from 'react-redux';
+import Routes from '../routes/Routes';
+import ModalComponent from './Modal.component';
+import ConfirmComponent from './Confirm.component';
+import { ConfirmType, RootState } from '../redux/App/App.reducer';
 
 interface AppProps {
   isFetching: boolean;
@@ -19,18 +18,18 @@ interface AppProps {
 const App = (props: AppProps) => {
   const { isFetching, isLoggedIn, admin, modal, confirm } = props;
 
-  console.log("APP")
+  console.log('APP');
 
   const { showModal, mensajeModal, tituloModal, tipoModal } = modal;
   const { showConfirm, mensajeConfirm, tituloConfirm, tipoConfirm, callBackConfirm } = confirm;
 
   return (
-    <div className="mx-auto"
+    <div className='mx-auto'
       style={{
-        backgroundColor: "#EEEEEE",
-        height: "100%",
-        minHeight: "100vh",
-        maxWidth: "600px"
+        backgroundColor: '#EEEEEE',
+        height: '100%',
+        minHeight: '100vh',
+        maxWidth: '600px'
       }}
     >
         <ModalComponent 
@@ -49,15 +48,15 @@ const App = (props: AppProps) => {
         <Router history = {history} >
           <Routes isLoggedIn = {isLoggedIn} admin = {admin}/>
         </Router>
-        <footer className="page-footer fixed-bottom text-center">
+        <footer className='page-footer fixed-bottom text-center'>
         {isFetching ? 
-          <div className="float-right">
+          <div className='float-right'>
             <span 
-              className="spinner-grow" 
-              role="status"
+              className='spinner-grow' 
+              role='status'
               style={{
-                height: "15vh",
-                width: "15vh"
+                height: '15vh',
+                width: '15vh'
               }}
             >
             </span>
