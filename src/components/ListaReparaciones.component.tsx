@@ -32,6 +32,7 @@ const ListaReparaciones = (props: ListaReparacionesProps) => {
     estadosPrioritarios: true,
     search: ''
   });
+  const [reparacionesList, setReparacionesList] = useState<ReparacionType[]>([]);
 
   const iniciarFormulario = useCallback(async () => {
     if (!coleccionReparaciones?.length) await getReparaciones(usuario, filter);
@@ -43,7 +44,26 @@ const ListaReparaciones = (props: ListaReparacionesProps) => {
 
   useEffect(() => {
     getReparaciones(usuario, filter);
-  }, [filter]);
+  }, [filter.estadosPrioritarios, filter.search]);
+
+  useEffect(() => {
+    if (coleccionReparaciones.length) {
+      const reparaciones = coleccionReparaciones.filter(reparacion => {
+        const noPrioritarios = ["Entregado", "Liquidación", "Trabado"];
+        const estadosNoIncluidos = filter.estadosPrioritarios ? noPrioritarios : [''];
+        const incluirPorEstado = !estadosNoIncluidos.includes(reparacion.data.EstadoRep);
+        let incluirPorSearch = true;
+        if (filter.search) {
+          incluirPorSearch = reparacion.data.DroneRep.toLowerCase().includes(filter.search.toLowerCase())
+            || reparacion.data.NombreUsu?.toLowerCase().includes(filter.search.toLowerCase())
+            || reparacion.data.UsuarioRep?.toLowerCase().includes(filter.search.toLowerCase())
+            || reparacion.data.EmailUsu?.toLowerCase().includes(filter.search.toLowerCase());
+        }
+        return incluirPorEstado && incluirPorSearch;
+      });
+      setReparacionesList(reparaciones);
+    }
+  }, [coleccionReparaciones, filter.estadosPrioritarios, filter.search]);
 
   const handleOnChange = () => {
     setFilter({
@@ -67,8 +87,8 @@ const ListaReparaciones = (props: ListaReparacionesProps) => {
 
       <div className="card mb-3">
         <div className="card-body">
-          <div className="d-flex justify-content-between">
-            <label className="custom-control-label">Estados Prioritarios</label>
+          <div className="d-flex">
+            <label className="me-4">Estados Prioritarios</label>
             <input
               type="checkbox"
               className="custom-control-input"
@@ -78,12 +98,11 @@ const ListaReparaciones = (props: ListaReparacionesProps) => {
             />
           </div>
           <div className="form-group">
-            <label htmlFor="searchInput">Buscar Reparaciones</label>
             <input
               type="text"
               className="form-control"
               id="searchInput"
-              placeholder="Escriba para buscar..."
+              placeholder="Buscar reparaciones..."
               value={filter.search}
               onChange={handleSearchChange}
             />
@@ -91,7 +110,7 @@ const ListaReparaciones = (props: ListaReparacionesProps) => {
         </div>
       </div>
 
-      {coleccionReparaciones.map(reparacion => (
+      {reparacionesList.map(reparacion => (
         <div
           key={reparacion.id}
           className="card mb-3 p-1"

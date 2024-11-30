@@ -125,15 +125,15 @@ export const registroPersistencia = (registro) => {
 //////////////////////// REPARACIONES ///////////////////////////////////////////////////////////////
 
 // GET todas las Reparaciones
-export const getReparacionesPersistencia = (setReparacionesToRedux, usuario, filtros) => {
-    const noPrioritarios = ["Entregado", "Liquidación", "Trabado"];
-    const estadosNoIncluidos = filtros.estadosPrioritarios ? noPrioritarios : [''];
+export const getReparacionesPersistencia = (setReparacionesToRedux, usuario) => {
     return new Promise((resolve, reject) => {
         // const unsubscribe = null;
         let queryReparaciones = "";
         if(usuario?.data?.Admin) { // TODO: Esto es una regla de negocio. No va acá.
             // con el not-in se podría hacer un array con los que no quiero que estén, o con el in los que sí quiero.
-            queryReparaciones = query(collection(firestore, "REPARACIONES"), where("EstadoRep", "not-in", estadosNoIncluidos)); // , orderBy("PrioridadRep"));
+            queryReparaciones = query(
+                collection(firestore, "REPARACIONES"),
+            ); // , orderBy("PrioridadRep"));
         } else {
             queryReparaciones = query(collection(firestore, "REPARACIONES"), where("UsuarioRep", "==", usuario.id));
         }
