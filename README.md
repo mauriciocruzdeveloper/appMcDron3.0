@@ -153,3 +153,37 @@ Falta implementarlo en algunos componentes. La idea es poder cambiar la capa de 
 - El usuario guarda en estado
 
 USUAIRO --estadoSeleccionadoId--> SISTEMA FRONT --estadoSeleccionadId+Fecha--> PERSISTENCIA
+
+
+## COMPILAR APK
+
+nvm use 16
+
+cordova build android --release -- --packageType=apk (para que genere una apk y no una aab)
+
+La versión de Gradle tiene que ser la 7.6: https://askubuntu.com/questions/1307132/how-to-upgrade-gradle-to-6-7-1
+
+1. Construir la APK (Release)
+Ejecuta el siguiente comando para compilar tu aplicación en modo release:
+
+cordova build android --release -- --packageType=apk
+
+2. Alinear el APK
+Usa zipalign para optimizar el APK:
+
+zipalign -v -p 4 appmcdron.apk appmcdron-aligned.apk
+
+3. Firmar el APK
+Firma el APK con apksigner:
+
+apksigner sign --ks mauriciokey.keystore appmcdron-aligned.apk
+
+4. Verificar la firma
+Verifica que el APK esté correctamente firmado:
+
+apksigner verify --verbose appmcdron-aligned.apk
+
+5. Instalar en el dispositivo
+Finalmente, instala el APK en tu dispositivo Android:
+
+adb install appmcdron-aligned.apk
