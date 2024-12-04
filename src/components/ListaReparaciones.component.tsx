@@ -1,5 +1,5 @@
 import React from "react";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import { connect } from "react-redux";
 import history from "../history";
 import {
@@ -8,14 +8,13 @@ import {
 import { estados } from '../datos/estados';
 // Estas son las importaciones de react-floating-action-button
 // lightColors y darkColors pueden estar buenos... hay que probarlos
-import { useCallback } from "react";
 import { ReparacionType } from "../types/reparacion";
 import { ClienteType } from "../types/usuario";
 import { RootState } from "../redux/App/App.reducer";
 import { Filtro } from "../interfaces/Filtro";
 
 interface ListaReparacionesProps {
-  getReparaciones: (usuario: ClienteType, filter: Filtro | null) => void; // TODO: Revisar los tipos de los argumentos.
+  getReparaciones: (usuario: ClienteType) => void; // TODO: Revisar los tipos de los argumentos.
   coleccionReparaciones: ReparacionType[];
   isFetching: boolean;
   usuario: ClienteType;
@@ -34,17 +33,9 @@ const ListaReparaciones = (props: ListaReparacionesProps) => {
   });
   const [reparacionesList, setReparacionesList] = useState<ReparacionType[]>([]);
 
-  const iniciarFormulario = useCallback(async () => {
-    if (!coleccionReparaciones?.length) await getReparaciones(usuario, filter); // TODO: Investigar si corresponde await
-  }, [getReparaciones]);
-
   useEffect(() => {
-    iniciarFormulario();
-  }, [iniciarFormulario]);
-
-  useEffect(() => {
-    getReparaciones(usuario, filter);
-  }, [filter.estadosPrioritarios, filter.search]);
+    getReparaciones(usuario);
+  }, []);
 
   useEffect(() => {
     if (coleccionReparaciones.length) {

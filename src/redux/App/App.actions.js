@@ -322,9 +322,15 @@ export const getUsuarios = () => (dispatch) => {
 
 // GET de todas las Reparaciones
 // EstadoRep en el futuro puede reemplazarse por un Array con los estados por los cuales quiero filtrar
-export const getReparaciones = (usuario) => (dispatch) => {
+export const getReparaciones = () => (dispatch, getState) => {
+    const usuario = getState().app.usuario;
+    const coleccionReparaciones = getState().app.coleccionReparaciones;
     dispatch(isFetchingStart());
     return new Promise((resolve, reject) => {
+        if (coleccionReparaciones.length > 0) {
+            dispatch(setReparacionesToRedux(coleccionReparaciones));
+            resolve();
+        }
         getReparacionesPersistencia(reparaciones => dispatch(setReparacionesToRedux(reparaciones)), usuario)
         .then(() => resolve())
         // .catch(() => {

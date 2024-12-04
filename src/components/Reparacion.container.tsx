@@ -1,4 +1,4 @@
-import { useEffect, useCallback, useState, FC } from "react";
+import { useEffect, useState, FC } from "react";
 import history from "../history";
 import { connect } from "react-redux";
 import { useParams } from "react-router-dom";
@@ -16,7 +16,6 @@ import ReparacionPresentational from './Reparacion.presentational';
 import { RootState } from "../redux/App/App.reducer";
 import { Estado } from "../types/estado";
 import { ReparacionType } from "../types/reparacion";
-import { setReparacionesToRedux } from "../redux/App/App.actions";
 
 interface ReparacionProps {
     guardarReparacion: (reparacion: ReparacionType) => void;
@@ -108,15 +107,7 @@ const Reparacion: FC<ReparacionProps> = (props) => {
             "Atención",
             "warning",
             () => {
-                guardarReparacion(reparacion)
-                // TODO: Verficiar esto. La idea es guardar en el state de redux la reparación modificada a la vez que en la base de datos.
-                // esto debería estar en el action creator de guardarReparacion
-                // También hay que agregar un mecanismo para que cuando se guarde o no se guarde, redux se actualice.
-                // O quizás intenar guardar varias veces hasta que se consiga, y si no se consigue, mostrar un mensaje de error.
-                const newColleccionReparaciones = coleccionReparaciones.map(rep => {
-                    if (rep.id === reparacion.id) return reparacion;
-                    return rep;
-                });
+                guardarReparacion(reparacion);
             }
         );
 
@@ -139,12 +130,37 @@ const Reparacion: FC<ReparacionProps> = (props) => {
     const handleSendEmail = () => {
         if (!reparacion) return;
 
+        // TODO: Los datos de los emails tienen que estar en otro lado, e importarlos.
         const datosEmail = {
             to: reparacion.data.UsuarioRep,
             cc: 'info@mauriciocruzdrones.com',
             bcc: [],
             subject: '',
             body: ''
+        };
+        enviarEmail(datosEmail);
+    }
+
+    const handleSendRecibo = () => {
+        if (!reparacion) return;
+
+        // TODO: Los datos de los emails tienen que estar en otro lado, e importarlos.
+        const datosEmail = {
+            to: reparacion.data.EmailUsu,
+            cc: 'info@mauriciocruzdrones.com',
+            bcc: [],
+            subject: 'Recibo de equipo ' + reparacion.data.DroneRep,
+            body: 'Prueba body'
+            // body: 'Recibo de equipo: ' + reparacion.data.DroneRep + '\n' +
+            //     'Fecha de ingreso: ' + reparacion.data.FeRecRep + '\n' +
+            //     'Observaciones: ' + reparacion.data.DescripcionUsuRep + '\n' +
+            //     'Cliente: ' + reparacion.data.NombreUsu + ' ' + reparacion.data.ApellidoUsu + '\n' +
+            //     'Teléfono: ' + reparacion.data.TelefonoUsu + '\n' +
+            //     '\n\n\n\n\n' +
+            //     'Mauricio Cruz Drones\n' +
+            //     'www.mauriciocruzdrones.com\n' +
+            //     'Teléfono: 341 6559834\n' +
+            //     'Email: mauricio11111@gmail.com\n'
         };
         enviarEmail(datosEmail);
     }
@@ -183,6 +199,7 @@ const Reparacion: FC<ReparacionProps> = (props) => {
                 handleEliminarReparacion={handleEliminarReparacion}
                 handleSendEmail={handleSendEmail}
                 handleSendSms={handleSendSms}
+                handleSendRecibo={handleSendRecibo}
             /> : null
     )
 };
