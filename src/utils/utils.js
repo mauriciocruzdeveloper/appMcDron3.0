@@ -23,11 +23,9 @@ export const notificacionesPorMensajes = (EmailUsu) => {
 
 export const enviarEmail = (data) => {
     // eslint-disable-next-line no-undef
-    cordova.plugins.email.addAlias('gmail', 'com.google.android.gm');
-    // eslint-disable-next-line no-undef
     cordova.plugins.email.open({
         ...data,
-        app: 'gmail',
+        body: encodeURIComponent(data.body),
     });
 }
 

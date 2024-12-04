@@ -71,34 +71,40 @@ const Reparacion: FC<ReparacionProps> = (props) => {
 
         let campofecha = null;
         switch (estado.nombre) {
-            case "En Espera":
-                campofecha = "FechaEsperaRep";
-                break;
-            case "En Reparación":
-                campofecha = "FechaReparacionRep";
+            case "Consulta":
+                campofecha = "FeConRep";
                 break;
             case "Reparado":
-                campofecha = "FechaReparadoRep";
+                campofecha = "FeFinRep";
+                break;
+            case "Recibido":
+                campofecha = "FecRecRep";
                 break;
             case "Entregado":
-                campofecha = "FechaEntregadoRep";
-                break;
-            case "Cancelado":
-                campofecha = "FechaCanceladoRep";
+                campofecha = "FeEntRep";
                 break;
             default:
                 return;
         }
 
-        setReparacion({
+        const newReparacion = {
             ...reparacion,
             data: {
                 ...reparacion.data,
                 EstadoRep: estado.nombre,
                 PrioridadRep: estado.prioridad,
-                [campofecha]: new Date().getTime() + 10800001
             }
-        });
+        };
+
+        if (campofecha) {
+            newReparacion.data = {
+                ...newReparacion.data,
+                [campofecha]: new Date().toISOString(),
+            };
+        }
+
+        setReparacion(newReparacion);
+
     }
 
     const handleGuardarReparacion = () => {
@@ -150,17 +156,18 @@ const Reparacion: FC<ReparacionProps> = (props) => {
             cc: 'info@mauriciocruzdrones.com',
             bcc: [],
             subject: 'Recibo de equipo ' + reparacion.data.DroneRep,
-            body: 'Prueba body'
-            // body: 'Recibo de equipo: ' + reparacion.data.DroneRep + '\n' +
-            //     'Fecha de ingreso: ' + reparacion.data.FeRecRep + '\n' +
-            //     'Observaciones: ' + reparacion.data.DescripcionUsuRep + '\n' +
-            //     'Cliente: ' + reparacion.data.NombreUsu + ' ' + reparacion.data.ApellidoUsu + '\n' +
-            //     'Teléfono: ' + reparacion.data.TelefonoUsu + '\n' +
-            //     '\n\n\n\n\n' +
-            //     'Mauricio Cruz Drones\n' +
-            //     'www.mauriciocruzdrones.com\n' +
-            //     'Teléfono: 341 6559834\n' +
-            //     'Email: mauricio11111@gmail.com\n'
+            body:
+                'Recibo de equipo: ' + reparacion.data.DroneRep + '<br>' +
+                'Fecha de ingreso: ' + reparacion.data.FeRecRep + '<br>' +
+                'Observaciones: ' + reparacion.data.DescripcionUsuRep + '<br>' +
+                'Cliente: ' + reparacion.data.NombreUsu + ' ' + reparacion.data.ApellidoUsu + '<br>' +
+                'Teléfono: ' + reparacion.data.TelefonoUsu + '<br>' +
+                '<br>' +
+                'Mauricio Cruz Drones<br>' +
+                'www.mauriciocruzdrones.com<br>' +
+                'Teléfono: 341 6559834<br>' +
+                'Email: mauricio11111@gmail.com<br>',
+            isHtlm: true
         };
         enviarEmail(datosEmail);
     }
