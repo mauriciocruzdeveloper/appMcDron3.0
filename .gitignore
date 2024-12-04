@@ -8,6 +8,7 @@ plugins
 platforms
 build
 www
+tmp_build
 
 #
 ainfo/
