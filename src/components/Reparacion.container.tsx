@@ -69,7 +69,34 @@ const Reparacion: FC<ReparacionProps> = (props) => {
     const setEstado = (estado: Estado) => {
         if (!reparacion) return;
 
-        let campofecha = null;
+        // TODO: Refactorizar los estados. Deben tener un id, incremental según el orden.
+        // TODO: Las reglas de negocio no deben estar acá. Se podría hacer con clases. En las clases hasta podría validar los campos.
+        // Si quiero bajar de estado desde Recibido, no puedo (ni seleccionar el mismo).
+        if (reparacion.data.EstadoRep === 'Recibido' && (
+            estado.nombre === 'Consulta' ||
+            estado.nombre === 'Respondido' ||
+            estado.nombre === 'Transito' ||
+            estado.nombre === 'Recibido'
+        )) return;
+
+        if (reparacion.data.EstadoRep === 'Reparado' && (
+            estado.nombre === 'Consulta' ||
+            estado.nombre === 'Respondido' ||
+            estado.nombre === 'Transito' ||
+            estado.nombre === 'Recibido' ||
+            estado.nombre === 'Revisado' ||
+            estado.nombre === 'Presupuestado' ||
+            estado.nombre === 'Reparar' ||
+            estado.nombre === 'Repuestos' ||
+            estado.nombre === 'Reparado'
+        )) return;
+
+        if (reparacion.data.EstadoRep === 'Entregado')
+            return;
+
+        type CampoFecha = 'FeConRep' | 'FeFinRep' | 'FeRecRep' | 'FeEntRep';
+
+        let campofecha: CampoFecha | null = null;
         switch (estado.nombre) {
             case "Consulta":
                 campofecha = "FeConRep";
@@ -78,13 +105,13 @@ const Reparacion: FC<ReparacionProps> = (props) => {
                 campofecha = "FeFinRep";
                 break;
             case "Recibido":
-                campofecha = "FecRecRep";
+                campofecha = "FeRecRep";
                 break;
             case "Entregado":
                 campofecha = "FeEntRep";
                 break;
             default:
-                return;
+                break;
         }
 
         const newReparacion = {
@@ -96,10 +123,10 @@ const Reparacion: FC<ReparacionProps> = (props) => {
             }
         };
 
-        if (campofecha) {
+        if (campofecha && !newReparacion.data[`${campofecha}`]) {
             newReparacion.data = {
                 ...newReparacion.data,
-                [campofecha]: new Date().toISOString(),
+                [campofecha]: new Date().getTime(),
             };
         }
 
@@ -192,6 +219,8 @@ const Reparacion: FC<ReparacionProps> = (props) => {
         };
         enviarSms(data);
     }
+
+    console.log('!!! reparacion en Container', reparacion);
 
     return (
         // Sólo se renderiza el commponente presentacional cuando están los datos necesarios ya cargados.
