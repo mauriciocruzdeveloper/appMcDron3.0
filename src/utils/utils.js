@@ -74,10 +74,6 @@ export async function OpenaiFetchAPI(prompt) {
             })
         });
         return response.json().then(data => {
-            console.log(data)
-            console.log(typeof data)
-            console.log(Object.keys(data))
-            console.log(data['choices'][0].message.content)
             return data['choices'][0].message.content
         });
     } catch (error) {

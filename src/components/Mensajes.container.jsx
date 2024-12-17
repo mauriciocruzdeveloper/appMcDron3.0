@@ -39,7 +39,6 @@ const Mensajes = ({
     await getMessages(usuario.data.EmailUsu, cliente.data.EmailUsu || 'admin@mauriciocruzdrones.com');
     if(!usuariosSelect?.length && admin) await getUsuariosSelect();
     let mensajesLeidos = coleccionMensajes.filter(mensaje => (mensaje.data.isRead==false));
-    console.log('mensajesLeidos: ' + JSON.stringify(mensajesLeidos));
     actualizarLeidos(mensajesLeidos);
   }, [cliente]);
 
@@ -79,7 +78,6 @@ const Mensajes = ({
 
   // Actualiza mensajes leídos. Ver si acá es el mejor lugar.
   // let mensajesLeidos = coleccionMensajes.filter(mensaje => (mensaje.data.isRead==false));
-  // console.log('mensajesLeidos: ' + JSON.stringify(mensajesLeidos));
   // actualizarLeidos(mensajesLeidos);
 
   

@@ -263,8 +263,6 @@ export const generarAutoDiagnostico = (reparacion) => async (dispatch) => {
 
         dispatch(isFetchingCoplete());
 
-        console.log('!!!! prompt', prompt);
-        console.log('!!!! Diagnóstico generado:', chatCompletion);
         return chatCompletion;
     } catch (error) {
         console.error('Error al generar el diagnóstico:', error);

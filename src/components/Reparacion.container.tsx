@@ -226,8 +226,6 @@ const Reparacion: FC<ReparacionProps> = (props) => {
         enviarSms(data);
     }
 
-    console.log('!!! reparacion en Container', reparacion);
-
     return (
         // Sólo se renderiza el commponente presentacional cuando están los datos necesarios ya cargados.
         estados && reparacion ?

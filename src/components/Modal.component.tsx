@@ -25,8 +25,6 @@ interface ModalComponentProps {
 const ModalComponent = (props: ModalComponentProps) => {
     const { show, titulo, mensaje, cierraModal, tipo } = props;
 
-    console.log('Llega a ErrorComponent ' + show);
-
     return(
         <Modal className="w-80" centered show={show} onHide={cierraModal}>
             <Modal.Title><Alert variant={tipo}>{titulo}</Alert></Modal.Title>

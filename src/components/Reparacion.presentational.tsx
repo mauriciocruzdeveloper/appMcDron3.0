@@ -36,8 +36,6 @@ const ReparacionPresentational = (props: ReparacionPresentationalProps) => {
 
     console.log("REPARACION presentational");
 
-    console.log('!!! reparacion en presentational', reparacion);
-
     const handleOnChange = (event: ChangeEvent<InputType>) => {
         const target = event.target;
 
