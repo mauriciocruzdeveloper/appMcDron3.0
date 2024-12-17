@@ -7,6 +7,11 @@ import 'bootstrap/dist/css/bootstrap.min.css'
 import 'bootstrap/dist/js/bootstrap.min.js'
 import './css/estilos.css';
 
+import dotenv from 'dotenv';
+dotenv.config();
+
+console.log("ENV", process.env);
+
 const startApp = () => {
     // console.log(device.cordova)
     ReactDOM.render(

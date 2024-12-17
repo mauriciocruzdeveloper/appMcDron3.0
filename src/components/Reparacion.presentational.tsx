@@ -240,6 +240,15 @@ const ReparacionPresentational = (props: ReparacionPresentationalProps) => {
                             disabled={!admin}
                         />
                     </div>
+                    <div>
+                        <label className="form-label">Autdiagnóstico</label>
+                        <TextareaAutosize
+                            readOnly
+                            className="form-control"
+                            id="DiagnosticoRep"
+                            value={reparacion?.data?.DiagnosticoRep || ""}
+                        />
+                    </div>
                 </div>
             </div>
             <div className="card mb-3">

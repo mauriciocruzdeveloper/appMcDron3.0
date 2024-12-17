@@ -12,6 +12,7 @@ export interface DataReparacion {
     EmailUsu: string;
     TelefonoUsu: string;
     DescripcionUsuRep: string;
+    DiagnosticoRep: string;
     FeRecRep: number;
     NumeroSerieRep: string;
     DescripcionTecRep: string;

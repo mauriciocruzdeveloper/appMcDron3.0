@@ -9,18 +9,20 @@ import {
 } from "../redux/root-actions";
 import {
     enviarEmail,
-    enviarSms
+    enviarSms,
 } from "../utils/utils";
 import { estados } from '../datos/estados';
 import ReparacionPresentational from './Reparacion.presentational';
 import { RootState } from "../redux/App/App.reducer";
 import { Estado } from "../types/estado";
 import { ReparacionType } from "../types/reparacion";
+import { generarAutoDiagnostico } from "../redux/App/App.actions";
 
 interface ReparacionProps {
     guardarReparacion: (reparacion: ReparacionType) => void;
     eliminarReparacion: (id: string) => void;
     confirm: (message: string, title: string, type: string, callback: () => void) => void;
+    generarAutoDiagnostico: (reparacion: ReparacionType) => Promise<string>;
     coleccionReparaciones: ReparacionType[];
     admin: boolean;
 }
@@ -35,6 +37,7 @@ const Reparacion: FC<ReparacionProps> = (props) => {
         guardarReparacion,
         eliminarReparacion,
         confirm,
+        generarAutoDiagnostico,
         coleccionReparaciones,
         admin,
     } = props;
@@ -134,14 +137,17 @@ const Reparacion: FC<ReparacionProps> = (props) => {
 
     }
 
+    const confirmaGuardarReparacion = async () => {
+        if (reparacion.data.EstadoRep === 'Recibido') reparacion.data.DiagnosticoRep = await generarAutoDiagnostico(reparacion);
+        guardarReparacion(reparacion);
+    }
+
     const handleGuardarReparacion = () => {
         confirm(
             "Guardar Reparación?",
             "Atención",
             "warning",
-            () => {
-                guardarReparacion(reparacion);
-            }
+            confirmaGuardarReparacion,
         );
 
     }
@@ -251,4 +257,5 @@ export default connect(
         guardarReparacion,
         eliminarReparacion,
         confirm,
+        generarAutoDiagnostico,
     })(Reparacion);
