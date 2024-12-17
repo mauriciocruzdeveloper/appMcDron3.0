@@ -183,24 +183,27 @@ const Reparacion: FC<ReparacionProps> = (props) => {
     const handleSendRecibo = () => {
         if (!reparacion) return;
 
+        const bodyContent =
+`Nro. de reparación: ${reparacion.id}
+Recibo de equipo: ${reparacion.data.DroneRep}
+Fecha de ingreso: ${reparacion.data.FeRecRep}'
+Observaciones: ${reparacion.data.DescripcionUsuRep}
+Cliente: ${reparacion.data.NombreUsu} ${reparacion.data.ApellidoUsu}
+Teléfono: ${reparacion.data.TelefonoUsu}
+        
+Mauricio Cruz Drones
+www.mauriciocruzdrones.com
+Teléfono: +54 9 341 7439091
+Email: mauriciocruzdrones@gmail.com`;
+
         // TODO: Los datos de los emails tienen que estar en otro lado, e importarlos.
         const datosEmail = {
             to: reparacion.data.EmailUsu,
             cc: 'info@mauriciocruzdrones.com',
             bcc: [],
             subject: 'Recibo de equipo ' + reparacion.data.DroneRep,
-            body:
-                'Recibo de equipo: ' + reparacion.data.DroneRep + '<br>' +
-                'Fecha de ingreso: ' + reparacion.data.FeRecRep + '<br>' +
-                'Observaciones: ' + reparacion.data.DescripcionUsuRep + '<br>' +
-                'Cliente: ' + reparacion.data.NombreUsu + ' ' + reparacion.data.ApellidoUsu + '<br>' +
-                'Teléfono: ' + reparacion.data.TelefonoUsu + '<br>' +
-                '<br>' +
-                'Mauricio Cruz Drones<br>' +
-                'www.mauriciocruzdrones.com<br>' +
-                'Teléfono: 341 6559834<br>' +
-                'Email: mauricio11111@gmail.com<br>',
-            isHtlm: true
+            body: bodyContent,
+            // isHtlm: true
         };
         enviarEmail(datosEmail);
     }

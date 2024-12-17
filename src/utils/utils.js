@@ -25,7 +25,7 @@ export const enviarEmail = (data) => {
     // eslint-disable-next-line no-undef
     cordova.plugins.email.open({
         ...data,
-        body: encodeURIComponent(data.body),
+        body: data.body,
     });
 }
 

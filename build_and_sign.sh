@@ -41,9 +41,14 @@ cp "platforms/android/app/build/outputs/apk/release/app-release-unsigned.apk" "$
 
 # 3. Alinear el APK
 echo "==> Alineando APK..."
-zipalign -v -p 4 "$BUILD_DIR/$APK_NAME" "$ALIGNED_APK"
+if [ -f "$ALIGNED_APK" ]; then
+  rm -f "$ALIGNED_APK"
+fi
+
+ALIGN_OUTPUT=$(zipalign -v -p 4 "$BUILD_DIR/$APK_NAME" "$ALIGNED_APK" 2>&1)
 if [ $? -ne 0 ]; then
   echo "Error al alinear el APK."
+  echo "$ALIGN_OUTPUT"
   exit 1
 fi
 echo "==> APK alineado correctamente."
