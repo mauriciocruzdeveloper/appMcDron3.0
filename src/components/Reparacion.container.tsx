@@ -186,7 +186,7 @@ const Reparacion: FC<ReparacionProps> = (props) => {
         const bodyContent =
 `Nro. de reparación: ${reparacion.id}
 Recibo de equipo: ${reparacion.data.DroneRep}
-Fecha de ingreso: ${reparacion.data.FeRecRep}
+Fecha de ingreso: ${new Date(reparacion.data.FeRecRep).toLocaleDateString()}
 Observaciones: ${reparacion.data.DescripcionUsuRep}
 Cliente: ${reparacion.data.NombreUsu} ${reparacion.data.ApellidoUsu}
 Teléfono: ${reparacion.data.TelefonoUsu}
