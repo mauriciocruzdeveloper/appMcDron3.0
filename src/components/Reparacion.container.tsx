@@ -17,6 +17,8 @@ import { RootState } from "../redux/App/App.reducer";
 import { Estado } from "../types/estado";
 import { ReparacionType } from "../types/reparacion";
 import { generarAutoDiagnostico } from "../redux/App/App.actions";
+import { bodyRecibo } from "../emails/recibido";
+import { enviarRecibo } from "../utils/sendEmails";
 
 interface ReparacionProps {
     guardarReparacion: (reparacion: ReparacionType) => void;
@@ -182,30 +184,7 @@ const Reparacion: FC<ReparacionProps> = (props) => {
 
     const handleSendRecibo = () => {
         if (!reparacion) return;
-
-        const bodyContent =
-`Nro. de reparación: ${reparacion.id}
-Recibo de equipo: ${reparacion.data.DroneRep}
-Fecha de ingreso: ${new Date(reparacion.data.FeRecRep).toLocaleDateString()}
-Observaciones: ${reparacion.data.DescripcionUsuRep}
-Cliente: ${reparacion.data.NombreUsu} ${reparacion.data.ApellidoUsu}
-Teléfono: ${reparacion.data.TelefonoUsu}
-        
-Mauricio Cruz Drones
-www.mauriciocruzdrones.com
-Teléfono: +54 9 341 7439091
-Email: mauriciocruzdrones@gmail.com`;
-
-        // TODO: Los datos de los emails tienen que estar en otro lado, e importarlos.
-        const datosEmail = {
-            to: reparacion.data.EmailUsu,
-            cc: 'info@mauriciocruzdrones.com',
-            bcc: [],
-            subject: 'Recibo de equipo ' + reparacion.data.DroneRep,
-            body: bodyContent,
-            // isHtlm: true
-        };
-        enviarEmail(datosEmail);
+        enviarRecibo(reparacion);
     }
 
     // Estas funciones, acá y en usuario, hay que modificarlas y hacer todo dentro de enviarSms()
