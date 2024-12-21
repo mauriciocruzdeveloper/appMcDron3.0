@@ -85,7 +85,7 @@ export const setUsuario = (usuario) => ({
     payload: usuario
 });
 
-export const setReparacionesToRedux = (reparaciones) => ({
+export const setReparaciones = (reparaciones) => ({
     type: AppTypes.SET_REPARACIONES,
     payload: { data: reparaciones }
 });
@@ -362,10 +362,10 @@ export const getReparaciones = () => (dispatch, getState) => {
     dispatch(isFetchingStart());
     return new Promise((resolve, reject) => {
         if (coleccionReparaciones.length > 0) {
-            dispatch(setReparacionesToRedux(coleccionReparaciones));
+            dispatch(setReparaciones(coleccionReparaciones));
             resolve();
         }
-        getReparacionesPersistencia(reparaciones => dispatch(setReparacionesToRedux(reparaciones)), usuario)
+        getReparacionesPersistencia(reparaciones => dispatch(setReparaciones(reparaciones)), usuario)
             .then(() => resolve())
             // .catch(() => {
             //     dispatch(abreModal("Error", "Error en getReparaciones() al buscar las Reparaciones", "danger"));

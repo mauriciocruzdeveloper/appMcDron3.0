@@ -28,7 +28,7 @@ import {
 
 import { triggerNotification } from '../utils/utils';
 
-import { config as firebaseConfig }  from '../configProd'; // Para producción
+import { config as firebaseConfig }  from '../firebase/configProd'; // Para producción
 // import { config as firebaseConfig }  from '../configDev'; // Para desarrollo
 
 import { provincias } from '../datos/provincias.json';
@@ -125,7 +125,7 @@ export const registroPersistencia = (registro) => {
 //////////////////////// REPARACIONES ///////////////////////////////////////////////////////////////
 
 // GET todas las Reparaciones
-export const getReparacionesPersistencia = (setReparacionesToRedux, usuario) => {
+export const getReparacionesPersistencia = (setReparaciones, usuario) => {
     return new Promise((resolve, reject) => {
         // const unsubscribe = null;
         let queryReparaciones = "";
@@ -146,7 +146,7 @@ export const getReparacionesPersistencia = (setReparacionesToRedux, usuario) => 
                         data: doc.data()
                     }
                 ));
-                setReparacionesToRedux(reparaciones);
+                setReparaciones(reparaciones);
                 // Ordeno por prioridad porque firebase no me deja ordenar y filtrar por distintos campos.
                 reparaciones.sort((a, b) => a.data.PrioridadRep - b.data.PrioridadRep);
                 resolve(reparaciones);
