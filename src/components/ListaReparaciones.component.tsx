@@ -2,9 +2,6 @@ import React from "react";
 import { useEffect, useState } from "react";
 import { connect } from "react-redux";
 import history from "../history";
-import {
-  getReparaciones
-} from "../redux/root-actions";
 import { estados } from '../datos/estados';
 // Estas son las importaciones de react-floating-action-button
 // lightColors y darkColors pueden estar buenos... hay que probarlos
@@ -12,9 +9,12 @@ import { ReparacionType } from "../types/reparacion";
 import { ClienteType } from "../types/usuario";
 import { RootState } from "../redux/App/App.reducer";
 import { Filtro } from "../interfaces/Filtro";
+import { subscribeToCollection } from "../firebase/suscribe-collection";
+import { getReparaciones } from "../usecases/getReparaciones";
+import { Unsubscribe } from "firebase/firestore";
 
 interface ListaReparacionesProps {
-  getReparaciones: (usuario: ClienteType) => void; // TODO: Revisar los tipos de los argumentos.
+  getReparaciones: (usuario: ClienteType) => Unsubscribe; // TODO: Revisar los tipos de los argumentos.
   coleccionReparaciones: ReparacionType[];
   isFetching: boolean;
   usuario: ClienteType;
@@ -34,7 +34,11 @@ const ListaReparaciones = (props: ListaReparacionesProps) => {
   const [reparacionesList, setReparacionesList] = useState<ReparacionType[]>([]);
 
   useEffect(() => {
-    getReparaciones(usuario);
+    const unsubscribe = getReparaciones(usuario);
+
+    return () => {
+      unsubscribe();
+    }
   }, []);
 
   useEffect(() => {
@@ -140,4 +144,9 @@ const mapStateToProps = (state: RootState) => ({
   usuario: state.app.usuario,
 });
 
-export default connect(mapStateToProps, { getReparaciones })(ListaReparaciones);
+const mapDispatchToProps = {
+  getReparaciones,
+  subscribeToCollection,
+};
+
+export default connect(mapStateToProps, mapDispatchToProps)(ListaReparaciones);
