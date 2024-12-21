@@ -1,11 +1,16 @@
 import ReactDOM from "react-dom";
-import App from "./components/App.component.jsx";
+import App from "./components/App.component";
 import { Provider } from "react-redux";
 import store from "./redux/store";
 
 import 'bootstrap/dist/css/bootstrap.min.css'
 import 'bootstrap/dist/js/bootstrap.min.js'
 import './css/estilos.css';
+
+import dotenv from 'dotenv';
+dotenv.config();
+
+console.log("ENV", process.env);
 
 const startApp = () => {
     // console.log(device.cordova)

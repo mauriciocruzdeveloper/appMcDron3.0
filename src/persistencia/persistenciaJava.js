@@ -92,7 +92,7 @@ export const guardarReparacionPersistencia = (reparacion) => {
             axios.post(`${SERVIDOR}/reparaciones`, transformReparacionAppToJava(reparacion), { headers })
             .then(response => resolve(response.data))
             .catch(error => reject(error));
-        };
+        }
     });
 };
 
@@ -151,7 +151,6 @@ export const guardarUsuarioPersistencia = (usuario) => {
     return new Promise((resolve, reject) => {
         const headers = {'autorization': token()}
         if(usuario.id){
-            console.log("llega A PATCH");
             axios.patch(`${SERVIDOR}/usuarios/${usuario.id}`, transformUsuarioAppToJava(usuario), { headers })
             .then(response => resolve(transformUsuarioJavaToApp(response.data)))
             .catch(() => reject( {code: `Error PATCH usu guardarUsuarioPersistencia` }))
@@ -163,7 +162,7 @@ export const guardarUsuarioPersistencia = (usuario) => {
                 console.log("error: " + JSON.stringify(error.message));
                 reject({code: error.messaje})
             });
-        };
+        }
     });
 };
 
@@ -262,9 +261,6 @@ const transformReparacionJavaToApp = ({
 };
 
 const transformReparacionAppToJava = (reparacion) => {
-
-    console.log("REPARACIONNNNNN: " + JSON.stringify(reparacion));
-
     const {
         EstadoRep,
         PrioridadRep,

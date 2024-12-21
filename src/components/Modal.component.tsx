@@ -14,9 +14,16 @@ import { cierraModal } from '../redux/root-actions.js';
 // muted
 // white
 
-const ModalComponent = ({ show, titulo, mensaje, cierraModal, tipo }) => {
+interface ModalComponentProps {
+    show: boolean;
+    titulo: string;
+    mensaje: string;
+    cierraModal: () => void;
+    tipo: string;
+}
 
-    console.log('Llega a ErrorComponent ' + show);
+const ModalComponent = (props: ModalComponentProps) => {
+    const { show, titulo, mensaje, cierraModal, tipo } = props;
 
     return(
         <Modal className="w-80" centered show={show} onHide={cierraModal}>

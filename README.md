@@ -22,7 +22,12 @@ password: 123456
 O sino puede registrarse y tendrá una cuenta como invitado.
 
 
-## COMANZAR
+## COMENZAR
+
+### INSTALAR CORDOVA
+ npm install -g cordova
+
+
 
 - cordova run browser: Para levantar con Cordova
 - npm start: Para levantar con React
@@ -141,3 +146,44 @@ Falta implementarlo en algunos componentes. La idea es poder cambiar la capa de 
 - Usa persistencia en caché (para Firebase) en caso que se pierda la conexión a internet
 - Para conectar los components con las actions y los states uso el patrón container-component.
 - La app escucha los cambios en las colecciones a nivel de persistencia, y actualiza las colecciones en redux automáticamente cuando éstas cambian, lo que también actualiza automáticamente la presentación.
+
+
+## NOTAS - CASO DE USO - EJEMPLO
+
+- El usuario guarda en estado
+
+USUAIRO --estadoSeleccionadoId--> SISTEMA FRONT --estadoSeleccionadId+Fecha--> PERSISTENCIA
+
+
+## COMPILAR APK
+
+nvm use 16
+
+cordova build android --release -- --packageType=apk (para que genere una apk y no una aab)
+
+La versión de Gradle tiene que ser la 7.6: https://askubuntu.com/questions/1307132/how-to-upgrade-gradle-to-6-7-1
+
+1. Construir la APK (Release)
+Ejecuta el siguiente comando para compilar tu aplicación en modo release:
+
+cordova build android --release -- --packageType=apk
+
+2. Alinear el APK
+Usa zipalign para optimizar el APK:
+
+zipalign -v -p 4 appmcdron.apk appmcdron-aligned.apk
+
+3. Firmar el APK
+Firma el APK con apksigner:
+
+apksigner sign --ks mauriciokey.keystore appmcdron-aligned.apk
+
+4. Verificar la firma
+Verifica que el APK esté correctamente firmado:
+
+apksigner verify --verbose appmcdron-aligned.apk
+
+5. Instalar en el dispositivo
+Finalmente, instala el APK en tu dispositivo Android:
+
+adb install appmcdron-aligned.apk

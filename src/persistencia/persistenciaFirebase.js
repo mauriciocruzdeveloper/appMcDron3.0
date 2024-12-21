@@ -1,11 +1,11 @@
-import { initializeApp } from "firebase/app";
+import { initializeApp } from 'firebase/app';
 
 import { 
     getAuth, 
     signInWithEmailAndPassword,
     sendEmailVerification,
     createUserWithEmailAndPassword
-} from "firebase/auth";
+} from 'firebase/auth';
 
 import {
     onSnapshot,
@@ -23,13 +23,13 @@ import {
     orderBy,
     deleteDoc,
     enableIndexedDbPersistence,
-    CACHE_SIZE_UNLIMITED // constante para caché ilimitada
-} from "firebase/firestore";
+    CACHE_SIZE_UNLIMITED, // constante para caché ilimitada
+} from 'firebase/firestore';
 
 import { triggerNotification } from '../utils/utils';
 
-// import { config as firebaseConfig }  from '../configProd'; // Para producción
-import { config as firebaseConfig }  from '../configDev'; // Para desarrollo
+import { config as firebaseConfig }  from '../configProd'; // Para producción
+// import { config as firebaseConfig }  from '../configDev'; // Para desarrollo
 
 import { provincias } from '../datos/provincias.json';
 import { localidades } from '../datos/localidades.json';
@@ -47,8 +47,8 @@ const firestore = initializeFirestore(firebaseApp, {
 
 // Habilita la persistensia sin conexión
 enableIndexedDbPersistence(firestore)
-  .then(() => console.log("Persistencia habilitada"))
-  .catch(err => console.log("Error en persistencia: " + err));
+  .then(() => console.log('Persistencia habilitada'))
+  .catch(err => console.log('Error en persistencia: ' + err));
 
 
 // Login
@@ -59,11 +59,11 @@ export const loginPersistencia = (emailParametro, passwordParametro) => {
         const auth = getAuth();
         signInWithEmailAndPassword(auth, emailParametro, passwordParametro)
         .then(async () => {
-            console.log("Se logueó");
+            console.log('Se logueó');
             let userAuth = auth.currentUser;
             if(userAuth.emailVerified) {
                 console.log('Email is verified ' + emailParametro);
-                let usuarioRef = doc(collection(firestore, "USUARIOS"), emailParametro);
+                let usuarioRef = doc(collection(firestore, 'USUARIOS'), emailParametro);
                 await getDoc(usuarioRef)
                 .then(doc => {
                     if(doc.exists){
@@ -72,17 +72,17 @@ export const loginPersistencia = (emailParametro, passwordParametro) => {
                         usuario.data = doc.data();
                         return resolve(usuario);
                     }else{
-                        reject({ code: "Problema en doc.exist en loginPersistencia()"});
+                        reject({ code: 'Problema en doc.exist en loginPersistencia()'});
                     }
                 })
-                .catch(() => reject({ code: "problema en el logueo" }));
+                .catch(() => reject({ code: 'problema en el logueo' }));
                 return resolve(); // ESTA LÍNEA PUEDE ESTAR MAL
             }else{
                 console.log('Email no verificado');
                 await sendEmailVerification(userAuth)
-                .then(() => reject({code: "Email no verificado. Se envió email de verificación a su casilla de correos"}))
-                .catch(() => reject({ code: "No se pudo enviar el email de verificación" }));
-            };
+                .then(() => reject({code: 'Email no verificado. Se envió email de verificación a su casilla de correos'}))
+                .catch(() => reject({ code: 'No se pudo enviar el email de verificación' }));
+            }
         })
         .catch((error) => reject({ code: error.code }));
     });
@@ -125,18 +125,18 @@ export const registroPersistencia = (registro) => {
 //////////////////////// REPARACIONES ///////////////////////////////////////////////////////////////
 
 // GET todas las Reparaciones
-export const getReparacionesPersistencia = (setReparacionesToRedux, usuario, filtros = [ '' ]) => {
-    console.log("getReparacionesPersistencia()");
-    console.log("filtros: " + filtros);
+export const getReparacionesPersistencia = (setReparacionesToRedux, usuario) => {
     return new Promise((resolve, reject) => {
         // const unsubscribe = null;
         let queryReparaciones = "";
-        if(usuario?.data?.Admin) {
+        if(usuario?.data?.Admin) { // TODO: Esto es una regla de negocio. No va acá.
             // con el not-in se podría hacer un array con los que no quiero que estén, o con el in los que sí quiero.
-            queryReparaciones = query(collection(firestore, "REPARACIONES"), where("EstadoRep", "not-in", filtros)); // , orderBy("PrioridadRep"));
+            queryReparaciones = query(
+                collection(firestore, "REPARACIONES"),
+            ); // , orderBy("PrioridadRep"));
         } else {
             queryReparaciones = query(collection(firestore, "REPARACIONES"), where("UsuarioRep", "==", usuario.id));
-        };
+        }
         try{
             const unsubscribeRep = onSnapshot(queryReparaciones, (querySnapshot) => {
                 let reparaciones = [];
@@ -153,7 +153,7 @@ export const getReparacionesPersistencia = (setReparacionesToRedux, usuario, fil
             });
         }catch(error){
             () => reject(error);
-        };
+        }
     });
 }
 
@@ -189,15 +189,15 @@ export const guardarReparacionPersistencia = (reparacion) => {
         // El id es el id o sino la fecha de consulta.
         reparacion.id = (reparacion.id || reparacion.data?.FeConRep.toString());
         setDoc(
-            doc(firestore, "REPARACIONES", reparacion.id), 
+            doc(firestore, 'REPARACIONES', reparacion.id), 
             reparacion.data
         )
         .then(docReparacion => {
-            console.log("actualizado reparación ok");
+            console.log('actualizado reparación ok');
             resolve(docReparacion || reparacion);
         })
         .catch(error => {
-            console.log("Error: " + error);
+            console.log('Error: ' + error);
             reject(error);
         });
     })
@@ -206,13 +206,13 @@ export const guardarReparacionPersistencia = (reparacion) => {
 // DELETE Reparación por id
 export const eliminarReparacionPersistencia = (id) => {
     return new Promise((resolve, reject) => {
-        deleteDoc(doc(firestore, "REPARACIONES", id))
+        deleteDoc(doc(firestore, 'REPARACIONES', id))
         .then(() => {
-            console.log("borrando reparación ok");
+            console.log('borrando reparación ok');
             resolve(id);
         })
         .catch(error => {
-            console.log("Error: " + error);
+            console.log('Error: ' + error);
             reject(error);
         });
 
@@ -225,15 +225,15 @@ export const eliminarReparacionPersistencia = (id) => {
 
 // GET todos los clientes
 export const getUsuariosPersistencia = (setUsuariosToRedux) => {
-    console.log("getUsuariosPersistencia");
+    console.log('getUsuariosPersistencia');
     return new Promise((resolve, reject) => {
         // const unsubscribe = null;
-        const q = query(collection(firestore, "USUARIOS"), orderBy("NombreUsu"));
+        const q = query(collection(firestore, 'USUARIOS'), orderBy('NombreUsu'));
         try {
             const unsubscribeUsu = onSnapshot(q, (querySnapshot) => {
                 let usuarios = [];
                 querySnapshot.forEach(doc => usuarios.push({id: doc.id, data: { ...doc.data(), EmailUsu: doc.id}}))
-                // console.log("usuarios en getUsuariosPersistencia(): " + JSON.stringify(usuarios[0]));
+                // console.log('usuarios en getUsuariosPersistencia(): ' + JSON.stringify(usuarios[0]));
                 // Esta función es una callback. Se llama igual que el action creator
                 setUsuariosToRedux(usuarios);
                 resolve(usuarios);
@@ -260,12 +260,12 @@ export const getClientePorEmailPersistencia = getClientePersistencia;
 
 // GUARDAR Cliente
 const triggerUsuarioReparaciones = (usuario) => {
-    console.log("triggerUsuarioReparaciones()");
+    console.log('triggerUsuarioReparaciones()');
     return new Promise(async (resolve, reject) => {
         try {
-            console.log("enter try triggerUsuarioReparaciones()");
-            console.log("enter promise triggerUsuarioReparaciones()");
-            const q = query(collection(firestore, "REPARACIONES"), where("UsuarioRep", "==", usuario.id));
+            console.log('enter try triggerUsuarioReparaciones()');
+            console.log('enter promise triggerUsuarioReparaciones()');
+            const q = query(collection(firestore, 'REPARACIONES'), where('UsuarioRep', '==', usuario.id));
             const docs = await getDocs(q);
                 
             docs.forEach(doc => {
@@ -282,7 +282,7 @@ const triggerUsuarioReparaciones = (usuario) => {
             });
             resolve();
         }catch(error){
-            console.log("error triggerUsuarioReparaciones()", error);
+            console.log('error triggerUsuarioReparaciones()', error);
             () => reject(error);
         }
     });
@@ -292,20 +292,20 @@ export const guardarUsuarioPersistencia = (usuario) => {
     return new Promise((resolve, reject) => {
         // El id es el id o sino el email.
         usuario.id = usuario.id || usuario.data?.EmailUsu;
-        setDoc(doc(firestore, "USUARIOS", usuario.id), usuario.data)
+        setDoc(doc(firestore, 'USUARIOS', usuario.id), usuario.data)
         .then(docUsuario => {
             triggerUsuarioReparaciones(usuario)
             .then(() => {
-                console.log("actualizado usuario ok");
+                console.log('actualizado usuario ok');
                 resolve(docUsuario || usuario);
             })
             .catch((error) => {
-                console.log("Error en triggerUsuarioReparaciones() al guardar Usuario", error);
-                reject({ code: "Error en triggerUsuarioReparaciones() al guardar Usuario" })
+                console.log('Error en triggerUsuarioReparaciones() al guardar Usuario', error);
+                reject({ code: 'Error en triggerUsuarioReparaciones() al guardar Usuario' })
             });
         })
         .catch(error => {
-            console.log("Error: " + error);
+            console.log('Error: ' + error);
             reject(error);
         });
     });
@@ -315,14 +315,14 @@ export const guardarUsuarioPersistencia = (usuario) => {
 export const eliminarUsuarioPersistencia = (id) => {
     return new Promise(async (resolve, reject) => {
         // Busco si hay alguna reparación relacionada al usuario a eliminar
-        const refCol = collection(firestore, "REPARACIONES");
-        const q = query(refCol, where("UsuarioRep", "==", id));
+        const refCol = collection(firestore, 'REPARACIONES');
+        const q = query(refCol, where('UsuarioRep', '==', id));
         const querySnapshot = await getDocs(q);
         // Si la consulta no arroja ningún resultado, se elimina, sino da error y muestra reparación relacionada.
         if(querySnapshot.empty){
-            deleteDoc(doc(firestore, "USUARIOS", id))
+            deleteDoc(doc(firestore, 'USUARIOS', id))
             .then(() => {
-                console.log("borrando usuario ok");
+                console.log('borrando usuario ok');
                 resolve(id);
             })
             .catch(error => {
@@ -331,7 +331,7 @@ export const eliminarUsuarioPersistencia = (id) => {
         }else{
             reject({ 
                 code: 
-                    "No se puede borrar este usuario. Reparación relacionada: "
+                    'No se puede borrar este usuario. Reparación relacionada: '
                     // Muestra en el mesaje de error los ids de las reparaciones relacionadas al usuario
                     + querySnapshot.docs.map(doc => doc.id).toString()
         });
@@ -346,7 +346,7 @@ export const eliminarUsuarioPersistencia = (id) => {
 // SEND de un mensaje
 // VER EL PROBLEMA DE LOS LEÍDOS Y NO LEÍDOS
 export const sendMessagePersistencia = (message) => {
-    console.log("sendMessagePersistencia()");
+    console.log('sendMessagePersistencia()');
     return new Promise(async (resolve, reject) => {
         // Usu es el que está logueado, Cli es al que se le envía el mensaje
         let colRefUsu = collection(firestore, 'USUARIOS', message.data.from, 'messages');
@@ -380,10 +380,10 @@ export const sendMessagePersistencia = (message) => {
 
 // GET todos los mensajes
 export const getMessagesPersistencia = (emailUsu, emailCli, setMessagesToRedux) => {
-    console.log("getMessagesPersistencia: " + emailUsu + ' ' + emailCli);
+    console.log('getMessagesPersistencia: ' + emailUsu + ' ' + emailCli);
     return new Promise((resolve, reject) => {
         const colRef = collection(firestore, 'USUARIOS', emailUsu, 'messages');
-        const q = query(colRef, where('emailCli', '==', emailCli), orderBy("date"));
+        const q = query(colRef, where('emailCli', '==', emailCli), orderBy('date'));
         try {             
             const unsubscribeMessages = onSnapshot(q, (querySnapshot) => {
                 let messages = [];
@@ -416,9 +416,9 @@ export const getMessagesPersistencia = (emailUsu, emailCli, setMessagesToRedux) 
 
 export const actualizarLeidosPersistencia = (mensajesLeidos) => {
     mensajesLeidos.forEach(async mensaje => {
-        console.log("actualiza leidos, mensaje: " +     JSON.stringify(mensaje));
+        console.log('actualiza leidos, mensaje: ' +     JSON.stringify(mensaje));
         const docRef = doc(collection(firestore, `USUARIOS/${mensaje.data.emailUsu}/messages`), mensaje.id);
-        await updateDoc(docRef, {isRead: true}).then(console.log("ACTUALIZADO")).catch(error => console.log("ERROR: " + error.code));
+        await updateDoc(docRef, {isRead: true}).then(console.log('ACTUALIZADO')).catch(error => console.log('ERROR: ' + error.code));
     });
 };
 
@@ -428,11 +428,11 @@ export const notificacionesPorMensajesPersistencia = (emailUsu) => {
     // PLUGIN cordova-plugin-firestore (no funciona el plugin) //////////////////////////////////////////
 
     // var options = {
-    //     "datePrefix": '__DATE:',
-    //     "fieldValueDelete": "__DELETE",
-    //     "fieldValueServerTimestamp" : "__SERVERTIMESTAMP",
-    //     "persist": true,
-    //     // "config" : {}
+    //     'datePrefix': '__DATE:',
+    //     'fieldValueDelete': '__DELETE',
+    //     'fieldValueServerTimestamp' : '__SERVERTIMESTAMP',
+    //     'persist': true,
+    //     // 'config' : {}
     // };
       
     
@@ -440,13 +440,13 @@ export const notificacionesPorMensajesPersistencia = (emailUsu) => {
       
     // Firestore.initialise(options).then(function(db) {
     // // Add a second document with a generated ID.
-    //     const colRef = db.collection("USUARIOS").doc(emailUsu).collection(messages);
-    //     const query = colRef.where("isRead", "==", false).where("sender", "!=", emailUsu);
+    //     const colRef = db.collection('USUARIOS').doc(emailUsu).collection(messages);
+    //     const query = colRef.where('isRead', '==', false).where('sender', '!=', emailUsu);
     //     query.onSnapshot(querySnapshot => {
     //         querySnapshot.docChanges().forEach(change => {
     //             if(change.doc.data().sender != emailUsu){
     //                 const notification = {
-    //                     title: "Nuevo Mensaje de " + change.doc.data().senderName,
+    //                     title: 'Nuevo Mensaje de ' + change.doc.data().senderName,
     //                     text: change.doc.data().content,
     //                     foreground: true,
     //                     vibrate: true
@@ -457,7 +457,7 @@ export const notificacionesPorMensajesPersistencia = (emailUsu) => {
     //         //resolve();
     //     })
     //     .catch(function(error) {
-    //         console.error("Error adding document: ", error);
+    //         console.error('Error adding document: ', error);
     //     });
     // });
 
@@ -465,16 +465,16 @@ export const notificacionesPorMensajesPersistencia = (emailUsu) => {
 
 
 
-    console.log("emailUsu: " + emailUsu);
+    console.log('emailUsu: ' + emailUsu);
     const colRef = collection(firestore, 'USUARIOS', emailUsu, 'messages');
-    const q = query(colRef, where("isRead", "==", false), where("sender", "!=", emailUsu));
+    const q = query(colRef, where('isRead', '==', false), where('sender', '!=', emailUsu));
     try {
         const unsubscribeNotificationMenssages = onSnapshot(q, (querySnapshot) => {
             //const doc = querySnapshot.docs[0];
             querySnapshot.docChanges().forEach(change => {
                 if(change.doc.data().sender != emailUsu){
                     const notification = {
-                        title: "Nuevo Mensaje de " + change.doc.data().senderName,
+                        title: 'Nuevo Mensaje de ' + change.doc.data().senderName,
                         text: change.doc.data().content,
                         foreground: true,
                         vibrate: true
@@ -485,7 +485,7 @@ export const notificacionesPorMensajesPersistencia = (emailUsu) => {
             //resolve();
         });
     }catch(error){
-        () => reject(error);
+        () => error;
     }
 }
 
@@ -527,9 +527,9 @@ export const guardarPresupuestoPersistencia = (presupuesto) => {
             presupuesto.reparacion.data.UsuarioRep = presupuesto.usuario.data.EmailUsu;
             guardarReparacionPersistencia(presupuesto.reparacion)
             .then(() => resolve(presupuesto))
-            .catch(() => reject({ code: "Error en guardarPresupuestoPersistencia() al guardar Reparación" }));
+            .catch(() => reject({ code: 'Error en guardarPresupuestoPersistencia() al guardar Reparación' }));
         })
-        .catch(()  => reject({ code: "Error en guardarPresupuestoPersistencia() al guardar Usuario" }));
+        .catch(()  => reject({ code: 'Error en guardarPresupuestoPersistencia() al guardar Usuario' }));
     });
 }
 
@@ -548,7 +548,7 @@ export const guardarPresupuestoPersistencia = (presupuesto) => {
 
 // Obtengo las provincias desde un archivo propio
 export const getProvinciasSelectPersistencia = () => {
-    console.log("getProvinciasSelectPersistencia");
+    console.log('getProvinciasSelectPersistencia');
     return new Promise((resolve, reject) => {
         resolve(provincias.map(provincia => {
             return {
@@ -561,7 +561,7 @@ export const getProvinciasSelectPersistencia = () => {
 
 // Obtengo las localidades por provincia desde /data
 export const getLocPorProvPersistencia = (provincia) => {
-     console.log("getLocPorProvPersistencia");
+     console.log('getLocPorProvPersistencia');
      return new Promise((resolve, reject) => {
         resolve(
             localidades.filter(localidad => (
@@ -580,7 +580,7 @@ export const getLocPorProvPersistencia = (provincia) => {
 ////////////////////// FUNCIONES UTILS ///////////////////////////
 
 // Hash simple para generar los ids de los chats
-function hash_method(inputAHash, inputBHash) { return inputAHash ^ inputBHash };
+function hash_method(inputAHash, inputBHash) { return inputAHash ^ inputBHash }
 
 
 
@@ -596,7 +596,7 @@ function hash_method(inputAHash, inputBHash) { return inputAHash ^ inputBHash };
 // export const getReparacionesPersistencia = () => {
 //     return new Promise((resolve, reject) => {
 //         const reparacionesRef = collection(firestore, 'REPARACIONES');
-//         const q = query(reparacionesRef, orderBy("PrioridadRep"));
+//         const q = query(reparacionesRef, orderBy('PrioridadRep'));
 //         getDocs(q)
 //         .then(querySnapshot => {
 //             let reparaciones = [];
@@ -610,7 +610,7 @@ function hash_method(inputAHash, inputBHash) { return inputAHash ^ inputBHash };
 // export const getUsuariosPersistencia = () => {
 //     return new Promise((resolve, reject) => {
 //         const usuariosRef = collection(firestore, 'USUARIOS');
-//         const q = query(usuariosRef, orderBy("NombreUsu"));
+//         const q = query(usuariosRef, orderBy('NombreUsu'));
 //         getDocs(q)
 //         .then(querySnapshot => {
 //             let usuarios = [];

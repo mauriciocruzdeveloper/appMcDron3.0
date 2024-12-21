@@ -82,7 +82,7 @@ const MensajesPresentational = (props) => {
                             className="btn btn-outline-secondary bg-bluemcdron text-white" 
                             onClick={handleSendMessage}
                         >
-                            <i class="bi bi-send"></i>
+                            <i className="bi bi-send"></i>
                         </button>
                     </div>
                 </div>
