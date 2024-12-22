@@ -9,22 +9,20 @@ import { ReparacionType } from "../types/reparacion";
 import { ClienteType } from "../types/usuario";
 import { RootState } from "../redux/App/App.reducer";
 import { Filtro } from "../interfaces/Filtro";
-import { subscribeToCollection } from "../firebase/suscribe-collection";
-import { getReparaciones } from "../usecases/getReparaciones";
-import { Unsubscribe } from "firebase/firestore";
+import { Unsubscribe } from "firebase/auth";
+import { getReparacionesAsync } from "../redux-tool-kit/slices/appSlice";
+import { useAppDispatch } from "../redux-tool-kit/hooks/useAppDispatch";
 
 interface ListaReparacionesProps {
-  getReparaciones: (usuario: ClienteType) => Unsubscribe; // TODO: Revisar los tipos de los argumentos.
   coleccionReparaciones: ReparacionType[];
   isFetching: boolean;
   usuario: ClienteType;
 }
 
 const ListaReparaciones = (props: ListaReparacionesProps) => {
+  const dispatch = useAppDispatch();
   const {
-    getReparaciones,
     coleccionReparaciones,
-    usuario,
   } = props;
 
   const [filter, setFilter] = useState<Filtro>({
@@ -34,11 +32,13 @@ const ListaReparaciones = (props: ListaReparacionesProps) => {
   const [reparacionesList, setReparacionesList] = useState<ReparacionType[]>([]);
 
   useEffect(() => {
-    const unsubscribe = getReparaciones(usuario);
+    const unsubscribe = dispatch(getReparacionesAsync());
 
+    console.log("!!! UNSUBSCRIBE");
+    
     return () => {
-      unsubscribe();
-    }
+      if (unsubscribe) unsubscribe();
+    };
   }, []);
 
   useEffect(() => {
@@ -141,12 +141,6 @@ const ListaReparaciones = (props: ListaReparacionesProps) => {
 const mapStateToProps = (state: RootState) => ({
   coleccionReparaciones: state.app.coleccionReparaciones,
   isFetching: state.app.isFetching,
-  usuario: state.app.usuario,
 });
 
-const mapDispatchToProps = {
-  getReparaciones,
-  subscribeToCollection,
-};
-
-export default connect(mapStateToProps, mapDispatchToProps)(ListaReparaciones);
+export default connect(mapStateToProps, { })(ListaReparaciones);
