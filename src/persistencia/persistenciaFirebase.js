@@ -1,7 +1,7 @@
 import { initializeApp } from 'firebase/app';
 
-import { 
-    getAuth, 
+import {
+    getAuth,
     signInWithEmailAndPassword,
     sendEmailVerification,
     createUserWithEmailAndPassword
@@ -11,15 +11,15 @@ import {
     onSnapshot,
     where,
     limit,
-    collection, 
-    doc, 
-    setDoc, 
+    collection,
+    doc,
+    setDoc,
     initializeFirestore,
     getDoc,
     addDoc,
     getDocs,
     updateDoc,
-    query, 
+    query,
     orderBy,
     deleteDoc,
     enableIndexedDbPersistence,
@@ -28,11 +28,12 @@ import {
 
 import { triggerNotification } from '../utils/utils';
 
-import { config as firebaseConfig }  from '../firebase/configProd'; // Para producción
+import { config as firebaseConfig } from '../firebase/configProd'; // Para producción
 // import { config as firebaseConfig }  from '../configDev'; // Para desarrollo
 
 import { provincias } from '../datos/provincias.json';
 import { localidades } from '../datos/localidades.json';
+import { setError } from '../redux-tool-kit/slices/appSlice';
 
 // Initialize Firebase
 const firebaseApp = initializeApp(firebaseConfig);
@@ -47,44 +48,44 @@ const firestore = initializeFirestore(firebaseApp, {
 
 // Habilita la persistensia sin conexión
 enableIndexedDbPersistence(firestore)
-  .then(() => console.log('Persistencia habilitada'))
-  .catch(err => console.log('Error en persistencia: ' + err));
+    .then(() => console.log('Persistencia habilitada'))
+    .catch(err => console.log('Error en persistencia: ' + err));
 
 
 // Login
 export const loginPersistencia = (emailParametro, passwordParametro) => {
     // La contraseña se encripta del lado del servidor por seguridad
     return new Promise((resolve, reject) => {
-        console.log(emailParametro,passwordParametro);
+        console.log(emailParametro, passwordParametro);
         const auth = getAuth();
         signInWithEmailAndPassword(auth, emailParametro, passwordParametro)
-        .then(async () => {
-            console.log('Se logueó');
-            let userAuth = auth.currentUser;
-            if(userAuth.emailVerified) {
-                console.log('Email is verified ' + emailParametro);
-                let usuarioRef = doc(collection(firestore, 'USUARIOS'), emailParametro);
-                await getDoc(usuarioRef)
-                .then(doc => {
-                    if(doc.exists){
-                        let usuario = {};
-                        usuario.id = doc.id;
-                        usuario.data = doc.data();
-                        return resolve(usuario);
-                    }else{
-                        reject({ code: 'Problema en doc.exist en loginPersistencia()'});
-                    }
-                })
-                .catch(() => reject({ code: 'problema en el logueo' }));
-                return resolve(); // ESTA LÍNEA PUEDE ESTAR MAL
-            }else{
-                console.log('Email no verificado');
-                await sendEmailVerification(userAuth)
-                .then(() => reject({code: 'Email no verificado. Se envió email de verificación a su casilla de correos'}))
-                .catch(() => reject({ code: 'No se pudo enviar el email de verificación' }));
-            }
-        })
-        .catch((error) => reject({ code: error.code }));
+            .then(async () => {
+                console.log('Se logueó');
+                let userAuth = auth.currentUser;
+                if (userAuth.emailVerified) {
+                    console.log('Email is verified ' + emailParametro);
+                    let usuarioRef = doc(collection(firestore, 'USUARIOS'), emailParametro);
+                    await getDoc(usuarioRef)
+                        .then(doc => {
+                            if (doc.exists) {
+                                let usuario = {};
+                                usuario.id = doc.id;
+                                usuario.data = doc.data();
+                                return resolve(usuario);
+                            } else {
+                                reject({ code: 'Problema en doc.exist en loginPersistencia()' });
+                            }
+                        })
+                        .catch(() => reject({ code: 'problema en el logueo' }));
+                    return resolve(); // ESTA LÍNEA PUEDE ESTAR MAL
+                } else {
+                    console.log('Email no verificado');
+                    await sendEmailVerification(userAuth)
+                        .then(() => reject({ code: 'Email no verificado. Se envió email de verificación a su casilla de correos' }))
+                        .catch(() => reject({ code: 'No se pudo enviar el email de verificación' }));
+                }
+            })
+            .catch((error) => reject({ code: error.code }));
     });
 };
 
@@ -107,17 +108,17 @@ export const registroPersistencia = (registro) => {
     return new Promise((resolve, reject) => {
         const auth = getAuth();
         createUserWithEmailAndPassword(auth, email, password)
-        .then(async (userCredential) => {
-            // Signed in
-            const user = userCredential.user;
-            await guardarUsuarioPersistencia(usuario);
-            await sendEmailVerification(user);
-            resolve(user);
-        })
-        .catch((error) => {
-            const errorCode = error.code;
-            reject(errorCode);
-        });
+            .then(async (userCredential) => {
+                // Signed in
+                const user = userCredential.user;
+                await guardarUsuarioPersistencia(usuario);
+                await sendEmailVerification(user);
+                resolve(user);
+            })
+            .catch((error) => {
+                const errorCode = error.code;
+                reject(errorCode);
+            });
     });
 }
 
@@ -125,36 +126,34 @@ export const registroPersistencia = (registro) => {
 //////////////////////// REPARACIONES ///////////////////////////////////////////////////////////////
 
 // GET todas las Reparaciones
-export const getReparacionesPersistencia = (setReparaciones, usuario) => {
-    return new Promise((resolve, reject) => {
-        // const unsubscribe = null;
-        let queryReparaciones = "";
-        if(usuario?.data?.Admin) { // TODO: Esto es una regla de negocio. No va acá.
-            // con el not-in se podría hacer un array con los que no quiero que estén, o con el in los que sí quiero.
-            queryReparaciones = query(
-                collection(firestore, "REPARACIONES"),
-            ); // , orderBy("PrioridadRep"));
-        } else {
-            queryReparaciones = query(collection(firestore, "REPARACIONES"), where("UsuarioRep", "==", usuario.id));
-        }
-        try{
-            const unsubscribeRep = onSnapshot(queryReparaciones, (querySnapshot) => {
-                let reparaciones = [];
-                querySnapshot.forEach(doc => reparaciones.push(
-                    {
-                        id: doc.id,
-                        data: doc.data()
-                    }
-                ));
-                setReparaciones(reparaciones);
-                // Ordeno por prioridad porque firebase no me deja ordenar y filtrar por distintos campos.
-                reparaciones.sort((a, b) => a.data.PrioridadRep - b.data.PrioridadRep);
-                resolve(reparaciones);
-            });
-        }catch(error){
-            () => reject(error);
-        }
-    });
+// const unsubscribe = null;
+export const getReparacionesPersistencia = (setReparacionesToRedux, usuario) => {
+    let queryReparaciones = "";
+    if (usuario?.data?.Admin) { // TODO: Esto es una regla de negocio. No va acá.
+        // con el not-in se podría hacer un array con los que no quiero que estén, o con el in los que sí quiero.
+        queryReparaciones = query(
+            collection(firestore, "REPARACIONES"),
+        ); // , orderBy("PrioridadRep"));
+    } else {
+        queryReparaciones = query(collection(firestore, "REPARACIONES"), where("UsuarioRep", "==", usuario.id));
+    }
+    try {
+        const unsubscribeRep = onSnapshot(queryReparaciones, (querySnapshot) => {
+            let reparaciones = [];
+            querySnapshot.forEach(doc => reparaciones.push(
+                {
+                    id: doc.id,
+                    data: doc.data()
+                }
+            ));
+            // Ordeno por prioridad porque firebase no me deja ordenar y filtrar por distintos campos.
+            reparaciones.sort((a, b) => a.data.PrioridadRep - b.data.PrioridadRep);
+            setReparacionesToRedux(reparaciones); 
+        });
+        return unsubscribeRep;
+    } catch (error) {
+        return error;
+    }
 }
 
 // GET Reparación por id
@@ -162,24 +161,24 @@ export const getReparacionPersistencia = (id) => {
     return new Promise((resolve, reject) => {
         const docRef = doc(firestore, 'REPARACIONES', id);
         getDoc(docRef)
-        .then(docSnap => {
-            const idCliente = docSnap.data()?.UsuarioRep || '';
-            const docRefCliente = doc(firestore, 'USUARIOS', idCliente);
-            getDoc(docRefCliente)
-            .then(docSnapCliente => {
-                resolve({
-                    id: id, 
-                    data: {
-                        ...docSnap.data(),
-                        NombreUsu: docSnapCliente.data()?.NombreUsu,
-                        ApellidoUsu: docSnapCliente.data()?.ApellidoUsu,
-                        TelefonoUsu: docSnapCliente.data()?.TelefonoUsu,
-                        EmailUsu: docSnapCliente.data()?.EmailUsu
-                    }
-                })
+            .then(docSnap => {
+                const idCliente = docSnap.data()?.UsuarioRep || '';
+                const docRefCliente = doc(firestore, 'USUARIOS', idCliente);
+                getDoc(docRefCliente)
+                    .then(docSnapCliente => {
+                        resolve({
+                            id: id,
+                            data: {
+                                ...docSnap.data(),
+                                NombreUsu: docSnapCliente.data()?.NombreUsu,
+                                ApellidoUsu: docSnapCliente.data()?.ApellidoUsu,
+                                TelefonoUsu: docSnapCliente.data()?.TelefonoUsu,
+                                EmailUsu: docSnapCliente.data()?.EmailUsu
+                            }
+                        })
+                    })
             })
-        })
-        .catch(error => reject(error))
+            .catch(error => reject(error))
     });
 };
 
@@ -189,17 +188,17 @@ export const guardarReparacionPersistencia = (reparacion) => {
         // El id es el id o sino la fecha de consulta.
         reparacion.id = (reparacion.id || reparacion.data?.FeConRep.toString());
         setDoc(
-            doc(firestore, 'REPARACIONES', reparacion.id), 
+            doc(firestore, 'REPARACIONES', reparacion.id),
             reparacion.data
         )
-        .then(docReparacion => {
-            console.log('actualizado reparación ok');
-            resolve(docReparacion || reparacion);
-        })
-        .catch(error => {
-            console.log('Error: ' + error);
-            reject(error);
-        });
+            .then(docReparacion => {
+                console.log('actualizado reparación ok');
+                resolve(docReparacion || reparacion);
+            })
+            .catch(error => {
+                console.log('Error: ' + error);
+                reject(error);
+            });
     })
 };
 
@@ -207,14 +206,14 @@ export const guardarReparacionPersistencia = (reparacion) => {
 export const eliminarReparacionPersistencia = (id) => {
     return new Promise((resolve, reject) => {
         deleteDoc(doc(firestore, 'REPARACIONES', id))
-        .then(() => {
-            console.log('borrando reparación ok');
-            resolve(id);
-        })
-        .catch(error => {
-            console.log('Error: ' + error);
-            reject(error);
-        });
+            .then(() => {
+                console.log('borrando reparación ok');
+                resolve(id);
+            })
+            .catch(error => {
+                console.log('Error: ' + error);
+                reject(error);
+            });
 
     })
 };
@@ -232,13 +231,13 @@ export const getUsuariosPersistencia = (setUsuariosToRedux) => {
         try {
             const unsubscribeUsu = onSnapshot(q, (querySnapshot) => {
                 let usuarios = [];
-                querySnapshot.forEach(doc => usuarios.push({id: doc.id, data: { ...doc.data(), EmailUsu: doc.id}}))
+                querySnapshot.forEach(doc => usuarios.push({ id: doc.id, data: { ...doc.data(), EmailUsu: doc.id } }))
                 // console.log('usuarios en getUsuariosPersistencia(): ' + JSON.stringify(usuarios[0]));
                 // Esta función es una callback. Se llama igual que el action creator
                 setUsuariosToRedux(usuarios);
                 resolve(usuarios);
             });
-        }catch(error){
+        } catch (error) {
             () => reject(error);
         }
     });
@@ -250,8 +249,8 @@ export const getClientePersistencia = (id) => {
     return new Promise((resolve, reject) => {
         const docRef = doc(firestore, 'USUARIOS', id);
         getDoc(docRef)
-        .then(docSnap => resolve({id: id, data: { ...docSnap.data(), EmailUsu: id }})) // Este objeto es una reparación.
-        .catch(error => reject(error))
+            .then(docSnap => resolve({ id: id, data: { ...docSnap.data(), EmailUsu: id } })) // Este objeto es una reparación.
+            .catch(error => reject(error))
     });
 };
 
@@ -267,7 +266,7 @@ const triggerUsuarioReparaciones = (usuario) => {
             console.log('enter promise triggerUsuarioReparaciones()');
             const q = query(collection(firestore, 'REPARACIONES'), where('UsuarioRep', '==', usuario.id));
             const docs = await getDocs(q);
-                
+
             docs.forEach(doc => {
                 guardarReparacionPersistencia({
                     id: doc.id,
@@ -278,10 +277,10 @@ const triggerUsuarioReparaciones = (usuario) => {
                         TelefonoUsu: usuario.data.TelefonoUsu,
                         EmailUsu: usuario.data.EmailUsu
                     }
-                });                
+                });
             });
             resolve();
-        }catch(error){
+        } catch (error) {
             console.log('error triggerUsuarioReparaciones()', error);
             () => reject(error);
         }
@@ -293,21 +292,21 @@ export const guardarUsuarioPersistencia = (usuario) => {
         // El id es el id o sino el email.
         usuario.id = usuario.id || usuario.data?.EmailUsu;
         setDoc(doc(firestore, 'USUARIOS', usuario.id), usuario.data)
-        .then(docUsuario => {
-            triggerUsuarioReparaciones(usuario)
-            .then(() => {
-                console.log('actualizado usuario ok');
-                resolve(docUsuario || usuario);
+            .then(docUsuario => {
+                triggerUsuarioReparaciones(usuario)
+                    .then(() => {
+                        console.log('actualizado usuario ok');
+                        resolve(docUsuario || usuario);
+                    })
+                    .catch((error) => {
+                        console.log('Error en triggerUsuarioReparaciones() al guardar Usuario', error);
+                        reject({ code: 'Error en triggerUsuarioReparaciones() al guardar Usuario' })
+                    });
             })
-            .catch((error) => {
-                console.log('Error en triggerUsuarioReparaciones() al guardar Usuario', error);
-                reject({ code: 'Error en triggerUsuarioReparaciones() al guardar Usuario' })
+            .catch(error => {
+                console.log('Error: ' + error);
+                reject(error);
             });
-        })
-        .catch(error => {
-            console.log('Error: ' + error);
-            reject(error);
-        });
     });
 };
 
@@ -319,22 +318,22 @@ export const eliminarUsuarioPersistencia = (id) => {
         const q = query(refCol, where('UsuarioRep', '==', id));
         const querySnapshot = await getDocs(q);
         // Si la consulta no arroja ningún resultado, se elimina, sino da error y muestra reparación relacionada.
-        if(querySnapshot.empty){
+        if (querySnapshot.empty) {
             deleteDoc(doc(firestore, 'USUARIOS', id))
-            .then(() => {
-                console.log('borrando usuario ok');
-                resolve(id);
-            })
-            .catch(error => {
-                reject(error);
-            });
-        }else{
-            reject({ 
-                code: 
+                .then(() => {
+                    console.log('borrando usuario ok');
+                    resolve(id);
+                })
+                .catch(error => {
+                    reject(error);
+                });
+        } else {
+            reject({
+                code:
                     'No se puede borrar este usuario. Reparación relacionada: '
                     // Muestra en el mesaje de error los ids de las reparaciones relacionadas al usuario
                     + querySnapshot.docs.map(doc => doc.id).toString()
-        });
+            });
         }
 
     })
@@ -359,7 +358,7 @@ export const sendMessagePersistencia = (message) => {
             // El que envía siempre es el from
             sender: message.data.from,
             senderName: message.data.senderName,
-            isRead: false 
+            isRead: false
         };
         let dataCli = {
             date: message.data.date,
@@ -369,7 +368,7 @@ export const sendMessagePersistencia = (message) => {
             // El que envía siempre es el from
             sender: message.data.from,
             senderName: message.data.senderName,
-            isRead: false 
+            isRead: false
         };
         // Actualiza los mensajes del Usu y del Cli (el qué envía y el que recibe)
         await addDoc(colRefUsu, dataUsu).catch(error => reject(error));
@@ -384,11 +383,11 @@ export const getMessagesPersistencia = (emailUsu, emailCli, setMessagesToRedux) 
     return new Promise((resolve, reject) => {
         const colRef = collection(firestore, 'USUARIOS', emailUsu, 'messages');
         const q = query(colRef, where('emailCli', '==', emailCli), orderBy('date'));
-        try {             
+        try {
             const unsubscribeMessages = onSnapshot(q, (querySnapshot) => {
                 let messages = [];
                 querySnapshot.forEach(doc => messages.push({
-                    id: doc.id, 
+                    id: doc.id,
                     data: {
                         date: doc.data().date,
                         content: doc.data().content,
@@ -408,7 +407,7 @@ export const getMessagesPersistencia = (emailUsu, emailCli, setMessagesToRedux) 
             //     isRead: true
             // });
             resolve(unsubscribeMessages); // Devuelvo la función de cancelación de suscripción.
-        }catch(error){
+        } catch (error) {
             () => reject(error);
         }
     });
@@ -416,9 +415,9 @@ export const getMessagesPersistencia = (emailUsu, emailCli, setMessagesToRedux) 
 
 export const actualizarLeidosPersistencia = (mensajesLeidos) => {
     mensajesLeidos.forEach(async mensaje => {
-        console.log('actualiza leidos, mensaje: ' +     JSON.stringify(mensaje));
+        console.log('actualiza leidos, mensaje: ' + JSON.stringify(mensaje));
         const docRef = doc(collection(firestore, `USUARIOS/${mensaje.data.emailUsu}/messages`), mensaje.id);
-        await updateDoc(docRef, {isRead: true}).then(console.log('ACTUALIZADO')).catch(error => console.log('ERROR: ' + error.code));
+        await updateDoc(docRef, { isRead: true }).then(console.log('ACTUALIZADO')).catch(error => console.log('ERROR: ' + error.code));
     });
 };
 
@@ -434,10 +433,10 @@ export const notificacionesPorMensajesPersistencia = (emailUsu) => {
     //     'persist': true,
     //     // 'config' : {}
     // };
-      
-    
+
+
     // options.config = firebaseConfig;  
-      
+
     // Firestore.initialise(options).then(function(db) {
     // // Add a second document with a generated ID.
     //     const colRef = db.collection('USUARIOS').doc(emailUsu).collection(messages);
@@ -472,7 +471,7 @@ export const notificacionesPorMensajesPersistencia = (emailUsu) => {
         const unsubscribeNotificationMenssages = onSnapshot(q, (querySnapshot) => {
             //const doc = querySnapshot.docs[0];
             querySnapshot.docChanges().forEach(change => {
-                if(change.doc.data().sender != emailUsu){
+                if (change.doc.data().sender != emailUsu) {
                     const notification = {
                         title: 'Nuevo Mensaje de ' + change.doc.data().senderName,
                         text: change.doc.data().content,
@@ -484,7 +483,7 @@ export const notificacionesPorMensajesPersistencia = (emailUsu) => {
             })
             //resolve();
         });
-    }catch(error){
+    } catch (error) {
         () => error;
     }
 }
@@ -523,13 +522,13 @@ export const guardarPresupuestoPersistencia = (presupuesto) => {
     presupuesto.reparacion.data.TelefonoUsu = presupuesto.usuario.data?.TelefonoUsu || '';
     return new Promise((resolve, reject) => {
         guardarUsuarioPersistencia(presupuesto.usuario)
-        .then(() => {
-            presupuesto.reparacion.data.UsuarioRep = presupuesto.usuario.data.EmailUsu;
-            guardarReparacionPersistencia(presupuesto.reparacion)
-            .then(() => resolve(presupuesto))
-            .catch(() => reject({ code: 'Error en guardarPresupuestoPersistencia() al guardar Reparación' }));
-        })
-        .catch(()  => reject({ code: 'Error en guardarPresupuestoPersistencia() al guardar Usuario' }));
+            .then(() => {
+                presupuesto.reparacion.data.UsuarioRep = presupuesto.usuario.data.EmailUsu;
+                guardarReparacionPersistencia(presupuesto.reparacion)
+                    .then(() => resolve(presupuesto))
+                    .catch(() => reject({ code: 'Error en guardarPresupuestoPersistencia() al guardar Reparación' }));
+            })
+            .catch(() => reject({ code: 'Error en guardarPresupuestoPersistencia() al guardar Usuario' }));
     });
 }
 
@@ -561,18 +560,18 @@ export const getProvinciasSelectPersistencia = () => {
 
 // Obtengo las localidades por provincia desde /data
 export const getLocPorProvPersistencia = (provincia) => {
-     console.log('getLocPorProvPersistencia');
-     return new Promise((resolve, reject) => {
+    console.log('getLocPorProvPersistencia');
+    return new Promise((resolve, reject) => {
         resolve(
             localidades.filter(localidad => (
                 localidad.provincia.nombre == provincia
             ))
-            .map(localidad => {
-                return {
-                    value: localidad.nombre,
-                    label: localidad.nombre
-                }
-            })
+                .map(localidad => {
+                    return {
+                        value: localidad.nombre,
+                        label: localidad.nombre
+                    }
+                })
         );
     })
 };
