@@ -15,6 +15,7 @@ ainfo/
 
 # configuración Prod para producción y Dev para desarrollo
 /src/configProd.js
+/src/firebase/configProd.js
 
 # Variables de entorno
 .env
