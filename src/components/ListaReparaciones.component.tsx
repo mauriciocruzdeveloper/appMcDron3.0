@@ -42,15 +42,15 @@ const ListaReparaciones = (props: ListaReparacionesProps) => {
       const reparaciones = coleccionReparaciones.filter(reparacion => {
         const noPrioritarios = ["Entregado", "Liquidación", "Trabado"];
         const estadosNoIncluidos = filter.estadosPrioritarios ? noPrioritarios : [''];
-        const incluirPorEstado = !estadosNoIncluidos.includes(reparacion.data.EstadoRep);
-        let incluirPorSearch = true;
+        const incluirPorEstado = !estadosNoIncluidos.includes(reparacion.data.EstadoRep) && !filter.search;
+        let incluirPorSearch = false;
         if (filter.search) {
           incluirPorSearch = reparacion.data.DroneRep.toLowerCase().includes(filter.search.toLowerCase())
             || reparacion.data.NombreUsu?.toLowerCase().includes(filter.search.toLowerCase())
             || reparacion.data.UsuarioRep?.toLowerCase().includes(filter.search.toLowerCase())
             || reparacion.data.EmailUsu?.toLowerCase().includes(filter.search.toLowerCase());
         }
-        return incluirPorEstado && incluirPorSearch;
+        return incluirPorSearch || incluirPorEstado;
       });
       setReparacionesList(reparaciones);
     }
