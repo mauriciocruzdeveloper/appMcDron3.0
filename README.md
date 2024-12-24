@@ -192,6 +192,10 @@ export PATH=$PATH:$GRADLE_HOME/bin
 19. gradle -v
 Tiene que decir 7.6
 
+Script hecho en bash para instalar todo esto:
+https://chatgpt.com/c/676a081f-df28-8007-b653-a2978c623858
+Probar!!!
+
 ### PASOS
 
 #### Con sh
