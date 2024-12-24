@@ -163,6 +163,42 @@ cordova build android --release -- --packageType=apk (para que genere una apk y 
 
 La versión de Gradle tiene que ser la 7.6: https://askubuntu.com/questions/1307132/how-to-upgrade-gradle-to-6-7-1
 
+### Instalar SDKs
+
+1. Descargar Android Studio: https://developer.android.com/studio?hl=es-419
+2. cd ~/Descargas
+3. tar -xzvf android-studio-2024.2.1.12-linux.tar.gz -C ~/Android
+4. mkdir ~/Android
+5. cd ~/Android/android-studio/bin
+6. ./studio.sh
+Instalar herramientas de línea de comandos
+7. sudo apt install google-android-cmdline-tools-1.0-installer
+8. sudo apt install google-android-platform-tools-installer
+Instalar JDk8 (Probablemente tiene que ser la 17)
+9. sudo apt update
+10. sudo apt install openjdk-8-jdk
+Seleccionar la versión correcta de java
+11. sudo update-alternatives --config javac
+Instalar gradle (Quizás hay que instalar la 8.3, al final termina instalando esa...)
+12. sudo apt remove gradle
+13. wget https://services.gradle.org/distributions/gradle-7.6-bin.zip
+14. sudo mkdir /opt/gradle
+15. sudo unzip gradle-7.6-bin.zip -d /opt/gradle
+16. sudo nano ~/.bashrc
+17. Copiar
+export GRADLE_HOME=/opt/gradle/gradle-7.6
+export PATH=$PATH:$GRADLE_HOME/bin
+18. source ~/.bashrc
+19. gradle -v
+Tiene que decir 7.6
+
+### PASOS
+
+#### Con sh
+sh ./build_and_sign.sh
+
+### Sin sh
+
 1. Construir la APK (Release)
 Ejecuta el siguiente comando para compilar tu aplicación en modo release:
 
