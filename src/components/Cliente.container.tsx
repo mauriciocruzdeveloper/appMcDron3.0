@@ -17,7 +17,7 @@ import {
     enviarSms
 } from "../utils/utils";
 import ClientePresentational from './Cliente.presentational'
-import { ClienteType } from "../types/usuario";
+import { ClienteType } from "../types/cliente";
 import { RootState } from "../redux/App/App.reducer";
 import { SelectType } from "../types/types";
 

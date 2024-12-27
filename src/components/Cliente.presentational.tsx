@@ -1,6 +1,6 @@
 import React from 'react';
 import Select, { SingleValue } from 'react-select';
-import { ClienteType } from '../types/usuario';
+import { ClienteType } from '../types/cliente';
 import { ChangeEvent } from 'react';
 import { InputType, SelectType } from '../types/types';
 

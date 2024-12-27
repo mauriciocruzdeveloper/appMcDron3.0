@@ -9,7 +9,7 @@ import {
 // lightColors y darkColors pueden estar buenos... hay que probarlos
 // import { Container, Button, lightColors, darkColors } from 'react-floating-action-button';
 import { RootState } from '../redux/App/App.reducer';
-import { ClienteType } from '../types/usuario';
+import { ClienteType } from '../types/cliente';
 
 interface ListaUsuariosProps {
   getUsuarios: () => void;

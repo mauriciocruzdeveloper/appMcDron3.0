@@ -9,7 +9,7 @@ import { estados } from '../datos/estados';
 // Estas son las importaciones de react-floating-action-button
 // lightColors y darkColors pueden estar buenos... hay que probarlos
 import { ReparacionType } from "../types/reparacion";
-import { ClienteType } from "../types/usuario";
+import { ClienteType } from "../types/cliente";
 import { RootState } from "../redux/App/App.reducer";
 import { Filtro } from "../types/Filtro";
 
