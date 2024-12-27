@@ -1,6 +1,6 @@
 import { ReparacionType } from '../../types/reparacion';
 import { SelectType } from '../../types/types';
-import { ClienteType } from '../../types/usuario';
+import { ClienteType } from '../../types/cliente';
 import { AppTypes } from './App.types';
 
 export interface RootState {
