@@ -173,8 +173,9 @@ const Reparacion: FC<ReparacionProps> = (props) => {
 
         // TODO: Los datos de los emails tienen que estar en otro lado, e importarlos.
         const datosEmail = {
+            from: 'mauriciocruzdrones@gmail.com',
             to: reparacion.data.UsuarioRep,
-            cc: 'info@mauriciocruzdrones.com',
+            cc: 'reparaciones@mauriciocruzdrones.com',
             bcc: [],
             subject: '',
             body: ''
