@@ -6,16 +6,20 @@ interface LoginPresentationalProps {
   changeInputLogin: (field: string, value: string) => void;
   handleLogin: () => void;
   handleRegistrarse: () => void;
+  setRememberMe: (value: boolean) => void;
 }
 
 const LoginPresentational = ({ 
   loginData,
   changeInputLogin,
   handleLogin,
-  handleRegistrarse
+  handleRegistrarse,
+  setRememberMe
 }: LoginPresentationalProps) => {
 
   console.log('LOGIN presentational');
+
+  const currentYear = new Date().getUTCFullYear();
 
   return (
     <div className='text-center'>
@@ -53,6 +57,7 @@ const LoginPresentational = ({
               <input 
                 type='checkbox' 
                 value='remember-me' 
+                onChange={ e => setRememberMe(e.target.checked) }
               /> 
               Remember me
             </label>
@@ -72,7 +77,7 @@ const LoginPresentational = ({
             <h5>Registrarse</h5>
           </a>
 
-          <p className='mt-5 mb-3 text-muted'>© 2017–2021</p>
+          <p className='mt-5 mb-3 text-muted'>© 2017–{currentYear}</p>
           
         </div>
       </main>
