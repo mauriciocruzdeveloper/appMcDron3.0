@@ -19,6 +19,7 @@ import { ReparacionType } from "../types/reparacion";
 import { generarAutoDiagnostico } from "../redux/App/App.actions";
 import { bodyRecibo } from "../emails/recibido";
 import { enviarRecibo } from "../utils/sendEmails";
+import { EMAIL_REPARACIONES } from "../types/constantes";
 
 interface ReparacionProps {
     guardarReparacion: (reparacion: ReparacionType) => void;
@@ -173,9 +174,9 @@ const Reparacion: FC<ReparacionProps> = (props) => {
 
         // TODO: Los datos de los emails tienen que estar en otro lado, e importarlos.
         const datosEmail = {
-            from: 'mauriciocruzdrones@gmail.com',
+            from: EMAIL_REPARACIONES,
             to: reparacion.data.UsuarioRep,
-            cc: 'reparaciones@mauriciocruzdrones.com',
+            cc: EMAIL_REPARACIONES,
             bcc: [],
             subject: '',
             body: ''
