@@ -11,7 +11,7 @@ import { estados } from '../datos/estados';
 import { ReparacionType } from "../types/reparacion";
 import { ClienteType } from "../types/usuario";
 import { RootState } from "../redux/App/App.reducer";
-import { Filtro } from "../interfaces/Filtro";
+import { Filtro } from "../types/Filtro";
 
 interface ListaReparacionesProps {
   getReparaciones: (usuario: ClienteType) => void; // TODO: Revisar los tipos de los argumentos.
