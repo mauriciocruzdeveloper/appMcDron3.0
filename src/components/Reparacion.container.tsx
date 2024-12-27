@@ -8,7 +8,6 @@ import {
     confirm,
 } from "../redux/root-actions";
 import {
-    enviarEmail,
     enviarSms,
 } from "../utils/utils";
 import { estados } from '../datos/estados';
@@ -17,9 +16,7 @@ import { RootState } from "../redux/App/App.reducer";
 import { Estado } from "../types/estado";
 import { ReparacionType } from "../types/reparacion";
 import { generarAutoDiagnostico } from "../redux/App/App.actions";
-import { bodyRecibo } from "../emails/recibido";
-import { enviarRecibo } from "../utils/sendEmails";
-import { EMAIL_REPARACIONES } from "../types/constantes";
+import { enviarEmailVacio, enviarRecibo } from "../utils/sendEmails";
 
 interface ReparacionProps {
     guardarReparacion: (reparacion: ReparacionType) => void;
@@ -171,17 +168,7 @@ const Reparacion: FC<ReparacionProps> = (props) => {
 
     const handleSendEmail = () => {
         if (!reparacion) return;
-
-        // TODO: Los datos de los emails tienen que estar en otro lado, e importarlos.
-        const datosEmail = {
-            from: EMAIL_REPARACIONES,
-            to: reparacion.data.UsuarioRep,
-            cc: EMAIL_REPARACIONES,
-            bcc: [],
-            subject: '',
-            body: ''
-        };
-        enviarEmail(datosEmail);
+        enviarEmailVacio(reparacion);
     }
 
     const handleSendRecibo = () => {
@@ -205,7 +192,7 @@ const Reparacion: FC<ReparacionProps> = (props) => {
             },
 
             success: () => null,
-            error: (e: any) => alert('Message Failed:' + e)
+            error: (e: unknown) => alert('Message Failed:' + e)
         };
         enviarSms(data);
     }
