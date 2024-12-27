@@ -5,7 +5,7 @@ import { enviarEmail } from "./utils";
 export const enviarRecibo = (reparacion: ReparacionType): void => {
     const datosEmail = {
         to: reparacion.data.EmailUsu,
-        cc: 'info@mauriciocruzdrones.com',
+        cc: 'reparaciones@mauriciocruzdrones.com',
         bcc: [],
         subject: 'Recibo de equipo ' + reparacion.data.DroneRep,
         body: bodyRecibo(reparacion),
