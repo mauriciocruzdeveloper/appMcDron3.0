@@ -12,9 +12,10 @@ import { notificacionesPorMensajesPersistencia } from '../persistencia/persisten
 
 import history from "../history";
 import { RootState } from "../redux/App/App.reducer";
+import { Usuario } from "../types/usuario";
 
 interface NavMcDronProps {
-    usuario: any;
+    usuario: Usuario;
     logout: () => void;
     confirm: (message: string, title: string, type: string, callback: () => void) => void;
 }
