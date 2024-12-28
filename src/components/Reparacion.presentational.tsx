@@ -239,7 +239,7 @@ const ReparacionPresentational = (props: ReparacionPresentationalProps) => {
                         />
                     </div>
                     <div>
-                        <label className="form-label">Autdiagnóstico</label>
+                        <label className="form-label">Autodiagnóstico</label>
                         <TextareaAutosize
                             readOnly
                             className="form-control"
