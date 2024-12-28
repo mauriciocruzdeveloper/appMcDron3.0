@@ -29,7 +29,10 @@ const NavMcDron = (props: NavMcDronProps) => {
 
     const handleBack = () => {
         if (history.location.pathname == "/inicio"){
-            confirm("Desloguearse???", "Atención", "warning", () => logout());
+            confirm("Desloguearse???", "Atención", "warning", () => {
+                localStorage.removeItem('loginData');
+                logout();
+            });
         }else{
             history.goBack()
         }

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useState } from 'react';
 import { connect } from 'react-redux';
 import history from '../history';
@@ -20,13 +20,26 @@ const INIT_LOGIN_DATA: LoginData = {
 };
 
 export interface LoginProps {
-  login: (loginData: LoginData) => void;
+  login: (loginData: LoginData) => Promise<void>;
 }
 
 const Login = ({ login }: LoginProps) => {
   console.log('LOGIN container');
 
-  const [ loginData, setLoginData ] = useState(INIT_LOGIN_DATA);
+  const [ loginData, setLoginData ] = useState(() => {
+    const savedLoginData = localStorage.getItem('loginData');
+    return savedLoginData ? JSON.parse(savedLoginData) : INIT_LOGIN_DATA;
+  });
+
+  const [ rememberMe, setRememberMe ] = useState(() => {
+    return localStorage.getItem('loginData') ? true : false;
+  });
+
+  useEffect(() => {
+    if (loginData.email && loginData.password) {
+      handleLogin();
+    }
+  }, []);
 
   // Actualiza los valores de los input cuando éstos cambian y los guarda en el state local.
   const changeInputLogin = (field: string, value: string) => setLoginData({ 
@@ -38,6 +51,10 @@ const Login = ({ login }: LoginProps) => {
   const handleLogin = async () => {
     // LLama al action creator (asincrónico) 'login'
     await login(loginData);
+    // Guarda los datos de login en localStorage solo si "Remember me" está marcado
+    if (rememberMe) {
+      localStorage.setItem('loginData', JSON.stringify(loginData));
+    }
     // Luego de loguearse, va al raíz. Si está logueado, termina en inicio, sino en login.
     history.push('/');
   };
@@ -55,6 +72,8 @@ const Login = ({ login }: LoginProps) => {
       handleLogin={handleLogin}
       changeInputLogin={changeInputLogin}
       handleRegistrarse={handleRegistrarse}
+      setRememberMe={setRememberMe}
+      rememberMe={rememberMe}
     /> : null 
   );
 };

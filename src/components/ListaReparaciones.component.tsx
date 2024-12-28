@@ -5,10 +5,10 @@ import { estados } from '../datos/estados';
 // Estas son las importaciones de react-floating-action-button
 // lightColors y darkColors pueden estar buenos... hay que probarlos
 import { ReparacionType } from "../types/reparacion";
-import { Filtro } from "../interfaces/Filtro";
 import { getReparacionesAsync } from "../redux-tool-kit/slices/appSlice";
 import { useAppDispatch } from "../redux-tool-kit/hooks/useAppDispatch";
 import { useAppSelector } from "../redux-tool-kit/hooks/useAppSelector";
+import { Filtro } from "../types/Filtro";
 
 export const ListaReparaciones = () => {
   const dispatch = useAppDispatch();
@@ -35,15 +35,15 @@ export const ListaReparaciones = () => {
       const reparacionesFiltered = reparaciones.filter(reparacion => {
         const noPrioritarios = ["Entregado", "Liquidación", "Trabado"];
         const estadosNoIncluidos = filter.estadosPrioritarios ? noPrioritarios : [''];
-        const incluirPorEstado = !estadosNoIncluidos.includes(reparacion.data.EstadoRep);
-        let incluirPorSearch = true;
+        const incluirPorEstado = !estadosNoIncluidos.includes(reparacion.data.EstadoRep) && !filter.search;
+        let incluirPorSearch = false;
         if (filter.search) {
           incluirPorSearch = reparacion.data.DroneRep.toLowerCase().includes(filter.search.toLowerCase())
             || reparacion.data.NombreUsu?.toLowerCase().includes(filter.search.toLowerCase())
             || reparacion.data.UsuarioRep?.toLowerCase().includes(filter.search.toLowerCase())
             || reparacion.data.EmailUsu?.toLowerCase().includes(filter.search.toLowerCase());
         }
-        return incluirPorEstado && incluirPorSearch;
+        return incluirPorSearch || incluirPorEstado;
       });
       setReparacionesList(reparacionesFiltered);
     }
