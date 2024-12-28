@@ -183,6 +183,18 @@ const Reparacion: FC<ReparacionProps> = (props) => {
         enviarSms(data);
     }
 
+    const handleGenerarAutoDiagnostico = async () => {
+        if (!reparacion) return;
+        const diagnostico = await generarAutoDiagnostico(reparacion);
+        setReparacion({
+            ...reparacion,
+            data: {
+                ...reparacion.data,
+                DiagnosticoRep: diagnostico,
+            }
+        });
+    }
+
     return (
         // Sólo se renderiza el componente presentacional cuando están los datos necesarios ya cargados.
         estados && reparacion ?
@@ -197,6 +209,7 @@ const Reparacion: FC<ReparacionProps> = (props) => {
                 handleSendEmail={handleSendEmail}
                 handleSendSms={handleSendSms}
                 handleSendRecibo={handleSendRecibo}
+                handleGenerarAutoDiagnostico={handleGenerarAutoDiagnostico}
             /> : null
     )
 };
