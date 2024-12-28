@@ -126,6 +126,7 @@ const Reparacion: FC<ReparacionProps> = (props) => {
             }
         };
 
+        // Regla: Si hay un campo de fecha y no está seteado, se setea con la fecha actual.
         if (campofecha && !newReparacion.data[`${campofecha}`]) {
             newReparacion.data = {
                 ...newReparacion.data,
@@ -134,11 +135,12 @@ const Reparacion: FC<ReparacionProps> = (props) => {
         }
 
         setReparacion(newReparacion);
-
     }
 
     const confirmaGuardarReparacion = async () => {
-        if (reparacion.data.EstadoRep === 'Recibido') reparacion.data.DiagnosticoRep = await generarAutoDiagnostico(reparacion);
+        if (reparacion.data.EstadoRep === 'Recibido' && !reparacion.data.DiagnosticoRep) {
+            reparacion.data.DiagnosticoRep = await generarAutoDiagnostico(reparacion);
+        }
         guardarReparacion(reparacion);
     }
 
