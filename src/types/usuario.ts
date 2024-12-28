@@ -1,13 +1,16 @@
-export interface DataCliente {
-    EmailUsu: string,
-    NombreUsu: string,
-    ApellidoUsu: string,
-    TelefonoUsu: string,
-    ProvinciaUsu: string,
-    CiudadUsu: string        
-}
+import { DocumentData } from "firebase/firestore";
 
-export interface ClienteType {
-    id: string;
-    data: DataCliente;
-}
+export interface Usuario {
+    id: string,
+    data: {
+      NombreUsu: string,
+      ApellidoUsu: string,
+      EmailUsu: string,
+      ProvinciaUsu: string,
+      CiudadUsu: string,
+      Admin: boolean,
+      Nick: string,
+      TelefonoUsu: string,
+      UrlFotoUsu: string
+    };
+  }

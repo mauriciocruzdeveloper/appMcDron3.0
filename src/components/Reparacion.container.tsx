@@ -8,7 +8,6 @@ import {
     confirm,
 } from "../redux/root-actions";
 import {
-    enviarEmail,
     enviarSms,
 } from "../utils/utils";
 import { estados } from '../datos/estados';
@@ -17,8 +16,7 @@ import { RootState } from "../redux/App/App.reducer";
 import { Estado } from "../types/estado";
 import { ReparacionType } from "../types/reparacion";
 import { generarAutoDiagnostico } from "../redux/App/App.actions";
-import { bodyRecibo } from "../emails/recibido";
-import { enviarRecibo } from "../utils/sendEmails";
+import { enviarEmailVacio, enviarRecibo } from "../utils/sendEmails";
 
 interface ReparacionProps {
     guardarReparacion: (reparacion: ReparacionType) => void;
@@ -128,6 +126,7 @@ const Reparacion: FC<ReparacionProps> = (props) => {
             }
         };
 
+        // Regla: Si hay un campo de fecha y no está seteado, se setea con la fecha actual.
         if (campofecha && !newReparacion.data[`${campofecha}`]) {
             newReparacion.data = {
                 ...newReparacion.data,
@@ -136,11 +135,12 @@ const Reparacion: FC<ReparacionProps> = (props) => {
         }
 
         setReparacion(newReparacion);
-
     }
 
     const confirmaGuardarReparacion = async () => {
-        if (reparacion.data.EstadoRep === 'Recibido') reparacion.data.DiagnosticoRep = await generarAutoDiagnostico(reparacion);
+        if (reparacion.data.EstadoRep === 'Recibido' && !reparacion.data.DiagnosticoRep) {
+            reparacion.data.DiagnosticoRep = await generarAutoDiagnostico(reparacion);
+        }
         guardarReparacion(reparacion);
     }
 
@@ -170,16 +170,7 @@ const Reparacion: FC<ReparacionProps> = (props) => {
 
     const handleSendEmail = () => {
         if (!reparacion) return;
-
-        // TODO: Los datos de los emails tienen que estar en otro lado, e importarlos.
-        const datosEmail = {
-            to: reparacion.data.UsuarioRep,
-            cc: 'info@mauriciocruzdrones.com',
-            bcc: [],
-            subject: '',
-            body: ''
-        };
-        enviarEmail(datosEmail);
+        enviarEmailVacio(reparacion);
     }
 
     const handleSendRecibo = () => {
@@ -203,7 +194,7 @@ const Reparacion: FC<ReparacionProps> = (props) => {
             },
 
             success: () => null,
-            error: (e: any) => alert('Message Failed:' + e)
+            error: (e: unknown) => alert('Message Failed:' + e)
         };
         enviarSms(data);
     }
