@@ -2,6 +2,7 @@ import { ReparacionType } from '../../types/reparacion';
 import { SelectType } from '../../types/types';
 import { ClienteType } from '../../types/cliente';
 import { AppTypes } from './App.types';
+import { Usuario } from '../../types/usuario';
 
 export interface RootState {
   app: AppState;
@@ -30,7 +31,7 @@ export interface AppState {
     password: string;
     token: string;
   };
-  usuario: any;
+  usuario: Usuario;
   coleccionReparaciones: ReparacionType[];
   coleccionMensajes: any[];
   coleccionUsuarios: ClienteType[];
