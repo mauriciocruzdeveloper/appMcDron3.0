@@ -20,7 +20,7 @@ const INIT_LOGIN_DATA: LoginData = {
 };
 
 export interface LoginProps {
-  login: (loginData: LoginData) => void;
+  login: (loginData: LoginData) => Promise<void>;
 }
 
 const Login = ({ login }: LoginProps) => {
@@ -31,7 +31,9 @@ const Login = ({ login }: LoginProps) => {
     return savedLoginData ? JSON.parse(savedLoginData) : INIT_LOGIN_DATA;
   });
 
-  const [ rememberMe, setRememberMe ] = useState(false);
+  const [ rememberMe, setRememberMe ] = useState(() => {
+    return localStorage.getItem('loginData') ? true : false;
+  });
 
   useEffect(() => {
     if (loginData.email && loginData.password) {
@@ -71,6 +73,7 @@ const Login = ({ login }: LoginProps) => {
       changeInputLogin={changeInputLogin}
       handleRegistrarse={handleRegistrarse}
       setRememberMe={setRememberMe}
+      rememberMe={rememberMe}
     /> : null 
   );
 };

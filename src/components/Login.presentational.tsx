@@ -7,6 +7,7 @@ interface LoginPresentationalProps {
   handleLogin: () => void;
   handleRegistrarse: () => void;
   setRememberMe: (value: boolean) => void;
+  rememberMe: boolean;
 }
 
 const LoginPresentational = ({ 
@@ -14,7 +15,8 @@ const LoginPresentational = ({
   changeInputLogin,
   handleLogin,
   handleRegistrarse,
-  setRememberMe
+  setRememberMe,
+  rememberMe
 }: LoginPresentationalProps) => {
 
   console.log('LOGIN presentational');
@@ -57,6 +59,7 @@ const LoginPresentational = ({
               <input 
                 type='checkbox' 
                 value='remember-me' 
+                checked={rememberMe}
                 onChange={ e => setRememberMe(e.target.checked) }
               /> 
               Remember me
