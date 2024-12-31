@@ -1,38 +1,27 @@
 import React from 'react';
-import { useEffect, useCallback, useState } from 'react';
-import { connect } from 'react-redux';
+import { useEffect, useState } from 'react';
 import history from '../history';
-import { 
-  getUsuarios
-} from '../redux/root-actions';
-// Estas son las importaciones de react-floating-action-button
-// lightColors y darkColors pueden estar buenos... hay que probarlos
-// import { Container, Button, lightColors, darkColors } from 'react-floating-action-button';
-import { RootState } from '../redux/App/App.reducer';
+import { useAppDispatch } from '../redux-tool-kit/hooks/useAppDispatch';
+import { useAppSelector } from '../redux-tool-kit/hooks/useAppSelector';
+import { getUsuariosAsync } from '../redux-tool-kit/slices/appSlice';
 import { ClienteType } from '../types/cliente';
 
-interface ListaUsuariosProps {
-  getUsuarios: () => void;
-  coleccionUsuarios: ClienteType[];
-  isFetching: boolean;
-}
-
-const ListaUsuarios = (props: ListaUsuariosProps) => {
-  const { 
-    coleccionUsuarios,
-    getUsuarios
-  } = props;
+export default function ListaUsuarios() {
+  const dispatch = useAppDispatch();
+  const coleccionUsuarios = useAppSelector((state) => state.app.coleccionUsuarios);
 
   const [filter, setFilter] = useState<string>('');
   const [usuariosList, setUsuariosList] = useState<ClienteType[]>([]);
 
-  const iniciarFormulario = useCallback(async () => {
-    if(!coleccionUsuarios?.length) await getUsuarios(); 
-  }, [getUsuarios]);
-
   useEffect(() => {
-    iniciarFormulario();
-  }, [iniciarFormulario]);
+    const unsubscribe = dispatch(getUsuariosAsync());
+
+    return () => {
+      if (unsubscribe) {
+        unsubscribe();
+      }
+    };
+  }, []);
 
   useEffect(() => {
     if (coleccionUsuarios.length) {
@@ -85,11 +74,4 @@ const ListaUsuarios = (props: ListaUsuariosProps) => {
       ))}
     </div>
   );
-};
-
-const mapStateToProps = (state: RootState) => ({
-  coleccionUsuarios: state.app.coleccionUsuarios,
-  isFetching: state.app.isFetching
-});
-
-export default connect(mapStateToProps, { getUsuarios })(ListaUsuarios);
+}
