@@ -6,7 +6,7 @@ import {
   getCliente,
   sendMessage,
   getUsuariosSelect
-} from '../redux/root-actions';
+} from '../redux-DEPRECATED/root-actions';
 import MensajesPresentational from './Mensajes.presentational';
 import { actualizarLeidos } from '../utils/utils';
 

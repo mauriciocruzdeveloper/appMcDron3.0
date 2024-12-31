@@ -1,4 +1,4 @@
-import store from './redux/store.js';
+import store from './redux-DEPRECATED/store.js';
 
 
 export const token = () => {

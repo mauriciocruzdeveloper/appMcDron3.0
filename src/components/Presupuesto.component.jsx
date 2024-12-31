@@ -11,7 +11,7 @@ import {
     getUsuariosSelect,
     getLocalidadesPorProvincia,
     setUsuario
-  } from "../redux/root-actions";
+  } from "../redux-DEPRECATED/root-actions";
 
   import history from "../history";
 

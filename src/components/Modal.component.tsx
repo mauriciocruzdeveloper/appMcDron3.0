@@ -1,6 +1,6 @@
 import { connect } from "react-redux";
 import { Modal, Button, Alert } from 'react-bootstrap';
-import { cierraModal } from '../redux/root-actions.js';
+import { cierraModal } from '../redux-DEPRECATED/root-actions.js';
 
 //TIPOS
 // primary
