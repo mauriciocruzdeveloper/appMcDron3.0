@@ -11,14 +11,14 @@ import {
     confirm,
     getProvinciasSelect,
     getLocalidadesPorProvincia,
-  } from "../redux/root-actions";
+  } from "../redux-DEPRECATED/root-actions";
 import { 
     enviarEmail,
     enviarSms
 } from "../utils/utils";
 import ClientePresentational from './Cliente.presentational'
 import { ClienteType } from "../types/cliente";
-import { RootState } from "../redux/App/App.reducer";
+import { RootState } from "../redux-DEPRECATED/App/App.reducer";
 import { SelectType } from "../types/types";
 
 export interface UsuarioProps {

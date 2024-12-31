@@ -2,7 +2,7 @@ import { AppDispatch } from '../redux-tool-kit/store'; // Ajusta según tu confi
 import { collection, onSnapshot, Query } from 'firebase/firestore';
 import { isFetchingStart, setError } from '../redux-tool-kit/slices/appSlice';
 import { db } from './firebase';
-import { setReparaciones } from '../redux/App/App.actions';
+import { setReparaciones } from '../redux-DEPRECATED/App/App.actions';
 
 export const subscribeToCollection = (collectionName: string) => (dispatch: AppDispatch) => {
   dispatch(isFetchingStart());

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { connect } from "react-redux";
-import { registro } from "../redux/root-actions";
+import { registro } from "../redux-DEPRECATED/root-actions";
 import history from "../history";
 import RegistroPresentational from "./Registro.presentational";
 

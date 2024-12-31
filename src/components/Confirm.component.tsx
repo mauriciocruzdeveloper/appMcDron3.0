@@ -1,7 +1,7 @@
 import React from 'react';
 import { connect } from 'react-redux';
 import { Modal, Button, Alert } from 'react-bootstrap';
-import { cierraConfirm } from '../redux/root-actions.js';
+import { cierraConfirm } from '../redux-DEPRECATED/root-actions.js';
 
 //TIPOS
 // primary

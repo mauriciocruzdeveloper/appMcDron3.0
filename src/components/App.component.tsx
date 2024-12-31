@@ -5,7 +5,7 @@ import { connect } from 'react-redux';
 import Routes from '../routes/Routes';
 import ModalComponent from './Modal.component';
 import ConfirmComponent from './Confirm.component';
-import { ConfirmType, RootState } from '../redux/App/App.reducer';
+import { ConfirmType, RootState } from '../redux-DEPRECATED/App/App.reducer';
 
 interface AppProps {
   isFetching: boolean;

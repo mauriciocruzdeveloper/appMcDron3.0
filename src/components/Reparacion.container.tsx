@@ -6,16 +6,16 @@ import {
     guardarReparacion,
     eliminarReparacion,
     confirm,
-} from "../redux/root-actions";
+} from "../redux-DEPRECATED/root-actions";
 import {
     enviarSms,
 } from "../utils/utils";
 import { estados } from '../datos/estados';
 import ReparacionPresentational from './Reparacion.presentational';
-import { RootState } from "../redux/App/App.reducer";
+import { RootState } from "../redux-DEPRECATED/App/App.reducer";
 import { Estado } from "../types/estado";
 import { ReparacionType } from "../types/reparacion";
-import { generarAutoDiagnostico } from "../redux/App/App.actions";
+import { generarAutoDiagnostico } from "../redux-DEPRECATED/App/App.actions";
 import { enviarEmailVacio, enviarRecibo } from "../utils/sendEmails";
 
 interface ReparacionProps {

@@ -1,12 +1,9 @@
 import React, { useEffect } from 'react';
 import { useState } from 'react';
-import { connect } from 'react-redux';
 import history from '../history';
-// Actions 
-import { login } from '../redux/root-actions';
-// Components
 import LoginPresentational from './Login.presentational'; // componente 'no inteligente' de presentación
-import { RootState } from '../redux/App/App.reducer';
+import { loginAsync } from '../redux-tool-kit/slices/appSlice';
+import { useAppDispatch } from '../redux-tool-kit/hooks/useAppDispatch';
 
 export interface LoginData {
   email: string;
@@ -20,16 +17,18 @@ const INIT_LOGIN_DATA: LoginData = {
 };
 
 export interface LoginProps {
-  login: (loginData: LoginData) => Promise<void>;
+  loginAsync: (loginData: LoginData) => Promise<void>;
 }
 
-const Login = ({ login }: LoginProps) => {
-  console.log('LOGIN container');
-
+export default function Login() {
+  const dispatch = useAppDispatch();
+  
   const [ loginData, setLoginData ] = useState(() => {
     const savedLoginData = localStorage.getItem('loginData');
     return savedLoginData ? JSON.parse(savedLoginData) : INIT_LOGIN_DATA;
   });
+  
+  console.log('LOGIN container');
 
   const [ rememberMe, setRememberMe ] = useState(() => {
     return localStorage.getItem('loginData') ? true : false;
@@ -50,7 +49,8 @@ const Login = ({ login }: LoginProps) => {
   // Manejador para el botón login. 
   const handleLogin = async () => {
     // LLama al action creator (asincrónico) 'login'
-    await login(loginData);
+    console.log('!!! handleLogin', loginData);
+    await dispatch(loginAsync(loginData));
     // Guarda los datos de login en localStorage solo si "Remember me" está marcado
     if (rememberMe) {
       localStorage.setItem('loginData', JSON.stringify(loginData));
@@ -76,10 +76,4 @@ const Login = ({ login }: LoginProps) => {
       rememberMe={rememberMe}
     /> : null 
   );
-};
-
-const mapStateToProps = (state: RootState) => ({
-  isFetching: state.app.isFetching,
-});
-
-export default connect(mapStateToProps, { login })(Login);
+}

@@ -3,7 +3,7 @@ import { connect } from "react-redux";
 import Login from '../components/Login.container';
 import Registro from '../components/Registro.container';
 import InicioRoutes from "./Inicio.routes";
-import { login, logout } from "../redux/root-actions";
+import { login, logout } from "../redux-DEPRECATED/root-actions";
 
 const Routes = ({ isLoggedIn, admin }) => {
 

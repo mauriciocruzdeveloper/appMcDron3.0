@@ -1,7 +1,7 @@
 // Módulo para conectar con redux
 import { connect } from "react-redux";
 // Actions
-import { logout, confirm } from "../redux/root-actions";
+import { logout, confirm } from "../redux-DEPRECATED/root-actions";
 // Componentes
 
 import { Navbar } from 'react-bootstrap';
@@ -11,7 +11,7 @@ import { ArrowLeftShort } from 'react-bootstrap-icons';
 import { notificacionesPorMensajesPersistencia } from '../persistencia/persistenciaFirebase';
 
 import history from "../history";
-import { RootState } from "../redux/App/App.reducer";
+import { RootState } from "../redux-DEPRECATED/App/App.reducer";
 import { Usuario } from "../types/usuario";
 
 interface NavMcDronProps {

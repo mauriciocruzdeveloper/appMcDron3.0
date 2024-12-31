@@ -10,6 +10,7 @@ import {
 import { ReparacionType } from '../../types/reparacion';
 import { Unsubscribe } from 'firebase/auth';
 import { AppDispatch, RootState } from '../store';
+import { Usuario } from '../../types/usuario';
 
 // Tipos para el estado inicial
 interface ModalState {
@@ -42,7 +43,7 @@ interface AppState {
   usuario: Record<string, any>;
   coleccionReparaciones: ReparacionType[];
   coleccionMensajes: any[];
-  coleccionUsuarios: any[];
+  coleccionUsuarios: Usuario[];
   provinciasSelect: any[];
   localidadesSelect: any[];
   usuariosSelect: any[];
@@ -118,7 +119,7 @@ export const registroAsync = createAsyncThunk(
 export const getReparacionesAsync = () => (
   dispatch: AppDispatch,
   getState: () => RootState,
-): Unsubscribe | undefined  => {
+): Unsubscribe | undefined => {
   try {
     const callbackReparaciones = (reparaciones: ReparacionType[]) => {
       console.log('!!! callbackReparaciones', reparaciones);
@@ -138,14 +139,14 @@ export const getUsuariosAsync = () => (
   dispatch: AppDispatch,
   getState: () => RootState
 ): Unsubscribe | undefined => {
-  try {
+    try {
     const callbackUsuarios = (usuarios: any[]) => {
-      console.log('callbackUsuarios', usuarios);
-      dispatch(setUsuariosToRedux(usuarios));
-    };
+        console.log('callbackUsuarios', usuarios);
+        dispatch(setUsuariosToRedux(usuarios));
+      };
     const state = getState() as { app: AppState };
-    const unsubscribe = getUsuariosPersistencia(callbackUsuarios);
-    return unsubscribe as Unsubscribe;
+      const unsubscribe = getUsuariosPersistencia(callbackUsuarios);
+      return unsubscribe as Unsubscribe;
   } catch (error) {
     return;
   }
