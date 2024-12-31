@@ -18,6 +18,7 @@ interface ReparacionPresentationalProps {
     handleSendEmail: () => void;
     handleSendSms: () => void;
     handleSendRecibo: () => void;
+    handleGenerarAutoDiagnostico: () => void;
 }
 
 const ReparacionPresentational = (props: ReparacionPresentationalProps) => {
@@ -32,6 +33,7 @@ const ReparacionPresentational = (props: ReparacionPresentationalProps) => {
         handleSendEmail,
         handleSendSms,
         handleSendRecibo,
+        handleGenerarAutoDiagnostico,
     } = props;
 
     console.log("REPARACION presentational");
@@ -239,7 +241,16 @@ const ReparacionPresentational = (props: ReparacionPresentationalProps) => {
                         />
                     </div>
                     <div>
-                        <label className="form-label">Autodiagnóstico</label>
+                        <div className="d-flex w-100 justify-content-between align-items-center">
+                            <label className="form-label">Autodiagnóstico</label>
+                            <button
+                                type="button"
+                                className="btn btn-outline-secondary bg-bluemcdron text-white"
+                                onClick={handleGenerarAutoDiagnostico}
+                            >
+                                <i className="bi bi-arrow-repeat"></i>
+                            </button>
+                        </div>
                         <TextareaAutosize
                             readOnly
                             className="form-control"
