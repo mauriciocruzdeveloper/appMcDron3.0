@@ -3,6 +3,7 @@ export interface Estado {
     prioridad: number;
     accion: string;
     color: string;
+    etapa: number;
 }
 
 export interface Estados {

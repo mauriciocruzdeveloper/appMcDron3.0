@@ -46,56 +46,41 @@ const Reparacion: FC<ReparacionProps> = (props) => {
 
     const { id } = useParams<ParamTypes>();
 
+    const [reparacionOriginal, setReparacionOriginal] = useState<ReparacionType>();
     const [reparacion, setReparacion] = useState<ReparacionType>();
 
     useEffect(() => {
         if (!coleccionReparaciones) return;
         const rep = coleccionReparaciones.find(reparacion => String(reparacion.id) === id);
+        setReparacionOriginal(rep);
         setReparacion(rep);
     }, [coleccionReparaciones, id]);
 
     if (!reparacion) return null;
 
     const changeInputRep = (field: string, value: string) => {
-        if (!reparacion) return;
-        setReparacion({
-            ...reparacion,
+        setReparacion(prevReparacion => prevReparacion ? {
+            ...prevReparacion,
             data: {
-                ...reparacion.data,
+                ...prevReparacion.data,
                 [field]: value
             }
-        });
+        } : prevReparacion);
     };
-    // Tengo que hacer una función aparte porque cuando modifica el estado de la reparación
-    // también tengo que modificar la prioridad. Se podría hacer diferente quizás con 
-    // id, value y otra prop del botón.
+
     const setEstado = (estado: Estado) => {
-        if (!reparacion) return;
+        if (!reparacion || !reparacionOriginal) return;
 
-        // TODO: Refactorizar los estados. Deben tener un id, incremental según el orden.
-        // TODO: Las reglas de negocio no deben estar acá. Se podría hacer con clases. En las clases hasta podría validar los campos.
-        // Si quiero bajar de estado desde Recibido, no puedo (ni seleccionar el mismo).
-        if (reparacion.data.EstadoRep === 'Recibido' && (
-            estado.nombre === 'Consulta' ||
-            estado.nombre === 'Respondido' ||
-            estado.nombre === 'Transito' ||
-            estado.nombre === 'Recibido'
-        )) return;
+        const estadoActual = estados[reparacionOriginal.data.EstadoRep];
+        const nuevaEtapa = estado.etapa;
 
-        if (reparacion.data.EstadoRep === 'Reparado' && (
-            estado.nombre === 'Consulta' ||
-            estado.nombre === 'Respondido' ||
-            estado.nombre === 'Transito' ||
-            estado.nombre === 'Recibido' ||
-            estado.nombre === 'Revisado' ||
-            estado.nombre === 'Presupuestado' ||
-            estado.nombre === 'Reparar' ||
-            estado.nombre === 'Repuestos' ||
-            estado.nombre === 'Reparado'
-        )) return;
+        // No permitir bajar de estado o seleccionar el mismo estado
+        // if (nuevaEtapa <= estadoActual.etapa) return;
 
-        if (reparacion.data.EstadoRep === 'Entregado')
-            return;
+        // Reglas específicas para ciertos estados
+        if (estadoActual.nombre === 'Recibido' && nuevaEtapa < estados['Recibido'].etapa) return;
+        if (estadoActual.nombre === 'Reparado' && nuevaEtapa < estados['Reparado'].etapa) return;
+        if (estadoActual.nombre === 'Entregado') return;
 
         type CampoFecha = 'FeConRep' | 'FeFinRep' | 'FeRecRep' | 'FeEntRep';
 
@@ -142,6 +127,7 @@ const Reparacion: FC<ReparacionProps> = (props) => {
             reparacion.data.DiagnosticoRep = await generarAutoDiagnostico(reparacion);
         }
         guardarReparacion(reparacion);
+        setReparacionOriginal(reparacion);
     }
 
     const handleGuardarReparacion = () => {
@@ -151,7 +137,6 @@ const Reparacion: FC<ReparacionProps> = (props) => {
             "warning",
             confirmaGuardarReparacion,
         );
-
     }
 
     const handleEliminarReparacion = () => {
@@ -178,7 +163,6 @@ const Reparacion: FC<ReparacionProps> = (props) => {
         enviarRecibo(reparacion);
     }
 
-    // Estas funciones, acá y en usuario, hay que modificarlas y hacer todo dentro de enviarSms()
     const handleSendSms = () => {
         const data = {
             number: reparacion?.data?.TelefonoUsu || '', /* iOS: ensure number is actually a string */
@@ -199,8 +183,20 @@ const Reparacion: FC<ReparacionProps> = (props) => {
         enviarSms(data);
     }
 
+    const handleGenerarAutoDiagnostico = async () => {
+        if (!reparacion) return;
+        const diagnostico = await generarAutoDiagnostico(reparacion);
+        setReparacion({
+            ...reparacion,
+            data: {
+                ...reparacion.data,
+                DiagnosticoRep: diagnostico,
+            }
+        });
+    }
+
     return (
-        // Sólo se renderiza el commponente presentacional cuando están los datos necesarios ya cargados.
+        // Sólo se renderiza el componente presentacional cuando están los datos necesarios ya cargados.
         estados && reparacion ?
             <ReparacionPresentational
                 admin={admin}
@@ -213,6 +209,7 @@ const Reparacion: FC<ReparacionProps> = (props) => {
                 handleSendEmail={handleSendEmail}
                 handleSendSms={handleSendSms}
                 handleSendRecibo={handleSendRecibo}
+                handleGenerarAutoDiagnostico={handleGenerarAutoDiagnostico}
             /> : null
     )
 };
@@ -221,7 +218,6 @@ const mapStateToProps = (state: RootState) => ({
     coleccionReparaciones: state.app.coleccionReparaciones
 });
 
-
 export default connect(
     mapStateToProps,
     {
@@ -229,4 +225,5 @@ export default connect(
         eliminarReparacion,
         confirm,
         generarAutoDiagnostico,
-    })(Reparacion);
+    }
+)(Reparacion);
