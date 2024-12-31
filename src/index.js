@@ -10,8 +10,6 @@ import './css/estilos.css';
 import dotenv from 'dotenv';
 dotenv.config();
 
-console.log("ENV", process.env);
-
 const startApp = () => {
     // console.log(device.cordova)
     ReactDOM.render(
