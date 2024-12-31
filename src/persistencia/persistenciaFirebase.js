@@ -148,7 +148,7 @@ export const getReparacionesPersistencia = (setReparacionesToRedux, usuario) => 
             ));
             // Ordeno por prioridad porque firebase no me deja ordenar y filtrar por distintos campos.
             reparaciones.sort((a, b) => a.data.PrioridadRep - b.data.PrioridadRep);
-            setReparacionesToRedux(reparaciones); 
+            setReparacionesToRedux(reparaciones);
         });
         return unsubscribeRep;
     } catch (error) {
@@ -225,22 +225,20 @@ export const eliminarReparacionPersistencia = (id) => {
 // GET todos los clientes
 export const getUsuariosPersistencia = (setUsuariosToRedux) => {
     console.log('getUsuariosPersistencia');
-    return new Promise((resolve, reject) => {
-        // const unsubscribe = null;
-        const q = query(collection(firestore, 'USUARIOS'), orderBy('NombreUsu'));
-        try {
-            const unsubscribeUsu = onSnapshot(q, (querySnapshot) => {
-                let usuarios = [];
-                querySnapshot.forEach(doc => usuarios.push({ id: doc.id, data: { ...doc.data(), EmailUsu: doc.id } }))
-                // console.log('usuarios en getUsuariosPersistencia(): ' + JSON.stringify(usuarios[0]));
-                // Esta función es una callback. Se llama igual que el action creator
-                setUsuariosToRedux(usuarios);
-                resolve(usuarios);
-            });
-        } catch (error) {
-            () => reject(error);
-        }
-    });
+    // const unsubscribe = null;
+    const q = query(collection(firestore, 'USUARIOS'), orderBy('NombreUsu'));
+    try {
+        const unsubscribeUsu = onSnapshot(q, (querySnapshot) => {
+            let usuarios = [];
+            querySnapshot.forEach(doc => usuarios.push({ id: doc.id, data: { ...doc.data(), EmailUsu: doc.id } }))
+            // console.log('usuarios en getUsuariosPersistencia(): ' + JSON.stringify(usuarios[0]));
+            // Esta función es una callback. Se llama igual que el action creator
+            setUsuariosToRedux(usuarios);
+        });
+        return unsubscribeUsu;
+    } catch (error) {
+        return error;
+    }
 }
 
 

@@ -10,7 +10,7 @@ import { useAppDispatch } from "../redux-tool-kit/hooks/useAppDispatch";
 import { useAppSelector } from "../redux-tool-kit/hooks/useAppSelector";
 import { Filtro } from "../types/Filtro";
 
-export const ListaReparaciones = () => {
+export default function ListaReparaciones() {
   const dispatch = useAppDispatch();
   const reparaciones = useAppSelector(state => state.app.coleccionReparaciones);
 
@@ -114,4 +114,4 @@ export const ListaReparaciones = () => {
       ))}
     </div>
   );
-};
+}

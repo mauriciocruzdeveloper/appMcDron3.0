@@ -3,13 +3,13 @@ import { Route, Switch, Redirect } from "react-router-dom";
 
 // Components
 import Inicio from "../components/Inicio.component";
-import ListaReparaciones from "../components/ListaReparaciones.component";
 import ListaUsuarios from "../components/ListaUsuarios.component";
 import Reparacion from "../components/Reparacion.container";
 import Usuario from "../components/Cliente.container";
 import Presupuesto from "../components/Presupuesto.component";
 import NavMcDron from "../components/NavMcDron.component";
 import Mensajes from "../components/Mensajes.container";
+import ListaReparaciones from "../components/ListaReparaciones.component";
 
 const InicioRoutes = ({ match, isLoggedIn, admin }) => {
 

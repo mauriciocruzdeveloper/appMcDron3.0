@@ -134,19 +134,22 @@ export const getReparacionesAsync = () => (
 };
 
 // OBTENER USUARIOS
-export const getUsuariosAsync = createAsyncThunk(
-  'app/getUsuarios',
-  async (_, { rejectWithValue }) => {
-    try {
-      const usuarios = await new Promise<any[]>((resolve, reject) => {
-        getUsuariosPersistencia(resolve);
-      });
-      return usuarios;
-    } catch (error: any) {
-      return rejectWithValue(error || 'Error al obtener usuarios');
-    }
+export const getUsuariosAsync = () => (
+  dispatch: AppDispatch,
+  getState: () => RootState
+): Unsubscribe | undefined => {
+  try {
+    const callbackUsuarios = (usuarios: any[]) => {
+      console.log('callbackUsuarios', usuarios);
+      dispatch(setUsuariosToRedux(usuarios));
+    };
+    const state = getState() as { app: AppState };
+    const unsubscribe = getUsuariosPersistencia(callbackUsuarios);
+    return unsubscribe as Unsubscribe;
+  } catch (error) {
+    return;
   }
-);
+};
 
 // ---------------------------------------------------------
 // SLICE PRINCIPAL
@@ -259,37 +262,22 @@ const appSlice = createSlice({
           tipoModal: 'danger',
         };
       })
-      // .addCase(getReparacionesAsync.pending, (state) => {
+      // .addCase(getUsuariosAsync.pending, (state) => {
       //   state.isFetching = true;
       // })
-      // .addCase(getReparacionesAsync.fulfilled, (state: AppState) => {
+      // .addCase(getUsuariosAsync.fulfilled, (state, action) => {
       //   state.isFetching = false;
+      //   state.coleccionUsuarios = action.payload;
       // })
-      // .addCase(getReparacionesAsync.rejected, (state, action) => {
+      // .addCase(getUsuariosAsync.rejected, (state, action) => {
       //   state.isFetching = false;
       //   state.modal = {
       //     showModal: true,
-      //     mensajeModal: `No se pudieron obtener reparaciones: ${action.payload}`,
+      //     mensajeModal: `No se pudieron obtener usuarios: ${action.payload}`,
       //     tituloModal: 'Error',
       //     tipoModal: 'danger',
       //   };
       // })
-      .addCase(getUsuariosAsync.pending, (state) => {
-        state.isFetching = true;
-      })
-      .addCase(getUsuariosAsync.fulfilled, (state, action) => {
-        state.isFetching = false;
-        state.coleccionUsuarios = action.payload;
-      })
-      .addCase(getUsuariosAsync.rejected, (state, action) => {
-        state.isFetching = false;
-        state.modal = {
-          showModal: true,
-          mensajeModal: `No se pudieron obtener usuarios: ${action.payload}`,
-          tituloModal: 'Error',
-          tipoModal: 'danger',
-        };
-      })
 
   },
 });
