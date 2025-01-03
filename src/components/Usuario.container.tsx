@@ -16,13 +16,13 @@ import {
     enviarEmail,
     enviarSms
 } from "../utils/utils";
-import ClientePresentational from './Cliente.presentational'
-import { ClienteType } from "../types/cliente";
+import UsuarioPresentational from './Usuario.presentational'
 import { RootState } from "../redux-DEPRECATED/App/App.reducer";
 import { SelectType } from "../types/types";
+import type { Usuario } from "../types/usuario";
 
 export interface UsuarioProps {
-    guardarUsuario: (usuario: ClienteType) => void;
+    guardarUsuario: (usuario: Usuario) => void;
     eliminarUsuario: (id: string) => void;
     confirm: (message: string, title: string, type: string, callback: () => void) => void;
     provinciasSelect: SelectType[];
@@ -52,7 +52,7 @@ const Usuario = (props: UsuarioProps) => {
 
     const { id } = useParams<ParamTypes>();
 
-    const [ cliente, setCliente ] = useState<ClienteType>();
+    const [ cliente, setCliente ] = useState<Usuario>();
 
     const inicializaFormulario = useCallback(async () => {
         if (!provinciasSelect?.length) await getProvinciasSelect();
@@ -153,7 +153,7 @@ const Usuario = (props: UsuarioProps) => {
     return(
                 // Sólo se renderiza el commponente presentacional cuando están los datos necesarios ya cargados.
         cliente && provinciasSelect.length ?
-        <ClientePresentational 
+        <UsuarioPresentational 
             cliente={cliente}
             provinciasSelect={provinciasSelect}
             localidadesSelect={localidadesSelect}

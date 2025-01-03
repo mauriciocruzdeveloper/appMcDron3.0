@@ -1,11 +1,11 @@
 import React from 'react';
 import Select, { SingleValue } from 'react-select';
-import { ClienteType } from '../types/cliente';
 import { ChangeEvent } from 'react';
 import { InputType, SelectType } from '../types/types';
+import { Usuario } from '../types/usuario';
 
-interface ClientePresentationalProps {
-    cliente: ClienteType;
+interface UsuarioPresentationalProps {
+    cliente: Usuario;
     provinciasSelect: SelectType[];
     localidadesSelect: SelectType[];
     onChangeProvincias: (value: string) => void;
@@ -17,7 +17,7 @@ interface ClientePresentationalProps {
     handleSendSms: () => void;
 }
 
-const ClientePresentational = (props: ClientePresentationalProps) => {
+const UsuarioPresentational = (props: UsuarioPresentationalProps) => {
     console.log('USUARIO presentational');
 
     const { 
@@ -175,4 +175,4 @@ const ClientePresentational = (props: ClientePresentationalProps) => {
     )
 }
 
-export default ClientePresentational;
+export default UsuarioPresentational;

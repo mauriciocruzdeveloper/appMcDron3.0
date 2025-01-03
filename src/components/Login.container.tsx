@@ -22,7 +22,7 @@ export interface LoginProps {
 
 export default function Login() {
   const dispatch = useAppDispatch();
-  
+
   const [ loginData, setLoginData ] = useState(() => {
     const savedLoginData = localStorage.getItem('loginData');
     return savedLoginData ? JSON.parse(savedLoginData) : INIT_LOGIN_DATA;
@@ -49,7 +49,6 @@ export default function Login() {
   // Manejador para el botón login. 
   const handleLogin = async () => {
     // LLama al action creator (asincrónico) 'login'
-    console.log('!!! handleLogin', loginData);
     await dispatch(loginAsync(loginData));
     // Guarda los datos de login en localStorage solo si "Remember me" está marcado
     if (rememberMe) {
