@@ -1,5 +1,4 @@
-import store from './redux-DEPRECATED/store.js';
-
+import store from "./redux-tool-kit/store";
 
 export const token = () => {
     const state = store.getState();

@@ -4,14 +4,14 @@ import history from '../history';
 import { useAppDispatch } from '../redux-tool-kit/hooks/useAppDispatch';
 import { useAppSelector } from '../redux-tool-kit/hooks/useAppSelector';
 import { getUsuariosAsync } from '../redux-tool-kit/slices/appSlice';
-import { ClienteType } from '../types/cliente';
+import { Usuario } from '../types/usuario';
 
 export default function ListaUsuarios() {
   const dispatch = useAppDispatch();
   const coleccionUsuarios = useAppSelector((state) => state.app.coleccionUsuarios);
 
   const [filter, setFilter] = useState<string>('');
-  const [usuariosList, setUsuariosList] = useState<ClienteType[]>([]);
+  const [usuariosList, setUsuariosList] = useState<Usuario[]>([]);
 
   useEffect(() => {
     const unsubscribe = dispatch(getUsuariosAsync());

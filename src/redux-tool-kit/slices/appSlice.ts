@@ -122,7 +122,6 @@ export const getReparacionesAsync = () => (
 ): Unsubscribe | undefined => {
   try {
     const callbackReparaciones = (reparaciones: ReparacionType[]) => {
-      console.log('!!! callbackReparaciones', reparaciones);
       dispatch(setReparaciones(reparaciones));
     }
     const state = getState() as { app: AppState };
@@ -207,7 +206,6 @@ const appSlice = createSlice({
       state.usuario = action.payload;
     },
     setReparaciones: (state, action: PayloadAction<ReparacionType[]>) => {
-      console.log('!!! setReparaciones en appSlice', action.payload);
       state.coleccionReparaciones = action.payload;
     },
     setUsuariosToRedux: (state, action: PayloadAction<any[]>) => {
