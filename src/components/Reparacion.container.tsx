@@ -17,6 +17,7 @@ import { Estado } from "../types/estado";
 import { ReparacionType } from "../types/reparacion";
 import { generarAutoDiagnostico } from "../redux/App/App.actions";
 import { enviarEmailVacio, enviarRecibo } from "../utils/sendEmails";
+import { subirFotoReparacionPersistencia, eliminarFotoReparacionPersistencia } from "../persistencia/subeFotoFirebase";
 
 interface ReparacionProps {
     guardarReparacion: (reparacion: ReparacionType) => void;
@@ -195,6 +196,31 @@ const Reparacion: FC<ReparacionProps> = (props) => {
         });
     }
 
+    const handleFotoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (!e.target.files?.length || !reparacion) return;
+        const file = e.target.files[0];
+        const urlFoto = await subirFotoReparacionPersistencia(reparacion.id, file);
+        setReparacion({
+          ...reparacion,
+          data: {
+            ...reparacion.data,
+            urlsFotos: [...(reparacion.data.urlsFotos || []), urlFoto]
+          }
+        });
+    };
+
+    const handleDeleteFoto = async (fotoUrl: string) => {
+        if (!reparacion) return;
+        await eliminarFotoReparacionPersistencia(reparacion.id, fotoUrl);
+        setReparacion({
+          ...reparacion,
+          data: {
+            ...reparacion.data,
+            urlsFotos: reparacion.data.urlsFotos?.filter(url => url !== fotoUrl)
+          }
+        });
+    };
+
     return (
         // Sólo se renderiza el componente presentacional cuando están los datos necesarios ya cargados.
         estados && reparacion ?
@@ -210,6 +236,8 @@ const Reparacion: FC<ReparacionProps> = (props) => {
                 handleSendSms={handleSendSms}
                 handleSendRecibo={handleSendRecibo}
                 handleGenerarAutoDiagnostico={handleGenerarAutoDiagnostico}
+                handleFotoChange={handleFotoChange}
+                handleDeleteFoto={handleDeleteFoto}
             /> : null
     )
 };

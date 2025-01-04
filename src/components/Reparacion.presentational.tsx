@@ -2,7 +2,7 @@ import { convertTimestampCORTO } from "../utils/utils";
 // Components
 import TextareaAutosize from "react-textarea-autosize";
 import "bootstrap-icons/font/bootstrap-icons.css";
-import { ChangeEvent } from "react";
+import { ChangeEvent, useState } from "react";
 import { InputType } from "../types/types";
 import { ReparacionType } from "../types/reparacion";
 import { Estado, Estados } from "../types/estado";
@@ -19,6 +19,8 @@ interface ReparacionPresentationalProps {
     handleSendSms: () => void;
     handleSendRecibo: () => void;
     handleGenerarAutoDiagnostico: () => void;
+    handleFotoChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+    handleDeleteFoto: (url: string) => void;
 }
 
 const ReparacionPresentational = (props: ReparacionPresentationalProps) => {
@@ -34,9 +36,13 @@ const ReparacionPresentational = (props: ReparacionPresentationalProps) => {
         handleSendSms,
         handleSendRecibo,
         handleGenerarAutoDiagnostico,
+        handleFotoChange,
+        handleDeleteFoto,
     } = props;
 
     console.log("REPARACION presentational");
+
+    const [fotoSeleccionada, setFotoSeleccionada] = useState<string | null>(null);
 
     const handleOnChange = (event: ChangeEvent<InputType>) => {
         const target = event.target;
@@ -51,6 +57,8 @@ const ReparacionPresentational = (props: ReparacionPresentationalProps) => {
         const field = target.id;
         changeInputRep(field, value);
     }
+
+    console.log('!!! reparacion', reparacion);
 
     return (
         <div
@@ -439,7 +447,81 @@ const ReparacionPresentational = (props: ReparacionPresentationalProps) => {
                     </div>
                 </div>
             </div>
-
+            <div className="card mb-3">
+                <div className="card-body">
+                    <label className="form-label">Subir Foto</label>
+                    <input type="file" className="form-control" onChange={handleFotoChange} />
+                    <div className="d-flex flex-wrap mt-3">
+                        {reparacion.data.urlsFotos?.map((url, idx) => (
+                            <div
+                                key={idx}
+                                style={{
+                                    width: "33%",
+                                    margin: "4px",
+                                    backgroundColor: "#f1f1f1"
+                                }}
+                            >
+                                <div
+                                    style={{
+                                        height: "150px",
+                                        display: "flex",
+                                        justifyContent: "center",
+                                        alignItems: "center",
+                                        cursor: "pointer",
+                                    }}
+                                    onClick={() => setFotoSeleccionada(url)}
+                                >
+                                    <img
+                                        src={url}
+                                        alt="Foto Reparación"
+                                        style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain" }}
+                                    />
+                                </div>
+                                {admin && (
+                                    <div className="text-center mt-2">
+                                        <button
+                                            type="button"
+                                            className="btn btn-sm btn-danger"
+                                            onClick={() => handleDeleteFoto(url)}
+                                        >
+                                            Borrar
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
+                        ))}
+                    </div>
+                    {fotoSeleccionada && (
+                        <div
+                            style={{
+                                position: "fixed",
+                                top: 0, left: 0,
+                                width: "100%", height: "100%",
+                                backgroundColor: "rgba(0,0,0,0.7)",
+                                display: "flex", alignItems: "center", justifyContent: "center"
+                            }}
+                        >
+                            <div style={{ position: "relative" }}>
+                                <button
+                                    type="button"
+                                    style={{
+                                        position: "absolute", top: "-30px", right: "-30px"
+                                    }}
+                                    className="btn btn-sm btn-light"
+                                    onClick={() => setFotoSeleccionada(null)}
+                                >
+                                    X
+                                </button>
+                                <img
+                                    src={fotoSeleccionada}
+                                    alt="Foto Ampliada"
+                                    style={{ maxHeight: "80vh", maxWidth: "90vw", objectFit: "contain" }}
+                                />
+                            </div>
+                        </div>
+                    )}
+                </div>
+            </div>
             {admin ? // Sólo para administrador
                 <div className="text-center">
                     <button
