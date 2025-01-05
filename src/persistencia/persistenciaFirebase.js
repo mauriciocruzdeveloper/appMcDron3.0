@@ -34,6 +34,7 @@ import { config as firebaseConfig } from '../firebase/configProd'; // Para produ
 import { provincias } from '../datos/provincias.json';
 import { localidades } from '../datos/localidades.json';
 import { setError } from '../redux-tool-kit/slices/appSlice';
+import { collectionNames } from '../types/collectionNames';
 
 // Initialize Firebase
 const firebaseApp = initializeApp(firebaseConfig);
@@ -159,7 +160,7 @@ export const getReparacionesPersistencia = (setReparacionesToRedux, usuario) => 
 // GET Reparación por id
 export const getReparacionPersistencia = (id) => {
     return new Promise((resolve, reject) => {
-        const docRef = doc(firestore, 'REPARACIONES', id);
+        const docRef = doc(firestore, collectionNames.REPARACIONES, id);
         getDoc(docRef)
             .then(docSnap => {
                 const idCliente = docSnap.data()?.UsuarioRep || '';
@@ -188,7 +189,7 @@ export const guardarReparacionPersistencia = (reparacion) => {
         // El id es el id o sino la fecha de consulta.
         reparacion.id = (reparacion.id || reparacion.data?.FeConRep.toString());
         setDoc(
-            doc(firestore, 'REPARACIONES', reparacion.id),
+            doc(firestore, collectionNames.REPARACIONES, reparacion.id), 
             reparacion.data
         )
             .then(docReparacion => {
@@ -205,15 +206,15 @@ export const guardarReparacionPersistencia = (reparacion) => {
 // DELETE Reparación por id
 export const eliminarReparacionPersistencia = (id) => {
     return new Promise((resolve, reject) => {
-        deleteDoc(doc(firestore, 'REPARACIONES', id))
-            .then(() => {
-                console.log('borrando reparación ok');
-                resolve(id);
-            })
-            .catch(error => {
-                console.log('Error: ' + error);
-                reject(error);
-            });
+        deleteDoc(doc(firestore, collectionNames.REPARACIONES, id))
+        .then(() => {
+            console.log('borrando reparación ok');
+            resolve(id);
+        })
+        .catch(error => {
+            console.log('Error: ' + error);
+            reject(error);
+        });
 
     })
 };
@@ -262,7 +263,7 @@ const triggerUsuarioReparaciones = (usuario) => {
         try {
             console.log('enter try triggerUsuarioReparaciones()');
             console.log('enter promise triggerUsuarioReparaciones()');
-            const q = query(collection(firestore, 'REPARACIONES'), where('UsuarioRep', '==', usuario.id));
+            const q = query(collection(firestore, collectionNames.REPARACIONES), where('UsuarioRep', '==', usuario.id));
             const docs = await getDocs(q);
 
             docs.forEach(doc => {
@@ -312,7 +313,7 @@ export const guardarUsuarioPersistencia = (usuario) => {
 export const eliminarUsuarioPersistencia = (id) => {
     return new Promise(async (resolve, reject) => {
         // Busco si hay alguna reparación relacionada al usuario a eliminar
-        const refCol = collection(firestore, 'REPARACIONES');
+        const refCol = collection(firestore, collectionNames.REPARACIONES);
         const q = query(refCol, where('UsuarioRep', '==', id));
         const querySnapshot = await getDocs(q);
         // Si la consulta no arroja ningún resultado, se elimina, sino da error y muestra reparación relacionada.
@@ -592,7 +593,7 @@ function hash_method(inputAHash, inputBHash) { return inputAHash ^ inputBHash }
 
 // export const getReparacionesPersistencia = () => {
 //     return new Promise((resolve, reject) => {
-//         const reparacionesRef = collection(firestore, 'REPARACIONES');
+//         const reparacionesRef = collection(firestore, collectionNames.REPARACIONES);
 //         const q = query(reparacionesRef, orderBy('PrioridadRep'));
 //         getDocs(q)
 //         .then(querySnapshot => {

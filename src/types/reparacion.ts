@@ -26,6 +26,7 @@ export interface DataReparacion {
     FeEntRep: number;
     TxtEntregaRep: string;
     SeguimientoEntregaRep: string;
+    urlsFotos?: string[];
 }
 
 export interface ReparacionType {
