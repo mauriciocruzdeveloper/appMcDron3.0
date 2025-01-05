@@ -457,7 +457,7 @@ const ReparacionPresentational = (props: ReparacionPresentationalProps) => {
                                 key={idx}
                                 style={{
                                     width: "33%",
-                                    margin: "4px",
+                                    padding: "4px",
                                     backgroundColor: "#f1f1f1"
                                 }}
                             >
