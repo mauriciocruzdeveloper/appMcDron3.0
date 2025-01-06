@@ -449,14 +449,25 @@ const ReparacionPresentational = (props: ReparacionPresentationalProps) => {
             </div>
             <div className="card mb-3">
                 <div className="card-body">
-                    <label className="form-label">Subir Foto</label>
-                    <input type="file" className="form-control" onChange={handleFotoChange} />
+                    <div className="d-flex w-100 justify-content-between align-items-center">
+                        <h5 className="card-title bluemcdron">FOTOS</h5>
+                        <div className="d-flex justify-content-start mb-2">
+                            <label className="btn btn-outline-secondary bg-bluemcdron text-white">
+                                Subir Foto
+                                <input
+                                    type="file"
+                                    onChange={handleFotoChange}
+                                    style={{ display: "none" }}
+                                />
+                            </label>
+                        </div>
+                    </div>
                     <div className="d-flex flex-wrap mt-3">
                         {reparacion.data.urlsFotos?.map((url, idx) => (
                             <div
                                 key={idx}
                                 style={{
-                                    width: "33%",
+                                    width: "calc((100% - (2 * 8px)) / 3)",
                                     margin: "4px",
                                     backgroundColor: "#f1f1f1"
                                 }}
@@ -479,6 +490,12 @@ const ReparacionPresentational = (props: ReparacionPresentationalProps) => {
                                 </div>
                                 {admin && (
                                     <div className="text-center mt-2">
+                                        <a
+                                            href={url}
+                                            className="btn btn-sm btn-success me-2"
+                                        >
+                                            Descargar
+                                        </a>
                                         <button
                                             type="button"
                                             className="btn btn-sm btn-danger"
@@ -505,7 +522,10 @@ const ReparacionPresentational = (props: ReparacionPresentationalProps) => {
                                 <button
                                     type="button"
                                     style={{
-                                        position: "absolute", top: "-30px", right: "-30px"
+                                        position: "absolute",
+                                        top: 0,
+                                        right: 0,
+                                        margin: "8px"
                                     }}
                                     className="btn btn-sm btn-light"
                                     onClick={() => setFotoSeleccionada(null)}
