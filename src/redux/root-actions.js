@@ -21,7 +21,8 @@ import {
     eliminarUsuario,
     setUsuario,
     getMessages,
-    sendMessage
+    sendMessage,
+    enviarRecibo,
 } from "./App/App.actions";
 
 export { 
@@ -46,5 +47,6 @@ export {
     eliminarUsuario,
     setUsuario,
     getMessages,
-    sendMessage
+    sendMessage,
+    enviarRecibo,
 }
