@@ -17,18 +17,16 @@ import { callEndpoint, enviarEmail } from "./utils";
 
 export const enviarRecibo = (reparacion: ReparacionType): void => {
     const body = {
-        cliente: reparacion.data.UsuarioRep,
+        cliente: reparacion.data.NombreUsu,
         nro_reparacion: reparacion.id,
         equipo: reparacion.data.DroneRep,
-        fecha_ingreso: new Date(reparacion.data.FeRecRep).toLocaleDateString(),
+        fecha_ingreso: new Date(Number(reparacion.data.FeRecRep)).toLocaleDateString(),
         observaciones: reparacion.data.DescripcionUsuRep,
         telefono: reparacion.data.TelefonoUsu,
         email: reparacion.data.EmailUsu
     };
 
     const url = process.env.REACT_APP_API_URL + '/send_recibo';
-
-    console.log('!!! url', url);
 
     callEndpoint({
         url,
