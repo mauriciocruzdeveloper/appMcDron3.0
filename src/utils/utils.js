@@ -1,7 +1,9 @@
+/* eslint-disable @typescript-eslint/explicit-module-boundary-types */
 import {
     notificacionesPorMensajesPersistencia,
     actualizarLeidosPersistencia
 } from '../persistencia/persistenciaFirebase';
+import { HttpMethod } from '../types/httpMethods';
 
 export const convertTimestampCORTO = (timestamp) => {
     let d = new Date(parseInt(timestamp) * 1), // Convert the passed timestamp to milliseconds
@@ -28,6 +30,50 @@ export const enviarEmail = (data) => {
         body: data.body,
     });
 }
+
+export const callEndpoint = async (params) => {
+    const {
+        url,
+        method = HttpMethod.GET,
+        body = null,
+        apiKey = process.env.REACT_APP_ENDPOINT_API_KEY
+    } = params;
+
+    try {
+        // Configuración básica de los headers
+        const headers = {
+            'Content-Type': 'application/json',
+            'X-API-KEY': apiKey, // Agregamos la API Key al header
+        };
+
+        // Configuración de la solicitud
+        const options = {
+            method,
+            headers,
+        };
+
+        // Si el método tiene un cuerpo (POST, PUT, etc.), lo añadimos
+        if (body) {
+            options.body = JSON.stringify(body);
+        }
+
+        // Realizamos la solicitud
+        const response = await fetch(url, options);
+
+        // Comprobamos si la respuesta es exitosa
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'Error al llamar al endpoint');
+        }
+
+        // Retornamos los datos en formato JSON
+        return await response.json();
+    } catch (error) {
+        console.error('Error al llamar al endpoint:', error.message);
+        return null;
+    }
+};
+
 
 export const enviarSms = ({ number, message, options, success, error }) => {
     // eslint-disable-next-line no-undef
