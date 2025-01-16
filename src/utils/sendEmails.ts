@@ -1,6 +1,7 @@
 import { EMAIL_REPARACIONES } from "../types/constantes";
 import { HttpMethod } from "../types/httpMethods";
 import { ReparacionType } from "../types/reparacion";
+import { Response } from "../types/response";
 import { callEndpoint, enviarEmail } from "./utils";
 
 // export const enviarRecibo = (reparacion: ReparacionType): void => {
@@ -15,25 +16,28 @@ import { callEndpoint, enviarEmail } from "./utils";
 //     enviarEmail(datosEmail);
 // }
 
-export const enviarRecibo = (reparacion: ReparacionType): void => {
-    const body = {
-        cliente: reparacion.data.NombreUsu,
-        nro_reparacion: reparacion.id,
-        equipo: reparacion.data.DroneRep,
-        fecha_ingreso: new Date(Number(reparacion.data.FeRecRep)).toLocaleDateString(),
-        observaciones: reparacion.data.DescripcionUsuRep,
-        telefono: reparacion.data.TelefonoUsu,
-        email: reparacion.data.EmailUsu
-    };
 
-    const url = process.env.REACT_APP_API_URL + '/send_recibo';
+// export const enviarRecibo = async (reparacion: ReparacionType): Promise<Response> => {
+//     const body = {
+//         cliente: reparacion.data.NombreUsu,
+//         nro_reparacion: reparacion.id,
+//         equipo: reparacion.data.DroneRep,
+//         fecha_ingreso: new Date(Number(reparacion.data.FeRecRep)).toLocaleDateString(),
+//         observaciones: reparacion.data.DescripcionUsuRep,
+//         telefono: reparacion.data.TelefonoUsu,
+//         email: reparacion.data.EmailUsu
+//     };
 
-    callEndpoint({
-        url,
-        method: HttpMethod.POST,
-        body,
-    });
-}
+//     const url = process.env.REACT_APP_API_URL + '/send_recibo';
+
+//     const response = await callEndpoint({
+//         url,
+//         method: HttpMethod.POST,
+//         body,
+//     });
+
+//     return response;
+// }
 
 export const enviarEmailVacio = (reparacion: ReparacionType): void => {
     const datosEmail = {
