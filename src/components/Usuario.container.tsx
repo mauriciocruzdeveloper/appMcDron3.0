@@ -18,35 +18,19 @@ import {
 } from "../utils/utils";
 import UsuarioPresentational from './Usuario.presentational'
 import { RootState } from "../redux-DEPRECATED/App/App.reducer";
-import { SelectType } from "../types/types";
 import type { Usuario } from "../types/usuario";
-
-export interface UsuarioProps {
-    guardarUsuario: (usuario: Usuario) => void;
-    eliminarUsuario: (id: string) => void;
-    confirm: (message: string, title: string, type: string, callback: () => void) => void;
-    provinciasSelect: SelectType[];
-    localidadesSelect: SelectType[];
-    getProvinciasSelect: () => void;
-    getLocalidadesPorProvincia: (provincia: string) => void;
-    coleccionUsuarios: any[];
-}
+import { useAppSelector } from "../redux-tool-kit/hooks/useAppSelector";
+import { useAppDispatch } from "../redux-tool-kit/hooks/useAppDispatch";
 
 interface ParamTypes {
     id: string;
 }
 
-const Usuario = (props: UsuarioProps) => {
-    const { 
-        guardarUsuario,
-        eliminarUsuario,
-        confirm,
-        provinciasSelect,
-        localidadesSelect,
-        getProvinciasSelect,
-        getLocalidadesPorProvincia,
-        coleccionUsuarios,
-    } = props;
+function UsuarioComponent(): React.ReactElement | null {
+    const dispatch = useAppDispatch();
+    const provinciasSelect = useAppSelector(state => state.app.provinciasSelect);
+    const localidadesSelect = useAppSelector(state => state.app.localidadesSelect);
+    const coleccionUsuarios = useAppSelector(state => state.app.coleccionUsuarios);
 
     console.log("USUARIO container");
 
@@ -55,7 +39,7 @@ const Usuario = (props: UsuarioProps) => {
     const [ cliente, setCliente ] = useState<Usuario>();
 
     const inicializaFormulario = useCallback(async () => {
-        if (!provinciasSelect?.length) await getProvinciasSelect();
+        if (!provinciasSelect?.length) await dispatch(getProvinciasSelect());
         setCliente(coleccionUsuarios.find(usuario => usuario.id == id))
     }, [coleccionUsuarios]);
 
@@ -183,4 +167,4 @@ export default connect(
         confirm,
         getProvinciasSelect,
         getLocalidadesPorProvincia,
-    })(Usuario);
+    })(UsuarioComponent);
