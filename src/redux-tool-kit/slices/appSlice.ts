@@ -40,7 +40,6 @@ interface AppState {
   modal: ModalState;
   confirm: ConfirmState;
   login: LoginState;
-  usuario: Record<string, any>;
   coleccionReparaciones: ReparacionType[];
   coleccionMensajes: any[];
   coleccionUsuarios: Usuario[];
@@ -48,6 +47,7 @@ interface AppState {
   localidadesSelect: any[];
   usuariosSelect: any[];
   error: string;
+  usuario: Usuario | null;
 }
 
 // Estado inicial
@@ -72,7 +72,7 @@ const initialState: AppState = {
     password: '',
     token: '',
   },
-  usuario: {},
+  usuario: null,
   coleccionReparaciones: [],
   coleccionMensajes: [],
   coleccionUsuarios: [],
@@ -202,7 +202,7 @@ const appSlice = createSlice({
         callBackConfirm: callBack,
       };
     },
-    setUsuario: (state, action: PayloadAction<Record<string, any>>) => {
+    setUsuario: (state, action: PayloadAction<Usuario>) => {
       state.usuario = action.payload;
     },
     setReparaciones: (state, action: PayloadAction<ReparacionType[]>) => {

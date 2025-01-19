@@ -1,6 +1,6 @@
-import { useEffect, useState, FC } from "react";
+import React from "react";
+import { useEffect, useState } from "react";
 import history from "../history";
-import { connect } from "react-redux";
 import { useParams } from "react-router-dom";
 import {
     guardarReparacion,
@@ -13,38 +13,23 @@ import {
 } from "../utils/utils";
 import { estados } from '../datos/estados';
 import ReparacionPresentational from './Reparacion.presentational';
-import { RootState } from "../redux-DEPRECATED/App/App.reducer";
 import { Estado } from "../types/estado";
 import { ReparacionType } from "../types/reparacion";
 import { generarAutoDiagnostico } from "../redux-DEPRECATED/App/App.actions";
 import { enviarEmailVacio } from "../utils/sendEmails";
 import { subirFotoReparacionPersistencia, eliminarFotoReparacionPersistencia } from "../persistencia/subeFotoFirebase";
-
-interface ReparacionProps {
-    guardarReparacion: (reparacion: ReparacionType) => void;
-    eliminarReparacion: (id: string) => void;
-    confirm: (message: string, title: string, type: string, callback: () => void) => void;
-    generarAutoDiagnostico: (reparacion: ReparacionType) => Promise<string>;
-    enviarRecibo: (reparacion: ReparacionType) => void;
-    coleccionReparaciones: ReparacionType[];
-    admin: boolean;
-}
+import { useAppSelector } from "../redux-tool-kit/hooks/useAppSelector";
+import { useAppDispatch } from "../redux-tool-kit/hooks/useAppDispatch";
 
 interface ParamTypes {
     id: string;
 }
 
-const Reparacion: FC<ReparacionProps> = (props) => {
 
-    const {
-        guardarReparacion,
-        eliminarReparacion,
-        confirm,
-        generarAutoDiagnostico,
-        enviarRecibo,
-        coleccionReparaciones,
-        admin,
-    } = props;
+export default function Reparacion(): React.ReactElement | null {
+    const dispatch = useAppDispatch();
+    const coleccionReparaciones = useAppSelector(state => state.app.coleccionReparaciones);
+    const isAdmin = useAppSelector(state => state.app.usuario?.data.Admin) ?? false;
 
     console.log("REPARACION container");
 
@@ -128,33 +113,33 @@ const Reparacion: FC<ReparacionProps> = (props) => {
 
     const confirmaGuardarReparacion = async () => {
         if (reparacion.data.EstadoRep === 'Recibido' && !reparacion.data.DiagnosticoRep) {
-            reparacion.data.DiagnosticoRep = await generarAutoDiagnostico(reparacion);
+            reparacion.data.DiagnosticoRep = await dispatch(generarAutoDiagnostico(reparacion));
         }
-        guardarReparacion(reparacion);
+        dispatch(guardarReparacion(reparacion));
         setReparacionOriginal(reparacion);
     }
 
     const handleGuardarReparacion = () => {
-        confirm(
+        dispatch(confirm(
             "Guardar Reparación?",
             "Atención",
             "warning",
             confirmaGuardarReparacion,
-        );
+        ));
     }
 
     const handleEliminarReparacion = () => {
         if (!reparacion) return;
 
-        confirm(
+        dispatch(confirm(
             "Eliminar Reparación?",
             "Atención",
             "danger",
             async () => {
-                await eliminarReparacion(reparacion.id);
+                await dispatch(eliminarReparacion(reparacion.id));
                 history.goBack();
             }
-        );
+        ));
     }
 
     const handleSendEmail = () => {
@@ -164,7 +149,7 @@ const Reparacion: FC<ReparacionProps> = (props) => {
 
     const handleSendRecibo = () => {
         if (!reparacion) return;
-        enviarRecibo(reparacion);
+        dispatch(enviarRecibo(reparacion));
     }
 
     const handleSendSms = () => {
@@ -189,7 +174,7 @@ const Reparacion: FC<ReparacionProps> = (props) => {
 
     const handleGenerarAutoDiagnostico = async () => {
         if (!reparacion) return;
-        const diagnostico = await generarAutoDiagnostico(reparacion);
+        const diagnostico = await dispatch(generarAutoDiagnostico(reparacion));
         setReparacion({
             ...reparacion,
             data: {
@@ -228,7 +213,7 @@ const Reparacion: FC<ReparacionProps> = (props) => {
         // Sólo se renderiza el componente presentacional cuando están los datos necesarios ya cargados.
         estados && reparacion ?
             <ReparacionPresentational
-                admin={admin}
+                admin={isAdmin}
                 reparacion={reparacion}
                 estados={estados}
                 setEstado={setEstado}
@@ -243,19 +228,4 @@ const Reparacion: FC<ReparacionProps> = (props) => {
                 handleDeleteFoto={handleDeleteFoto}
             /> : null
     )
-};
-
-const mapStateToProps = (state: RootState) => ({
-    coleccionReparaciones: state.app.coleccionReparaciones
-});
-
-export default connect(
-    mapStateToProps,
-    {
-        guardarReparacion,
-        eliminarReparacion,
-        confirm,
-        generarAutoDiagnostico,
-        enviarRecibo,
-    }
-)(Reparacion);
+}
