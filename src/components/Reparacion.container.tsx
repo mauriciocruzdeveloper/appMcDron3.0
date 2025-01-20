@@ -124,7 +124,7 @@ export default function Reparacion(): React.ReactElement | null {
             "Guardar Reparación?",
             "Atención",
             "warning",
-            confirmaGuardarReparacion,
+            confirmaGuardarReparacion, // TODO: Corregir esta averración. No se puede usar dispatch dentro de un dispatch. Menos una función en el payload.
         ));
     }
 
