@@ -17,7 +17,6 @@ import {
     enviarSms
 } from "../utils/utils";
 import UsuarioPresentational from './Usuario.presentational'
-import { RootState } from "../redux-DEPRECATED/App/App.reducer";
 import type { Usuario } from "../types/usuario";
 import { useAppSelector } from "../redux-tool-kit/hooks/useAppSelector";
 import { useAppDispatch } from "../redux-tool-kit/hooks/useAppDispatch";
@@ -26,7 +25,7 @@ interface ParamTypes {
     id: string;
 }
 
-function UsuarioComponent(): React.ReactElement | null {
+export default function UsuarioComponent(): React.ReactElement | null {
     const dispatch = useAppDispatch();
     const provinciasSelect = useAppSelector(state => state.app.provinciasSelect);
     const localidadesSelect = useAppSelector(state => state.app.localidadesSelect);
@@ -60,30 +59,30 @@ function UsuarioComponent(): React.ReactElement | null {
     };
 
     const handleGuardarUsuario = () => {
-        confirm(
+        dispatch(confirm(
             "Guardar Usuario?",
             "Atención",
             "warning",
-            () => guardarUsuario(cliente)
-        );
+            () => dispatch(guardarUsuario(cliente)) // TODO: Corregir esta averración. No se puede usar dispatch dentro de un dispatch.
+        ));
     }
 
     const handleEliminarUsuario = () => {
-        confirm(
+        dispatch(confirm(
             "Eliminar Reparación?",
             "Atención",
             "danger",
             async () => {
-                await eliminarUsuario(cliente.id);
+                await dispatch(eliminarUsuario(cliente.id)); // TODO: Corregir esta averración. No se puede usar dispatch dentro de un dispatch.
                 history.goBack();
             }
-        );
+        ));
     }
 
     const handleOnChangeProvincias = async (value: string) => {
         if (!cliente) return;
 
-        await getLocalidadesPorProvincia(value);
+        await dispatch(getLocalidadesPorProvincia(value));
         setCliente({ 
             ...cliente, 
             data: {
@@ -151,20 +150,3 @@ function UsuarioComponent(): React.ReactElement | null {
         /> : null
     )
 }
-
-const mapStateToProps = (state: RootState) => ({
-    provinciasSelect: state.app?.provinciasSelect,
-    localidadesSelect: state.app?.localidadesSelect,
-    coleccionUsuarios: state.app?.coleccionUsuarios
-  });
-
-
-export default connect(
-    mapStateToProps, 
-    {
-        guardarUsuario,
-        eliminarUsuario, 
-        confirm,
-        getProvinciasSelect,
-        getLocalidadesPorProvincia,
-    })(UsuarioComponent);
