@@ -1,6 +1,5 @@
 import { ReparacionType } from '../../types/reparacion';
 import { SelectType } from '../../types/types';
-import { ClienteType } from '../../types/cliente';
 import { AppTypes } from './App.types';
 import { Usuario } from '../../types/usuario';
 
@@ -34,7 +33,7 @@ export interface AppState {
   usuario: Usuario;
   coleccionReparaciones: ReparacionType[];
   coleccionMensajes: any[];
-  coleccionUsuarios: ClienteType[];
+  coleccionUsuarios: Usuario[];
   provinciasSelect: SelectType[];
   localidadesSelect: SelectType[];
   usuariosSelect: any[];

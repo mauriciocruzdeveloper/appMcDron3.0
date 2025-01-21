@@ -3,10 +3,10 @@ import { useEffect, useState } from 'react';
 import history from '../history';
 import { useAppDispatch } from '../redux-tool-kit/hooks/useAppDispatch';
 import { useAppSelector } from '../redux-tool-kit/hooks/useAppSelector';
-import { getUsuariosAsync } from '../redux-tool-kit/slices/appSlice';
 import { Usuario } from '../types/usuario';
+import { getUsuariosAsync } from '../redux-tool-kit/app/app.slice';
 
-export default function ListaUsuarios() {
+export default function ListaUsuarios(): JSX.Element {
   const dispatch = useAppDispatch();
   const coleccionUsuarios = useAppSelector((state) => state.app.coleccionUsuarios);
 
