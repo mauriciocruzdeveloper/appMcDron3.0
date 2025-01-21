@@ -2,8 +2,8 @@ import React, { useEffect } from 'react';
 import { useState } from 'react';
 import history from '../history';
 import LoginPresentational from './Login.presentational'; // componente 'no inteligente' de presentación
-import { loginAsync } from '../redux-tool-kit/slices/appSlice';
 import { useAppDispatch } from '../redux-tool-kit/hooks/useAppDispatch';
+import { loginAsync } from '../redux-tool-kit/app/app.actions';
 
 export interface LoginData {
   email: string;

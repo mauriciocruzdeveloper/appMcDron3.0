@@ -11,22 +11,10 @@ import { ReparacionType } from '../../types/reparacion';
 import { Unsubscribe } from 'firebase/auth';
 import { AppDispatch, RootState } from '../store';
 import { Usuario } from '../../types/usuario';
+import { abreModal } from '../modals/modals.slice';
+import { loginAsync, registroAsync } from './app.actions';
 
 // Tipos para el estado inicial
-interface ModalState {
-  showModal: boolean;
-  mensajeModal: string;
-  tituloModal: string;
-  tipoModal: string;
-}
-
-interface ConfirmState {
-  showConfirm: boolean;
-  mensajeConfirm: string;
-  tituloConfirm: string;
-  tipoConfirm: string;
-  callBackConfirm: (() => void) | null;
-}
 
 interface LoginState {
   email: string;
@@ -37,8 +25,6 @@ interface LoginState {
 interface AppState {
   isLoggedIn: boolean;
   isFetching: boolean;
-  modal: ModalState;
-  confirm: ConfirmState;
   login: LoginState;
   coleccionReparaciones: ReparacionType[];
   coleccionMensajes: any[];
@@ -54,19 +40,6 @@ interface AppState {
 const initialState: AppState = {
   isLoggedIn: false,
   isFetching: false,
-  modal: {
-    showModal: false,
-    mensajeModal: '',
-    tituloModal: '',
-    tipoModal: '',
-  },
-  confirm: {
-    showConfirm: false,
-    mensajeConfirm: '',
-    tituloConfirm: '',
-    tipoConfirm: '',
-    callBackConfirm: null,
-  },
   login: {
     email: '',
     password: '',
@@ -86,34 +59,6 @@ const initialState: AppState = {
 // createAsyncThunk
 // ---------------------------------------------------------
 
-// LOGIN
-export const loginAsync = createAsyncThunk(
-  'app/login',
-  async (
-    { email, password }: { email: string; password: string },
-    { rejectWithValue }
-  ) => {
-    try {
-      const usuario = await loginPersistencia(email, password);
-      return usuario;
-    } catch (error: any) {
-      return rejectWithValue(error.code || 'Error de login');
-    }
-  }
-);
-
-// REGISTRO
-export const registroAsync = createAsyncThunk(
-  'app/registro',
-  async (registroData: Record<string, any>, { rejectWithValue }) => {
-    try {
-      await registroPersistencia(registroData);
-      return 'Registro exitoso';
-    } catch (error: any) {
-      return rejectWithValue(error || 'Error de registro');
-    }
-  }
-);
 
 // OBTENER REPARACIONES
 export const getReparacionesAsync = () => (
@@ -162,46 +107,6 @@ const appSlice = createSlice({
       state.error = action.payload;
     },
     logout: () => initialState,
-    cierraModal: (state) => {
-      state.modal.showModal = false;
-    },
-    cierraConfirm: (state) => {
-      state.confirm.showConfirm = false;
-    },
-    abreModal: (
-      state,
-      action: PayloadAction<{
-        titulo: string;
-        mensaje: string;
-        tipo: string;
-      }>
-    ) => {
-      const { titulo, mensaje, tipo } = action.payload;
-      state.modal = {
-        showModal: true,
-        mensajeModal: mensaje,
-        tituloModal: titulo,
-        tipoModal: tipo,
-      };
-    },
-    confirm: (
-      state,
-      action: PayloadAction<{
-        mensaje: string;
-        titulo: string;
-        tipo: string;
-        callBack: (() => void) | null;
-      }>
-    ) => {
-      const { mensaje, titulo, tipo, callBack } = action.payload;
-      state.confirm = {
-        showConfirm: true,
-        mensajeConfirm: mensaje,
-        tituloConfirm: titulo,
-        tipoConfirm: tipo,
-        callBackConfirm: callBack,
-      };
-    },
     setUsuario: (state, action: PayloadAction<Usuario>) => {
       state.usuario = action.payload;
     },
@@ -231,53 +136,18 @@ const appSlice = createSlice({
         state.isLoggedIn = true;
         state.usuario = action.payload;
       })
-      .addCase(loginAsync.rejected, (state, action) => {
+      .addCase(loginAsync.rejected, (state) => {
         state.isFetching = false;
-        state.modal = {
-          showModal: true,
-          mensajeModal: `Error de login: ${action.payload}`,
-          tituloModal: 'Error',
-          tipoModal: 'danger',
-        };
       })
       .addCase(registroAsync.pending, (state) => {
         state.isFetching = true;
       })
       .addCase(registroAsync.fulfilled, (state) => {
         state.isFetching = false;
-        state.modal = {
-          showModal: true,
-          mensajeModal: 'Verifique su email para completar el registro',
-          tituloModal: 'Usuario Registrado',
-          tipoModal: 'warning',
-        };
       })
-      .addCase(registroAsync.rejected, (state, action) => {
+      .addCase(registroAsync.rejected, (state) => {
         state.isFetching = false;
-        state.modal = {
-          showModal: true,
-          mensajeModal: `Error: ${action.payload}`,
-          tituloModal: 'Error',
-          tipoModal: 'danger',
-        };
-      })
-      // .addCase(getUsuariosAsync.pending, (state) => {
-      //   state.isFetching = true;
-      // })
-      // .addCase(getUsuariosAsync.fulfilled, (state, action) => {
-      //   state.isFetching = false;
-      //   state.coleccionUsuarios = action.payload;
-      // })
-      // .addCase(getUsuariosAsync.rejected, (state, action) => {
-      //   state.isFetching = false;
-      //   state.modal = {
-      //     showModal: true,
-      //     mensajeModal: `No se pudieron obtener usuarios: ${action.payload}`,
-      //     tituloModal: 'Error',
-      //     tipoModal: 'danger',
-      //   };
-      // })
-
+      });
   },
 });
 
@@ -285,10 +155,6 @@ const appSlice = createSlice({
 export const {
   setError,
   logout,
-  cierraModal,
-  cierraConfirm,
-  abreModal,
-  confirm,
   setUsuario,
   setReparaciones,
   setUsuariosToRedux,

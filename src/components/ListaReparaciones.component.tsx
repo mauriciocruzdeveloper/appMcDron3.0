@@ -5,10 +5,10 @@ import { estados } from '../datos/estados';
 // Estas son las importaciones de react-floating-action-button
 // lightColors y darkColors pueden estar buenos... hay que probarlos
 import { ReparacionType } from "../types/reparacion";
-import { getReparacionesAsync } from "../redux-tool-kit/slices/appSlice";
 import { useAppDispatch } from "../redux-tool-kit/hooks/useAppDispatch";
 import { useAppSelector } from "../redux-tool-kit/hooks/useAppSelector";
 import { Filtro } from "../types/Filtro";
+import { getReparacionesAsync } from "../redux-tool-kit/app/app.slice";
 
 export default function ListaReparaciones() {
   const dispatch = useAppDispatch();

@@ -1,6 +1,5 @@
 import React from "react";
 import { useEffect, useCallback, useState } from "react";
-import { connect } from "react-redux";
 import { useParams } from "react-router-dom";
 import history from "../history";
 import { 
@@ -8,7 +7,6 @@ import {
     // al usuario logueado, y Cliente para el usuario en un ABMC
     guardarUsuario,
     eliminarUsuario,
-    confirm,
     getProvinciasSelect,
     getLocalidadesPorProvincia,
   } from "../redux-DEPRECATED/root-actions";
@@ -20,6 +18,7 @@ import UsuarioPresentational from './Usuario.presentational'
 import type { Usuario } from "../types/usuario";
 import { useAppSelector } from "../redux-tool-kit/hooks/useAppSelector";
 import { useAppDispatch } from "../redux-tool-kit/hooks/useAppDispatch";
+import { abreConfirm } from "../redux-tool-kit/modals/modals.slice";
 
 interface ParamTypes {
     id: string;
@@ -59,24 +58,21 @@ export default function UsuarioComponent(): React.ReactElement | null {
     };
 
     const handleGuardarUsuario = () => {
-        dispatch(confirm(
-            "Guardar Usuario?",
-            "Atención",
-            "warning",
-            () => dispatch(guardarUsuario(cliente)) // TODO: Corregir esta averración. No se puede usar dispatch dentro de un dispatch.
-        ));
+        dispatch(abreConfirm({
+            mensaje: "Guardar Usuario?",
+            titulo: "Atención",
+            tipo: "warning",
+            functionId: "guardarUsuario",
+        }));
     }
 
     const handleEliminarUsuario = () => {
-        dispatch(confirm(
-            "Eliminar Reparación?",
-            "Atención",
-            "danger",
-            async () => {
-                await dispatch(eliminarUsuario(cliente.id)); // TODO: Corregir esta averración. No se puede usar dispatch dentro de un dispatch.
-                history.goBack();
-            }
-        ));
+        dispatch(abreConfirm({
+            mensaje: "Eliminar Usuario?",
+            titulo: "Atención",
+            tipo: "danger",
+            functionId: "eliminarUsuario",
+        }));
     }
 
     const handleOnChangeProvincias = async (value: string) => {

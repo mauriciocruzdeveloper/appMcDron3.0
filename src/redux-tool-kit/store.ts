@@ -1,10 +1,12 @@
 // store.ts
 import { configureStore } from '@reduxjs/toolkit';
-import appReducer from './slices/appSlice';
+import appReducer from './app/app.slice';
+import modalsReducer from './modals/modals.slice';
 
 const store = configureStore({
   reducer: {
     app: appReducer,
+    modals: modalsReducer,
   },
   // Middleware se añade automáticamente, incluyendo Thunk.
   // Si necesitas personalizarlo, puedes usar esta opción:

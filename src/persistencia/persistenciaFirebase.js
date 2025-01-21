@@ -33,7 +33,6 @@ import { config as firebaseConfig } from '../firebase/configProd'; // Para produ
 
 import { provincias } from '../datos/provincias.json';
 import { localidades } from '../datos/localidades.json';
-import { setError } from '../redux-tool-kit/slices/appSlice';
 import { collectionNames } from '../types/collectionNames';
 
 // Initialize Firebase
@@ -185,9 +184,10 @@ export const getReparacionPersistencia = (id) => {
 
 // GUARDAR Reparación
 export const guardarReparacionPersistencia = (reparacion) => {
+    console.log('!!! guardarReparacionPersistencia()');
     return new Promise((resolve, reject) => {
         // El id es el id o sino la fecha de consulta.
-        reparacion.id = (reparacion.id || reparacion.data?.FeConRep.toString());
+        if (!reparacion.id) reparacion.id = reparacion.data?.FeConRep.toString();
         setDoc(
             doc(firestore, collectionNames.REPARACIONES, reparacion.id), 
             reparacion.data

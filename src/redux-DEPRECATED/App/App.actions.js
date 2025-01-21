@@ -26,6 +26,7 @@ import {
 } from "../../persistencia/persistenciaFirebase";
 import { callEndpoint, OpenaiFetchAPI } from "../../utils/utils";
 import { HttpMethod } from "../../types/httpMethods";
+import { isFetchingComplete, isFetchingStart } from "../../redux-tool-kit/app/app.slice";
 // } from "../../persistencia/persistenciaJava";
 // } from "../../persistencia/persistenciaNode";
 
@@ -33,13 +34,6 @@ import { HttpMethod } from "../../types/httpMethods";
 //////////////////////////////////////////////////////////////////////////
 //////// ACTIONS /////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////
-
-// Action que setea ifFetching en true
-export const isFetchingStart = () => ({ type: AppTypes.ISFETCHING_START });
-
-// Action que setea ifFetching en false
-export const isFetchingCoplete = () => ({ type: AppTypes.ISFETCHING_COMPLETE });
-
 // Action Login. 
 export const loginAction = (usuario) => ({
     type: AppTypes.LOGIN,
@@ -142,9 +136,9 @@ export const login = (login) => (dispatch) => {
                     dispatch(abreModal("Error ", "Código - " + error.code, "danger"));
                     reject();
                 })
-                .finally(() => dispatch(isFetchingCoplete()));
+                .finally(() => dispatch(isFetchingComplete()));
         } else {
-            // dispatch(isFetchingCoplete());
+            // dispatch(isFetchingComplete());
             dispatch(abreModal("Error", "Email o password vacios", "danger"));
             reject();
         }
@@ -174,14 +168,14 @@ export const registro = (registro) => (dispatch) => {
                         dispatch(abreModal("Error", "Error en registro(), en registroPersistencia() - " + error, "danger"));
                         reject();
                     })
-                    .finally(() => dispatch(isFetchingCoplete()));
+                    .finally(() => dispatch(isFetchingComplete()));
             } else {
-                dispatch(isFetchingCoplete());
+                dispatch(isFetchingComplete());
                 dispatch(abreModal("Error", "Los password deben ser iguales", "danger"));
                 reject();
             }
         } else {
-            dispatch(isFetchingCoplete());
+            dispatch(isFetchingComplete());
             dispatch(abreModal("Error", "Completar todos los campos obligatorios (*)", "danger"));
             reject();
         }
@@ -196,7 +190,7 @@ export const getCliente = (id) => (dispatch) => {
         getClientePersistencia(id)
             .then(cliente => resolve(cliente))
             .catch(() => reject({ code: "Error al obtener cliente en getCliente()" }))
-            .finally(() => dispatch(isFetchingCoplete()));
+            .finally(() => dispatch(isFetchingComplete()));
     });
 };
 
@@ -208,7 +202,7 @@ export const getReparacion = (id) => (dispatch) => {
         getReparacionPersistencia(id)
             .then(reparacion => resolve(reparacion))
             .catch(() => reject({ code: "Error en getReparacion() al buscar una Reparacion" }))
-            .finally(() => dispatch(isFetchingCoplete()));
+            .finally(() => dispatch(isFetchingComplete()));
     });
 };
 
@@ -226,7 +220,7 @@ export const guardarPresupuesto = (presupuesto) => (dispatch) => {
                 reject(abreModal("Error al guardar ", "Código - " + error, "danger"));
                 reject(error);
             })
-            .finally(() => dispatch(isFetchingCoplete()));
+            .finally(() => dispatch(isFetchingComplete()));
     });
 }
 
@@ -234,17 +228,19 @@ export const guardarPresupuesto = (presupuesto) => (dispatch) => {
 export const guardarReparacion = (reparacion) => (dispatch) => {
     console.log("guardarReparacion()");
     dispatch(isFetchingStart());
+    console.log('!!! isFetchingStart()');
     return new Promise((resolve, reject) => {
         guardarReparacionPersistencia(reparacion)
             .then(reparacion => {
                 dispatch(abreModal("Guardado con éxito", "Reparación: " + reparacion.id, "success"));
+                console.log('!!! resolve(reparacion)');
                 resolve(reparacion);
             })
             .catch(error => {
                 dispatch(abreModal("Error al guardar ", "Código - " + error, "danger"));
                 reject(error);
             })
-            .finally(() => dispatch(isFetchingCoplete()));
+            .finally(() => dispatch(isFetchingComplete()));
     });
 }
 
@@ -292,7 +288,7 @@ export const generarAutoDiagnostico = (reparacion) => async (dispatch) => {
 
         const chatCompletion = await OpenaiFetchAPI(prompt);
 
-        dispatch(isFetchingCoplete());
+        dispatch(isFetchingComplete());
 
         return chatCompletion;
     } catch (error) {
@@ -315,7 +311,7 @@ export const guardarUsuario = (usuario) => (dispatch) => {
                 dispatch(abreModal("Error al guardar ", "Código - " + error, "danger"));
                 reject(error);
             })
-            .finally(() => dispatch(isFetchingCoplete()));
+            .finally(() => dispatch(isFetchingComplete()));
     });
 }
 
@@ -346,7 +342,7 @@ export const eliminarReparacion = (id) => (dispatch) => {
                 dispatch(abreModal("Error al eliminar ", "Error en eliminarReparación() - Código - " + error.code, "danger"));
                 reject(error);
             })
-            .finally(() => dispatch(isFetchingCoplete()));
+            .finally(() => dispatch(isFetchingComplete()));
     });
 }
 
@@ -364,7 +360,7 @@ export const eliminarUsuario = (id) => (dispatch) => {
                 dispatch(abreModal("Error al eliminar ", "Error en eliminarUsuario() - Código - " + error.code, "danger"));
                 reject(error);
             })
-            .finally(() => dispatch(isFetchingCoplete()));
+            .finally(() => dispatch(isFetchingComplete()));
     });
 }
 
@@ -381,7 +377,7 @@ export const getUsuarios = () => (dispatch) => {
                 dispatch(abreModal("Error", "getUsuario() en getUsuariosPersistencia()", "danger"));
                 reject()
             })
-            .finally(() => dispatch(isFetchingCoplete()));
+            .finally(() => dispatch(isFetchingComplete()));
     });
 }
 
@@ -402,7 +398,7 @@ export const getReparaciones = () => (dispatch, getState) => {
             //     dispatch(abreModal("Error", "Error en getReparaciones() al buscar las Reparaciones", "danger"));
             //     reject();
             // })
-            .finally(() => dispatch(isFetchingCoplete()));
+            .finally(() => dispatch(isFetchingComplete()));
     });
 }
 
@@ -418,7 +414,7 @@ export const getMessages = (emailUsu, emailCli) => (dispatch) => {
             //     dispatch(abreModal("Error", "getMessages() en getMensajesPersistencia()", "danger"));
             //     reject()
             // })
-            .finally(() => dispatch(isFetchingCoplete()));
+            .finally(() => dispatch(isFetchingComplete()));
     });
 }
 
@@ -439,7 +435,7 @@ export const getProvinciasSelect = () => (dispatch) => {
                 resolve(provinciasSelect);
             })
             .catch(error => reject(error))
-            .finally(() => dispatch(isFetchingCoplete()));
+            .finally(() => dispatch(isFetchingComplete()));
     });
 }
 
@@ -464,7 +460,7 @@ export const getUsuariosSelect = () => (dispatch) => {
             }
         )
             .catch(error => reject(error))
-            .finally(() => dispatch(isFetchingCoplete()));
+            .finally(() => dispatch(isFetchingComplete()));
     });
 }
 
@@ -486,7 +482,7 @@ export const getLocalidadesPorProvincia = (provincia) => (dispatch) => {
                 resolve(localidadesSelect);
             })
             .catch(error => reject(error))
-            .finally(() => dispatch(isFetchingCoplete()));
+            .finally(() => dispatch(isFetchingComplete()));
     });
 }
 

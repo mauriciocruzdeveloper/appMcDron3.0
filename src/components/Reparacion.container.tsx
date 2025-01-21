@@ -5,7 +5,6 @@ import { useParams } from "react-router-dom";
 import {
     guardarReparacion,
     eliminarReparacion,
-    confirm,
     enviarRecibo,
 } from "../redux-DEPRECATED/root-actions";
 import {
@@ -20,6 +19,7 @@ import { enviarEmailVacio } from "../utils/sendEmails";
 import { subirFotoReparacionPersistencia, eliminarFotoReparacionPersistencia } from "../persistencia/subeFotoFirebase";
 import { useAppSelector } from "../redux-tool-kit/hooks/useAppSelector";
 import { useAppDispatch } from "../redux-tool-kit/hooks/useAppDispatch";
+import { useModal } from "./Modal/useModal";
 
 interface ParamTypes {
     id: string;
@@ -27,11 +27,16 @@ interface ParamTypes {
 
 
 export default function Reparacion(): React.ReactElement | null {
+    console.log("REPARACION container");
+
     const dispatch = useAppDispatch();
+
+    const {
+        openModal,
+    } = useModal();
+
     const coleccionReparaciones = useAppSelector(state => state.app.coleccionReparaciones);
     const isAdmin = useAppSelector(state => state.app.usuario?.data.Admin) ?? false;
-
-    console.log("REPARACION container");
 
     const { id } = useParams<ParamTypes>();
 
@@ -115,31 +120,47 @@ export default function Reparacion(): React.ReactElement | null {
         if (reparacion.data.EstadoRep === 'Recibido' && !reparacion.data.DiagnosticoRep) {
             reparacion.data.DiagnosticoRep = await dispatch(generarAutoDiagnostico(reparacion));
         }
-        dispatch(guardarReparacion(reparacion));
+        const response = await dispatch(guardarReparacion(reparacion));
         setReparacionOriginal(reparacion);
+        if (response) {
+            openModal({
+                mensaje: "Reparación guardada correctamente.",
+                tipo: "success",
+                titulo: "Guardar Reparación",
+            })
+        } else {
+            openModal({
+                mensaje: "Error al guardar la reparación.",
+                tipo: "danger",
+                titulo: "Guardar Reparación",
+            })
+        }
     }
 
-    const handleGuardarReparacion = () => {
-        dispatch(confirm(
-            "Guardar Reparación?",
-            "Atención",
-            "warning",
-            confirmaGuardarReparacion, // TODO: Corregir esta averración. No se puede usar dispatch dentro de un dispatch. Menos una función en el payload.
-        ));
+    const confirmEliminarReparacion = async () => {
+        console.log('!!! confirmEliminarReparacion');
+        if (!reparacion) return;
+        await dispatch(eliminarReparacion(reparacion.id));
+        history.goBack();
+    }
+
+    const handleGuardarReparacion = async () => {
+        console.log('!!! handleGuardarReparacion');
+        openModal({
+            mensaje: "Desea guardar los cambios?",
+            tipo: "warning",
+            titulo: "Guardar Reparación",
+            confirmCallback: confirmaGuardarReparacion,
+        })
     }
 
     const handleEliminarReparacion = () => {
-        if (!reparacion) return;
-
-        dispatch(confirm(
-            "Eliminar Reparación?",
-            "Atención",
-            "danger",
-            async () => {
-                await dispatch(eliminarReparacion(reparacion.id));
-                history.goBack();
-            }
-        ));
+        openModal({
+            mensaje: "Eliminar Reparación?",
+            tipo: "Atención",
+            titulo: "danger",
+            confirmCallback: confirmEliminarReparacion,
+        })
     }
 
     const handleSendEmail = () => {

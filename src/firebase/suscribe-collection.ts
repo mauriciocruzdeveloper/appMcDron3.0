@@ -1,6 +1,6 @@
 import { AppDispatch } from '../redux-tool-kit/store'; // Ajusta según tu configuración
 import { collection, onSnapshot, Query } from 'firebase/firestore';
-import { isFetchingStart, setError } from '../redux-tool-kit/slices/appSlice';
+import { isFetchingStart, setError } from '../redux-tool-kit/modals/appSlice/app.slice';
 import { db } from './firebase';
 import { setReparaciones } from '../redux-DEPRECATED/App/App.actions';
 
