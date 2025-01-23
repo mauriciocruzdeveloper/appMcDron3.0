@@ -122,7 +122,7 @@ export default function Reparacion(): React.ReactElement | null {
         }
         const response = await dispatch(guardarReparacion(reparacion));
         setReparacionOriginal(reparacion);
-        if (response) {
+        if (response.meta.requestStatus === 'fulfilled') {
             openModal({
                 mensaje: "Reparación guardada correctamente.",
                 tipo: "success",
@@ -138,14 +138,25 @@ export default function Reparacion(): React.ReactElement | null {
     }
 
     const confirmEliminarReparacion = async () => {
-        console.log('!!! confirmEliminarReparacion');
         if (!reparacion) return;
-        await dispatch(eliminarReparacion(reparacion.id));
-        history.goBack();
+        const response = await dispatch(eliminarReparacion(reparacion.id));
+        if (response.meta.requestStatus === 'fulfilled') {
+            openModal({
+                mensaje: "Reparación eliminada correctamente.",
+                tipo: "success",
+                titulo: "Eliminar Reparación",
+            })
+            history.goBack();
+        } else {
+            openModal({
+                mensaje: "Error al eliminar la reparación.",
+                tipo: "danger",
+                titulo: "Eliminar Reparación",
+            })
+        }
     }
 
     const handleGuardarReparacion = async () => {
-        console.log('!!! handleGuardarReparacion');
         openModal({
             mensaje: "Desea guardar los cambios?",
             tipo: "warning",
@@ -210,11 +221,11 @@ export default function Reparacion(): React.ReactElement | null {
         const file = e.target.files[0];
         const urlFoto = await subirFotoReparacionPersistencia(reparacion.id, file);
         setReparacion({
-          ...reparacion,
-          data: {
-            ...reparacion.data,
-            urlsFotos: [...(reparacion.data.urlsFotos || []), urlFoto]
-          }
+            ...reparacion,
+            data: {
+                ...reparacion.data,
+                urlsFotos: [...(reparacion.data.urlsFotos || []), urlFoto]
+            }
         });
     };
 
@@ -222,11 +233,11 @@ export default function Reparacion(): React.ReactElement | null {
         if (!reparacion) return;
         await eliminarFotoReparacionPersistencia(reparacion.id, fotoUrl);
         setReparacion({
-          ...reparacion,
-          data: {
-            ...reparacion.data,
-            urlsFotos: reparacion.data.urlsFotos?.filter(url => url !== fotoUrl)
-          }
+            ...reparacion,
+            data: {
+                ...reparacion.data,
+                urlsFotos: reparacion.data.urlsFotos?.filter(url => url !== fotoUrl)
+            }
         });
     };
 

@@ -14,12 +14,8 @@ interface AppProps {
 }
 
 const App = (props: AppProps) => {
-  const { isFetching, isLoggedIn, admin } = props;
-
   console.log('APP');
-
-  console.log('!!! $$$$$$$ IS FECHING', isFetching);
-
+  const { isFetching, isLoggedIn, admin } = props;
 
   return (
     <div className='mx-auto'
