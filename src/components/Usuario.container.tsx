@@ -2,15 +2,15 @@ import React from "react";
 import { useEffect, useCallback, useState } from "react";
 import { useParams } from "react-router-dom";
 import history from "../history";
-import { 
-    // Cliente y Usuario es lo mismo, pero Usuario se usa para referirse
-    // al usuario logueado, y Cliente para el usuario en un ABMC
+import {
+    // Usuario y Usuario es lo mismo, pero Usuario se usa para referirse
+    // al usuario logueado, y Usuario para el usuario en un ABMC
     guardarUsuario,
     eliminarUsuario,
     getProvinciasSelect,
     getLocalidadesPorProvincia,
-  } from "../redux-DEPRECATED/root-actions";
-import { 
+} from "../redux-DEPRECATED/root-actions";
+import {
     enviarEmail,
     enviarSms
 } from "../utils/utils";
@@ -18,102 +18,153 @@ import UsuarioPresentational from './Usuario.presentational'
 import type { Usuario } from "../types/usuario";
 import { useAppSelector } from "../redux-tool-kit/hooks/useAppSelector";
 import { useAppDispatch } from "../redux-tool-kit/hooks/useAppDispatch";
-import { abreConfirm } from "../redux-tool-kit/modals/modals.slice";
+import { useModal } from "./Modal/useModal";
 
 interface ParamTypes {
     id: string;
 }
 
 export default function UsuarioComponent(): React.ReactElement | null {
-    const dispatch = useAppDispatch();
-    const provinciasSelect = useAppSelector(state => state.app.provinciasSelect);
-    const localidadesSelect = useAppSelector(state => state.app.localidadesSelect);
-    const coleccionUsuarios = useAppSelector(state => state.app.coleccionUsuarios);
-
     console.log("USUARIO container");
+
+    const dispatch = useAppDispatch();
+
+    const {
+        openModal,
+    } = useModal();
+
+    const provinciasSelect = useAppSelector(state => state.usuario.provinciasSelect);
+    const localidadesSelect = useAppSelector(state => state.usuario.localidadesSelect);
+    const coleccionUsuarios = useAppSelector(state => state.usuario.coleccionUsuarios);
 
     const { id } = useParams<ParamTypes>();
 
-    const [ cliente, setCliente ] = useState<Usuario>();
+    const [usuario, setUsuario] = useState<Usuario>();
 
     const inicializaFormulario = useCallback(async () => {
-        if (!provinciasSelect?.length) await dispatch(getProvinciasSelect());
-        setCliente(coleccionUsuarios.find(usuario => usuario.id == id))
+        if (!provinciasSelect?.length) {
+            const provincias = await dispatch(getProvinciasSelect());
+
+            if (!provincias.length) {
+                openModal({
+                    mensaje: "Error al cargar las provincias.",
+                    tipo: "danger",
+                    titulo: "Cargar Provincias",
+                })
+            }
+        }
+        setUsuario(coleccionUsuarios.find(usuario => usuario.id == id))
     }, [coleccionUsuarios]);
 
     useEffect(() => {
         inicializaFormulario();
     }, [inicializaFormulario]);
-    
-    if (!cliente) return null;
+
+    if (!usuario) return null;
 
     const changeInputUsu = (field: string, value: string) => {
-        setCliente({ 
-            ...cliente, 
+        setUsuario({
+            ...usuario,
             data: {
-                ...cliente.data,
+                ...usuario.data,
                 [field]: value
-            } 
+            }
         });
     };
 
-    const handleGuardarUsuario = () => {
-        dispatch(abreConfirm({
-            mensaje: "Guardar Usuario?",
-            titulo: "Atención",
+    const confirmaGuardarUsuario = async () => {
+        const response = await dispatch(guardarUsuario(usuario));
+        if (response.meta.requestStatus === 'fulfilled') {
+            openModal({
+                mensaje: "Reparación guardada correctamente.",
+                tipo: "success",
+                titulo: "Guardar Reparación",
+            })
+        } else {
+            openModal({
+                mensaje: "Error al guardar la reparación.",
+                tipo: "danger",
+                titulo: "Guardar Reparación",
+            })
+        }
+    }
+
+    const confirmEliminarUsuario = async () => {
+        if (!usuario) return;
+        const response = await dispatch(eliminarUsuario(usuario.id));
+        if (response.meta.requestStatus === 'fulfilled') {
+            openModal({
+                mensaje: "Usuario eliminado correctamente.",
+                tipo: "success",
+                titulo: "Eliminar Usuario",
+            })
+            history.goBack();
+        } else {
+            openModal({
+                mensaje: "Error al eliminar el usuario.",
+                tipo: "danger",
+                titulo: "Eliminar Usuario",
+            })
+        }
+    }
+
+    const handleGuardarUsuario = async () => {
+        openModal({
+            mensaje: "Desea guardar los cambios?",
             tipo: "warning",
-            functionId: "guardarUsuario",
-        }));
+            titulo: "Guardar Usuario",
+            confirmCallback: confirmaGuardarUsuario,
+        })
     }
 
     const handleEliminarUsuario = () => {
-        dispatch(abreConfirm({
-            mensaje: "Eliminar Usuario?",
-            titulo: "Atención",
+        openModal({
+            mensaje: "Desea eliminar el Usuario?",
             tipo: "danger",
-            functionId: "eliminarUsuario",
-        }));
+            titulo: "Eliminar Usuario",
+            confirmCallback: confirmEliminarUsuario,
+        })
     }
 
     const handleOnChangeProvincias = async (value: string) => {
-        if (!cliente) return;
+        if (!usuario) return;
 
         await dispatch(getLocalidadesPorProvincia(value));
-        setCliente({ 
-            ...cliente, 
+        setUsuario({
+            ...usuario,
             data: {
-                ...cliente.data,
+                ...usuario.data,
                 ProvinciaUsu: value
-            } 
+            }
         });
     }
 
     const handleOnChangeLocalidades = (value: string) => {
-        setCliente({ 
-            ...cliente, 
+        setUsuario({
+            ...usuario,
             data: {
-                ...cliente.data,
+                ...usuario.data,
                 CiudadUsu: value
-            } 
+            }
         });
     }
 
     const handleSendEmail = () => {
         const data = {
-            to: cliente.data.EmailUsu,
+            to: usuario.data.EmailUsu,
             cc: 'info@mauriciocruzdrones.com',
             bcc: [],
             subject: '',
-            body:    ''
+            body: ''
         };
         enviarEmail(data);
     }
 
     const handleSendSms = () => {
         const data = {
-            number: cliente.data.TelefonoUsu, /* iOS: ensure number is actually a string */
+            number: usuario.data.TelefonoUsu, /* iOS: ensure number is actually a string */
             message: 'Prueba de sms',
-    
+
             //CONFIGURATION
             options: {
                 replaceLineBreaks: false, // true to replace \n by a new line, false by default
@@ -122,27 +173,32 @@ export default function UsuarioComponent(): React.ReactElement | null {
                     //intent: '' // send SMS without opening any other app, require : android.permission.SEND_SMS and android.permission.READ_PHONE_STATE
                 }
             },
-    
+
             success: () => null,
-            error: (e: any) => alert('Message Failed:' + e)
+            error: (e: unknown) => alert('Message Failed:' + e)
         };
         enviarSms(data);
     }
 
-    return(
-                // Sólo se renderiza el commponente presentacional cuando están los datos necesarios ya cargados.
-        cliente && provinciasSelect.length ?
-        <UsuarioPresentational 
-            cliente={cliente}
-            provinciasSelect={provinciasSelect}
-            localidadesSelect={localidadesSelect}
-            handleGuardarUsuario={handleGuardarUsuario}
-            handleEliminarUsuario={handleEliminarUsuario}
-            changeInputUsu={changeInputUsu}
-            onChangeProvincias={handleOnChangeProvincias}
-            onChangeLocalidades={handleOnChangeLocalidades}
-            handleSendEmail={handleSendEmail}
-            handleSendSms={handleSendSms}
-        /> : null
+    console.log('!!! usuario')
+    console.log(usuario)
+    console.log('!!! provinciasSelect')
+    console.log(provinciasSelect)
+
+    return (
+        // Sólo se renderiza el commponente presentacional cuando están los datos necesarios ya cargados.
+        usuario && provinciasSelect.length ?
+            <UsuarioPresentational
+                usuario={usuario}
+                provinciasSelect={provinciasSelect}
+                localidadesSelect={localidadesSelect}
+                handleGuardarUsuario={handleGuardarUsuario}
+                handleEliminarUsuario={handleEliminarUsuario}
+                changeInputUsu={changeInputUsu}
+                onChangeProvincias={handleOnChangeProvincias}
+                onChangeLocalidades={handleOnChangeLocalidades}
+                handleSendEmail={handleSendEmail}
+                handleSendSms={handleSendSms}
+            /> : null
     )
 }

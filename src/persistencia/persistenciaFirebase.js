@@ -184,9 +184,7 @@ export const getReparacionPersistencia = (id) => {
 
 // GUARDAR Reparación
 export const guardarReparacionPersistencia = (reparacion) => {
-    console.log('!!! guardarReparacionPersistencia()');
     return new Promise((resolve, reject) => {
-        // El id es el id o sino la fecha de consulta.
         if (!reparacion.id) reparacion.id = reparacion.data?.FeConRep.toString();
         setDoc(
             doc(firestore, collectionNames.REPARACIONES, reparacion.id), 
@@ -288,8 +286,7 @@ const triggerUsuarioReparaciones = (usuario) => {
 
 export const guardarUsuarioPersistencia = (usuario) => {
     return new Promise((resolve, reject) => {
-        // El id es el id o sino el email.
-        usuario.id = usuario.id || usuario.data?.EmailUsu;
+        if (!usuario.id) usuario.id = usuario.data?.EmailUsu;
         setDoc(doc(firestore, 'USUARIOS', usuario.id), usuario.data)
             .then(docUsuario => {
                 triggerUsuarioReparaciones(usuario)

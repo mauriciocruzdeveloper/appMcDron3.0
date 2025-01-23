@@ -58,8 +58,6 @@ const ReparacionPresentational = (props: ReparacionPresentationalProps) => {
         changeInputRep(field, value);
     }
 
-    console.log('!!! reparacion', reparacion);
-
     return (
         <div
             className="p-4"

@@ -1,8 +1,6 @@
 // features/appSlice.ts
-import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
+import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import {
-  loginPersistencia,
-  registroPersistencia,
   getReparacionesPersistencia,
   getUsuariosPersistencia,
   // ... el resto de funciones de persistencia que necesites
@@ -11,7 +9,6 @@ import { ReparacionType } from '../../types/reparacion';
 import { Unsubscribe } from 'firebase/auth';
 import { AppDispatch, RootState } from '../store';
 import { Usuario } from '../../types/usuario';
-import { abreModal } from '../modals/modals.slice';
 import { loginAsync, registroAsync } from './app.actions';
 
 // Tipos para el estado inicial
@@ -28,10 +25,6 @@ interface AppState {
   login: LoginState;
   coleccionReparaciones: ReparacionType[];
   coleccionMensajes: any[];
-  coleccionUsuarios: Usuario[];
-  provinciasSelect: any[];
-  localidadesSelect: any[];
-  usuariosSelect: any[];
   error: string;
   usuario: Usuario | null;
 }
@@ -48,10 +41,6 @@ const initialState: AppState = {
   usuario: null,
   coleccionReparaciones: [],
   coleccionMensajes: [],
-  coleccionUsuarios: [],
-  provinciasSelect: [],
-  localidadesSelect: [],
-  usuariosSelect: [],
   error: '',
 };
 
@@ -78,24 +67,6 @@ export const getReparacionesAsync = () => (
   }
 };
 
-// OBTENER USUARIOS
-export const getUsuariosAsync = () => (
-  dispatch: AppDispatch,
-  getState: () => RootState
-): Unsubscribe | undefined => {
-    try {
-    const callbackUsuarios = (usuarios: any[]) => {
-        console.log('callbackUsuarios', usuarios);
-        dispatch(setUsuariosToRedux(usuarios));
-      };
-    const state = getState() as { app: AppState };
-      const unsubscribe = getUsuariosPersistencia(callbackUsuarios);
-      return unsubscribe as Unsubscribe;
-  } catch (error) {
-    return;
-  }
-};
-
 // ---------------------------------------------------------
 // SLICE PRINCIPAL
 // ---------------------------------------------------------
@@ -112,9 +83,6 @@ const appSlice = createSlice({
     },
     setReparaciones: (state, action: PayloadAction<ReparacionType[]>) => {
       state.coleccionReparaciones = action.payload;
-    },
-    setUsuariosToRedux: (state, action: PayloadAction<any[]>) => {
-      state.coleccionUsuarios = action.payload;
     },
     setMessagesToRedux: (state, action: PayloadAction<any[]>) => {
       state.coleccionMensajes = action.payload;
@@ -157,7 +125,6 @@ export const {
   logout,
   setUsuario,
   setReparaciones,
-  setUsuariosToRedux,
   setMessagesToRedux,
   isFetchingStart,
   isFetchingComplete,

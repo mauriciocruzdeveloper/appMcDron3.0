@@ -27,6 +27,7 @@ import {
 import { callEndpoint, OpenaiFetchAPI } from "../../utils/utils";
 import { HttpMethod } from "../../types/httpMethods";
 import { isFetchingComplete, isFetchingStart } from "../../redux-tool-kit/app/app.slice";
+import { setLocalidadesSelect, setProvinciasSelect, setUsuariosSelect } from "../../redux-tool-kit/usuario/usuario.slice";
 // } from "../../persistencia/persistenciaJava";
 // } from "../../persistencia/persistenciaNode";
 
@@ -228,16 +229,12 @@ export const guardarPresupuesto = (presupuesto) => (dispatch) => {
 export const guardarReparacion = (reparacion) => (dispatch) => {
     console.log("guardarReparacion()");
     dispatch(isFetchingStart());
-    console.log('!!! isFetchingStart()');
     return new Promise((resolve, reject) => {
         guardarReparacionPersistencia(reparacion)
             .then(reparacion => {
-                dispatch(abreModal("Guardado con éxito", "Reparación: " + reparacion.id, "success"));
-                console.log('!!! resolve(reparacion)');
                 resolve(reparacion);
             })
             .catch(error => {
-                dispatch(abreModal("Error al guardar ", "Código - " + error, "danger"));
                 reject(error);
             })
             .finally(() => dispatch(isFetchingComplete()));
@@ -428,10 +425,7 @@ export const getProvinciasSelect = () => (dispatch) => {
     return new Promise((resolve, reject) => {
         getProvinciasSelectPersistencia()
             .then(provinciasSelect => {
-                dispatch({
-                    type: AppTypes.GET_PROVINCIAS_SELECT,
-                    payload: { data: provinciasSelect }
-                });
+                dispatch(setProvinciasSelect(provinciasSelect));
                 resolve(provinciasSelect);
             })
             .catch(error => reject(error))
@@ -439,24 +433,18 @@ export const getProvinciasSelect = () => (dispatch) => {
     });
 }
 
-// Esta función no tiene mucho sentido. Habría que verlo bien.
+// TODO: Esta función no tiene mucho sentido. Habría que verlo bien. Donde llama a getUsuariosSelect, tenría que llamar a un selector y listo
 export const getUsuariosSelect = () => (dispatch) => {
     console.log("getUsuariosSelect");
     dispatch(isFetchingStart());
     return new Promise((resolve, reject) => {
         getUsuariosPersistencia(
-            // Esta es la función callback que actualiza usuariosSelect
             usuarios => {
                 const usuariosSelect = usuarios.map(usuario => {
                     let dato = usuario.data.EmailUsu ? usuario.data.EmailUsu : usuario.id;
                     return { value: dato, label: dato }
                 });
-                dispatch({
-                    type: AppTypes.GET_USUARIOS_SELECT,
-                    payload: {
-                        data: usuariosSelect
-                    }
-                });
+                dispatch(setUsuariosSelect(usuariosSelect));
             }
         )
             .catch(error => reject(error))
@@ -470,15 +458,7 @@ export const getLocalidadesPorProvincia = (provincia) => (dispatch) => {
     return new Promise((resolve, reject) => {
         getLocPorProvPersistencia(provincia)
             .then(localidadesSelect => {
-                dispatch({
-                    type: AppTypes.GET_LOCALIDADES_SELECT,
-                    payload: {
-                        data: {
-                            localidadesSelect: localidadesSelect,
-                            provincia: provincia
-                        }
-                    }
-                });
+                dispatch(setLocalidadesSelect(localidadesSelect));
                 resolve(localidadesSelect);
             })
             .catch(error => reject(error))

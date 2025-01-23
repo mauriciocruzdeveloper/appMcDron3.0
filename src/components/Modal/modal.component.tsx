@@ -24,15 +24,12 @@ export const ModalComponent: React.FC = () => {
         onConfirm,
     } = useModal();
 
-    console.log('CONFIRM COMPONENT');
+    console.log('MODAL COMPONENT');
 
     const handleOnConfirm = () => {
-        console.log('!!! handleOnConfirm');
         onConfirm?.();
         closeModal();
     }
-
-    console.log('!!! tipo = ', tipo);
 
     return (
         <Modal centered show={isOpen} onHide={closeModal}>
