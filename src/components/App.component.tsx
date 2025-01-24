@@ -26,27 +26,27 @@ const App = (props: AppProps) => {
         maxWidth: '600px'
       }}
     >
-      <ModalProvider>
-        <ModalComponent />
-        <Router history={history} >
-          <Routes isLoggedIn={isLoggedIn} admin={admin} />
-        </Router>
-        <footer className='page-footer fixed-bottom text-center'>
-          {isFetching ?
-            <div className='float-right'>
-              <span
-                className='spinner-grow'
-                role='status'
-                style={{
-                  height: '15vh',
-                  width: '15vh'
-                }}
-              >
-              </span>
-            </div>
-            : null}
-        </footer>
-      </ModalProvider>
+        <ModalProvider>
+          <ModalComponent />
+          <Router history={history} >
+            <Routes isLoggedIn={isLoggedIn} admin={admin} />
+          </Router>
+          <footer className='page-footer fixed-bottom text-center'>
+            {isFetching ?
+              <div className='float-right'>
+                <span
+                  className='spinner-grow'
+                  role='status'
+                  style={{
+                    height: '15vh',
+                    width: '15vh'
+                  }}
+                >
+                </span>
+              </div>
+              : null}
+          </footer>
+        </ModalProvider>
     </div>
   );
 };

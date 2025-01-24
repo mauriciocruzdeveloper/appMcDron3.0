@@ -8,27 +8,15 @@ import { ReparacionType } from "../types/reparacion";
 import { useAppDispatch } from "../redux-tool-kit/hooks/useAppDispatch";
 import { useAppSelector } from "../redux-tool-kit/hooks/useAppSelector";
 import { Filtro } from "../types/Filtro";
-import { getReparacionesAsync } from "../redux-tool-kit/app/app.slice";
 
-export default function ListaReparaciones() {
-  const dispatch = useAppDispatch();
-  const reparaciones = useAppSelector(state => state.app.coleccionReparaciones);
+export default function ListaReparaciones(): JSX.Element {
+  const reparaciones = useAppSelector(state => state.reparacion.coleccionReparaciones);
 
   const [filter, setFilter] = useState<Filtro>({
     estadosPrioritarios: true,
     search: ''
   });
   const [reparacionesList, setReparacionesList] = useState<ReparacionType[]>([]);
-
-  useEffect(() => {
-    const unsubscribe = dispatch(getReparacionesAsync());
-    
-    return () => {
-      if (unsubscribe) {
-        unsubscribe()
-      }
-    };
-  }, []);
 
   useEffect(() => {
     if (reparaciones.length) {

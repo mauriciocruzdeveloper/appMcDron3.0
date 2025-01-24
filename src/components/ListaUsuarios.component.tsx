@@ -1,27 +1,14 @@
 import React from 'react';
 import { useEffect, useState } from 'react';
 import history from '../history';
-import { useAppDispatch } from '../redux-tool-kit/hooks/useAppDispatch';
 import { useAppSelector } from '../redux-tool-kit/hooks/useAppSelector';
 import { Usuario } from '../types/usuario';
-import { getUsuariosAsync } from '../redux-tool-kit/usuario/usuario.slice';
 
 export default function ListaUsuarios(): JSX.Element {
-  const dispatch = useAppDispatch();
   const coleccionUsuarios = useAppSelector((state) => state.usuario.coleccionUsuarios);
 
   const [filter, setFilter] = useState<string>('');
   const [usuariosList, setUsuariosList] = useState<Usuario[]>([]);
-
-  useEffect(() => {
-    const unsubscribe = dispatch(getUsuariosAsync());
-
-    return () => {
-      if (unsubscribe) {
-        unsubscribe();
-      }
-    };
-  }, []);
 
   useEffect(() => {
     if (coleccionUsuarios.length) {

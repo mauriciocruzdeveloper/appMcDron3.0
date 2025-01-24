@@ -33,7 +33,7 @@ export const getUsuariosAsync = () => (
     try {
         const callbackUsuarios = (usuarios: any[]) => {
             console.log('callbackUsuarios', usuarios);
-            dispatch(setUsuariosToRedux(usuarios));
+            dispatch(setUsuarios(usuarios));
         };
         const unsubscribe = getUsuariosPersistencia(callbackUsuarios);
         return unsubscribe as Unsubscribe;
@@ -49,7 +49,7 @@ const usuarioSlice = createSlice({
     name: 'usuario',
     initialState,
     reducers: {
-        setUsuariosToRedux: (state, action: PayloadAction<any[]>) => {
+        setUsuarios: (state, action: PayloadAction<any[]>) => {
             state.coleccionUsuarios = action.payload;
         },
         setProvinciasSelect: (state, action: PayloadAction<any[]>) => {
@@ -66,7 +66,7 @@ const usuarioSlice = createSlice({
 
 // Exportar acciones síncronas
 export const {
-    setUsuariosToRedux,
+    setUsuarios,
     setProvinciasSelect,
     setLocalidadesSelect,
     setUsuariosSelect,

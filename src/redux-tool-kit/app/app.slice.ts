@@ -1,13 +1,5 @@
 // features/appSlice.ts
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import {
-  getReparacionesPersistencia,
-  getUsuariosPersistencia,
-  // ... el resto de funciones de persistencia que necesites
-} from '../../persistencia/persistenciaFirebase';
-import { ReparacionType } from '../../types/reparacion';
-import { Unsubscribe } from 'firebase/auth';
-import { AppDispatch, RootState } from '../store';
 import { Usuario } from '../../types/usuario';
 import { loginAsync, registroAsync } from './app.actions';
 
@@ -23,7 +15,6 @@ interface AppState {
   isLoggedIn: boolean;
   isFetching: boolean;
   login: LoginState;
-  coleccionReparaciones: ReparacionType[];
   coleccionMensajes: any[];
   error: string;
   usuario: Usuario | null;
@@ -39,7 +30,6 @@ const initialState: AppState = {
     token: '',
   },
   usuario: null,
-  coleccionReparaciones: [],
   coleccionMensajes: [],
   error: '',
 };
@@ -47,25 +37,6 @@ const initialState: AppState = {
 // ---------------------------------------------------------
 // createAsyncThunk
 // ---------------------------------------------------------
-
-
-// OBTENER REPARACIONES
-export const getReparacionesAsync = () => (
-  dispatch: AppDispatch,
-  getState: () => RootState,
-): Unsubscribe | undefined => {
-  try {
-    const callbackReparaciones = (reparaciones: ReparacionType[]) => {
-      dispatch(setReparaciones(reparaciones));
-    }
-    const state = getState() as { app: AppState };
-    const usuario = state.app.usuario;
-    const unsubscribe = getReparacionesPersistencia(callbackReparaciones, usuario);
-    return unsubscribe as Unsubscribe;
-  } catch (error: any) {
-    return;
-  }
-};
 
 // ---------------------------------------------------------
 // SLICE PRINCIPAL
@@ -80,9 +51,6 @@ const appSlice = createSlice({
     logout: () => initialState,
     setUsuario: (state, action: PayloadAction<Usuario>) => {
       state.usuario = action.payload;
-    },
-    setReparaciones: (state, action: PayloadAction<ReparacionType[]>) => {
-      state.coleccionReparaciones = action.payload;
     },
     setMessagesToRedux: (state, action: PayloadAction<any[]>) => {
       state.coleccionMensajes = action.payload;
@@ -124,7 +92,6 @@ export const {
   setError,
   logout,
   setUsuario,
-  setReparaciones,
   setMessagesToRedux,
   isFetchingStart,
   isFetchingComplete,

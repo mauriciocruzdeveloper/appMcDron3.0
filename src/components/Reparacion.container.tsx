@@ -35,7 +35,7 @@ export default function Reparacion(): React.ReactElement | null {
         openModal,
     } = useModal();
 
-    const coleccionReparaciones = useAppSelector(state => state.app.coleccionReparaciones);
+    const coleccionReparaciones = useAppSelector(state => state.reparacion.coleccionReparaciones);
     const isAdmin = useAppSelector(state => state.app.usuario?.data.Admin) ?? false;
 
     const { id } = useParams<ParamTypes>();

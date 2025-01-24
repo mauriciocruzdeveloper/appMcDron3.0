@@ -128,6 +128,7 @@ export const registroPersistencia = (registro) => {
 // GET todas las Reparaciones
 // const unsubscribe = null;
 export const getReparacionesPersistencia = (setReparacionesToRedux, usuario) => {
+    console.log('!!! getReparacionesPersistencia');
     let queryReparaciones = "";
     if (usuario?.data?.Admin) { // TODO: Esto es una regla de negocio. No va acá.
         // con el not-in se podría hacer un array con los que no quiero que estén, o con el in los que sí quiero.
