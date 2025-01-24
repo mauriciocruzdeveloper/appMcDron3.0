@@ -81,11 +81,6 @@ export const setUsuario = (usuario) => ({
     payload: usuario
 });
 
-export const setReparaciones = (reparaciones) => ({
-    type: AppTypes.SET_REPARACIONES,
-    payload: { data: reparaciones }
-});
-
 export const abreModal = (titulo, mensaje, tipo) => ({
     type: AppTypes.MODAL,
     payload: {
