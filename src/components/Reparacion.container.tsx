@@ -3,7 +3,6 @@ import { useEffect, useState } from "react";
 import history from "../history";
 import { useParams } from "react-router-dom";
 import {
-    guardarReparacion,
     eliminarReparacion,
     enviarRecibo,
 } from "../redux-DEPRECATED/root-actions";
@@ -20,6 +19,7 @@ import { subirFotoReparacionPersistencia, eliminarFotoReparacionPersistencia } f
 import { useAppSelector } from "../redux-tool-kit/hooks/useAppSelector";
 import { useAppDispatch } from "../redux-tool-kit/hooks/useAppDispatch";
 import { useModal } from "./Modal/useModal";
+import { guardarReparacionAsync } from "../redux-tool-kit/reparacion/reparacion.actions";
 
 interface ParamTypes {
     id: string;
@@ -120,7 +120,7 @@ export default function Reparacion(): React.ReactElement | null {
         if (reparacion.data.EstadoRep === 'Recibido' && !reparacion.data.DiagnosticoRep) {
             reparacion.data.DiagnosticoRep = await dispatch(generarAutoDiagnostico(reparacion));
         }
-        const response = await dispatch(guardarReparacion(reparacion));
+        const response = await dispatch(guardarReparacionAsync(reparacion));
         setReparacionOriginal(reparacion);
         if (response.meta.requestStatus === 'fulfilled') {
             openModal({

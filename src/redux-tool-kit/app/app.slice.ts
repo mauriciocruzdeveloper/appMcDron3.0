@@ -11,7 +11,7 @@ interface LoginState {
   token: string;
 }
 
-interface AppState {
+export interface AppState {
   isLoggedIn: boolean;
   isFetching: boolean;
   login: LoginState;

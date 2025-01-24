@@ -8,6 +8,7 @@ import { ReparacionType } from '../../types/reparacion';
 import { Unsubscribe } from 'firebase/auth';
 import { AppDispatch, RootState } from '../store';
 import { AppState } from '../../redux-DEPRECATED/App/App.reducer';
+import { guardarReparacionAsync } from './reparacion.actions';
 
 // Tipos para el estado inicial
 interface ReparacionState {
@@ -22,25 +23,6 @@ const initialState: ReparacionState = {
 // ---------------------------------------------------------
 // createAsyncThunk
 // ---------------------------------------------------------
-
-
-// OBTENER REPARACIONES
-export const getReparacionesAsync = createAsyncThunk(
-    'app/getReparaciones',
-    async (arg, { dispatch, getState }) => {
-        try {
-        const callbackReparaciones = (reparaciones: ReparacionType[]) => {
-            dispatch(setReparaciones(reparaciones));
-        }
-        const state = getState() as { app: AppState };
-        const usuario = state.app.usuario;
-        const unsubscribe = getReparacionesPersistencia(callbackReparaciones, usuario);
-        return unsubscribe as Unsubscribe;
-        } catch (error: any) {
-        return;
-        }
-    },
-)
 
 // ---------------------------------------------------------
 // SLICE PRINCIPAL
