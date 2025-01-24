@@ -1,48 +1,47 @@
-// Módulo para conectar con redux
-import { connect } from "react-redux";
-// Actions
-import { logout, confirm } from "../redux-DEPRECATED/root-actions";
-// Componentes
-
+import React from 'react';
 import { Navbar } from 'react-bootstrap';
 import { ArrowLeftShort } from 'react-bootstrap-icons';
-
-// Esta función no debería salir de acá...
 import { notificacionesPorMensajesPersistencia } from '../persistencia/persistenciaFirebase';
-
 import history from "../history";
-import { RootState } from "../redux-DEPRECATED/App/App.reducer";
-import { Usuario } from "../types/usuario";
+import { logout } from "../redux-tool-kit/app/app.slice";
+import { useAppSelector } from "../redux-tool-kit/hooks/useAppSelector";
+import { useModal } from './Modal/useModal';
 
-interface NavMcDronProps {
-    usuario: Usuario;
-    logout: () => void;
-    confirm: (message: string, title: string, type: string, callback: () => void) => void;
-}
 
-const NavMcDron = (props: NavMcDronProps) => {
-    const { usuario, logout, confirm } = props;
-
+export default function NavMcDron (): JSX.Element {
     console.log("NavMcDron");
 
-    // Esto hay que ver donde lo ponemos...
-    notificacionesPorMensajesPersistencia(usuario.data.EmailUsu);
+    const usuario = useAppSelector(state => state.app.usuario);
 
+    const {
+        openModal,
+    } = useModal();
+
+    // Esto hay que ver donde lo ponemos...
+    notificacionesPorMensajesPersistencia(usuario?.data.EmailUsu);
+
+    const confirmaDesloguearse = () => {
+        localStorage.removeItem('loginData');
+        logout();
+    }
+        
     const handleBack = () => {
-        if (history.location.pathname == "/inicio"){
-            confirm("Desloguearse???", "Atención", "warning", () => {
-                localStorage.removeItem('loginData');
-                logout();
-            });
-        }else{
+        if (history.location.pathname == "/inicio") {
+            openModal({
+                mensaje: "Desea desloguearse?",
+                tipo: "warning",
+                titulo: "Atención!",
+                confirmCallback: confirmaDesloguearse,
+            })
+        } else {
             history.goBack()
         }
     }
 
     return (
         <Navbar sticky="top" className="bg-bluemcdron d-flex justify-content-between px-2">
-            <ArrowLeftShort 
-                width="50" 
+            <ArrowLeftShort
+                width="50"
                 height="50"
                 onClick={handleBack}
                 color="white"
@@ -55,20 +54,14 @@ const NavMcDron = (props: NavMcDronProps) => {
                 width="50" 
                 height="50"
             > */}
-                <img 
-                    src={usuario?.data?.UrlFotoUsu || "./img/logo1.png"}
-                    width="50" 
-                    // height="50"
-                    className="rounded-circle float-right" 
-                    alt="Foto del usuario"
-                />
+            <img
+                src={usuario?.data?.UrlFotoUsu || "./img/logo1.png"}
+                width="50"
+                // height="50"
+                className="rounded-circle float-right"
+                alt="Foto del usuario"
+            />
             {/* </div> */}
         </Navbar>
     )
-};
-
-const mapStateToProps = (state: RootState) => ({
-    usuario: state.app?.usuario
-});
-
-export default connect(mapStateToProps, { logout, confirm })(NavMcDron);
+}

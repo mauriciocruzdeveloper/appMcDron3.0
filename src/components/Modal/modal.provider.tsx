@@ -5,7 +5,7 @@ export interface OpenModalProps {
     titulo: string;
     mensaje: string;
     tipo: string;
-    confirmCallback?: () => Promise<void>;
+    confirmCallback?: () => Promise<void> | void;
 }
 
 interface ValuesProps {
@@ -13,7 +13,7 @@ interface ValuesProps {
     titulo: string;
     mensaje: string;
     tipo: string;
-    onConfirm?: () => Promise<void>;
+    onConfirm?: () => Promise<void> | void;
 }
 
 export const ModalProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {

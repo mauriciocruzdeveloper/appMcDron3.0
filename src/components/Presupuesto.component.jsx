@@ -5,12 +5,9 @@ import Select from 'react-select';
 import { 
     getCliente,
     guardarPresupuesto,
-    abreModal,
-    confirm,
     getProvinciasSelect,
     getUsuariosSelect,
     getLocalidadesPorProvincia,
-    setUsuario
   } from "../redux-DEPRECATED/root-actions";
 
   import history from "../history";
@@ -23,7 +20,6 @@ const Presupuesto = ({
     getCliente,
     usuario,
     guardarPresupuesto,
-    abreModal,
     confirm,
     getProvinciasSelect,
     getUsuariosSelect,
@@ -84,10 +80,10 @@ const Presupuesto = ({
         !usuario.data?.Admin 
         ? setPresupuesto({ ...presupuesto, cliente: usuario }) 
         : null; // Acá iría getCliente(usuario.id);
-        await getProvinciasSelect()
-        .catch(error => abreModal("Error buscando ProvinciasSelect ", `Código - ${error.code}`, "danger" ));
-        await getUsuariosSelect()
-        .catch(error => abreModal("Error buscando UsuariosSelect ", `Código - ${error.code}`, "danger" ));
+        await getProvinciasSelect();
+        // .catch(error => abreModal("Error buscando ProvinciasSelect ", `Código - ${error.code}`, "danger" ));
+        await getUsuariosSelect();
+        // .catch(error => abreModal("Error buscando UsuariosSelect ", `Código - ${error.code}`, "danger" ));
     },[usuario]);
 
     useEffect(() => {
@@ -324,11 +320,8 @@ const mapStateToProps = (state) => ({
 export default connect(
     mapStateToProps, 
     {
-        setUsuario,
         getCliente,
         guardarPresupuesto, 
-        abreModal,
-        confirm,
         getProvinciasSelect,
         getUsuariosSelect,
         getLocalidadesPorProvincia,

@@ -1,11 +1,9 @@
 import { Route, Switch, Redirect } from "react-router-dom";
-import { connect } from "react-redux";
 import Login from '../components/Login.container';
 import Registro from '../components/Registro.container';
 import InicioRoutes from "./Inicio.routes";
-import { login, logout } from "../redux-DEPRECATED/root-actions";
 
-const Routes = ({ isLoggedIn, admin }) => {
+export default function Routes({ isLoggedIn, admin }) {
 
     console.log("ROUTES");
 
@@ -28,6 +26,4 @@ const Routes = ({ isLoggedIn, admin }) => {
 
         </Switch>
     </>)
-};
-
-export default connect( null, { login, logout } )( Routes );
+}
