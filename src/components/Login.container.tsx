@@ -17,10 +17,6 @@ const INIT_LOGIN_DATA: LoginData = {
   password: ''
 };
 
-export interface LoginProps {
-  loginAsync: (loginData: LoginData) => Promise<void>;
-}
-
 export default function Login(): JSX.Element | null {
   const dispatch = useAppDispatch();
   const {
