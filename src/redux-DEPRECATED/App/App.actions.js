@@ -73,11 +73,9 @@ export const guardarPresupuesto = (presupuesto) => (dispatch) => {
     return new Promise((resolve, reject) => {
         guardarPresupuestoPersistencia(presupuesto)
             .then(() => {
-                // dispatch(abreModal("Presupuesto enviado!", "", "success"));
                 resolve(presupuesto);
             })
             .catch(error => {
-                // reject(abreModal("Error al guardar ", "Código - " + error, "danger"));
                 reject(error);
             })
             .finally(() => dispatch(isFetchingComplete()));

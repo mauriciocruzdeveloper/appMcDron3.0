@@ -5,13 +5,14 @@ import {
 import { Unsubscribe } from 'firebase/auth';
 import { AppDispatch } from '../store';
 import { Usuario } from '../../types/usuario';
+import { SelectOption } from '../../types/selectOption';
 
 // Tipos para el estado inicial
 interface UsuarioState {
     coleccionUsuarios: Usuario[];
     provinciasSelect: any[];
     localidadesSelect: any[];
-    usuariosSelect: any[];
+    usuariosSelect: SelectOption[];
 }
 
 // Estado inicial
@@ -27,20 +28,30 @@ const initialState: UsuarioState = {
 // ---------------------------------------------------------
 
 // OBTENER USUARIOS
-export const getUsuariosAsync = () => (
-    dispatch: AppDispatch,
-): Unsubscribe | undefined => {
-    try {
-        const callbackUsuarios = (usuarios: any[]) => {
-            console.log('callbackUsuarios', usuarios);
-            dispatch(setUsuarios(usuarios));
-        };
-        const unsubscribe = getUsuariosPersistencia(callbackUsuarios);
-        return unsubscribe as Unsubscribe;
-    } catch (error) {
-        return;
-    }
-};
+// export const getUsuariosAsync = () => (
+//     dispatch: AppDispatch,
+// ): Unsubscribe | undefined => {
+//     try {
+//         const callbackUsuarios = (usuarios: Usuario[]) => {
+//             const usuariosSelect = usuarios.map(usuario => {
+//                 const dato = usuario.data.EmailUsu ? usuario.data.EmailUsu : usuario.id;
+//                 return {
+//                     value: dato,
+//                     label: dato,
+//                 }
+//             });
+//             console.log('callbackUsuarios', usuarios);
+//             console.log('callbackUsuariosSelect', usuariosSelect);
+//             dispatch(setUsuarios(usuarios));
+//             // TODO: Para los usuarios select hacer un selector específico, cuando haga selectores. Usar librería reselct
+//             dispatch(setUsuariosSelect(usuariosSelect));
+//         };
+//         const unsubscribe = getUsuariosPersistencia(callbackUsuarios);
+//         return unsubscribe as Unsubscribe;
+//     } catch (error) {
+//         return;
+//     }
+// };
 
 // ---------------------------------------------------------
 // SLICE PRINCIPAL
@@ -58,7 +69,7 @@ const usuarioSlice = createSlice({
         setLocalidadesSelect: (state, action: PayloadAction<any[]>) => {
             state.localidadesSelect = action.payload;
         },
-        setUsuariosSelect: (state, action: PayloadAction<Usuario[]>) => {
+        setUsuariosSelect: (state, action: PayloadAction<SelectOption[]>) => {
             state.usuariosSelect = action.payload;
         },
     },

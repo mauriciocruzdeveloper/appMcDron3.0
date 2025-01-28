@@ -5,7 +5,7 @@ import { setReparaciones } from "../redux-tool-kit/reparacion/reparacion.slice";
 import { ReparacionType } from "../types/reparacion";
 import { Unsubscribe } from "firebase/auth";
 import { useAppSelector } from "../redux-tool-kit/hooks/useAppSelector";
-import { setUsuarios } from "../redux-tool-kit/usuario/usuario.slice";
+import { setUsuarios, setUsuariosSelect } from "../redux-tool-kit/usuario/usuario.slice";
 import { Usuario } from "../types/usuario";
 
 export interface DataManagerProps {
@@ -51,6 +51,16 @@ export function DataManagerComponent({ children }: DataManagerProps): React.Reac
                 (usuarios: Usuario[]) => {
                     console.log("!!! Usuarios obtenidos:", usuarios);
                     dispatch(setUsuarios(usuarios));
+                    const usuariosSelect = usuarios.map(usuario => {
+                        const dato = usuario.data.EmailUsu ? usuario.data.EmailUsu : usuario.id;
+                        return {
+                            value: dato,
+                            label: dato,
+                        }
+                    });
+                    dispatch(setUsuarios(usuarios));
+                    // TODO: Para los usuarios select hacer un selector específico, cuando haga selectores. Usar librería reselct
+                    dispatch(setUsuariosSelect(usuariosSelect));
                 },
             );
 

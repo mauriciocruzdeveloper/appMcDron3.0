@@ -1,74 +1,87 @@
-import { useEffect, useCallback, useState } from "react";
-import { connect } from "react-redux";
+import { useEffect, useCallback, useState, useMemo } from "react";
 import TextareaAutosize from "react-textarea-autosize";
-import Select from 'react-select';
-import { 
+import Select, { InputActionMeta } from 'react-select';
+import {
     getCliente,
     guardarPresupuesto,
     getProvinciasSelect,
     getUsuariosSelect,
     getLocalidadesPorProvincia,
-  } from "../redux-DEPRECATED/root-actions";
+} from "../redux-DEPRECATED/root-actions";
 
-  import history from "../history";
+import history from "../history";
+import { useAppSelector } from "../redux-tool-kit/hooks/useAppSelector";
+import { Usuario } from "../types/usuario";
+import { ReparacionType } from "../types/reparacion";
+import { useAppDispatch } from "../redux-tool-kit/hooks/useAppDispatch";
+import { useModal } from "./Modal/useModal";
 
 // import { provincias } from '../datos/provincias.json'; 
 
-const Presupuesto = ({
-    admin,
-    setUsuario,
-    getCliente,
-    usuario,
-    guardarPresupuesto,
-    confirm,
-    getProvinciasSelect,
-    getUsuariosSelect,
-    getLocalidadesPorProvincia,
-    localidadesSelect,
-    provinciasSelect,
-    usuariosSelect,
-}) => {
-
+export default function Presupuesto(): JSX.Element {
     console.log("PRESUPUESTO");
+    const dispatch = useAppDispatch();
 
-    const [ presupuesto, setPresupuesto ] = useState(
-        { 
-            cliente: { id: '', data: {} }, 
-            reparacion: { id: '', data: {} } }
-        );
-    
+    const {
+        openModal,
+    } = useModal();
 
-    const changeInputUsu = target => {
-        setPresupuesto({ 
-            ...presupuesto, 
+    const usuario = useAppSelector(state => state.app.usuario);
+    const localidadesSelect = useAppSelector(state => state.usuario.localidadesSelect);
+    const provinciasSelect = useAppSelector(state => state.usuario.provinciasSelect);
+    const usuariosSelect = useAppSelector(state => state.usuario.usuariosSelect);
+    const isAdmin = useMemo(() => usuario?.data?.Admin, [usuario]);
+
+    const [presupuesto, setPresupuesto] = useState<{
+        cliente: {
+            data: any,
+        },
+        reparacion: {
+            data: any,
+        },
+    }>({
+        cliente: {
+            data: {}
+        },
+        reparacion: {
+            data: {}
+        }
+    });
+
+
+    // TODO: Ver cómo está hecho en Reparacion.container.tsx
+    const changeInputUsu = (field: string, value: string) => {
+        setPresupuesto(prevState => prevState ? {
+            ...presupuesto,
             cliente: {
-                ...presupuesto.cliente,
+                ...presupuesto?.cliente,
                 data: {
-                    ...presupuesto.cliente.data,
-                    [target.id]: target.value
-                } 
+                    ...presupuesto?.cliente?.data,
+                    [field]: value
+                },
             }
-        });
+        } : presupuesto);
     };
 
-    const changeInputRep = target => {
+    // TODO: Ver el tipo correcto de target. Ver cómo está hecho en Reparacion.container.tsx
+    const changeInputRep = (target: any) => {
         let value = null;
-        if(target.type == "date"){
-            let anio = target.value.substr(0, 4);
-            let mes = target.value.substr(5, 2)-1;
-            let dia = target.value.substr(8, 2);
-            value = new Date(anio, mes, dia).getTime()+10800001; // Se agrega este número para que de bien la fecha.
-        }else{
+        if (target.type == "date") {
+            const anio = target.value.substr(0, 4);
+            const mes = target.value.substr(5, 2) - 1;
+            const dia = target.value.substr(8, 2);
+            value = new Date(anio, mes, dia).getTime() + 10800001; // Se agrega este número para que de bien la fecha.
+        } else {
             value = target.value;
         }
-        setPresupuesto({ 
-            ...presupuesto, 
+        setPresupuesto({
+            ...presupuesto,
             reparacion: {
                 ...presupuesto.reparacion,
                 data: {
                     ...presupuesto.reparacion.data,
                     [target.id]: value
-                } 
+                }
             }
         });
     };
@@ -77,81 +90,85 @@ const Presupuesto = ({
         // Si el usuario es admin, deja todo en blanco para cargar cualquier usuario
         // sino cargo los datos del usuario logueado.
         //!usuario.data?.Admin ? await getCliente(usuario.id) : null; // Acá iría getCliente(usuario.id);
-        !usuario.data?.Admin 
-        ? setPresupuesto({ ...presupuesto, cliente: usuario }) 
-        : null; // Acá iría getCliente(usuario.id);
-        await getProvinciasSelect();
+        !usuario?.data?.Admin && usuario
+            ? setPresupuesto({ ...presupuesto, cliente: usuario })
+            : null; // Acá iría getCliente(usuario.id);
+        await dispatch(getProvinciasSelect());
         // .catch(error => abreModal("Error buscando ProvinciasSelect ", `Código - ${error.code}`, "danger" ));
-        await getUsuariosSelect();
-        // .catch(error => abreModal("Error buscando UsuariosSelect ", `Código - ${error.code}`, "danger" ));
-    },[usuario]);
+    }, [usuario]);
 
     useEffect(() => {
         initForm();
     }, [initForm]);
 
     //////////////////////////////////////////////////////////////
+    const confirmaGuardarPresupuesto = async () => {
+        const response = await dispatch(guardarPresupuesto(reparacion));
+        if (response.meta.requestStatus === 'fulfilled') {
+            openModal({
+                mensaje: "Presupuesto enviado!",
+                tipo: "success",
+                titulo: "Guardar Presupuesto",
+            })
+            console.log(JSON.stringify(presupuesto));
+            // !isAdmin ? setUsuario(presupuesto.usuario) : null; // TODO: Revisar para qué hice esto
+            history.goBack();
+        } else {
+            openModal({
+                mensaje: "Error al guardar",
+                tipo: "danger",
+                titulo: "Guardar Presupuesto",
+            })
+        }
+    }
 
     const handleGuardarPresupuesto = () => {
-        confirm(
-            "Guardar Presupuesto?",
-            "Atención",
-            "warning",
-            async () => {
-                const presupuesto = {
-                    usuario: cliente,
-                    reparacion: reparacion
-                };
-                presupuesto.reparacion.data.EstadoRep = "Consulta";
-                presupuesto.reparacion.data.PrioridadRep = "1";
-                presupuesto.reparacion.data.FeConRep = Date.now();
-
-                await guardarPresupuesto(presupuesto)
-                console.log(JSON.stringify(presupuesto));
-                !admin ? setUsuario(presupuesto.usuario) : null;
-                history.goBack();
-            }
-        );
+        openModal({
+            mensaje: "Desea guardar el presupuesto?",
+            tipo: "warning",
+            titulo: "Guardar Presupuesto",
+            confirmCallback: confirmaGuardarPresupuesto,
+        });
     }
 
 
-    const handleOnChangeProvincias = async (e) => {
-        await getLocalidadesPorProvincia(e.value);
+    const handleOnChangeProvincias = async (e: any) => {
+        await dispatch(getLocalidadesPorProvincia(e.value));
 
-        setPresupuesto({ 
-            ...presupuesto, 
+        setPresupuesto({
+            ...presupuesto,
             cliente: {
                 ...presupuesto.cliente,
                 data: {
                     ...presupuesto.cliente.data,
                     ProvinciaUsu: e.value
-                } 
+                }
             }
         });
     }
 
-    const handleOnChangeLocalidades = (e) => {
-        setPresupuesto({ 
-            ...presupuesto, 
+    const handleOnChangeLocalidades = (e: any) => {
+        setPresupuesto({
+            ...presupuesto,
             cliente: {
                 ...presupuesto.cliente,
                 data: {
                     ...presupuesto.cliente.data,
                     CiudadUsu: e.value
-                } 
+                }
             }
         });
     }
 
-    
+
     // Función que maneja el onChange del Select de usuarios cuando se selecciona
     // un usuario/cliente de la lista que previamente se cargó en el Select
-    const handleOnChangeUsuarios = async (e) => {
-        if(e){
-            let cliente = await getCliente(e.value);
-            setPresupuesto({ 
-                ...presupuesto, 
-                cliente: cliente 
+    const handleOnChangeUsuarios = async (e: any) => {
+        if (e) {
+            const cliente = await dispatch(getCliente(e.value));
+            setPresupuesto({
+                ...presupuesto,
+                cliente: cliente
             });
         }
     }
@@ -161,26 +178,22 @@ const Presupuesto = ({
     // sólo contiene el valor del input, no es un evento.
     // Abajo creo target con los atributos correctos para pasarlos como 
     // parámetro del método changeInputPresu.
-    const handleOnInputChangeUsuarios = (inputEmailUsu, action) => {
-        const target = {};
-        target.id = "EmailUsu";
-        target.value = inputEmailUsu;
-        // solución para el borrado cuando blour. 
+    const handleOnInputChangeUsuarios = (inputEmailUsu: string, action: InputActionMeta) => {
         // https://github.com/JedWatson/react-select/issues/588#issuecomment-815133270
-        if(action.action === "input-change") changeInputUsu(target);
+        if (action.action === "input-change") changeInputUsu("EmailUsu", inputEmailUsu);
         // Otra opción
         //if (action?.action !== 'input-blur' && action?.action !== 'menu- close') changeInputUsu(target);
     }
 
     const { cliente, reparacion } = presupuesto;
 
-    return(
+    return (
         <div
             className="p-4"
-            // style={{
-            //     backgroundColor: "#EEEEEE",
+        // style={{
+        //     backgroundColor: "#EEEEEE",
 
-            //   }}
+        //   }}
         >
 
             <div className="card mb-3 bg-bluemcdron">
@@ -198,68 +211,68 @@ const Presupuesto = ({
                         {/* Crear un componente propio para otros usos que no se borre
                         el contenido cuando se desenfoca. Ponerlo en una carpeta aparte 
                         de componentes propios */}
-                        <Select 
+                        <Select
                             options={usuariosSelect}
                             noOptionsMessage={() => null}
                             onChange={e => handleOnChangeUsuarios(e)}
                             onInputChange={handleOnInputChangeUsuarios}
                             id="EmailUsu"
-                            value={{value: cliente.data?.EmailUsu, label: cliente.data?.EmailUsu}}
-                            isDisabled={!admin}
+                            value={{ value: cliente.data?.EmailUsu, label: cliente.data?.EmailUsu }}
+                            isDisabled={!isAdmin}
                         />
                     </div>
                     <div>
                         <label className="form-label">Nombre</label>
-                        <input 
-                            onChange={e => changeInputUsu(e.target)} 
-                            type="text" 
-                            className="form-control" 
-                            id="NombreUsu" 
+                        <input
+                            onChange={e => changeInputUsu(e.target.id, e.target.value)}
+                            type="text"
+                            className="form-control"
+                            id="NombreUsu"
                             value={cliente.data?.NombreUsu || ""}
                         />
                     </div>
                     <div>
                         <label className="form-label">Apellido</label>
-                        <input 
-                            onChange={e => changeInputUsu(e.target)} 
-                            type="text" 
-                            className="form-control" 
-                            id="ApellidoUsu" 
+                        <input
+                            onChange={e => changeInputUsu(e.target.id, e.target.value)}
+                            type="text"
+                            className="form-control"
+                            id="ApellidoUsu"
                             value={cliente.data?.ApellidoUsu || ""}
                         />
                     </div>
                     <div>
                         <label className="form-label">Teléfono</label>
-                        <input 
-                            onChange={e => changeInputUsu(e.target)} 
-                            type="tel" 
-                            className="form-control" 
+                        <input
+                            onChange={e => changeInputUsu(e.target.id, e.target.value)}
+                            type="tel"
+                            className="form-control"
                             id="TelefonoUsu"
                             value={cliente.data?.TelefonoUsu || ""}
                         />
                     </div>
                     <div>
                         <label className="form-label">Provincia</label>
-                        <Select 
+                        <Select
                             // onFocus={handleOnFocusSelect}
                             options={provinciasSelect}
                             onChange={e => handleOnChangeProvincias(e)}
                             id="ProvinciaUsu"
                             value={{
-                                value: cliente.data?.ProvinciaUsu, 
+                                value: cliente.data?.ProvinciaUsu,
                                 label: cliente.data?.ProvinciaUsu
                             }}
                         />
                     </div>
                     <div>
                         <label className="form-label">Ciudad</label>
-                        <Select 
+                        <Select
                             // onFocus={handleOnFocusSelect}
                             options={localidadesSelect}
                             onChange={e => handleOnChangeLocalidades(e)}
                             id="CiudadUsu"
                             value={{
-                                value: cliente.data?.CiudadUsu, 
+                                value: cliente.data?.CiudadUsu,
                                 label: cliente.data?.CiudadUsu
                             }}
                         />
@@ -272,20 +285,20 @@ const Presupuesto = ({
                     <h5 className="card-title bluemcdron">DRONE</h5>
                     <div>
                         <label className="form-label">Modelo del Drone</label>
-                        <input 
-                            onChange={e => changeInputRep(e.target)} 
-                            type="text" 
-                            className="form-control" 
+                        <input
+                            onChange={e => changeInputRep(e.target)}
+                            type="text"
+                            className="form-control"
                             id="DroneRep"
                             value={reparacion.data?.DroneRep || ""}
                         />
                     </div>
-                    
+
                     <div>
                         <label className="form-label">Desperfectos o Roturas</label>
                         <TextareaAutosize
-                            onChange={e => changeInputRep(e.target)} 
-                            className="form-control" 
+                            onChange={e => changeInputRep(e.target)}
+                            className="form-control"
                             id="DescripcionUsuRep"
                             value={reparacion.data?.DescripcionUsuRep || ""}
                         />
@@ -296,8 +309,8 @@ const Presupuesto = ({
 
 
             <div className="text-center">
-                <button 
-                    onClick={ handleGuardarPresupuesto }
+                <button
+                    onClick={handleGuardarPresupuesto}
                     className="w-100 mb-3 btn bg-bluemcdron text-white"
                 >
                     Guardar
@@ -305,24 +318,6 @@ const Presupuesto = ({
             </div>
 
         </div>
- 
+
     )
 }
-
-const mapStateToProps = (state) => ({
-    usuario: state.app?.usuario,
-    localidadesSelect: state.app?.localidadesSelect,
-    provinciasSelect: state.app?.provinciasSelect,
-    usuariosSelect: state.app?.usuariosSelect
-  });
-
-
-export default connect(
-    mapStateToProps, 
-    {
-        getCliente,
-        guardarPresupuesto, 
-        getProvinciasSelect,
-        getUsuariosSelect,
-        getLocalidadesPorProvincia,
-    })(Presupuesto);

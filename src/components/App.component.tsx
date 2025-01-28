@@ -1,21 +1,14 @@
 import React from 'react';
 import { Router } from 'react-router-dom';
 import history from '../history';
-import { connect } from 'react-redux';
 import Routes from '../routes/Routes';
-import { RootState } from '../redux-DEPRECATED/App/App.reducer';
 import { ModalComponent } from './Modal/modal.component';
 import { ModalProvider } from './Modal/modal.provider';
+import { useAppSelector } from '../redux-tool-kit/hooks/useAppSelector';
 
-interface AppProps {
-  isFetching: boolean;
-  isLoggedIn: boolean;
-  admin: boolean;
-}
-
-const App = (props: AppProps) => {
+export default function App(): JSX.Element {
   console.log('APP');
-  const { isFetching, isLoggedIn, admin } = props;
+  const isFetching = useAppSelector(state => state.app.isFetching);
 
   return (
     <div className='mx-auto'
@@ -29,7 +22,7 @@ const App = (props: AppProps) => {
         <ModalProvider>
           <ModalComponent />
           <Router history={history} >
-            <Routes isLoggedIn={isLoggedIn} admin={admin} />
+            <Routes />
           </Router>
           <footer className='page-footer fixed-bottom text-center'>
             {isFetching ?
@@ -49,14 +42,4 @@ const App = (props: AppProps) => {
         </ModalProvider>
     </div>
   );
-};
-
-const mapStateToProps = (state: RootState) => ({
-  isLoggedIn: state.app.isLoggedIn,
-  isFetching: state.app.isFetching,
-  admin: state.app.usuario?.data?.Admin || false,
-  modal: state.app.modal,
-  confirm: state.app.confirm
-});
-
-export default connect(mapStateToProps)(App);
+}
