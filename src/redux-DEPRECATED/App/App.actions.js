@@ -10,10 +10,6 @@ import { AppTypes } from "./App.types";
 import {
     getReparacionPersistencia,
     getClientePersistencia,
-    guardarUsuarioPersistencia,
-    guardarPresupuestoPersistencia,
-    eliminarReparacionPersistencia,
-    eliminarUsuarioPersistencia,
     getProvinciasSelectPersistencia,
     getLocPorProvPersistencia,
     getUsuariosPersistencia,
@@ -32,10 +28,6 @@ import { setLocalidadesSelect, setProvinciasSelect, setUsuariosSelect } from "..
 //////// ACTIONS /////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////
 
-export const setMessagesToRedux = (messages) => ({
-    type: AppTypes.GET_MESSAGES,
-    payload: { data: messages }
-});
 
 /////////////////////////////////////////////////
 // FUNCIONES PARA CONECTARSE A LA PERSISTENCIA //
@@ -66,24 +58,7 @@ export const getReparacion = (id) => (dispatch) => {
     });
 };
 
-// GUARDA Presupuesto
-export const guardarPresupuesto = (presupuesto) => (dispatch) => {
-    console.log("guardarPersupuesto()");
-    dispatch(isFetchingStart());
-    return new Promise((resolve, reject) => {
-        guardarPresupuestoPersistencia(presupuesto)
-            .then(() => {
-                resolve(presupuesto);
-            })
-            .catch(error => {
-                reject(error);
-            })
-            .finally(() => dispatch(isFetchingComplete()));
-    });
-}
-
 // Envía Recibo
-
 export const enviarRecibo = (reparacion) => (dispatch) => {
     const body = {
         cliente: reparacion.data.NombreUsu,
@@ -137,88 +112,7 @@ export const generarAutoDiagnostico = (reparacion) => async (dispatch) => {
     }
 };
 
-// GUARDA Usuario
-export const guardarUsuario = (usuario) => (dispatch) => {
-    console.log("guardarUsuario()");
-    dispatch(isFetchingStart());
-    return new Promise((resolve, reject) => {
-        guardarUsuarioPersistencia(usuario)
-            .then(usuario => {
-                // dispatch(abreModal("Guardado con éxito", "Usuario: " + usuario.id, "success"));
-                resolve(usuario);
-            })
-            .catch(error => {
-                // dispatch(abreModal("Error al guardar ", "Código - " + error, "danger"));
-                reject(error);
-            })
-            .finally(() => dispatch(isFetchingComplete()));
-    });
-}
 
-// GUARDA Mensaje
-export const sendMessage = (message) => (dispatch) => {
-    console.log("sendMessage()");
-    return new Promise((resolve, reject) => {
-        sendMessagePersistencia(message)
-            .then(message => resolve(message))
-            .catch(error => {
-                // dispatch(abreModal("Mensaje no enviado", "Código - " + error, "danger"));
-                reject(error);
-            })
-    });
-}
-
-// DELETE Reparación
-export const eliminarReparacion = (id) => (dispatch) => {
-    console.log("eliminarReparacion()");
-    dispatch(isFetchingStart());
-    return new Promise((resolve, reject) => {
-        eliminarReparacionPersistencia(id)
-            .then(id => {
-                // dispatch(abreModal("Reparación eliminada con éxito", "Reparación: " + id, "success"));
-                resolve(id);
-            })
-            .catch(error => {
-                // dispatch(abreModal("Error al eliminar ", "Error en eliminarReparación() - Código - " + error.code, "danger"));
-                reject(error);
-            })
-            .finally(() => dispatch(isFetchingComplete()));
-    });
-}
-
-// DELETE Usuario
-export const eliminarUsuario = (id) => (dispatch) => {
-    console.log("eliminarUsuarios()");
-    dispatch(isFetchingStart());
-    return new Promise((resolve, reject) => {
-        eliminarUsuarioPersistencia(id)
-            .then(id => {
-                // dispatch(abreModal("Usuario eliminado con éxito", "Usuario: " + id, "success"));
-                resolve(id);
-            })
-            .catch(error => {
-                // dispatch(abreModal("Error al eliminar ", "Error en eliminarUsuario() - Código - " + error.code, "danger"));
-                reject(error);
-            })
-            .finally(() => dispatch(isFetchingComplete()));
-    });
-}
-
-// GET de todos los Mensajes
-export const getMessages = (emailUsu, emailCli) => (dispatch) => {
-    console.log("getMessages()");
-    dispatch(isFetchingStart());
-    return new Promise((resolve, reject) => {
-        getMessagesPersistencia(emailUsu, emailCli, mensajes => dispatch(setMessagesToRedux(mensajes)))
-            // podría ubicar unsubscribeMessages en el store así puedo accederla desde cualquier lado
-            .then((unsubscribeMessages) => resolve(unsubscribeMessages))
-            // .catch(() => {
-            //     dispatch(abreModal("Error", "getMessages() en getMensajesPersistencia()", "danger"));
-            //     reject()
-            // })
-            .finally(() => dispatch(isFetchingComplete()));
-    });
-}
 
 ////////////////////////////////////////////////////
 // FUNCIONES PARA PARA POSIBLES REFACTORIZACIONES //

@@ -5,8 +5,6 @@ import history from "../history";
 import {
     // Usuario y Usuario es lo mismo, pero Usuario se usa para referirse
     // al usuario logueado, y Usuario para el usuario en un ABMC
-    guardarUsuario,
-    eliminarUsuario,
     getProvinciasSelect,
     getLocalidadesPorProvincia,
 } from "../redux-DEPRECATED/root-actions";
@@ -19,6 +17,7 @@ import type { Usuario } from "../types/usuario";
 import { useAppSelector } from "../redux-tool-kit/hooks/useAppSelector";
 import { useAppDispatch } from "../redux-tool-kit/hooks/useAppDispatch";
 import { useModal } from "./Modal/useModal";
+import { eliminarUsuarioAsync, guardarUsuarioAsync } from "../redux-tool-kit/usuario/usuario.actions";
 
 interface ParamTypes {
     id: string;
@@ -73,7 +72,7 @@ export default function UsuarioComponent(): React.ReactElement | null {
     };
 
     const confirmaGuardarUsuario = async () => {
-        const response = await dispatch(guardarUsuario(usuario));
+        const response = await dispatch(guardarUsuarioAsync(usuario));
         if (response.meta.requestStatus === 'fulfilled') {
             openModal({
                 mensaje: "Reparación guardada correctamente.",
@@ -91,7 +90,7 @@ export default function UsuarioComponent(): React.ReactElement | null {
 
     const confirmEliminarUsuario = async () => {
         if (!usuario) return;
-        const response = await dispatch(eliminarUsuario(usuario.id));
+        const response = await dispatch(eliminarUsuarioAsync(usuario.id));
         if (response.meta.requestStatus === 'fulfilled') {
             openModal({
                 mensaje: "Usuario eliminado correctamente.",
@@ -179,11 +178,6 @@ export default function UsuarioComponent(): React.ReactElement | null {
         };
         enviarSms(data);
     }
-
-    console.log('!!! usuario')
-    console.log(usuario)
-    console.log('!!! provinciasSelect')
-    console.log(provinciasSelect)
 
     return (
         // Sólo se renderiza el commponente presentacional cuando están los datos necesarios ya cargados.

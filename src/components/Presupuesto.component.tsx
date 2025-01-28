@@ -3,18 +3,15 @@ import TextareaAutosize from "react-textarea-autosize";
 import Select, { InputActionMeta } from 'react-select';
 import {
     getCliente,
-    guardarPresupuesto,
     getProvinciasSelect,
-    getUsuariosSelect,
     getLocalidadesPorProvincia,
 } from "../redux-DEPRECATED/root-actions";
 
 import history from "../history";
 import { useAppSelector } from "../redux-tool-kit/hooks/useAppSelector";
-import { Usuario } from "../types/usuario";
-import { ReparacionType } from "../types/reparacion";
 import { useAppDispatch } from "../redux-tool-kit/hooks/useAppDispatch";
 import { useModal } from "./Modal/useModal";
+import { guardarPresupuestoAsync } from "../redux-tool-kit/reparacion/reparacion.actions";
 
 // import { provincias } from '../datos/provincias.json'; 
 
@@ -103,7 +100,23 @@ export default function Presupuesto(): JSX.Element {
 
     //////////////////////////////////////////////////////////////
     const confirmaGuardarPresupuesto = async () => {
-        const response = await dispatch(guardarPresupuesto(reparacion));
+        const dateNow = Date.now();
+        const response = await dispatch(guardarPresupuestoAsync({
+            usuario: {
+                ...presupuesto.cliente,
+                id: presupuesto.cliente.data.EmailUsu,
+            }, // TODO: Corregir esto de los clientes que son usuarios
+            reparacion: { // TODO: Verificar esto de pasar los datos faltantes al crear la reparación
+                ...presupuesto.reparacion,
+                id: dateNow.toString(),
+                data: {
+                    ...presupuesto.reparacion.data,
+                    EstadoRep: "Consulta",
+                    PrioridadRep: "1",
+                    FeConRep: dateNow,
+                },
+            },
+        }));
         if (response.meta.requestStatus === 'fulfilled') {
             openModal({
                 mensaje: "Presupuesto enviado!",

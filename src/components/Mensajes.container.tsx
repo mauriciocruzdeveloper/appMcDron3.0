@@ -1,44 +1,33 @@
 import React from 'react';
 import { useState, useEffect, useCallback } from 'react';
-import { connect } from 'react-redux';
 import { 
   getMessages,
   getCliente,
   sendMessage,
-  getUsuariosSelect
 } from '../redux-DEPRECATED/root-actions';
 import MensajesPresentational from './Mensajes.presentational';
 import { actualizarLeidos } from '../utils/utils';
+import { useAppSelector } from '../redux-tool-kit/hooks/useAppSelector';
+import { Usuario } from '../types/usuario';
+import { useAppDispatch } from '../redux-tool-kit/hooks/useAppDispatch';
 
-const Mensajes = ({
-  admin,
-  usuario, // El usuario logueado, cliente es el cliente seleccionado
-  coleccionMensajes,
-  getMessages,
-  getCliente,
-  sendMessage,
-  getUsuariosSelect,
-  usuariosSelect
-}) => {
-
+export default function Mensajes(): JSX.Element {
   console.log('MENSAJES container');
+  const dispatch = useAppDispatch();
+  const isAdmin = useAppSelector(state => state.app.usuario?.data.Admin);
+  const coleccionMensajes = useAppSelector(state => state.mensaje.coleccionMensajes);
+  const usuario = useAppSelector(state => state.app.usuario);
+  const usuariosSelect = useAppSelector(state => state.usuario.usuariosSelect);
 
   // MODIFICANDO UN POCO EL CÓDIGO, SIRVe PARA ENVIAR MENSAJES ENTRE CLIENTES
 
-  const INIT_MESSAGE_DATA = '';
-  const INIT_CLIENTE = {
-    id: '',
-    data: {}
-  }
-
-  const [ messageData, setMessageData ] = useState(INIT_MESSAGE_DATA);
-  const [ cliente, setCliente ] = useState(INIT_CLIENTE); // Es el cliente seleccionado cuando soy admin
+  const [ messageData, setMessageData ] = useState<string>();
+  const [ cliente, setCliente ] = useState<Usuario>(); // Es el cliente seleccionado cuando soy admin
 
   // El useCallback tiene como dependencia el cliente, cuando elijo otro cliente, se actualiza.
   const initForm = useCallback(async () => {
-    await getMessages(usuario.data.EmailUsu, cliente.data.EmailUsu || 'admin@mauriciocruzdrones.com');
-    if(!usuariosSelect?.length && admin) await getUsuariosSelect();
-    let mensajesLeidos = coleccionMensajes.filter(mensaje => (mensaje.data.isRead==false));
+    await getMessages(usuario?.data.EmailUsu, cliente?.data.EmailUsu || 'admin@mauriciocruzdrones.com');
+    const mensajesLeidos = coleccionMensajes.filter(mensaje => (mensaje.data.isRead==false));
     actualizarLeidos(mensajesLeidos);
   }, [cliente]);
 
@@ -49,29 +38,30 @@ const Mensajes = ({
   }, [initForm]);
 
 
-  const handleOnChangeUsuarios = async (e) => {
+  const handleOnChangeUsuarios = async (e: any) => {
     if(e){
-      const cliente = await getCliente(e.value);
+      const cliente = await dispatch(getCliente(e.value));
       setCliente(cliente);
     }
   }
 
 
-  const changeInputMessage = target => setMessageData(target.value);
+  const changeInputMessage = (target: any) => setMessageData(target.value);
 
   const handleSendMessage = async () => {
+    if (!usuario || !cliente) return;
     const message = {
       id: '',
       data: {
         date: new Date().getTime(),
         content: messageData,
-        senderName: usuario.data.NombreUsu,
+        senderName: usuario?.data.NombreUsu,
         from: usuario.data.EmailUsu,
         // Si es admin, envío al invitado (PARA PROBAR). LUEGO HACER SELECT PARA ELEGIR EL CLIENTE
         to: cliente.data.EmailUsu || 'admin@mauriciocruzdrones.com',
       }
     }
-    setMessageData(INIT_MESSAGE_DATA);
+    setMessageData('');
     // Envía el mensaje si no está vacío, y si el remitente y el destinatario no es el mismo.
     if(message.data.to != message.data.from && message.data.content) await sendMessage(message);
   };
@@ -80,13 +70,11 @@ const Mensajes = ({
   // let mensajesLeidos = coleccionMensajes.filter(mensaje => (mensaje.data.isRead==false));
   // actualizarLeidos(mensajesLeidos);
 
-  
-
   return (
     <MensajesPresentational 
       cliente={cliente}
       usuario={usuario}
-      admin={admin}
+      admin={isAdmin}
       messageData={messageData}
       coleccionMensajes={coleccionMensajes}
       changeInputMessage={changeInputMessage}
@@ -95,18 +83,4 @@ const Mensajes = ({
       usuariosSelect={usuariosSelect}
     />
   );
-
-};
-
-const mapStateToProps = (state) => ({
-  usuario: state.app.usuario,
-  coleccionMensajes: state.app.coleccionMensajes,
-  usuariosSelect: state.app.usuariosSelect
-});
-
-export default connect(mapStateToProps, { 
-  sendMessage, 
-  getMessages,
-  getCliente,
-  getUsuariosSelect
-})(Mensajes);
+}

@@ -1,8 +1,9 @@
 import { createAsyncThunk, Unsubscribe } from "@reduxjs/toolkit";
 import { ReparacionType } from "../../types/reparacion";
 import { setReparaciones } from "./reparacion.slice";
-import { getReparacionesPersistencia, guardarReparacionPersistencia } from "../../persistencia/persistenciaFirebase";
+import { eliminarReparacionPersistencia, getReparacionesPersistencia, guardarPresupuestoPersistencia, guardarReparacionPersistencia } from "../../persistencia/persistenciaFirebase";
 import { AppState, isFetchingComplete, isFetchingStart } from "../app/app.slice";
+import { Usuario } from "../../types/usuario";
 
 // OBTENER REPARACIONES
 export const getReparacionesAsync = createAsyncThunk(
@@ -22,21 +23,25 @@ export const getReparacionesAsync = createAsyncThunk(
     },
 )
 
-// GUARDA Reparación
-// export const guardarReparacion = (reparacion) => (dispatch) => {
-//     console.log("guardarReparacion()");
-//     dispatch(isFetchingStart());
-//     return new Promise((resolve, reject) => {
-//         guardarReparacionPersistencia(reparacion)
-//             .then(reparacion => {
-//                 resolve(reparacion);
-//             })
-//             .catch(error => {
-//                 reject(error);
-//             })
-//             .finally(() => dispatch(isFetchingComplete()));
-//     });
-// }
+// GUARDA Presupuesto
+export const guardarPresupuestoAsync = createAsyncThunk(
+    'app/guardarPresupuesto',
+    async (presupuesto: {
+        reparacion: ReparacionType,
+        usuario: Usuario,
+    }, { dispatch }) => {
+        console.log("guardarPresupuestoAsync()");
+        dispatch(isFetchingStart());
+        try {
+            await guardarPresupuestoPersistencia(presupuesto);
+            dispatch(isFetchingComplete());
+            return presupuesto;
+        } catch (error: any) {
+            dispatch(isFetchingComplete());
+            return error;
+        }
+    },
+);
 
 export const guardarReparacionAsync = createAsyncThunk(
     'app/guardarReparacion',
@@ -52,3 +57,19 @@ export const guardarReparacionAsync = createAsyncThunk(
         }
     },
 );
+
+// ELIMINAR REPARACION
+export const eliminarReparacionAsync = createAsyncThunk(
+    'app/eliminarReparacion',
+    async (id: string, { dispatch }) => {
+        try {
+            dispatch(isFetchingStart());
+            const reparacionEliminada = await eliminarReparacionPersistencia(id);
+            dispatch(isFetchingComplete());
+            return reparacionEliminada;
+        } catch (error: any) {
+            dispatch(isFetchingComplete());
+            return error;
+        }
+    },
+)

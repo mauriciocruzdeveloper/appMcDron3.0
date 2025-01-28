@@ -1,14 +1,6 @@
 // features/appSlice.ts
-import { createAsyncThunk, createSlice, PayloadAction } from '@reduxjs/toolkit';
-import {
-  getReparacionesPersistencia,
-  // ... el resto de funciones de persistencia que necesites
-} from '../../persistencia/persistenciaFirebase';
+import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { ReparacionType } from '../../types/reparacion';
-import { Unsubscribe } from 'firebase/auth';
-import { AppDispatch, RootState } from '../store';
-import { AppState } from '../../redux-DEPRECATED/App/App.reducer';
-import { guardarReparacionAsync } from './reparacion.actions';
 
 // Tipos para el estado inicial
 interface ReparacionState {
@@ -21,14 +13,10 @@ const initialState: ReparacionState = {
 };
 
 // ---------------------------------------------------------
-// createAsyncThunk
-// ---------------------------------------------------------
-
-// ---------------------------------------------------------
 // SLICE PRINCIPAL
 // ---------------------------------------------------------
-const appSlice = createSlice({
-  name: 'app',
+const reparacionSlice = createSlice({
+  name: 'reparacion',
   initialState,
   reducers: {
     setReparaciones: (state, action: PayloadAction<ReparacionType[]>) => {
@@ -40,7 +28,7 @@ const appSlice = createSlice({
 // Exportar acciones síncronas
 export const {
   setReparaciones,
-} = appSlice.actions;
+} = reparacionSlice.actions;
 
 // Exportar el reducer por defecto
-export default appSlice.reducer;
+export default reparacionSlice.reducer;

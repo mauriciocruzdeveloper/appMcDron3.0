@@ -15,7 +15,6 @@ export interface AppState {
   isLoggedIn: boolean;
   isFetching: boolean;
   login: LoginState;
-  coleccionMensajes: any[];
   error: string;
   usuario: Usuario | null;
 }
@@ -30,13 +29,8 @@ const initialState: AppState = {
     token: '',
   },
   usuario: null,
-  coleccionMensajes: [],
   error: '',
 };
-
-// ---------------------------------------------------------
-// createAsyncThunk
-// ---------------------------------------------------------
 
 // ---------------------------------------------------------
 // SLICE PRINCIPAL
@@ -51,9 +45,6 @@ const appSlice = createSlice({
     logout: () => initialState,
     setUsuario: (state, action: PayloadAction<Usuario>) => {
       state.usuario = action.payload;
-    },
-    setMessagesToRedux: (state, action: PayloadAction<any[]>) => {
-      state.coleccionMensajes = action.payload;
     },
     isFetchingStart: (state) => {
       state.isFetching = true;
@@ -92,7 +83,6 @@ export const {
   setError,
   logout,
   setUsuario,
-  setMessagesToRedux,
   isFetchingStart,
   isFetchingComplete,
 } = appSlice.actions;
