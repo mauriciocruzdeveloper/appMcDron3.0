@@ -124,11 +124,8 @@ export const registroPersistencia = (registro) => {
 
 
 //////////////////////// REPARACIONES ///////////////////////////////////////////////////////////////
-
 // GET todas las Reparaciones
-// const unsubscribe = null;
 export const getReparacionesPersistencia = (setReparacionesToRedux, usuario) => {
-    console.log('!!! getReparacionesPersistencia');
     let queryReparaciones = "";
     if (usuario?.data?.Admin) { // TODO: Esto es una regla de negocio. No va acá.
         // con el not-in se podría hacer un array con los que no quiero que estén, o con el in los que sí quiero.
@@ -188,7 +185,7 @@ export const guardarReparacionPersistencia = (reparacion) => {
     return new Promise((resolve, reject) => {
         if (!reparacion.id) reparacion.id = reparacion.data?.FeConRep.toString();
         setDoc(
-            doc(firestore, collectionNames.REPARACIONES, reparacion.id), 
+            doc(firestore, collectionNames.REPARACIONES, reparacion.id),
             reparacion.data
         )
             .then(docReparacion => {
@@ -206,14 +203,14 @@ export const guardarReparacionPersistencia = (reparacion) => {
 export const eliminarReparacionPersistencia = (id) => {
     return new Promise((resolve, reject) => {
         deleteDoc(doc(firestore, collectionNames.REPARACIONES, id))
-        .then(() => {
-            console.log('borrando reparación ok');
-            resolve(id);
-        })
-        .catch(error => {
-            console.log('Error: ' + error);
-            reject(error);
-        });
+            .then(() => {
+                console.log('borrando reparación ok');
+                resolve(id);
+            })
+            .catch(error => {
+                console.log('Error: ' + error);
+                reject(error);
+            });
 
     })
 };
@@ -523,9 +520,9 @@ export const guardarPresupuestoPersistencia = (presupuesto) => {
                 presupuesto.reparacion.data.UsuarioRep = presupuesto.usuario.data.EmailUsu;
                 guardarReparacionPersistencia(presupuesto.reparacion)
                     .then(() => resolve(presupuesto))
-                    .catch(() => reject({ code: 'Error en guardarPresupuestoPersistencia() al guardar Reparación' }));
+                    // .catch(() => reject({ code: 'Error en guardarPresupuestoPersistencia() al guardar Reparación' }));
             })
-            .catch(() => reject({ code: 'Error en guardarPresupuestoPersistencia() al guardar Usuario' }));
+            // .catch(() => reject({ code: 'Error en guardarPresupuestoPersistencia() al guardar Usuario' }));
     });
 }
 

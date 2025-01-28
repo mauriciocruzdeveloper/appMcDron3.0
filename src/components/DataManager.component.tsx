@@ -13,7 +13,6 @@ export interface DataManagerProps {
 }
 
 export function DataManagerComponent({ children }: DataManagerProps): React.ReactElement {
-    console.log('!!! DataManagerComponent');
     const dispatch = useAppDispatch();
     const usuario = useAppSelector(state => state.app.usuario);
     const [unsubscribeReparaciones, setUnsubscribeReparaciones] = useState<Unsubscribe>();
@@ -33,7 +32,6 @@ export function DataManagerComponent({ children }: DataManagerProps): React.Reac
         try {
             const unsubscribe = getReparacionesPersistencia(
                 (reparaciones: ReparacionType[]) => {
-                    console.log("!!! Reparaciones obtenidas:", reparaciones);
                     dispatch(setReparaciones(reparaciones));
                 },
                 usuario
@@ -49,7 +47,6 @@ export function DataManagerComponent({ children }: DataManagerProps): React.Reac
         try {
             const unsubscribe = getUsuariosPersistencia(
                 (usuarios: Usuario[]) => {
-                    console.log("!!! Usuarios obtenidos:", usuarios);
                     dispatch(setUsuarios(usuarios));
                     const usuariosSelect = usuarios.map(usuario => {
                         const dato = usuario.data.EmailUsu ? usuario.data.EmailUsu : usuario.id;
