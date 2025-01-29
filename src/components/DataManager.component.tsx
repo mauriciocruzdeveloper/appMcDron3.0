@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { getReparacionesPersistencia, getUsuariosPersistencia } from "../persistencia/persistenciaFirebase";
+import { getMessagesPersistencia, getReparacionesPersistencia, getUsuariosPersistencia } from "../persistencia/persistenciaFirebase";
 import { useAppDispatch } from "../redux-tool-kit/hooks/useAppDispatch";
 import { setReparaciones } from "../redux-tool-kit/reparacion/reparacion.slice";
 import { ReparacionType } from "../types/reparacion";
@@ -7,6 +7,7 @@ import { Unsubscribe } from "firebase/auth";
 import { useAppSelector } from "../redux-tool-kit/hooks/useAppSelector";
 import { setUsuarios, setUsuariosSelect } from "../redux-tool-kit/usuario/usuario.slice";
 import { Usuario } from "../types/usuario";
+import { setMessages } from "../redux-tool-kit/mensaje/mensaje.slice";
 
 export interface DataManagerProps {
     children: React.ReactNode;
@@ -15,22 +16,37 @@ export interface DataManagerProps {
 export function DataManagerComponent({ children }: DataManagerProps): React.ReactElement {
     const dispatch = useAppDispatch();
     const usuario = useAppSelector(state => state.app.usuario);
+    const emailUsuMessage = useAppSelector(state => state.mensaje.emailUsuMessage);
+    const emailCliMessage = useAppSelector(state => state.mensaje.emailCliMessage);
     const [unsubscribeReparaciones, setUnsubscribeReparaciones] = useState<Unsubscribe>();
     const [unsubscribeUsuarios, setUnsubscribeUsuarios] = useState<Unsubscribe>();
+    const [unsubscribeMessages, setUnsubscribeMessages] = useState<Unsubscribe>();
 
     useEffect(() => {
-        getReparaciones();
         getUsuarios();
-
         return () => {
-            unsubscribeReparaciones?.();
             unsubscribeUsuarios?.();
         };
     }, []);
 
+    useEffect(() => {
+        getReparaciones();
+        return () => {
+            unsubscribeReparaciones?.();
+        };
+    }, [usuario]);
+
+    useEffect(() => {
+        if (!emailUsuMessage || !emailCliMessage) return;
+        getMensajes();
+        return () => {
+            unsubscribeMessages?.();
+        };
+    }, [emailUsuMessage, emailCliMessage]);
+
     const getReparaciones = async () => {
         try {
-            const unsubscribe = getReparacionesPersistencia(
+            const unsubscribe = await getReparacionesPersistencia(
                 (reparaciones: ReparacionType[]) => {
                     dispatch(setReparaciones(reparaciones));
                 },
@@ -45,7 +61,7 @@ export function DataManagerComponent({ children }: DataManagerProps): React.Reac
 
     const getUsuarios = async () => {
         try {
-            const unsubscribe = getUsuariosPersistencia(
+            const unsubscribe = await getUsuariosPersistencia(
                 (usuarios: Usuario[]) => {
                     dispatch(setUsuarios(usuarios));
                     const usuariosSelect = usuarios.map(usuario => {
@@ -67,7 +83,23 @@ export function DataManagerComponent({ children }: DataManagerProps): React.Reac
         }
     };
 
-    // TODO: Hace falta que se aun wrapper
+    const getMensajes = async () => {
+        try {
+            const unsubscribe = await getMessagesPersistencia(
+                (mensajes: any) => {
+                    dispatch(setMessages(mensajes));
+                },
+                emailUsuMessage,
+                emailCliMessage,
+            );
+
+            setUnsubscribeMessages(() => unsubscribe); // Guarda el unsubscribe en el estado local
+        } catch (error) {
+            console.error("Error al obtener mensajes:", error);
+        }
+    };
+
+    // TODO: Hace falta que sea un wrapper???
     return (
         <div>
             {children}

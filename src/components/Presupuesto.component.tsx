@@ -1,17 +1,14 @@
 import { useEffect, useCallback, useState, useMemo } from "react";
 import TextareaAutosize from "react-textarea-autosize";
 import Select, { InputActionMeta } from 'react-select';
-import {
-    getCliente,
-    getProvinciasSelect,
-    getLocalidadesPorProvincia,
-} from "../redux-DEPRECATED/root-actions";
 
 import history from "../history";
 import { useAppSelector } from "../redux-tool-kit/hooks/useAppSelector";
 import { useAppDispatch } from "../redux-tool-kit/hooks/useAppDispatch";
 import { useModal } from "./Modal/useModal";
 import { guardarPresupuestoAsync } from "../redux-tool-kit/reparacion/reparacion.actions";
+import { getClienteAsync } from "../redux-tool-kit/usuario/usuario.actions";
+import { getLocalidadesPorProvincia, getProvinciasSelect } from "../redux-DEPRECATED/App/App.actions";
 
 // import { provincias } from '../datos/provincias.json'; 
 
@@ -178,10 +175,19 @@ export default function Presupuesto(): JSX.Element {
     // un usuario/cliente de la lista que previamente se cargó en el Select
     const handleOnChangeUsuarios = async (e: any) => {
         if (e) {
-            const cliente = await dispatch(getCliente(e.value));
+            const response = await dispatch(getClienteAsync(e.value));
+
+            if (response.meta.requestStatus === 'rejected') {
+                openModal({
+                    mensaje: "Error al obtener el cliente.",
+                    tipo: "danger",
+                    titulo: "Error al obtener el cliente",
+                });
+                return;
+            }
             setPresupuesto({
                 ...presupuesto,
-                cliente: cliente
+                cliente: response.payload
             });
         }
     }

@@ -1,15 +1,14 @@
 import React from 'react';
 import { useState, useEffect, useCallback } from 'react';
-import { 
-  getMessages,
-  getCliente,
-  sendMessage,
-} from '../redux-DEPRECATED/root-actions';
 import MensajesPresentational from './Mensajes.presentational';
 import { actualizarLeidos } from '../utils/utils';
 import { useAppSelector } from '../redux-tool-kit/hooks/useAppSelector';
 import { Usuario } from '../types/usuario';
 import { useAppDispatch } from '../redux-tool-kit/hooks/useAppDispatch';
+import { sendMessageAsync } from '../redux-tool-kit/mensaje/mensaje.actions';
+import { getClienteAsync } from '../redux-tool-kit/usuario/usuario.actions';
+import { useModal } from './Modal/useModal';
+import { setEmailCliMessage, setEmailUsuMessage } from '../redux-tool-kit/mensaje/mensaje.slice';
 
 export default function Mensajes(): JSX.Element {
   console.log('MENSAJES container');
@@ -18,18 +17,19 @@ export default function Mensajes(): JSX.Element {
   const coleccionMensajes = useAppSelector(state => state.mensaje.coleccionMensajes);
   const usuario = useAppSelector(state => state.app.usuario);
   const usuariosSelect = useAppSelector(state => state.usuario.usuariosSelect);
+  const [messageData, setMessageData] = useState<string>();
+  const [cliente, setCliente] = useState<Usuario>(); // Es el cliente seleccionado cuando soy admin
+
+  const { openModal } = useModal();
 
   // MODIFICANDO UN POCO EL CÓDIGO, SIRVe PARA ENVIAR MENSAJES ENTRE CLIENTES
 
-  const [ messageData, setMessageData ] = useState<string>();
-  const [ cliente, setCliente ] = useState<Usuario>(); // Es el cliente seleccionado cuando soy admin
 
   // El useCallback tiene como dependencia el cliente, cuando elijo otro cliente, se actualiza.
   const initForm = useCallback(async () => {
-    await getMessages(usuario?.data.EmailUsu, cliente?.data.EmailUsu || 'admin@mauriciocruzdrones.com');
-    const mensajesLeidos = coleccionMensajes.filter(mensaje => (mensaje.data.isRead==false));
+    const mensajesLeidos = coleccionMensajes.filter(mensaje => (mensaje.data.isRead == false));
     actualizarLeidos(mensajesLeidos);
-  }, [cliente]);
+  }, [coleccionMensajes]);
 
   // initForm es la dependencia del useEffect que se vuelve a ejecutar cuando cambia initForm, que cambia cuando 
   // se actualiza el useCallback, cuando a su vez cambia el cliente.
@@ -37,11 +37,29 @@ export default function Mensajes(): JSX.Element {
     initForm();
   }, [initForm]);
 
+  useEffect(() => {
+    dispatch(setEmailCliMessage(cliente?.data.EmailUsu ?? usuario?.data.EmailUsu ?? ''));
+  }, [cliente]);
+
+  useEffect(() => {
+    dispatch(setEmailUsuMessage(usuario?.data.EmailUsu ?? ''));
+  }, [usuario]);
+
 
   const handleOnChangeUsuarios = async (e: any) => {
-    if(e){
-      const cliente = await dispatch(getCliente(e.value));
-      setCliente(cliente);
+    if (e) {
+      // TODO: Hacer algo general para manejar las respuestas y luego abrir modal
+      const response = await dispatch(getClienteAsync(e.value));
+
+      if (response.meta.requestStatus === 'rejected') {
+        openModal({
+          mensaje: "Error al obtener el cliente.",
+          tipo: "danger",
+          titulo: "Error al obtener el cliente",
+        });
+        return;
+      }
+      setCliente(response.payload);
     }
   }
 
@@ -63,7 +81,7 @@ export default function Mensajes(): JSX.Element {
     }
     setMessageData('');
     // Envía el mensaje si no está vacío, y si el remitente y el destinatario no es el mismo.
-    if(message.data.to != message.data.from && message.data.content) await sendMessage(message);
+    if (message.data.to != message.data.from && message.data.content) await dispatch(sendMessageAsync(message));
   };
 
   // Actualiza mensajes leídos. Ver si acá es el mejor lugar.
@@ -71,7 +89,7 @@ export default function Mensajes(): JSX.Element {
   // actualizarLeidos(mensajesLeidos);
 
   return (
-    <MensajesPresentational 
+    <MensajesPresentational
       cliente={cliente}
       usuario={usuario}
       admin={isAdmin}
