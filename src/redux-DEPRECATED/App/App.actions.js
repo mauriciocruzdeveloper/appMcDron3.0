@@ -1,32 +1,13 @@
-/* eslint-disable @typescript-eslint/explicit-module-boundary-types */
-// En este archivo están las definiciones de acciones para el reducer y también funciones
-// que pueden no disparar una acción. Acá están todas las funciones que se llaman desde
-// los componentes.
-// Habría que separar la lógica de las acciones... No se cómo. Puede ser con in middleware.
-// Otra opción podría se usar componentes "Contenedores", donde esté la lógica, y aquí también
-// se disparen las acciones, y luego los componentes "Presentación" que se sirvan de los estados del store.
-
 import {
     getProvinciasSelectPersistencia,
     getLocPorProvPersistencia,
-    getUsuariosPersistencia,
 } from "../../persistencia/persistenciaFirebase";
 import { callEndpoint, OpenaiFetchAPI } from "../../utils/utils";
 import { HttpMethod } from "../../types/httpMethods";
 import { isFetchingComplete, isFetchingStart } from "../../redux-tool-kit/app/app.slice";
-import { setLocalidadesSelect, setProvinciasSelect, setUsuariosSelect } from "../../redux-tool-kit/usuario/usuario.slice";
+import { setLocalidadesSelect, setProvinciasSelect } from "../../redux-tool-kit/usuario/usuario.slice";
 // } from "../../persistencia/persistenciaJava";
 // } from "../../persistencia/persistenciaNode";
-
-
-//////////////////////////////////////////////////////////////////////////
-//////// ACTIONS /////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////
-
-
-/////////////////////////////////////////////////
-// FUNCIONES PARA CONECTARSE A LA PERSISTENCIA //
-/////////////////////////////////////////////////
 
 // Envía Recibo
 export const enviarRecibo = (reparacion) => (dispatch) => {
@@ -115,8 +96,3 @@ export const getLocalidadesPorProvincia = (provincia) => (dispatch) => {
             .finally(() => dispatch(isFetchingComplete()));
     });
 }
-
-// export const rememberMe = () => {
-//     localStorage.setItem('memoria', JSON.stringify( estado.display1 ));
-//     const memoria = JSON.parse(localStorage.getItem('memoria')) || [];
-// }
