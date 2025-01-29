@@ -1,12 +1,10 @@
 import React, { useEffect } from 'react';
 import { useState } from 'react';
-import { connect } from 'react-redux';
 import history from '../history';
-// Actions 
-import { login } from '../redux/root-actions';
-// Components
 import LoginPresentational from './Login.presentational'; // componente 'no inteligente' de presentación
-import { RootState } from '../redux/App/App.reducer';
+import { useAppDispatch } from '../redux-tool-kit/hooks/useAppDispatch';
+import { loginAsync } from '../redux-tool-kit/app/app.actions';
+import { useModal } from './Modal/useModal';
 
 export interface LoginData {
   email: string;
@@ -19,19 +17,20 @@ const INIT_LOGIN_DATA: LoginData = {
   password: ''
 };
 
-export interface LoginProps {
-  login: (loginData: LoginData) => Promise<void>;
-}
+export default function Login(): JSX.Element | null {
+  const dispatch = useAppDispatch();
+  const {
+    openModal,
+  } = useModal();
 
-const Login = ({ login }: LoginProps) => {
-  console.log('LOGIN container');
-
-  const [ loginData, setLoginData ] = useState(() => {
+  const [loginData, setLoginData] = useState(() => {
     const savedLoginData = localStorage.getItem('loginData');
     return savedLoginData ? JSON.parse(savedLoginData) : INIT_LOGIN_DATA;
   });
 
-  const [ rememberMe, setRememberMe ] = useState(() => {
+  console.log('LOGIN container');
+
+  const [rememberMe, setRememberMe] = useState(() => {
     return localStorage.getItem('loginData') ? true : false;
   });
 
@@ -41,45 +40,40 @@ const Login = ({ login }: LoginProps) => {
     }
   }, []);
 
-  // Actualiza los valores de los input cuando éstos cambian y los guarda en el state local.
-  const changeInputLogin = (field: string, value: string) => setLoginData({ 
-    ...loginData, 
-    [field]: value 
+  const changeInputLogin = (field: string, value: string) => setLoginData({
+    ...loginData,
+    [field]: value
   });
 
-  // Manejador para el botón login. 
   const handleLogin = async () => {
-    // LLama al action creator (asincrónico) 'login'
-    await login(loginData);
-    // Guarda los datos de login en localStorage solo si "Remember me" está marcado
-    if (rememberMe) {
-      localStorage.setItem('loginData', JSON.stringify(loginData));
+    const result = await dispatch(loginAsync(loginData));
+    if (result.meta.requestStatus === 'fulfilled') {
+      if (rememberMe) {
+        localStorage.setItem('loginData', JSON.stringify(loginData));
+      }
+      history.push('/');
+    } else {
+      openModal({
+        mensaje: `Error de login: ${result}`,
+        titulo: 'Error',
+        tipo: 'danger',
+      });
     }
-    // Luego de loguearse, va al raíz. Si está logueado, termina en inicio, sino en login.
-    history.push('/');
   };
 
-  // Manejador para registrarse
   const handleRegistrarse = () => {
-    // Va a la página de registro
     history.push('/registro');
   }
 
   return (
     loginData ?
-    <LoginPresentational 
-      loginData={loginData}
-      handleLogin={handleLogin}
-      changeInputLogin={changeInputLogin}
-      handleRegistrarse={handleRegistrarse}
-      setRememberMe={setRememberMe}
-      rememberMe={rememberMe}
-    /> : null 
+      <LoginPresentational
+        loginData={loginData}
+        handleLogin={handleLogin}
+        changeInputLogin={changeInputLogin}
+        handleRegistrarse={handleRegistrarse}
+        setRememberMe={setRememberMe}
+        rememberMe={rememberMe}
+      /> : null
   );
-};
-
-const mapStateToProps = (state: RootState) => ({
-  isFetching: state.app.isFetching,
-});
-
-export default connect(mapStateToProps, { login })(Login);
+}

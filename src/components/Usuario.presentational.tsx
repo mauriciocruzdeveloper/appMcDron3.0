@@ -1,11 +1,11 @@
 import React from 'react';
 import Select, { SingleValue } from 'react-select';
-import { ClienteType } from '../types/cliente';
 import { ChangeEvent } from 'react';
 import { InputType, SelectType } from '../types/types';
+import { Usuario } from '../types/usuario';
 
-interface ClientePresentationalProps {
-    cliente: ClienteType;
+interface UsuarioPresentationalProps {
+    usuario: Usuario;
     provinciasSelect: SelectType[];
     localidadesSelect: SelectType[];
     onChangeProvincias: (value: string) => void;
@@ -17,11 +17,11 @@ interface ClientePresentationalProps {
     handleSendSms: () => void;
 }
 
-const ClientePresentational = (props: ClientePresentationalProps) => {
+const UsuarioPresentational = (props: UsuarioPresentationalProps) => {
     console.log('USUARIO presentational');
 
     const { 
-        cliente,
+        usuario,
         provinciasSelect,
         localidadesSelect,
         onChangeProvincias,
@@ -69,8 +69,8 @@ const ClientePresentational = (props: ClientePresentationalProps) => {
                     <h3 className='card-title'>
                         USUARIO
                     </h3>
-                    <div>Nombre: {cliente?.data?.NombreUsu} {cliente?.data?.ApellidoUsu}</div>
-                    <div>Email: {cliente?.data?.EmailUsu}</div>
+                    <div>Nombre: {usuario?.data?.NombreUsu} {usuario?.data?.ApellidoUsu}</div>
+                    <div>Email: {usuario?.data?.EmailUsu}</div>
                 </div>
             </div>
 
@@ -85,7 +85,7 @@ const ClientePresentational = (props: ClientePresentationalProps) => {
                                 type='text' 
                                 className='form-control' 
                                 id='EmailUsu' 
-                                value={cliente?.data?.EmailUsu || ''}
+                                value={usuario?.data?.EmailUsu || ''}
                             />
                             <button 
                                 type='submit' 
@@ -103,7 +103,7 @@ const ClientePresentational = (props: ClientePresentationalProps) => {
                             type='text' 
                             className='form-control' 
                             id='NombreUsu' 
-                            value={cliente?.data?.NombreUsu || ''}
+                            value={usuario?.data?.NombreUsu || ''}
                         />
                     </div>
                     <div>
@@ -113,7 +113,7 @@ const ClientePresentational = (props: ClientePresentationalProps) => {
                             type='text' 
                             className='form-control' 
                             id='ApellidoUsu' 
-                            value={cliente?.data?.ApellidoUsu || ''}
+                            value={usuario?.data?.ApellidoUsu || ''}
                         />
                     </div>
                     <div>
@@ -124,7 +124,7 @@ const ClientePresentational = (props: ClientePresentationalProps) => {
                                 type='tel' 
                                 className='form-control' 
                                 id='TelefonoUsu'
-                                value={cliente?.data?.TelefonoUsu || ''}
+                                value={usuario?.data?.TelefonoUsu || ''}
                             />
                             <button 
                                     type='submit' 
@@ -141,7 +141,7 @@ const ClientePresentational = (props: ClientePresentationalProps) => {
                             options={provinciasSelect}
                             onChange={handleOnChangeProvincias}
                             id='ProvinciaUsu'
-                            value={({value: cliente?.data?.ProvinciaUsu, label: cliente?.data?.ProvinciaUsu})}
+                            value={({value: usuario?.data?.ProvinciaUsu, label: usuario?.data?.ProvinciaUsu})}
                         />
                     </div>
                     <div>
@@ -150,7 +150,7 @@ const ClientePresentational = (props: ClientePresentationalProps) => {
                             options={localidadesSelect}
                             onChange={handleOnChangeLocalidades}
                             id='CiudadUsu'
-                            value={{value: cliente?.data?.CiudadUsu, label: cliente?.data?.CiudadUsu}}
+                            value={{value: usuario?.data?.CiudadUsu, label: usuario?.data?.CiudadUsu}}
                         />
                     </div>
                 </div>
@@ -175,4 +175,4 @@ const ClientePresentational = (props: ClientePresentationalProps) => {
     )
 }
 
-export default ClientePresentational;
+export default UsuarioPresentational;

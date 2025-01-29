@@ -1,52 +1,38 @@
-import { useEffect, useState, FC } from "react";
+import React from "react";
+import { useEffect, useState } from "react";
 import history from "../history";
-import { connect } from "react-redux";
 import { useParams } from "react-router-dom";
-import {
-    guardarReparacion,
-    eliminarReparacion,
-    confirm,
-    enviarRecibo,
-} from "../redux/root-actions";
 import {
     enviarSms,
 } from "../utils/utils";
 import { estados } from '../datos/estados';
 import ReparacionPresentational from './Reparacion.presentational';
-import { RootState } from "../redux/App/App.reducer";
 import { Estado } from "../types/estado";
 import { ReparacionType } from "../types/reparacion";
-import { generarAutoDiagnostico } from "../redux/App/App.actions";
+import { enviarRecibo, generarAutoDiagnostico } from "../redux-DEPRECATED/App/App.actions";
 import { enviarEmailVacio } from "../utils/sendEmails";
 import { subirFotoReparacionPersistencia, eliminarFotoReparacionPersistencia } from "../persistencia/subeFotoFirebase";
-
-interface ReparacionProps {
-    guardarReparacion: (reparacion: ReparacionType) => void;
-    eliminarReparacion: (id: string) => void;
-    confirm: (message: string, title: string, type: string, callback: () => void) => void;
-    generarAutoDiagnostico: (reparacion: ReparacionType) => Promise<string>;
-    enviarRecibo: (reparacion: ReparacionType) => void;
-    coleccionReparaciones: ReparacionType[];
-    admin: boolean;
-}
+import { useAppSelector } from "../redux-tool-kit/hooks/useAppSelector";
+import { useAppDispatch } from "../redux-tool-kit/hooks/useAppDispatch";
+import { useModal } from "./Modal/useModal";
+import { eliminarReparacionAsync, guardarReparacionAsync } from "../redux-tool-kit/reparacion/reparacion.actions";
 
 interface ParamTypes {
     id: string;
 }
 
-const Reparacion: FC<ReparacionProps> = (props) => {
+
+export default function Reparacion(): React.ReactElement | null {
+    console.log("REPARACION container");
+
+    const dispatch = useAppDispatch();
 
     const {
-        guardarReparacion,
-        eliminarReparacion,
-        confirm,
-        generarAutoDiagnostico,
-        enviarRecibo,
-        coleccionReparaciones,
-        admin,
-    } = props;
+        openModal,
+    } = useModal();
 
-    console.log("REPARACION container");
+    const coleccionReparaciones = useAppSelector(state => state.reparacion.coleccionReparaciones);
+    const isAdmin = useAppSelector(state => state.app.usuario?.data.Admin) ?? false;
 
     const { id } = useParams<ParamTypes>();
 
@@ -128,33 +114,60 @@ const Reparacion: FC<ReparacionProps> = (props) => {
 
     const confirmaGuardarReparacion = async () => {
         if (reparacion.data.EstadoRep === 'Recibido' && !reparacion.data.DiagnosticoRep) {
-            reparacion.data.DiagnosticoRep = await generarAutoDiagnostico(reparacion);
+            reparacion.data.DiagnosticoRep = await dispatch(generarAutoDiagnostico(reparacion));
         }
-        guardarReparacion(reparacion);
+        const response = await dispatch(guardarReparacionAsync(reparacion));
         setReparacionOriginal(reparacion);
+        if (response.meta.requestStatus === 'fulfilled') {
+            openModal({
+                mensaje: "Reparación guardada correctamente.",
+                tipo: "success",
+                titulo: "Guardar Reparación",
+            })
+        } else {
+            openModal({
+                mensaje: "Error al guardar la reparación.",
+                tipo: "danger",
+                titulo: "Guardar Reparación",
+            })
+        }
     }
 
-    const handleGuardarReparacion = () => {
-        confirm(
-            "Guardar Reparación?",
-            "Atención",
-            "warning",
-            confirmaGuardarReparacion,
-        );
+    const confirmEliminarReparacion = async () => {
+        if (!reparacion) return;
+        const response = await dispatch(eliminarReparacionAsync(reparacion.id));
+        if (response.meta.requestStatus === 'fulfilled') {
+            openModal({
+                mensaje: "Reparación eliminada correctamente.",
+                tipo: "success",
+                titulo: "Eliminar Reparación",
+            })
+            history.goBack();
+        } else {
+            openModal({
+                mensaje: "Error al eliminar la reparación.",
+                tipo: "danger",
+                titulo: "Eliminar Reparación",
+            })
+        }
+    }
+
+    const handleGuardarReparacion = async () => {
+        openModal({
+            mensaje: "Desea guardar los cambios?",
+            tipo: "warning",
+            titulo: "Guardar Reparación",
+            confirmCallback: confirmaGuardarReparacion,
+        })
     }
 
     const handleEliminarReparacion = () => {
-        if (!reparacion) return;
-
-        confirm(
-            "Eliminar Reparación?",
-            "Atención",
-            "danger",
-            async () => {
-                await eliminarReparacion(reparacion.id);
-                history.goBack();
-            }
-        );
+        openModal({
+            mensaje: "Eliminar Reparación?",
+            tipo: "Atención",
+            titulo: "danger",
+            confirmCallback: confirmEliminarReparacion,
+        })
     }
 
     const handleSendEmail = () => {
@@ -164,7 +177,7 @@ const Reparacion: FC<ReparacionProps> = (props) => {
 
     const handleSendRecibo = () => {
         if (!reparacion) return;
-        enviarRecibo(reparacion);
+        dispatch(enviarRecibo(reparacion));
     }
 
     const handleSendSms = () => {
@@ -189,7 +202,7 @@ const Reparacion: FC<ReparacionProps> = (props) => {
 
     const handleGenerarAutoDiagnostico = async () => {
         if (!reparacion) return;
-        const diagnostico = await generarAutoDiagnostico(reparacion);
+        const diagnostico = await dispatch(generarAutoDiagnostico(reparacion));
         setReparacion({
             ...reparacion,
             data: {
@@ -204,11 +217,11 @@ const Reparacion: FC<ReparacionProps> = (props) => {
         const file = e.target.files[0];
         const urlFoto = await subirFotoReparacionPersistencia(reparacion.id, file);
         setReparacion({
-          ...reparacion,
-          data: {
-            ...reparacion.data,
-            urlsFotos: [...(reparacion.data.urlsFotos || []), urlFoto]
-          }
+            ...reparacion,
+            data: {
+                ...reparacion.data,
+                urlsFotos: [...(reparacion.data.urlsFotos || []), urlFoto]
+            }
         });
     };
 
@@ -216,11 +229,11 @@ const Reparacion: FC<ReparacionProps> = (props) => {
         if (!reparacion) return;
         await eliminarFotoReparacionPersistencia(reparacion.id, fotoUrl);
         setReparacion({
-          ...reparacion,
-          data: {
-            ...reparacion.data,
-            urlsFotos: reparacion.data.urlsFotos?.filter(url => url !== fotoUrl)
-          }
+            ...reparacion,
+            data: {
+                ...reparacion.data,
+                urlsFotos: reparacion.data.urlsFotos?.filter(url => url !== fotoUrl)
+            }
         });
     };
 
@@ -228,7 +241,7 @@ const Reparacion: FC<ReparacionProps> = (props) => {
         // Sólo se renderiza el componente presentacional cuando están los datos necesarios ya cargados.
         estados && reparacion ?
             <ReparacionPresentational
-                admin={admin}
+                admin={isAdmin}
                 reparacion={reparacion}
                 estados={estados}
                 setEstado={setEstado}
@@ -243,19 +256,4 @@ const Reparacion: FC<ReparacionProps> = (props) => {
                 handleDeleteFoto={handleDeleteFoto}
             /> : null
     )
-};
-
-const mapStateToProps = (state: RootState) => ({
-    coleccionReparaciones: state.app.coleccionReparaciones
-});
-
-export default connect(
-    mapStateToProps,
-    {
-        guardarReparacion,
-        eliminarReparacion,
-        confirm,
-        generarAutoDiagnostico,
-        enviarRecibo,
-    }
-)(Reparacion);
+}

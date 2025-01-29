@@ -3,13 +3,14 @@ import { Route, Switch, Redirect } from "react-router-dom";
 
 // Components
 import Inicio from "../components/Inicio.component";
-import ListaReparaciones from "../components/ListaReparaciones.component";
 import ListaUsuarios from "../components/ListaUsuarios.component";
 import Reparacion from "../components/Reparacion.container";
-import Usuario from "../components/Cliente.container";
+import Usuario from "../components/Usuario.container";
 import Presupuesto from "../components/Presupuesto.component";
 import NavMcDron from "../components/NavMcDron.component";
 import Mensajes from "../components/Mensajes.container";
+import ListaReparaciones from "../components/ListaReparaciones.component";
+import { DataManagerComponent } from "../components/DataManager.component";
 
 const InicioRoutes = ({ match, isLoggedIn, admin }) => {
 
@@ -19,7 +20,7 @@ const InicioRoutes = ({ match, isLoggedIn, admin }) => {
     // component instancia el componenete cada vez
     return (
         isLoggedIn ?
-        <>
+        <DataManagerComponent>
             {/* TODO: Verificar si Nav debe ir acá, quizás en App */}
             <NavMcDron /> 
             <Switch>
@@ -31,7 +32,7 @@ const InicioRoutes = ({ match, isLoggedIn, admin }) => {
                 <Route exact path={`${match.path}/presupuesto`} render = {props => <Presupuesto {...props} admin={admin}/>} />
                 <Route exact path={`${match.path}/mensajes`} render = {props => <Mensajes {...props} admin={admin}/>} />
             </Switch>
-        </>
+        </DataManagerComponent>
         : <Redirect to="/login" />        
     )
 }

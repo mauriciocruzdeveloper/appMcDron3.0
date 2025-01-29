@@ -1,13 +1,13 @@
 import ReactDOM from "react-dom";
 import App from "./components/App.component";
 import { Provider } from "react-redux";
-import store from "./redux/store";
 
 import 'bootstrap/dist/css/bootstrap.min.css'
 import 'bootstrap/dist/js/bootstrap.min.js'
 import './css/estilos.css';
 
 import dotenv from 'dotenv';
+import store from "./redux-tool-kit/store";
 dotenv.config();
 
 const startApp = () => {
