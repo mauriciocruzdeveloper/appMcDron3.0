@@ -1,7 +1,7 @@
 import { createAsyncThunk, Unsubscribe } from "@reduxjs/toolkit";
 import { ReparacionType } from "../../types/reparacion";
 import { setReparaciones } from "./reparacion.slice";
-import { eliminarReparacionPersistencia, getReparacionesPersistencia, guardarPresupuestoPersistencia, guardarReparacionPersistencia } from "../../persistencia/persistenciaFirebase";
+import { eliminarReparacionPersistencia, getReparacionesPersistencia, getReparacionPersistencia, guardarPresupuestoPersistencia, guardarReparacionPersistencia } from "../../persistencia/persistenciaFirebase";
 import { AppState, isFetchingComplete, isFetchingStart } from "../app/app.slice";
 import { Usuario } from "../../types/usuario";
 
@@ -43,6 +43,7 @@ export const guardarPresupuestoAsync = createAsyncThunk(
     },
 );
 
+// GUARDA REPARACION
 export const guardarReparacionAsync = createAsyncThunk(
     'app/guardarReparacion',
     async (reparacion: ReparacionType, { dispatch }) => {
@@ -73,3 +74,19 @@ export const eliminarReparacionAsync = createAsyncThunk(
         }
     },
 )
+
+// GET Reparación por id
+export const getReparacionAsync = createAsyncThunk(
+    'app/getReparacion',
+    async (id: string, { dispatch }) => {
+        try {
+            dispatch(isFetchingStart());
+            const reparacion = await getReparacionPersistencia(id);
+            dispatch(isFetchingComplete());
+            return reparacion;
+        } catch (error: any) {
+            dispatch(isFetchingComplete());
+            return error;
+        }
+    },
+);

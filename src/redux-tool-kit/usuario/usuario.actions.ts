@@ -1,5 +1,9 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
-import { eliminarUsuarioPersistencia, guardarUsuarioPersistencia } from "../../persistencia/persistenciaFirebase";
+import {
+    eliminarUsuarioPersistencia,
+    getClientePersistencia,
+    guardarUsuarioPersistencia,
+} from "../../persistencia/persistenciaFirebase";
 import { isFetchingComplete, isFetchingStart } from "../app/app.slice";
 import { Usuario } from "../../types/usuario";
 
@@ -28,6 +32,22 @@ export const guardarUsuarioAsync = createAsyncThunk(
             const usuarioGuardado = await guardarUsuarioPersistencia(usuario);
             dispatch(isFetchingComplete());
             return usuarioGuardado;
+        } catch (error: any) {
+            dispatch(isFetchingComplete());
+            return error;
+        }
+    },
+);
+
+// GET Clientes/Usuarios por id
+export const getClienteAsync = createAsyncThunk(
+    'app/getCliente',
+    async (id: string, { dispatch }) => {
+        try {
+            dispatch(isFetchingStart());
+            const cliente = await getClientePersistencia(id);
+            dispatch(isFetchingComplete());
+            return cliente;
         } catch (error: any) {
             dispatch(isFetchingComplete());
             return error;

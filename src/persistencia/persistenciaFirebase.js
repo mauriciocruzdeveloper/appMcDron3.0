@@ -372,7 +372,7 @@ export const sendMessagePersistencia = (message) => {
 };
 
 // GET todos los mensajes
-export const getMessagesPersistencia = (emailUsu, emailCli, setMessagesToRedux) => {
+export const getMessagesPersistencia = (setMessagesToRedux, emailUsu, emailCli) => {
     console.log('getMessagesPersistencia: ' + emailUsu + ' ' + emailCli);
     return new Promise((resolve, reject) => {
         const colRef = collection(firestore, 'USUARIOS', emailUsu, 'messages');

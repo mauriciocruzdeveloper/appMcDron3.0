@@ -3,12 +3,6 @@ import { useEffect, useCallback, useState } from "react";
 import { useParams } from "react-router-dom";
 import history from "../history";
 import {
-    // Usuario y Usuario es lo mismo, pero Usuario se usa para referirse
-    // al usuario logueado, y Usuario para el usuario en un ABMC
-    getProvinciasSelect,
-    getLocalidadesPorProvincia,
-} from "../redux-DEPRECATED/root-actions";
-import {
     enviarEmail,
     enviarSms
 } from "../utils/utils";
@@ -18,6 +12,7 @@ import { useAppSelector } from "../redux-tool-kit/hooks/useAppSelector";
 import { useAppDispatch } from "../redux-tool-kit/hooks/useAppDispatch";
 import { useModal } from "./Modal/useModal";
 import { eliminarUsuarioAsync, guardarUsuarioAsync } from "../redux-tool-kit/usuario/usuario.actions";
+import { getLocalidadesPorProvincia, getProvinciasSelect } from "../redux-DEPRECATED/App/App.actions";
 
 interface ParamTypes {
     id: string;

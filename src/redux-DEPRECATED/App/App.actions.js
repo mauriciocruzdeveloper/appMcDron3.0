@@ -6,15 +6,10 @@
 // Otra opción podría se usar componentes "Contenedores", donde esté la lógica, y aquí también
 // se disparen las acciones, y luego los componentes "Presentación" que se sirvan de los estados del store.
 
-import { AppTypes } from "./App.types";
 import {
-    getReparacionPersistencia,
-    getClientePersistencia,
     getProvinciasSelectPersistencia,
     getLocPorProvPersistencia,
     getUsuariosPersistencia,
-    getMessagesPersistencia,
-    sendMessagePersistencia
 } from "../../persistencia/persistenciaFirebase";
 import { callEndpoint, OpenaiFetchAPI } from "../../utils/utils";
 import { HttpMethod } from "../../types/httpMethods";
@@ -32,31 +27,6 @@ import { setLocalidadesSelect, setProvinciasSelect, setUsuariosSelect } from "..
 /////////////////////////////////////////////////
 // FUNCIONES PARA CONECTARSE A LA PERSISTENCIA //
 /////////////////////////////////////////////////
-
-
-// GET Cliente/Usuario por id
-export const getCliente = (id) => (dispatch) => {
-    console.log("getCliente()");
-    dispatch(isFetchingStart());
-    return new Promise(async (resolve, reject) => {
-        getClientePersistencia(id)
-            .then(cliente => resolve(cliente))
-            .catch(() => reject({ code: "Error al obtener cliente en getCliente()" }))
-            .finally(() => dispatch(isFetchingComplete()));
-    });
-};
-
-// GET Reparación por id
-export const getReparacion = (id) => (dispatch) => {
-    console.log("getReparacion()");
-    dispatch(isFetchingStart());
-    return new Promise((resolve, reject) => {
-        getReparacionPersistencia(id)
-            .then(reparacion => resolve(reparacion))
-            .catch(() => reject({ code: "Error en getReparacion() al buscar una Reparacion" }))
-            .finally(() => dispatch(isFetchingComplete()));
-    });
-};
 
 // Envía Recibo
 export const enviarRecibo = (reparacion) => (dispatch) => {
@@ -127,25 +97,6 @@ export const getProvinciasSelect = () => (dispatch) => {
                 dispatch(setProvinciasSelect(provinciasSelect));
                 resolve(provinciasSelect);
             })
-            .catch(error => reject(error))
-            .finally(() => dispatch(isFetchingComplete()));
-    });
-}
-
-// TODO: Esta función no tiene mucho sentido. Habría que verlo bien. Donde llama a getUsuariosSelect, tenría que llamar a un selector y listo
-export const getUsuariosSelect = () => (dispatch) => {
-    console.log("getUsuariosSelect");
-    dispatch(isFetchingStart());
-    return new Promise((resolve, reject) => {
-        getUsuariosPersistencia(
-            usuarios => {
-                const usuariosSelect = usuarios.map(usuario => {
-                    let dato = usuario.data.EmailUsu ? usuario.data.EmailUsu : usuario.id;
-                    return { value: dato, label: dato }
-                });
-                dispatch(setUsuariosSelect(usuariosSelect));
-            }
-        )
             .catch(error => reject(error))
             .finally(() => dispatch(isFetchingComplete()));
     });
