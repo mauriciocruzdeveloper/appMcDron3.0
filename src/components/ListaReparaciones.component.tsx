@@ -1,31 +1,15 @@
 import React from "react";
 import { useEffect, useState } from "react";
-import { connect } from "react-redux";
 import history from "../history";
-import {
-  getReparaciones
-} from "../redux/root-actions";
 import { estados } from '../datos/estados';
 // Estas son las importaciones de react-floating-action-button
 // lightColors y darkColors pueden estar buenos... hay que probarlos
 import { ReparacionType } from "../types/reparacion";
-import { ClienteType } from "../types/cliente";
-import { RootState } from "../redux/App/App.reducer";
+import { useAppSelector } from "../redux-tool-kit/hooks/useAppSelector";
 import { Filtro } from "../types/Filtro";
 
-interface ListaReparacionesProps {
-  getReparaciones: (usuario: ClienteType) => void; // TODO: Revisar los tipos de los argumentos.
-  coleccionReparaciones: ReparacionType[];
-  isFetching: boolean;
-  usuario: ClienteType;
-}
-
-const ListaReparaciones = (props: ListaReparacionesProps) => {
-  const {
-    getReparaciones,
-    coleccionReparaciones,
-    usuario,
-  } = props;
+export default function ListaReparaciones(): JSX.Element {
+  const reparaciones = useAppSelector(state => state.reparacion.coleccionReparaciones);
 
   const [filter, setFilter] = useState<Filtro>({
     estadosPrioritarios: true,
@@ -34,12 +18,8 @@ const ListaReparaciones = (props: ListaReparacionesProps) => {
   const [reparacionesList, setReparacionesList] = useState<ReparacionType[]>([]);
 
   useEffect(() => {
-    getReparaciones(usuario);
-  }, []);
-
-  useEffect(() => {
-    if (coleccionReparaciones.length) {
-      const reparaciones = coleccionReparaciones.filter(reparacion => {
+    if (reparaciones.length) {
+      const reparacionesFiltered = reparaciones.filter(reparacion => {
         const noPrioritarios = ["Entregado", "Liquidación", "Trabado"];
         const estadosNoIncluidos = filter.estadosPrioritarios ? noPrioritarios : [''];
         const incluirPorEstado = !estadosNoIncluidos.includes(reparacion.data.EstadoRep) && !filter.search;
@@ -52,9 +32,9 @@ const ListaReparaciones = (props: ListaReparacionesProps) => {
         }
         return incluirPorSearch || incluirPorEstado;
       });
-      setReparacionesList(reparaciones);
+      setReparacionesList(reparacionesFiltered);
     }
-  }, [coleccionReparaciones, filter.estadosPrioritarios, filter.search]);
+  }, [reparaciones, filter.estadosPrioritarios, filter.search]);
 
   const handleOnChange = () => {
     setFilter({
@@ -69,7 +49,6 @@ const ListaReparaciones = (props: ListaReparacionesProps) => {
       search: e.target.value,
     });
   }
-
 
   console.log("LISTA REPARACIONES");
 
@@ -120,24 +99,6 @@ const ListaReparaciones = (props: ListaReparacionesProps) => {
           </p>
         </div>
       ))}
-      {/* <Container>
-      <Button
-        className="bg-bluemcdron"
-        styles={{
-          color: lightColors.white
-        }}
-        // onClick={() => history.push(`/inicio/cargapresupuesto`)} VER BIEN!!!
-      >Add</Button>
-    </Container> */}
     </div>
-
   );
-};
-
-const mapStateToProps = (state: RootState) => ({
-  coleccionReparaciones: state.app.coleccionReparaciones,
-  isFetching: state.app.isFetching,
-  usuario: state.app.usuario,
-});
-
-export default connect(mapStateToProps, { getReparaciones })(ListaReparaciones);
+}

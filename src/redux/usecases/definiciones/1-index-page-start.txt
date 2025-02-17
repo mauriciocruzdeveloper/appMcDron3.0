@@ -1,4 +1,0 @@
-1- El usuario abre la aplicación.
-2- El sistema muestra la pantalla de inicio.
-    2-a- Si el usuario no está logueado.
-        2-a-1- El sistema muestra la pantalla de logueo.
