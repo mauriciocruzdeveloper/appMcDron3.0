@@ -169,7 +169,7 @@ export const guardarUsuarioPersistencia = (usuario) => {
             axios.post(SERVIDOR + '/api/usuarios', usuario.data, { headers })
             .then(response => resolve(transformMongooseToApp(response)))
             .catch(() => reject( {code: `Error POST usu guardarUsuarioPersistencia()` }));
-        };
+        }
     });
 };
 

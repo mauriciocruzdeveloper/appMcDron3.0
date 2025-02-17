@@ -4,7 +4,9 @@ import { useParams } from "react-router-dom";
 import history from "../history";
 import {
     enviarEmail,
-    enviarSms
+    enviarSms,
+    getLocalidadesPorProvincia,
+    getProvinciasSelect
 } from "../utils/utils";
 import UsuarioPresentational from './Usuario.presentational'
 import type { Usuario } from "../types/usuario";
@@ -12,7 +14,6 @@ import { useAppSelector } from "../redux-tool-kit/hooks/useAppSelector";
 import { useAppDispatch } from "../redux-tool-kit/hooks/useAppDispatch";
 import { useModal } from "./Modal/useModal";
 import { eliminarUsuarioAsync, guardarUsuarioAsync } from "../redux-tool-kit/usuario/usuario.actions";
-import { getLocalidadesPorProvincia, getProvinciasSelect } from "../redux-DEPRECATED/App/App.actions";
 
 interface ParamTypes {
     id: string;
