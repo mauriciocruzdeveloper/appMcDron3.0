@@ -51,7 +51,7 @@ export const guardarPresupuestoPersistencia = (presupuesto) => {
 //////////////////// REPARACIONES //////////////////////
 
 // Devuelve todas las reparaciones
-export const getReparacionesPersistencia = (setReparacionesToRedux) => {
+export const getReparacionesPersistencia = (setReparaciones) => {
     return new Promise((resolve, reject) => {
         const headers = { 'autorization': token() }
         axios.get(`${SERVIDOR}/reparaciones`, { headers })
@@ -62,7 +62,7 @@ export const getReparacionesPersistencia = (setReparacionesToRedux) => {
             });
             // Esto lo tuve que agregar para que funcione más o menos igual
             // que la versión de Firebase.
-            setReparacionesToRedux(reparaciones);
+            setReparaciones(reparaciones);
             resolve(reparaciones);
         })
         .catch(() => reject({ code: `Error en getReparacionesPersistencia()` }));

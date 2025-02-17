@@ -21,7 +21,7 @@ const MensajesPresentational = (props) => {
     return (
         <div className="p-4" >
 
-            {admin && cliente && usuariosSelect ?
+            {admin && usuariosSelect ?
             <div className="card mb-3">
                 <div className="card-body">
                     <h5 className="card-title bluemcdron">CLIENTE</h5>
@@ -33,8 +33,8 @@ const MensajesPresentational = (props) => {
                             onChange={e => handleOnChangeUsuarios(e)}
                             id="EmailUsu"
                             value={{
-                                value: `${cliente.data?.NombreUsu || 'Admin'} - ${cliente.data?.EmailUsu || 'admin@mauriciocruzdrones.com'}`, 
-                                label: `${cliente.data?.NombreUsu || 'Admin'} - ${cliente.data?.EmailUsu || 'admin@mauriciocruzdrones.com'}`
+                                value: `${cliente?.data?.NombreUsu || 'Admin'} - ${cliente?.data?.EmailUsu || 'admin@mauriciocruzdrones.com'}`, 
+                                label: `${cliente?.data?.NombreUsu || 'Admin'} - ${cliente?.data?.EmailUsu || 'admin@mauriciocruzdrones.com'}`
                             }}
                         />
                     </div>
