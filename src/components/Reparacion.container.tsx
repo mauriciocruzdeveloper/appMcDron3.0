@@ -9,13 +9,14 @@ import { estados } from '../datos/estados';
 import ReparacionPresentational from './Reparacion.presentational';
 import { Estado } from "../types/estado";
 import { ReparacionType } from "../types/reparacion";
-import { enviarRecibo, generarAutoDiagnostico } from "../redux-DEPRECATED/App/App.actions";
+import { generarAutoDiagnostico } from "../redux-DEPRECATED/App/App.actions";
 import { enviarEmailVacio } from "../utils/sendEmails";
 import { subirFotoReparacionPersistencia, eliminarFotoReparacionPersistencia } from "../persistencia/subeFotoFirebase";
 import { useAppSelector } from "../redux-tool-kit/hooks/useAppSelector";
 import { useAppDispatch } from "../redux-tool-kit/hooks/useAppDispatch";
 import { useModal } from "./Modal/useModal";
 import { eliminarReparacionAsync, guardarReparacionAsync } from "../redux-tool-kit/reparacion/reparacion.actions";
+import { enviarReciboAsync } from "../redux-tool-kit/app/app.actions";
 
 interface ParamTypes {
     id: string;
@@ -175,9 +176,24 @@ export default function Reparacion(): React.ReactElement | null {
         enviarEmailVacio(reparacion);
     }
 
-    const handleSendRecibo = () => {
+    const handleSendRecibo = async () => {
         if (!reparacion) return;
-        dispatch(enviarRecibo(reparacion));
+
+        const response = await dispatch(enviarReciboAsync(reparacion));
+        setReparacionOriginal(reparacion);
+        if (response.meta.requestStatus === 'fulfilled') {
+            openModal({
+                mensaje: "Recibo enviado correctamente.",
+                tipo: "success",
+                titulo: "Enviar Recibo",
+            })
+        } else {
+            openModal({
+                mensaje: "Error al enviar el recibo.",
+                tipo: "danger",
+                titulo: "Enviar Recibo",
+            })
+        }
     }
 
     const handleSendSms = () => {
