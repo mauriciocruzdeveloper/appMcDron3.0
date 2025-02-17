@@ -4,12 +4,12 @@ import history from "../history";
 import { useParams } from "react-router-dom";
 import {
     enviarSms,
+    generarAutoDiagnostico,
 } from "../utils/utils";
 import { estados } from '../datos/estados';
 import ReparacionPresentational from './Reparacion.presentational';
 import { Estado } from "../types/estado";
 import { ReparacionType } from "../types/reparacion";
-import { generarAutoDiagnostico } from "../redux-DEPRECATED/App/App.actions";
 import { enviarEmailVacio } from "../utils/sendEmails";
 import { subirFotoReparacionPersistencia, eliminarFotoReparacionPersistencia } from "../persistencia/subeFotoFirebase";
 import { useAppSelector } from "../redux-tool-kit/hooks/useAppSelector";
