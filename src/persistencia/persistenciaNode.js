@@ -35,7 +35,7 @@ export const loginPersistencia = (email, password) => {
 //////////////////// REPARACIONES //////////////////////
 
 // Devuelve todas las reparaciones
-export const getReparacionesPersistencia = (setReparacionesToRedux) => {
+export const getReparacionesPersistencia = (setReparaciones) => {
     return new Promise((resolve, reject) => {
         const headers = { 'autorization': token() }
         axios.get(`${SERVIDOR}/api/reparaciones`, { headers })
@@ -49,7 +49,7 @@ export const getReparacionesPersistencia = (setReparacionesToRedux) => {
             });
             // Esto lo tuve que agregar para que funcione más o menos igual
             // que la versión de Firebase.
-            setReparacionesToRedux(reparaciones);
+            setReparaciones(reparaciones);
             resolve(reparaciones);
         })
         .catch(error => reject({ ...error, code: `Error consulta codigo: ${error?.response?.status}` }));
@@ -169,7 +169,7 @@ export const guardarUsuarioPersistencia = (usuario) => {
             axios.post(SERVIDOR + '/api/usuarios', usuario.data, { headers })
             .then(response => resolve(transformMongooseToApp(response)))
             .catch(() => reject( {code: `Error POST usu guardarUsuarioPersistencia()` }));
-        };
+        }
     });
 };
 

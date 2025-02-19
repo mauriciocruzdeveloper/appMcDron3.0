@@ -1,7 +1,16 @@
+/* eslint-disable @typescript-eslint/explicit-module-boundary-types */
 import {
     notificacionesPorMensajesPersistencia,
-    actualizarLeidosPersistencia
+    actualizarLeidosPersistencia,
+    getLocPorProvPersistencia,
+    getProvinciasSelectPersistencia
 } from '../persistencia/persistenciaFirebase';
+import { HttpMethod } from '../types/httpMethods';
+
+import { isFetchingComplete, isFetchingStart } from "../redux-tool-kit/app/app.slice";
+import { setLocalidadesSelect, setProvinciasSelect } from "../redux-tool-kit/usuario/usuario.slice";
+// } from "../../persistencia/persistenciaJava";
+// } from "../../persistencia/persistenciaNode";
 
 export const convertTimestampCORTO = (timestamp) => {
     let d = new Date(parseInt(timestamp) * 1), // Convert the passed timestamp to milliseconds
@@ -28,6 +37,50 @@ export const enviarEmail = (data) => {
         body: data.body,
     });
 }
+
+export const callEndpoint = async (params) => {
+    const {
+        url,
+        method = HttpMethod.GET,
+        body = null,
+        apiKey = process.env.REACT_APP_ENDPOINT_API_KEY
+    } = params;
+
+    try {
+        // Configuración básica de los headers
+        const headers = {
+            'Content-Type': 'application/json',
+            'X-API-KEY': apiKey, // Agregamos la API Key al header
+        };
+
+        // Configuración de la solicitud
+        const options = {
+            method,
+            headers,
+        };
+
+        // Si el método tiene un cuerpo (POST, PUT, etc.), lo añadimos
+        if (body) {
+            options.body = JSON.stringify(body);
+        }
+
+        // Realizamos la solicitud
+        const response = await fetch(url, options);
+
+        // Comprobamos si la respuesta es exitosa
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'Error al llamar al endpoint');
+        }
+
+        // Retornamos los datos en formato JSON
+        return await response.json();
+    } catch (error) {
+        console.error('Error al llamar al endpoint:', error.message);
+        return null;
+    }
+};
+
 
 export const enviarSms = ({ number, message, options, success, error }) => {
     // eslint-disable-next-line no-undef
@@ -81,3 +134,65 @@ export async function OpenaiFetchAPI(prompt) {
         return 'No se pudo generar un diagnóstico automático.';
     }
 }
+
+
+
+// ACCIONES DE REDUX
+
+// Autodiagnóstico
+export const generarAutoDiagnostico = (reparacion) => async (dispatch) => {
+    const descripcionProblema = reparacion.data.DescripcionUsuRep;
+
+    const prompt = `Eres un experto en reparación de drones. Basado en la siguiente descripción del problema, proporciona un diagnóstico, posibles repuestos necesarios y posibles soluciones. Si se proporcionan códigos de error, buscar qué significan esos códigos de error y responder en consecuencia. Se conciso. 
+
+  Descripción del problema:
+  ${descripcionProblema}`;
+
+    try {
+        dispatch(isFetchingStart());
+
+        const chatCompletion = await OpenaiFetchAPI(prompt);
+
+        dispatch(isFetchingComplete());
+
+        return chatCompletion;
+    } catch (error) {
+        console.error('Error al generar el diagnóstico:', error);
+        return 'No se pudo generar un diagnóstico automático.';
+    }
+};
+
+
+
+////////////////////////////////////////////////////
+// FUNCIONES PARA PARA POSIBLES REFACTORIZACIONES //
+////////////////////////////////////////////////////
+
+export const getProvinciasSelect = () => (dispatch) => {
+    console.log("getProvinciasSelect");
+    dispatch(isFetchingStart());
+    return new Promise((resolve, reject) => {
+        getProvinciasSelectPersistencia()
+            .then(provinciasSelect => {
+                dispatch(setProvinciasSelect(provinciasSelect));
+                resolve(provinciasSelect);
+            })
+            .catch(error => reject(error))
+            .finally(() => dispatch(isFetchingComplete()));
+    });
+}
+
+export const getLocalidadesPorProvincia = (provincia) => (dispatch) => {
+    console.log("getLocalidadesPorProvincia");
+    dispatch(isFetchingStart());
+    return new Promise((resolve, reject) => {
+        getLocPorProvPersistencia(provincia)
+            .then(localidadesSelect => {
+                dispatch(setLocalidadesSelect(localidadesSelect));
+                resolve(localidadesSelect);
+            })
+            .catch(error => reject(error))
+            .finally(() => dispatch(isFetchingComplete()));
+    });
+}
+
