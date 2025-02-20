@@ -1,3 +1,4 @@
+/* eslint-disable react/jsx-no-target-blank */
 import { convertTimestampCORTO } from "../utils/utils";
 // Components
 import TextareaAutosize from "react-textarea-autosize";
@@ -465,7 +466,7 @@ const ReparacionPresentational = (props: ReparacionPresentationalProps) => {
                             <div
                                 key={idx}
                                 style={{
-                                    width: "calc((100% - (2 * 8px)) / 3)",
+                                    width: "calc((100% - (2 * 12px)) / 3)",
                                     margin: "4px",
                                     backgroundColor: "#f1f1f1"
                                 }}
@@ -487,20 +488,19 @@ const ReparacionPresentational = (props: ReparacionPresentationalProps) => {
                                     />
                                 </div>
                                 {admin && (
-                                    <div className="text-center mt-2">
+                                    <div className="flex text-center my-2">
                                         <a
+                                            target="_blank"
                                             href={url}
-                                            className="btn btn-sm btn-success me-2"
+                                            download
+                                            className="btn btn-sm btn-success me-2 bi-cloud-download"
                                         >
-                                            Descargar
                                         </a>
-                                        <button
-                                            type="button"
-                                            className="btn btn-sm btn-danger"
+                                        <a
+                                            className="btn btn-sm btn-danger bi bi-trash"
                                             onClick={() => handleDeleteFoto(url)}
                                         >
-                                            Borrar
-                                        </button>
+                                        </a>
                                     </div>
                                 )}
                             </div>
