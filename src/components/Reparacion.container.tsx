@@ -16,7 +16,7 @@ import { useAppSelector } from "../redux-tool-kit/hooks/useAppSelector";
 import { useAppDispatch } from "../redux-tool-kit/hooks/useAppDispatch";
 import { useModal } from "./Modal/useModal";
 import { eliminarReparacionAsync, guardarReparacionAsync } from "../redux-tool-kit/reparacion/reparacion.actions";
-import { enviarReciboAsync } from "../redux-tool-kit/app/app.actions";
+import { borrarFotoAsync, enviarReciboAsync, subirFotoAsync } from "../redux-tool-kit/app/app.actions";
 
 interface ParamTypes {
     id: string;
@@ -231,26 +231,43 @@ export default function Reparacion(): React.ReactElement | null {
     const handleFotoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         if (!e.target.files?.length || !reparacion) return;
         const file = e.target.files[0];
-        const urlFoto = await subirFotoReparacionPersistencia(reparacion.id, file);
-        setReparacion({
-            ...reparacion,
-            data: {
-                ...reparacion.data,
-                urlsFotos: [...(reparacion.data.urlsFotos || []), urlFoto]
-            }
-        });
+        const response = await dispatch(subirFotoAsync({reparacionId: reparacion.id, file}));
+        if (response.meta.requestStatus === 'fulfilled') {
+            const urlFoto = response.payload;
+            setReparacion({
+                ...reparacion,
+                data: {
+                    ...reparacion.data,
+                    urlsFotos: [...(reparacion.data.urlsFotos || []), urlFoto]
+                }
+            });
+        } else {
+            openModal({
+                mensaje: "Error al subir la foto.",
+                tipo: "danger",
+                titulo: "Subir Foto",
+            })
+        }
     };
 
     const handleDeleteFoto = async (fotoUrl: string) => {
         if (!reparacion) return;
-        await eliminarFotoReparacionPersistencia(reparacion.id, fotoUrl);
-        setReparacion({
-            ...reparacion,
-            data: {
-                ...reparacion.data,
-                urlsFotos: reparacion.data.urlsFotos?.filter(url => url !== fotoUrl)
-            }
-        });
+        const response = await dispatch(borrarFotoAsync({reparacionId: reparacion.id, fotoUrl}));
+        if (response.meta.requestStatus === 'fulfilled') {
+            setReparacion({
+                ...reparacion,
+                data: {
+                    ...reparacion.data,
+                    urlsFotos: reparacion.data.urlsFotos?.filter(url => url !== fotoUrl)
+                }
+            });
+        } else {
+            openModal({
+                mensaje: "Error al eliminar la foto.",
+                tipo: "danger",
+                titulo: "Eliminar Foto",
+            })
+        }   
     };
 
     return (
