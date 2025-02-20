@@ -219,13 +219,22 @@ export default function Reparacion(): React.ReactElement | null {
     const handleGenerarAutoDiagnostico = async () => {
         if (!reparacion) return;
         const diagnostico = await dispatch(generarAutoDiagnostico(reparacion));
-        setReparacion({
+        const newReparacion = {
             ...reparacion,
             data: {
                 ...reparacion.data,
                 DiagnosticoRep: diagnostico,
             }
-        });
+        }
+        const response = await dispatch(guardarReparacionAsync(newReparacion));
+        setReparacionOriginal(newReparacion);
+        if (response.meta.requestStatus === 'rejected') {
+            openModal({
+                mensaje: "Error al guardar la reparación.",
+                tipo: "danger",
+                titulo: "Guardar Reparación",
+            })
+        }
     }
 
     const handleFotoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
