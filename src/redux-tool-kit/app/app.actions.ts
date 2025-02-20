@@ -4,6 +4,7 @@ import { ReparacionType } from "../../types/reparacion";
 import { isFetchingComplete, isFetchingStart } from "./app.slice";
 import { callEndpoint } from "../../utils/utils";
 import { HttpMethod } from "../../types/httpMethods";
+import { eliminarFotoReparacionPersistencia, subirFotoReparacionPersistencia } from "../../persistencia/subeFotoFirebase";
 
 // LOGIN
 export const loginAsync = createAsyncThunk(
@@ -60,6 +61,38 @@ export const enviarReciboAsync = createAsyncThunk(
 
             dispatch(isFetchingComplete());
             return response;
+        } catch (error: any) {
+            dispatch(isFetchingComplete());
+            return error;
+        }
+    },
+);
+
+// SUBIR FOTO
+export const subirFotoAsync = createAsyncThunk(
+    'app/subirFoto',
+    async ({ reparacionId, file }: { reparacionId: string; file: File }, { dispatch }) => {
+        try {
+            dispatch(isFetchingStart());
+            const urlFoto = await subirFotoReparacionPersistencia(reparacionId, file);
+            dispatch(isFetchingComplete());
+            return urlFoto;
+        } catch (error: any) {
+            dispatch(isFetchingComplete());
+            return error;
+        }
+    },
+);
+
+// BORRAR FOTO
+export const borrarFotoAsync = createAsyncThunk(
+    'app/borrarFoto',
+    async ({ reparacionId, fotoUrl }: { reparacionId: string; fotoUrl: string }, { dispatch }) => {
+        try {
+            dispatch(isFetchingStart());
+            await eliminarFotoReparacionPersistencia(reparacionId, fotoUrl);
+            dispatch(isFetchingComplete());
+            return fotoUrl;
         } catch (error: any) {
             dispatch(isFetchingComplete());
             return error;
