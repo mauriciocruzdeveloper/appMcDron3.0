@@ -6,15 +6,14 @@ import { estados } from '../datos/estados';
 // lightColors y darkColors pueden estar buenos... hay que probarlos
 import { ReparacionType } from "../types/reparacion";
 import { useAppSelector } from "../redux-tool-kit/hooks/useAppSelector";
-import { Filtro } from "../types/Filtro";
+import { setFilter } from "../redux-tool-kit/reparacion/reparacion.slice";
+import { useAppDispatch } from "../redux-tool-kit/hooks/useAppDispatch";
 
 export default function ListaReparaciones(): JSX.Element {
+  const dispatch = useAppDispatch();
   const reparaciones = useAppSelector(state => state.reparacion.coleccionReparaciones);
+  const filter = useAppSelector(state => state.reparacion.filter);
 
-  const [filter, setFilter] = useState<Filtro>({
-    estadosPrioritarios: true,
-    search: ''
-  });
   const [reparacionesList, setReparacionesList] = useState<ReparacionType[]>([]);
 
   useEffect(() => {
@@ -37,24 +36,23 @@ export default function ListaReparaciones(): JSX.Element {
   }, [reparaciones, filter.estadosPrioritarios, filter.search]);
 
   const handleOnChange = () => {
-    setFilter({
+    dispatch(setFilter({
       ...filter,
       estadosPrioritarios: !filter.estadosPrioritarios,
-    });
+    }));
   }
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFilter({
+    dispatch(setFilter({
       ...filter,
       search: e.target.value,
-    });
+    }));
   }
 
   console.log("LISTA REPARACIONES");
 
   return (
     <div className="p-4">
-
       <div className="card mb-3">
         <div className="card-body">
           <div className="d-flex">
