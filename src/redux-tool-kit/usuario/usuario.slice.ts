@@ -4,6 +4,7 @@ import { SelectOption } from '../../types/selectOption';
 
 // Tipos para el estado inicial
 interface UsuarioState {
+    filter: string;
     coleccionUsuarios: Usuario[];
     provinciasSelect: any[];
     localidadesSelect: any[];
@@ -12,6 +13,7 @@ interface UsuarioState {
 
 // Estado inicial
 const initialState: UsuarioState = {
+    filter: '',
     coleccionUsuarios: [],
     provinciasSelect: [],
     localidadesSelect: [],
@@ -37,11 +39,15 @@ const usuarioSlice = createSlice({
         setUsuariosSelect: (state, action: PayloadAction<SelectOption[]>) => {
             state.usuariosSelect = action.payload;
         },
+        setFilter: (state, action: PayloadAction<string>) => {
+            state.filter = action.payload;
+        },
     },
 });
 
 // Exportar acciones síncronas
 export const {
+    setFilter,
     setUsuarios,
     setProvinciasSelect,
     setLocalidadesSelect,
