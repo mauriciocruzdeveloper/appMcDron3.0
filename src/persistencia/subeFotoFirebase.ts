@@ -6,15 +6,21 @@ export async function subirFotoReparacionPersistencia(
   reparacionId: string,
   file: File
 ): Promise<string> {
-  const storage = getStorage();
-  const storageRef = ref(storage, `${collectionNames.REPARACIONES}/${reparacionId}/${file.name}`);
-  await uploadBytes(storageRef, file);
-  const urlFoto = await getDownloadURL(storageRef);
-  const db = getFirestore();
-  await updateDoc(doc(db, collectionNames.REPARACIONES, reparacionId), {
-    "urlsFotos": arrayUnion(urlFoto)
-  });
-  return urlFoto;
+  try {
+    const storage = getStorage();
+    const storageRef = ref(storage, `${collectionNames.REPARACIONES}/${reparacionId}/${file.name}`);
+    await uploadBytes(storageRef, file);
+    const urlFoto = await getDownloadURL(storageRef);
+    const db = getFirestore();
+    await updateDoc(doc(db, collectionNames.REPARACIONES, reparacionId), {
+      "urlsFotos": arrayUnion(urlFoto)
+    });
+    return urlFoto;
+  } catch (error) {
+    console.error('Error al subir foto', error);
+    throw error;
+  }
+
 }
 
 export async function eliminarFotoReparacionPersistencia(
@@ -24,7 +30,8 @@ export async function eliminarFotoReparacionPersistencia(
   // 1) Borrar de Storage
   const storage = getStorage();
   const fotoRef = ref(storage, fotoUrl);
-  await deleteObject(fotoRef);
+  const response = await deleteObject(fotoRef);
+  console.log('!!! response', response);
   // 2) Remover la URL en Firestore
   const db = getFirestore();
   await updateDoc(doc(db, collectionNames.REPARACIONES, reparacionId), {
