@@ -3,7 +3,7 @@
     <name>App MC Dron 3.0</name>
     <hook type="before_prepare" src="scripts/prebuild.js" />
     <description>
-        App para MC Dron hecha con Cordova/React/Firebase
+        App para MC Dron hecha con Cordova/React/Redux Tool Kit/Firebase
     </description>
     <author email="mauricio11111@gmail.com" href="http://mauriciocruzdrones.com">
         Mauricio Cruz
@@ -63,6 +63,8 @@
         <splash density="land-xhdpi" src="res/screen/android/splash-land-xhdpi.png"/>
         <splash density="land-xxhdpi" src="res/screen/android/splash-land-xxhdpi.png"/>
         <splash density="land-xxxhdpi" src="res/screen/android/splash-land-xxxhdpi.png"/>  -->
+        <preference name="AndroidWindowSplashScreenAnimatedIcon" value="res/android/splash/xxxhdpi.png" />
+        <preference name="AndroidWindowSplashScreenBackground" value="#6dADDF" />
     </platform>
 
 
