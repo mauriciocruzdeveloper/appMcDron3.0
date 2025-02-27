@@ -51,6 +51,8 @@ export default function Reparacion(): React.ReactElement | null {
         }
     }, [reparacionStore, id]);
 
+    console.log("!!! ususarioStore", usuarioStore);
+
     if (!reparacion || !usuarioStore) return null;
 
     const changeInputRep = (field: string, value: string) => {
