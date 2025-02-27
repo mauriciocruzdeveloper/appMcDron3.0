@@ -2,6 +2,7 @@ import { createAsyncThunk } from "@reduxjs/toolkit";
 import {
     eliminarUsuarioPersistencia,
     getClientePersistencia,
+    getClientePorEmailPersistencia,
     guardarUsuarioPersistencia,
 } from "../../persistencia/persistenciaFirebase";
 import { isFetchingComplete, isFetchingStart } from "../app/app.slice";
@@ -54,3 +55,21 @@ export const getClienteAsync = createAsyncThunk(
         }
     },
 );
+
+// GET Clientes/Usuarios por email
+export const getClienteByEmailAsync = createAsyncThunk(
+    'app/getCliente',
+    async (id: string, { dispatch }) => {
+        try {
+            dispatch(isFetchingStart());
+            const cliente = await getClientePorEmailPersistencia(id);
+            dispatch(isFetchingComplete());
+            return cliente;
+        } catch (error: any) {
+            dispatch(isFetchingComplete());
+            return error;
+        }
+    },
+);
+
+

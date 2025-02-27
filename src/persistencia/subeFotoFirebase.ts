@@ -31,6 +31,7 @@ export async function eliminarFotoReparacionPersistencia(
   const storage = getStorage();
   const fotoRef = ref(storage, fotoUrl);
   const response = await deleteObject(fotoRef);
+  // TODO: Verificar que la respuesta sea correcta
   console.log('!!! response', response);
   // 2) Remover la URL en Firestore
   const db = getFirestore();
