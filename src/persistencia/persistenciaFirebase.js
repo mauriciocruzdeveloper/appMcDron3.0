@@ -184,7 +184,6 @@ export const getReparacionPersistencia = (id) => {
 export const guardarReparacionPersistencia = (reparacion) => {
     return new Promise((resolve, reject) => {
         if (!reparacion.id) reparacion.id = reparacion.data?.FeConRep.toString();
-        console.log('!!! guardar reparacion persistencia guardarReparacionPersistencia', reparacion);
         setDoc(
             doc(firestore, collectionNames.REPARACIONES, reparacion.id),
             reparacion.data
@@ -295,7 +294,7 @@ const triggerUsuarioReparaciones = (usuario) => {
                         NombreUsu: usuario.data.NombreUsu ?? '',
                         ApellidoUsu: usuario.data.ApellidoUsu ?? '',
                         TelefonoUsu: usuario.data.TelefonoUsu ?? '',
-                        EmailUsu: usuario.id ?? '' // TODO: Ponemos el id porque en realidad queremos poner el identificador del usuario. En el futuro, las reparaciones no deberían tener datos del ususario
+                        EmailUsu: usuario.data.EmailUsu ?? ''
                     }
                 });
             });
@@ -536,13 +535,12 @@ export const guardarPresupuestoPersistencia = (presupuesto) => {
     // En firebase, agrego información del usuario a la reparación para que sea mas performante la app
     presupuesto.reparacion.data.NombreUsu = presupuesto.usuario.data?.NombreUsu || '';
     presupuesto.reparacion.data.ApellidoUsu = presupuesto.usuario.data?.ApellidoUsu || '';
-    presupuesto.reparacion.data.EmailUsu = presupuesto.usuario.id || presupuesto.usuario.data?.EmailUsu || ''; // Guardamos el id del usuario en la reparaión, no el Email. Luego en la reparación buscamos el usuario.
+    presupuesto.reparacion.data.EmailUsu = presupuesto.usuario.data?.EmailUsu || ''; // Guardamos el id del usuario en la reparaión, no el Email. Luego en la reparación buscamos el usuario.
     presupuesto.reparacion.data.TelefonoUsu = presupuesto.usuario.data?.TelefonoUsu || '';
-    console.log('!!! guardar presupuesto guardarPresupuestoPersistencia: ', presupuesto);
     return new Promise((resolve, reject) => {
         guardarUsuarioPersistencia(presupuesto.usuario)
             .then(() => {
-                presupuesto.reparacion.data.UsuarioRep = presupuesto.usuario.data.EmailUsu;
+                presupuesto.reparacion.data.UsuarioRep = presupuesto.usuario.id;
                 guardarReparacionPersistencia(presupuesto.reparacion)
                     .then(() => resolve(presupuesto))
                 // .catch(() => reject({ code: 'Error en guardarPresupuestoPersistencia() al guardar Reparación' }));

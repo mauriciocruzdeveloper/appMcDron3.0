@@ -186,7 +186,6 @@ export default function Presupuesto(): JSX.Element {
                 });
                 return;
             }
-            console.log("!!! response.payload", response.payload);  
             setPresupuesto({
                 ...presupuesto,
                 cliente: response.payload
@@ -207,8 +206,6 @@ export default function Presupuesto(): JSX.Element {
     }
 
     const { cliente, reparacion } = presupuesto;
-
-    console.log("!!! presupuesto", presupuesto);
 
     return (
         <div

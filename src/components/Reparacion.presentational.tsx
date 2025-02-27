@@ -177,7 +177,7 @@ const ReparacionPresentational = (props: ReparacionPresentationalProps) => {
                             <input
                                 type="text"
                                 className="form-control"
-                                id="UsuarioRep"
+                                id="EmailUsu"
                                 value={usuario?.data?.EmailUsu || ''}
                                 disabled
                             />

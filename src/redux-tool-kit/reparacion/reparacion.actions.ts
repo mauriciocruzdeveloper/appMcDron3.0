@@ -30,8 +30,6 @@ export const guardarPresupuestoAsync = createAsyncThunk(
         reparacion: ReparacionType,
         usuario: Usuario,
     }, { dispatch }) => {
-        console.log("guardarPresupuestoAsync()");
-        console.log('!!! presupuesto en guardarPrespuestoAsync()', presupuesto);
         dispatch(isFetchingStart());
         try {
             await guardarPresupuestoPersistencia(presupuesto);
