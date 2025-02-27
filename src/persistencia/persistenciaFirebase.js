@@ -227,7 +227,7 @@ export const getUsuariosPersistencia = (setUsuariosToRedux) => {
     try {
         const unsubscribeUsu = onSnapshot(q, (querySnapshot) => {
             let usuarios = [];
-            querySnapshot.forEach(doc => usuarios.push({ id: doc.id, data: { ...doc.data(), EmailUsu: doc.id } }))
+            querySnapshot.forEach(doc => usuarios.push({ id: doc.id, data: doc.data() }))
             // console.log('usuarios en getUsuariosPersistencia(): ' + JSON.stringify(usuarios[0]));
             // Esta función es una callback. Se llama igual que el action creator
             setUsuariosToRedux(usuarios);
@@ -249,8 +249,34 @@ export const getClientePersistencia = (id) => {
     });
 };
 
-// En Firesbase el id del cliente es el email.
-export const getClientePorEmailPersistencia = getClientePersistencia;
+// En Firesbase el email es el campo EmailUsu de la colección USUARIOS.
+export const getClientePorEmailPersistencia = (email) => {
+    return new Promise((resolve, reject) => {
+        // Crear una consulta donde el campo EmailUsu sea igual al email buscado
+        const q = query(
+            collection(firestore, 'USUARIOS'),
+            where('EmailUsu', '==', email)
+        );
+
+        // Ejecutar la consulta
+        getDocs(q)
+            .then(querySnapshot => {
+                // Si no hay resultados
+                if (querySnapshot.empty) {
+                    resolve(null);
+                    return;
+                }
+
+                // Como email debería ser único, tomamos el primer documento que coincida
+                const doc = querySnapshot.docs[0];
+                resolve({
+                    id: doc.id,
+                    data: doc.data()
+                });
+            })
+            .catch(error => reject(error));
+    });
+};
 
 // GUARDAR Cliente
 const triggerUsuarioReparaciones = (usuario) => {
@@ -520,9 +546,9 @@ export const guardarPresupuestoPersistencia = (presupuesto) => {
                 presupuesto.reparacion.data.UsuarioRep = presupuesto.usuario.data.EmailUsu;
                 guardarReparacionPersistencia(presupuesto.reparacion)
                     .then(() => resolve(presupuesto))
-                    // .catch(() => reject({ code: 'Error en guardarPresupuestoPersistencia() al guardar Reparación' }));
+                // .catch(() => reject({ code: 'Error en guardarPresupuestoPersistencia() al guardar Reparación' }));
             })
-            // .catch(() => reject({ code: 'Error en guardarPresupuestoPersistencia() al guardar Usuario' }));
+        // .catch(() => reject({ code: 'Error en guardarPresupuestoPersistencia() al guardar Usuario' }));
     });
 }
 
