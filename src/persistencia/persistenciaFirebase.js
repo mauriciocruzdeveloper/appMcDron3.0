@@ -184,6 +184,7 @@ export const getReparacionPersistencia = (id) => {
 export const guardarReparacionPersistencia = (reparacion) => {
     return new Promise((resolve, reject) => {
         if (!reparacion.id) reparacion.id = reparacion.data?.FeConRep.toString();
+        console.log('!!! guardar reparacion persistencia guardarReparacionPersistencia', reparacion);
         setDoc(
             doc(firestore, collectionNames.REPARACIONES, reparacion.id),
             reparacion.data
@@ -283,8 +284,6 @@ const triggerUsuarioReparaciones = (usuario) => {
     console.log('triggerUsuarioReparaciones()');
     return new Promise(async (resolve, reject) => {
         try {
-            console.log('enter try triggerUsuarioReparaciones()');
-            console.log('enter promise triggerUsuarioReparaciones()');
             const q = query(collection(firestore, collectionNames.REPARACIONES), where('UsuarioRep', '==', usuario.id));
             const docs = await getDocs(q);
 
@@ -293,16 +292,15 @@ const triggerUsuarioReparaciones = (usuario) => {
                     id: doc.id,
                     data: {
                         ...doc.data(),
-                        NombreUsu: usuario.data.NombreUsu,
-                        ApellidoUsu: usuario.data.ApellidoUsu,
-                        TelefonoUsu: usuario.data.TelefonoUsu,
-                        EmailUsu: usuario.data.EmailUsu
+                        NombreUsu: usuario.data.NombreUsu ?? '',
+                        ApellidoUsu: usuario.data.ApellidoUsu ?? '',
+                        TelefonoUsu: usuario.data.TelefonoUsu ?? '',
+                        EmailUsu: usuario.id ?? '' // TODO: Ponemos el id porque en realidad queremos poner el identificador del usuario. En el futuro, las reparaciones no deberían tener datos del ususario
                     }
                 });
             });
             resolve();
         } catch (error) {
-            console.log('error triggerUsuarioReparaciones()', error);
             () => reject(error);
         }
     });
@@ -538,8 +536,9 @@ export const guardarPresupuestoPersistencia = (presupuesto) => {
     // En firebase, agrego información del usuario a la reparación para que sea mas performante la app
     presupuesto.reparacion.data.NombreUsu = presupuesto.usuario.data?.NombreUsu || '';
     presupuesto.reparacion.data.ApellidoUsu = presupuesto.usuario.data?.ApellidoUsu || '';
-    presupuesto.reparacion.data.EmailUsu = presupuesto.usuario.data?.EmailUsu || '';
+    presupuesto.reparacion.data.EmailUsu = presupuesto.usuario.id || presupuesto.usuario.data?.EmailUsu || ''; // Guardamos el id del usuario en la reparaión, no el Email. Luego en la reparación buscamos el usuario.
     presupuesto.reparacion.data.TelefonoUsu = presupuesto.usuario.data?.TelefonoUsu || '';
+    console.log('!!! guardar presupuesto guardarPresupuestoPersistencia: ', presupuesto);
     return new Promise((resolve, reject) => {
         guardarUsuarioPersistencia(presupuesto.usuario)
             .then(() => {
