@@ -7,7 +7,7 @@ import { useAppSelector } from "../redux-tool-kit/hooks/useAppSelector";
 import { useAppDispatch } from "../redux-tool-kit/hooks/useAppDispatch";
 import { useModal } from "./Modal/useModal";
 import { guardarPresupuestoAsync } from "../redux-tool-kit/reparacion/reparacion.actions";
-import { getClienteAsync } from "../redux-tool-kit/usuario/usuario.actions";
+import { getClienteByEmailAsync } from "../redux-tool-kit/usuario/usuario.actions";
 import { getLocalidadesPorProvincia, getProvinciasSelect } from "../utils/utils";
 
 // import { provincias } from '../datos/provincias.json'; 
@@ -28,6 +28,7 @@ export default function Presupuesto(): JSX.Element {
 
     const [presupuesto, setPresupuesto] = useState<{
         cliente: {
+            id?: string,
             data: any,
         },
         reparacion: {
@@ -101,7 +102,7 @@ export default function Presupuesto(): JSX.Element {
         const response = await dispatch(guardarPresupuestoAsync({
             usuario: {
                 ...presupuesto.cliente,
-                id: presupuesto.cliente.data.EmailUsu,
+                id: presupuesto.cliente.id ?? presupuesto.cliente.data.EmailUsu,
             }, // TODO: Corregir esto de los clientes que son usuarios
             reparacion: { // TODO: Verificar esto de pasar los datos faltantes al crear la reparación
                 ...presupuesto.reparacion,
@@ -175,7 +176,7 @@ export default function Presupuesto(): JSX.Element {
     // un usuario/cliente de la lista que previamente se cargó en el Select
     const handleOnChangeUsuarios = async (e: any) => {
         if (e) {
-            const response = await dispatch(getClienteAsync(e.value));
+            const response = await dispatch(getClienteByEmailAsync(e.value));
 
             if (response.meta.requestStatus === 'rejected') {
                 openModal({

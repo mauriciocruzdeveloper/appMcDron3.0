@@ -7,11 +7,13 @@ import { ChangeEvent, useState } from "react";
 import { InputType } from "../types/types";
 import { ReparacionType } from "../types/reparacion";
 import { Estado, Estados } from "../types/estado";
+import { Usuario } from "../types/usuario";
 import history from '../history';
 
 interface ReparacionPresentationalProps {
     admin: boolean;
     reparacion: ReparacionType;
+    usuario: Usuario;
     estados: Estados;
     setEstado: (estado: Estado) => void;
     changeInputRep: (field: string, value: string) => void;
@@ -29,6 +31,7 @@ const ReparacionPresentational = (props: ReparacionPresentationalProps) => {
     const {
         admin,
         reparacion,
+        usuario,
         estados,
         setEstado,
         changeInputRep,
@@ -61,7 +64,7 @@ const ReparacionPresentational = (props: ReparacionPresentationalProps) => {
     }
 
     const handleGoToUser = () => {
-        history.push(`/inicio/usuarios/${reparacion.data.UsuarioRep}`)
+        history.push(`/inicio/usuarios/${usuario.data.EmailUsu}`)
     }
 
     return (
@@ -83,7 +86,7 @@ const ReparacionPresentational = (props: ReparacionPresentationalProps) => {
                     </h3>
                     <div>id: {reparacion?.id}</div>
                     <div>Drone: {reparacion?.data?.DroneRep}</div>
-                    <div>Cliente: {reparacion?.data?.NombreUsu || reparacion?.data.UsuarioRep} {reparacion?.data?.ApellidoUsu}</div>
+                    <div>Cliente: {usuario?.data?.NombreUsu} {usuario?.data?.ApellidoUsu}</div>
                 </div>
             </div>
 
@@ -188,8 +191,8 @@ const ReparacionPresentational = (props: ReparacionPresentationalProps) => {
                             <input
                                 type="text"
                                 className="form-control"
-                                id="UsuarioRep"
-                                value={reparacion?.data?.EmailUsu || reparacion?.data?.UsuarioRep}
+                                id="EmailUsu"
+                                value={usuario?.data?.EmailUsu || ''}
                                 disabled
                             />
                             <button
@@ -207,7 +210,7 @@ const ReparacionPresentational = (props: ReparacionPresentationalProps) => {
                             type="text"
                             className="form-control"
                             id="NombreUsu"
-                            value={reparacion?.data?.NombreUsu}
+                            value={usuario?.data?.NombreUsu}
                             disabled
                         />
                     </div>
@@ -217,7 +220,7 @@ const ReparacionPresentational = (props: ReparacionPresentationalProps) => {
                             type="text"
                             className="form-control"
                             id="ApellidoUsu"
-                            value={reparacion?.data?.ApellidoUsu}
+                            value={usuario?.data?.ApellidoUsu}
                             disabled
                         />
                     </div>
@@ -228,7 +231,7 @@ const ReparacionPresentational = (props: ReparacionPresentationalProps) => {
                                 type="tel"
                                 className="form-control"
                                 id="TelefonoUsu"
-                                value={reparacion?.data?.TelefonoUsu}
+                                value={usuario?.data?.TelefonoUsu}
                                 disabled
                             />
                             <button

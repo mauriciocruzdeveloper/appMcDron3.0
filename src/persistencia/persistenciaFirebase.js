@@ -227,7 +227,7 @@ export const getUsuariosPersistencia = (setUsuariosToRedux) => {
     try {
         const unsubscribeUsu = onSnapshot(q, (querySnapshot) => {
             let usuarios = [];
-            querySnapshot.forEach(doc => usuarios.push({ id: doc.id, data: { ...doc.data(), EmailUsu: doc.id } }))
+            querySnapshot.forEach(doc => usuarios.push({ id: doc.id, data: doc.data() }))
             // console.log('usuarios en getUsuariosPersistencia(): ' + JSON.stringify(usuarios[0]));
             // Esta función es una callback. Se llama igual que el action creator
             setUsuariosToRedux(usuarios);
@@ -249,16 +249,40 @@ export const getClientePersistencia = (id) => {
     });
 };
 
-// En Firesbase el id del cliente es el email.
-export const getClientePorEmailPersistencia = getClientePersistencia;
+// En Firesbase el email es el campo EmailUsu de la colección USUARIOS.
+export const getClientePorEmailPersistencia = (email) => {
+    return new Promise((resolve, reject) => {
+        // Crear una consulta donde el campo EmailUsu sea igual al email buscado
+        const q = query(
+            collection(firestore, 'USUARIOS'),
+            where('EmailUsu', '==', email)
+        );
+
+        // Ejecutar la consulta
+        getDocs(q)
+            .then(querySnapshot => {
+                // Si no hay resultados
+                if (querySnapshot.empty) {
+                    resolve(null);
+                    return;
+                }
+
+                // Como email debería ser único, tomamos el primer documento que coincida
+                const doc = querySnapshot.docs[0];
+                resolve({
+                    id: doc.id,
+                    data: doc.data()
+                });
+            })
+            .catch(error => reject(error));
+    });
+};
 
 // GUARDAR Cliente
 const triggerUsuarioReparaciones = (usuario) => {
     console.log('triggerUsuarioReparaciones()');
     return new Promise(async (resolve, reject) => {
         try {
-            console.log('enter try triggerUsuarioReparaciones()');
-            console.log('enter promise triggerUsuarioReparaciones()');
             const q = query(collection(firestore, collectionNames.REPARACIONES), where('UsuarioRep', '==', usuario.id));
             const docs = await getDocs(q);
 
@@ -267,16 +291,15 @@ const triggerUsuarioReparaciones = (usuario) => {
                     id: doc.id,
                     data: {
                         ...doc.data(),
-                        NombreUsu: usuario.data.NombreUsu,
-                        ApellidoUsu: usuario.data.ApellidoUsu,
-                        TelefonoUsu: usuario.data.TelefonoUsu,
-                        EmailUsu: usuario.data.EmailUsu
+                        NombreUsu: usuario.data.NombreUsu ?? '',
+                        ApellidoUsu: usuario.data.ApellidoUsu ?? '',
+                        TelefonoUsu: usuario.data.TelefonoUsu ?? '',
+                        EmailUsu: usuario.data.EmailUsu ?? ''
                     }
                 });
             });
             resolve();
         } catch (error) {
-            console.log('error triggerUsuarioReparaciones()', error);
             () => reject(error);
         }
     });
@@ -512,17 +535,17 @@ export const guardarPresupuestoPersistencia = (presupuesto) => {
     // En firebase, agrego información del usuario a la reparación para que sea mas performante la app
     presupuesto.reparacion.data.NombreUsu = presupuesto.usuario.data?.NombreUsu || '';
     presupuesto.reparacion.data.ApellidoUsu = presupuesto.usuario.data?.ApellidoUsu || '';
-    presupuesto.reparacion.data.EmailUsu = presupuesto.usuario.data?.EmailUsu || '';
+    presupuesto.reparacion.data.EmailUsu = presupuesto.usuario.data?.EmailUsu || ''; // Guardamos el id del usuario en la reparaión, no el Email. Luego en la reparación buscamos el usuario.
     presupuesto.reparacion.data.TelefonoUsu = presupuesto.usuario.data?.TelefonoUsu || '';
     return new Promise((resolve, reject) => {
         guardarUsuarioPersistencia(presupuesto.usuario)
             .then(() => {
-                presupuesto.reparacion.data.UsuarioRep = presupuesto.usuario.data.EmailUsu;
+                presupuesto.reparacion.data.UsuarioRep = presupuesto.usuario.id;
                 guardarReparacionPersistencia(presupuesto.reparacion)
                     .then(() => resolve(presupuesto))
-                    // .catch(() => reject({ code: 'Error en guardarPresupuestoPersistencia() al guardar Reparación' }));
+                // .catch(() => reject({ code: 'Error en guardarPresupuestoPersistencia() al guardar Reparación' }));
             })
-            // .catch(() => reject({ code: 'Error en guardarPresupuestoPersistencia() al guardar Usuario' }));
+        // .catch(() => reject({ code: 'Error en guardarPresupuestoPersistencia() al guardar Usuario' }));
     });
 }
 
