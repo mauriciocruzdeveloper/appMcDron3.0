@@ -27,7 +27,6 @@ const mensajeSlice = createSlice({
             state.coleccionMensajes = action.payload;
         },
         setEmailUsuMessage: (state, action: PayloadAction<string>) => {
-            console.log('!!! setEmailUsuMessage', action.payload);
             state.emailUsuMessage = action.payload;
         },
         setEmailCliMessage: (state, action: PayloadAction<string>) => {

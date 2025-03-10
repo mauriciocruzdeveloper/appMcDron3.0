@@ -11,7 +11,6 @@ import ReparacionPresentational from './Reparacion.presentational';
 import { Estado } from "../types/estado";
 import { ReparacionType } from "../types/reparacion";
 import { enviarEmailVacio } from "../utils/sendEmails";
-import { subirFotoReparacionPersistencia, eliminarFotoReparacionPersistencia } from "../persistencia/subeFotoFirebase";
 import { useAppSelector } from "../redux-tool-kit/hooks/useAppSelector";
 import { useAppDispatch } from "../redux-tool-kit/hooks/useAppDispatch";
 import { useModal } from "./Modal/useModal";
@@ -32,22 +31,26 @@ export default function Reparacion(): React.ReactElement | null {
         openModal,
     } = useModal();
 
-    const coleccionReparaciones = useAppSelector(state => state.reparacion.coleccionReparaciones);
     const isAdmin = useAppSelector(state => state.app.usuario?.data.Admin) ?? false;
-
     const { id } = useParams<ParamTypes>();
+    const reparacionStore = useAppSelector(
+        state => state.reparacion.coleccionReparaciones.find(reparacion => String(reparacion.id) === id)
+    );
+    const usuarioStore = useAppSelector(
+        state => state.usuario.coleccionUsuarios.find(usuario => usuario.id === reparacionStore?.data.UsuarioRep)
+    );
 
     const [reparacionOriginal, setReparacionOriginal] = useState<ReparacionType>();
-    const [reparacion, setReparacion] = useState<ReparacionType>();
+    const [reparacion, setReparacion] = useState<ReparacionType | undefined>(reparacionStore);
 
     useEffect(() => {
-        if (!coleccionReparaciones) return;
-        const rep = coleccionReparaciones.find(reparacion => String(reparacion.id) === id);
-        setReparacionOriginal(rep);
-        setReparacion(rep);
-    }, [coleccionReparaciones, id]);
+        if (reparacionStore) {
+            setReparacion(reparacionStore);
+            setReparacionOriginal(reparacionStore);
+        }
+    }, [reparacionStore, id]);
 
-    if (!reparacion) return null;
+    if (!reparacion || !usuarioStore) return null;
 
     const changeInputRep = (field: string, value: string) => {
         setReparacion(prevReparacion => prevReparacion ? {
@@ -198,7 +201,7 @@ export default function Reparacion(): React.ReactElement | null {
 
     const handleSendSms = () => {
         const data = {
-            number: reparacion?.data?.TelefonoUsu || '', /* iOS: ensure number is actually a string */
+            number: usuarioStore?.data?.TelefonoUsu || '', /* iOS: ensure number is actually a string */
             message: 'Prueba de sms',
 
             //CONFIGURATION
@@ -285,6 +288,7 @@ export default function Reparacion(): React.ReactElement | null {
             <ReparacionPresentational
                 admin={isAdmin}
                 reparacion={reparacion}
+                usuario={usuarioStore}
                 estados={estados}
                 setEstado={setEstado}
                 changeInputRep={changeInputRep}

@@ -25,6 +25,8 @@
     </platform>
 
  <platform name="android">
+        <preference name="Orientation" value="portrait" />
+        
         <preference name="AndroidXEnabled" value="false" />
         <preference name="android-minSdkVersion" value="30" />
         <preference name="android-targetSdkVersion" value="34" />
