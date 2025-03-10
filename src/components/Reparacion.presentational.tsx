@@ -8,6 +8,7 @@ import { InputType } from "../types/types";
 import { ReparacionType } from "../types/reparacion";
 import { Estado, Estados } from "../types/estado";
 import { Usuario } from "../types/usuario";
+import history from '../history';
 
 interface ReparacionPresentationalProps {
     admin: boolean;
@@ -60,6 +61,10 @@ const ReparacionPresentational = (props: ReparacionPresentationalProps) => {
         }
         const field = target.id;
         changeInputRep(field, value);
+    }
+
+    const handleGoToUser = () => {
+        history.push(`/inicio/usuarios/${usuario.data.EmailUsu}`)
     }
 
     return (
@@ -160,7 +165,16 @@ const ReparacionPresentational = (props: ReparacionPresentationalProps) => {
 
             <div className="card mb-3">
                 <div className="card-body">
-                    <h5 className="card-title bluemcdron">CONSULTA - PRIMEROS DATOS</h5>
+                    <div className="d-flex w-100 justify-content-between align-items-center">
+                        <h5 className="card-title bluemcdron">CONSULTA - PRIMEROS DATOS</h5>
+                        <button
+                            type="button"
+                            className="btn btn-outline-secondary bg-bluemcdron text-white"
+                            onClick={handleGoToUser}
+                        >
+                            Ir al Cliente
+                        </button>
+                    </div>
                     <div>
                         <label className="form-label">Fecha de Cosulta</label>
                         <input
