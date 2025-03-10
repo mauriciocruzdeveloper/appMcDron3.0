@@ -11,7 +11,6 @@ import ReparacionPresentational from './Reparacion.presentational';
 import { Estado } from "../types/estado";
 import { ReparacionType } from "../types/reparacion";
 import { enviarEmailVacio } from "../utils/sendEmails";
-import { subirFotoReparacionPersistencia, eliminarFotoReparacionPersistencia } from "../persistencia/subeFotoFirebase";
 import { useAppSelector } from "../redux-tool-kit/hooks/useAppSelector";
 import { useAppDispatch } from "../redux-tool-kit/hooks/useAppDispatch";
 import { useModal } from "./Modal/useModal";

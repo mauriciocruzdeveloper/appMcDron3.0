@@ -142,11 +142,20 @@ export async function OpenaiFetchAPI(prompt) {
 // Autodiagnóstico
 export const generarAutoDiagnostico = (reparacion) => async (dispatch) => {
     const descripcionProblema = reparacion.data.DescripcionUsuRep;
+    const drone = reparacion.data.DroneRep;
 
-    const prompt = `Eres un experto en reparación de drones. Basado en la siguiente descripción del problema, proporciona un diagnóstico, posibles repuestos necesarios y posibles soluciones. Si se proporcionan códigos de error, buscar qué significan esos códigos de error y responder en consecuencia. Se conciso. 
+    const prompt = `
+Eres un experto en reparación de drones de la marca DJI.
+Basado en la siguiente descripción del problema, proporciona un diagnóstico, posibles repuestos necesarios y posibles soluciones.
+Si se proporcionan códigos de error, buscar qué significan esos códigos de error y responder en consecuencia.
+Se conciso.
 
-  Descripción del problema:
-  ${descripcionProblema}`;
+Modelo del drone:
+${drone}
+
+Descripción del problema:
+${descripcionProblema}
+`;
 
     try {
         dispatch(isFetchingStart());
