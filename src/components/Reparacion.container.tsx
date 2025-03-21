@@ -168,8 +168,8 @@ export default function Reparacion(): React.ReactElement | null {
     const handleEliminarReparacion = () => {
         openModal({
             mensaje: "Eliminar Reparación?",
-            tipo: "Atención",
-            titulo: "danger",
+            tipo: "danger",
+            titulo: "Atención",
             confirmCallback: confirmEliminarReparacion,
         })
     }
