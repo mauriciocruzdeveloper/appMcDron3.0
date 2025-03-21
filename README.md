@@ -1,15 +1,48 @@
 # App MC Dron 3.0
 
-La versión anterior es la 2.0 que está siendo desarrollada en Framework7/Cordova/Firebase. La versión 3.0 está siendo desarrollada en Bootstrap/React/Redux/Cordova/Firebase.
-Ambas versiones no están terminadas, y ambas siguen desarrollándose.
+App MC Dron 3.0 es una aplicación diseñada para gestionar un negocio de reparación de drones, optimizando la administración de presupuestos, reparaciones y comunicación con clientes. Se ha desarrollado con Cordova, React, Redux Toolkit y Firebase, permitiendo su ejecución en la web y en dispositivos Android (con potencial soporte para iOS).
+
+Siguiendo la filosofía Local First, la aplicación almacena y gestiona los datos localmente, sincronizándolos con la nube solo cuando es necesario. Esto garantiza un mejor rendimiento y una experiencia más fluida en comparación con aplicaciones que dependen exclusivamente de servidores remotos.
+
+## PRIMERA ETAPA: Gestión de reparaciones y usuarios
+
+- Implementación de funcionalidades para gestionar reparaciones y usuarios.
+- Se podrá solicitar un presupuesto, lo que creará una nueva reparación en estado "Consulta" y registrará al usuario.
+- Se permitirá modificar o eliminar tanto el usuario como la reparación.
+
+
+## SEGUNDA ETAPA: Mensajería y notificaciones
+
+- Se agregará un sistema de mensajería entre el cliente y el administrador.
+- La arquitectura permitirá futuras expansiones para habilitar mensajes entre clientes.
+- Se implementarán notificaciones, inicialmente para mensajes y luego para cambios de estado en las reparaciones.
+
+
+## TERCERA ETAPA: Expansión de notificaciones
+
+- Se agregarán notificaciones para:
+    - Cambios de estado en las reparaciones.
+    - Envío de presupuestos.
+    - Avisos de recepción y envío de drones.
+
+
+## CUARTA ETAPA: Mejoras y optimización
+
+- Implementación de optimizaciones en rendimiento y experiencia de usuario.
+- Incorporación de nuevas funcionalidades según las necesidades detectadas.
+
+## Versiones
+
+- Versión 2.0: Desarrollada en Framework7/Cordova/Firebase (desarrollo pausado).
+- Versión 3.0: Actualmente en desarrollo con Bootstrap/React/Redux/Cordova/Firebase.
 
 ### Versión APK (para Android) de prueba
 
-http://mauriciocruzdrones.com/app/appmcdrondev.apk
+http://mauriciocruzdrones.com/app/appmcdrondev.apk (próximamente)
 
 ### Versión de prueba online (puede estar desactualizada)
 
-http://mauriciocruzdrones.com/app
+http://mauriciocruzdrones.com/demo (proximamente)
 
 Administrador
 usuario: admin@mauriciocruzdrones.com
@@ -27,61 +60,53 @@ O sino puede registrarse y tendrá una cuenta como invitado.
 ### INSTALAR CORDOVA
  npm install -g cordova
 
-
-
 - cordova run browser: Para levantar con Cordova
 - npm start: Para levantar con React
 
 
-## PROBLEMAS
+## Solución a errores comunes
 
-- El complemento cordova-plugin-firestore da problemas al compilar. Por ejemplo, en la línea 128 de RunTransactionHandler.java no encuentra NonNull. Hay que modificar ese archivo para solucionar el problema importando la clase NonNull correctamente.
+### Error en cordova-plugin-firestore
+
+- El archivo RunTransactionHandler.java (línea 128) no encuentra NonNull.
+- Solución: Importar manualmente la clase NonNull.
+
+### Configuración del entorno - Instalar Java 8, Android Studio y Gradle
 
 - Instalar Java8, Android Studio y Gradle: https://stackoverflow.com/questions/66864889/how-to-solve-android-sdk-root-undefined-recommended-setting-and-android-home-u
+
+### Configurar variables de entorno
 
 - Setear variables de entorno.
 export ANDROID_SDK_ROOT="/home/mauricio/Android/Sdk/"
 export JAVA_HOME="/usr/java/jdk1.8.0_202"
+
+### Verificar que las variables de entorno estén correctamente exportadas
 
 - Para ver si están exportadas las variables de entorno
 echo $ANDROID_SDK_ROOT
 echo $JAVA_HOME
 
 
-## PRIMERA ETAPA
-
-En la primera etapa sólo se harán las funcionalidades relacionadas a las REPARACIONES y los USUARIOS. Se podrá pedir un PRESUPUESTO, y éste generará una nueva reparación en estado "Consulta" y guardará el usuario. Se podrá modificar o eliminar el usuario y/o la reparación.
-
-
-## SEGUNDA ETAPA
-
-Se agregó la funcionalidad e MENSAJES. En un principio, para enviar y recibir mensajes entre el cliente y el administrador. Está hecho de tal manera que permitiría, con pocas modificaciones, enviar mensajes también entre clientes.
-
-Se empezarán a incorporar las NOTIFICACIONES. Primero para los mensajes y luego para las actualizaciones de los estados de las reparaciones.
-
-
-## TERCERA ETAPA
-
-Se incorporarán notificaciones para los cambios de estado de las reparaciones, para informar el presupuesto, para avisar la recepció no envío del drone, etc.
-
-
-## CUARTA ETAPA
-
-Otras mejoras.
-
-
 ## TECNOLOGÍAS:
 
-- Cordova
-- React
-- Redux Thunk
-- React Router Dom
-- React Bootstrap
-- React Floating Action Button
-- React Router Dom
-- Firebase
-- React Select
-- React Textarea Autosize
+- Frontend:
+
+    - React
+    - Redux Toolkit
+    - React Router Dom
+    - React Bootstrap
+    - React Floating Action Button
+    - React Select
+    - React Textarea Autosize
+
+- Backend y almacenamiento:
+
+    - Firebase
+
+- Plataforma móvil:
+
+    - Cordova
 
 ### Floating Action Button
 
@@ -138,13 +163,15 @@ El flujo es como el de redux. Las acciones se originan en el componente presetac
 Los estados de los componentes tipo formularios se manejan de manera local con el hook useState.
 
 
-## PATRÓN CONTENEDOR-PRESENTACIONAL
+## PATRÓN CONTENEDOR-PRESENTACIONAL (Refactorizando a custom hooks)
+Esto está refactorizándose, se van a usar custom hooks.
+
 Falta implementarlo en algunos componentes. La idea es poder cambiar la capa de presentación prácticamente sin modificar el resto de la app.
 
 
 ## CARACTERÍSTICAS
 - Usa persistencia en caché (para Firebase) en caso que se pierda la conexión a internet
-- Para conectar los components con las actions y los states uso el patrón container-component.
+- Para conectar los components con las actions y los states uso acciones y selectores.
 - La app escucha los cambios en las colecciones a nivel de persistencia, y actualiza las colecciones en redux automáticamente cuando éstas cambian, lo que también actualiza automáticamente la presentación.
 
 
@@ -199,6 +226,7 @@ Probar!!!
 ### PASOS
 
 #### Con sh
+(No va a funcionar porque falta la contraseña para firmar, se hará una versión sin firma, pero no se podrá instalar en el teléfono)
 sh ./build_and_sign.sh
 
 ### Sin sh
