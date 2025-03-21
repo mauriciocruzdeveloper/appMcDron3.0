@@ -4,6 +4,7 @@ import { setReparaciones } from "./reparacion.slice";
 import { eliminarReparacionPersistencia, getReparacionesPersistencia, getReparacionPersistencia, guardarPresupuestoPersistencia, guardarReparacionPersistencia } from "../../persistencia/persistenciaFirebase";
 import { AppState, isFetchingComplete, isFetchingStart } from "../app/app.slice";
 import { Usuario } from "../../types/usuario";
+import { enviarReciboAsync } from "../app/app.actions";
 
 // OBTENER REPARACIONES
 export const getReparacionesAsync = createAsyncThunk(
@@ -33,6 +34,7 @@ export const guardarPresupuestoAsync = createAsyncThunk(
         dispatch(isFetchingStart());
         try {
             await guardarPresupuestoPersistencia(presupuesto);
+            await dispatch(enviarReciboAsync(presupuesto.reparacion));
             dispatch(isFetchingComplete());
             return presupuesto;
         } catch (error: any) {
