@@ -42,7 +42,7 @@ const Inicio = (props: InicioProps) => {
               style={{height: '100px'}}
               onClick={() => history.push(`${match.path}/presupuesto`)}
             >      
-              <div className='text-white text-center'>PRESUPUESTO</div>
+              <div className='text-white text-center'>RECEPCIÓN</div>
             </button>
 
             <button 

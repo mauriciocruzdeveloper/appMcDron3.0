@@ -9,6 +9,7 @@ import { useModal } from "./Modal/useModal";
 import { guardarPresupuestoAsync } from "../redux-tool-kit/reparacion/reparacion.actions";
 import { getClienteByEmailAsync } from "../redux-tool-kit/usuario/usuario.actions";
 import { getLocalidadesPorProvincia, getProvinciasSelect } from "../utils/utils";
+import { estados } from "../datos/estados";
 
 // import { provincias } from '../datos/provincias.json'; 
 
@@ -109,9 +110,10 @@ export default function Presupuesto(): JSX.Element {
                 id: dateNow.toString(),
                 data: {
                     ...presupuesto.reparacion.data,
-                    EstadoRep: "Consulta",
-                    PrioridadRep: "1",
+                    EstadoRep: estados["Recibido"].nombre,
+                    PrioridadRep: estados["Recibido"].prioridad,
                     FeConRep: dateNow,
+                    FeRecRep: dateNow,
                 },
             },
         }));
