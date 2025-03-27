@@ -15,7 +15,7 @@ import { useAppSelector } from "../redux-tool-kit/hooks/useAppSelector";
 import { useAppDispatch } from "../redux-tool-kit/hooks/useAppDispatch";
 import { useModal } from "./Modal/useModal";
 import { eliminarReparacionAsync, guardarReparacionAsync } from "../redux-tool-kit/reparacion/reparacion.actions";
-import { borrarFotoAsync, enviarReciboAsync, subirFotoAsync } from "../redux-tool-kit/app/app.actions";
+import { borrarFotoAsync, enviarReciboAsync, subirFotoAsync, subirDocumentoAsync, borrarDocumentoAsync } from "../redux-tool-kit/app/app.actions";
 
 interface ParamTypes {
     id: string;
@@ -262,6 +262,28 @@ export default function Reparacion(): React.ReactElement | null {
         }
     };
 
+    const handleDocumentoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (!e.target.files?.length || !reparacion) return;
+        const file = e.target.files[0];
+        const response = await dispatch(subirDocumentoAsync({reparacionId: reparacion.id, file}));
+        if (response.meta.requestStatus === 'fulfilled') {
+            const urlDoc = response.payload;
+            setReparacion({
+                ...reparacion,
+                data: {
+                    ...reparacion.data,
+                    urlsDocumentos: [...(reparacion.data.urlsDocumentos || []), urlDoc]
+                }
+            });
+        } else {
+            openModal({
+                mensaje: "Error al subir el documento.",
+                tipo: "danger",
+                titulo: "Subir Documento",
+            })
+        }
+    }
+
     const handleDeleteFoto = async (fotoUrl: string) => {
         if (!reparacion) return;
         const response = await dispatch(borrarFotoAsync({reparacionId: reparacion.id, fotoUrl}));
@@ -278,6 +300,26 @@ export default function Reparacion(): React.ReactElement | null {
                 mensaje: "Error al eliminar la foto.",
                 tipo: "danger",
                 titulo: "Eliminar Foto",
+            })
+        }   
+    };
+
+    const handleDeleteDocumento = async (docUrl: string) => {
+        if (!reparacion) return;
+        const response = await dispatch(borrarDocumentoAsync({reparacionId: reparacion.id, documentoUrl: docUrl}));
+        if (response.meta.requestStatus === 'fulfilled') {
+            setReparacion({
+                ...reparacion,
+                data: {
+                    ...reparacion.data,
+                    urlsDocumentos: reparacion.data.urlsDocumentos?.filter(url => url !== docUrl)
+                }
+            });
+        } else {
+            openModal({
+                mensaje: "Error al eliminar el documento.",
+                tipo: "danger",
+                titulo: "Eliminar Documento",
             })
         }   
     };
@@ -300,6 +342,8 @@ export default function Reparacion(): React.ReactElement | null {
                 handleGenerarAutoDiagnostico={handleGenerarAutoDiagnostico}
                 handleFotoChange={handleFotoChange}
                 handleDeleteFoto={handleDeleteFoto}
+                handleDocumentoChange={handleDocumentoChange}
+                handleDeleteDocumento={handleDeleteDocumento}
             /> : null
     )
 }

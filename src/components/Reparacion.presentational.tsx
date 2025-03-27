@@ -25,6 +25,8 @@ interface ReparacionPresentationalProps {
     handleGenerarAutoDiagnostico: () => void;
     handleFotoChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
     handleDeleteFoto: (url: string) => void;
+    handleDocumentoChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+    handleDeleteDocumento: (url: string) => void;
 }
 
 const ReparacionPresentational = (props: ReparacionPresentationalProps) => {
@@ -43,6 +45,8 @@ const ReparacionPresentational = (props: ReparacionPresentationalProps) => {
         handleGenerarAutoDiagnostico,
         handleFotoChange,
         handleDeleteFoto,
+        handleDocumentoChange,
+        handleDeleteDocumento,
     } = props;
 
     console.log("REPARACION presentational");
@@ -557,6 +561,73 @@ const ReparacionPresentational = (props: ReparacionPresentationalProps) => {
                     )}
                 </div>
             </div>
+
+            <div className="card mb-3">
+                <div className="card-body">
+                    <div className="d-flex w-100 justify-content-between align-items-center">
+                        <h5 className="card-title bluemcdron">DOCUMENTOS</h5>
+                        <div className="d-flex justify-content-start mb-2">
+                            <label className="btn btn-outline-secondary bg-bluemcdron text-white">
+                                Subir Documento
+                                <input
+                                    type="file"
+                                    onChange={handleDocumentoChange}
+                                    style={{ display: "none" }}
+                                />
+                            </label>
+                        </div>
+                    </div>
+                    <div className="mt-3">
+                        {reparacion.data.urlsDocumentos?.length ? (
+                            <div className="list-group">
+                                {reparacion.data.urlsDocumentos.map((url, idx) => {
+                                    // Decodificar caracteres especiales como %20
+                                    let fileName = decodeURIComponent(url);
+                                    // Extraer nombre del documento de la URL y decodificar
+                                    fileName = fileName.split('/').pop() || `Documento ${idx + 1}`;
+                                    // Eliminar los parámetros de consulta
+                                    fileName = fileName.split('?')[0];
+                                    
+                                    return (
+                                        <div 
+                                            key={idx} 
+                                            className="list-group-item list-group-item-action d-flex justify-content-between align-items-center mb-2"
+                                        >
+                                            <div className="text-truncate" style={{ maxWidth: "70%" }}>
+                                                <i className="bi bi-file-earmark-text me-2"></i>
+                                                <span className="text-truncate">{fileName}</span>
+                                            </div>
+                                            <div>
+                                                <a 
+                                                    href={url} 
+                                                    target="_blank" 
+                                                    className="btn btn-sm btn-success me-3"
+                                                    download
+                                                >
+                                                    <i className="bi bi-cloud-download"></i>
+                                                </a>
+                                                {admin && (
+                                                    <button 
+                                                        className="btn btn-sm btn-danger"
+                                                        onClick={() => handleDeleteDocumento(url)}
+                                                    >
+                                                        <i className="bi bi-trash"></i>
+                                                    </button>
+                                                )}
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        ) : (
+                            <div className="text-center text-muted">
+                                <p>No hay documentos adjuntos</p>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            </div>
+            
             {admin ? // Sólo para administrador
                 <div className="text-center">
                     <button
