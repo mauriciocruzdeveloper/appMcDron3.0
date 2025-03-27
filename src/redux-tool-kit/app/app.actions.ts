@@ -4,7 +4,7 @@ import { ReparacionType } from "../../types/reparacion";
 import { isFetchingComplete, isFetchingStart } from "./app.slice";
 import { callEndpoint } from "../../utils/utils";
 import { HttpMethod } from "../../types/httpMethods";
-import { eliminarFotoReparacionPersistencia, subirFotoReparacionPersistencia } from "../../persistencia/subeFotoFirebase";
+import { eliminarDocumentoReparacionPersistencia, eliminarFotoReparacionPersistencia, subirDocumentoReparacionPersistencia, subirFotoReparacionPersistencia } from "../../persistencia/subeFotoFirebase";
 
 // LOGIN
 export const loginAsync = createAsyncThunk(
@@ -84,6 +84,22 @@ export const subirFotoAsync = createAsyncThunk(
     },
 );
 
+// SUBIR DOCUMENTO
+export const subirDocumentoAsync = createAsyncThunk(
+    'app/subirDocumento',
+    async ({ reparacionId, file }: { reparacionId: string; file: File }, { dispatch }) => {
+        try {
+            dispatch(isFetchingStart());
+            const urlDoc = await subirDocumentoReparacionPersistencia(reparacionId, file);
+            dispatch(isFetchingComplete());
+            return urlDoc;
+        } catch (error: any) {
+            dispatch(isFetchingComplete());
+            return error;
+        }
+    },
+);
+
 // BORRAR FOTO
 export const borrarFotoAsync = createAsyncThunk(
     'app/borrarFoto',
@@ -93,6 +109,22 @@ export const borrarFotoAsync = createAsyncThunk(
             await eliminarFotoReparacionPersistencia(reparacionId, fotoUrl);
             dispatch(isFetchingComplete());
             return fotoUrl;
+        } catch (error: any) {
+            dispatch(isFetchingComplete());
+            return error;
+        }
+    },
+);
+
+// BORRAR DOCUMENTO
+export const borrarDocumentoAsync = createAsyncThunk(
+    'app/borrarDocumento',
+    async ({ reparacionId, documentoUrl }: { reparacionId: string; documentoUrl: string }, { dispatch }) => {
+        try {
+            dispatch(isFetchingStart());
+            await eliminarDocumentoReparacionPersistencia(reparacionId, documentoUrl);
+            dispatch(isFetchingComplete());
+            return documentoUrl;
         } catch (error: any) {
             dispatch(isFetchingComplete());
             return error;
