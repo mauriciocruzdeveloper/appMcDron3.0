@@ -49,6 +49,10 @@ export default function ListaUsuarios(): JSX.Element {
         </div>
       </div>
 
+      <div className="mb-2 text-muted">
+        {usuariosList.length} {usuariosList.length === 1 ? 'usuario' : 'usuarios'}
+      </div>
+
       {usuariosList.map(usuario => (
         <div
           key={usuario.id}

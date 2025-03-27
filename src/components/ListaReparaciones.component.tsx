@@ -78,6 +78,10 @@ export default function ListaReparaciones(): JSX.Element {
         </div>
       </div>
 
+      <div className="mb-2 text-muted">
+        {reparacionesList.length} {reparacionesList.length === 1 ? 'reparación' : 'reparaciones'}
+      </div>
+
       {reparacionesList.map(reparacion => (
         <div
           key={reparacion.id}
