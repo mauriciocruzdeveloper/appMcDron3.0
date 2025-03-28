@@ -8,7 +8,7 @@ import { useAppDispatch } from "../redux-tool-kit/hooks/useAppDispatch";
 import { useModal } from "./Modal/useModal";
 import { guardarPresupuestoAsync } from "../redux-tool-kit/reparacion/reparacion.actions";
 import { getClienteByEmailAsync } from "../redux-tool-kit/usuario/usuario.actions";
-import { getLocalidadesPorProvincia, getProvinciasSelect } from "../utils/utils";
+import { generarAutoDiagnostico, getLocalidadesPorProvincia, getProvinciasSelect } from "../utils/utils";
 import { estados } from "../datos/estados";
 
 // import { provincias } from '../datos/provincias.json'; 
@@ -100,6 +100,7 @@ export default function Presupuesto(): JSX.Element {
     //////////////////////////////////////////////////////////////
     const confirmaGuardarPresupuesto = async () => {
         const dateNow = Date.now();
+        const autoDiagnostico = await dispatch(generarAutoDiagnostico(reparacion));
         const response = await dispatch(guardarPresupuestoAsync({
             usuario: {
                 ...presupuesto.cliente,
@@ -114,6 +115,7 @@ export default function Presupuesto(): JSX.Element {
                     PrioridadRep: estados["Recibido"].prioridad,
                     FeConRep: dateNow,
                     FeRecRep: dateNow,
+                    DiagnosticoRep: autoDiagnostico,
                 },
             },
         }));
