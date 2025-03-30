@@ -1,4 +1,5 @@
 export enum collectionNames {
-    REPARACIONES = "REPARACIONES",
-    USUARIOS = "USUARIOS",
+    USUARIOS = 'USUARIOS',
+    REPARACIONES = 'REPARACIONES',
+    REPUESTOS = 'REPUESTOS'
 }

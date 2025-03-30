@@ -10,6 +10,7 @@ import Presupuesto from "../components/Presupuesto.component";
 import NavMcDron from "../components/NavMcDron.component";
 import Mensajes from "../components/Mensajes.container";
 import ListaReparaciones from "../components/ListaReparaciones.component";
+import ListaRepuestos from "../components/ListaRepuestos.component";
 import { DataManagerComponent } from "../components/DataManager.component";
 
 const InicioRoutes = ({ match, isLoggedIn, admin }) => {
@@ -31,6 +32,7 @@ const InicioRoutes = ({ match, isLoggedIn, admin }) => {
                 <Route exact path={`${match.path}/usuarios/:id`} render = {props => <Usuario {...props}/>} />
                 <Route exact path={`${match.path}/presupuesto`} render = {props => <Presupuesto {...props} admin={admin}/>} />
                 <Route exact path={`${match.path}/mensajes`} render = {props => <Mensajes {...props} admin={admin}/>} />
+                <Route exact path={`${match.path}/repuestos`} render = {props => <ListaRepuestos {...props} admin={admin}/>} />
             </Switch>
         </DataManagerComponent>
         : <Redirect to="/login" />        
