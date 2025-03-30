@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { getMessagesPersistencia, getReparacionesPersistencia, getUsuariosPersistencia } from "../persistencia/persistenciaFirebase";
+import { getMessagesPersistencia, getReparacionesPersistencia, getRepuestosPersistencia, getUsuariosPersistencia } from "../persistencia/persistenciaFirebase";
 import { useAppDispatch } from "../redux-tool-kit/hooks/useAppDispatch";
 import { setReparaciones } from "../redux-tool-kit/reparacion/reparacion.slice";
 import { ReparacionType } from "../types/reparacion";
@@ -8,6 +8,7 @@ import { useAppSelector } from "../redux-tool-kit/hooks/useAppSelector";
 import { setUsuarios, setUsuariosSelect } from "../redux-tool-kit/usuario/usuario.slice";
 import { Usuario } from "../types/usuario";
 import { setMessages } from "../redux-tool-kit/mensaje/mensaje.slice";
+import { setRepuestos } from "../redux-tool-kit/repuesto/repuesto.slice";
 
 export interface DataManagerProps {
     children: React.ReactNode;
@@ -43,6 +44,13 @@ export function DataManagerComponent({ children }: DataManagerProps): React.Reac
             unsubscribeMessages?.();
         };
     }, [emailUsuMessage, emailCliMessage]);
+
+    useEffect(() => {
+        getRepuestos();
+        return () => {
+            unsubscribeReparaciones?.();
+        };
+    }, []);
 
     const getReparaciones = async () => {
         try {
@@ -98,6 +106,20 @@ export function DataManagerComponent({ children }: DataManagerProps): React.Reac
             console.error("Error al obtener mensajes:", error);
         }
     };
+
+    const getRepuestos = async () => {
+        try {
+            const unsubscribe = await getRepuestosPersistencia(
+                (repuestos: any) => {
+                    dispatch(setRepuestos(repuestos));
+                },
+            );
+
+            setUnsubscribeReparaciones(() => unsubscribe); // Guarda el unsubscribe en el estado local
+        } catch (error) {
+            console.error("Error al obtener reparaciones:", error);
+        }
+    }
 
     // TODO: Hace falta que sea un wrapper???
     return (

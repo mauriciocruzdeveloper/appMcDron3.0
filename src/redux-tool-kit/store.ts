@@ -4,6 +4,7 @@ import appReducer from './app/app.slice';
 import usuarioReducer from './usuario/usuario.slice';
 import reparacionReducer from './reparacion/reparacion.slice';
 import mensajeReducer from './mensaje/mensaje.slice';
+import repuestoReducer from './repuesto/repuesto.slice';
 
 const store = configureStore({
   reducer: {
@@ -11,6 +12,7 @@ const store = configureStore({
     usuario: usuarioReducer,
     reparacion: reparacionReducer,
     mensaje: mensajeReducer,
+    repuesto: repuestoReducer,
   },
 });
 

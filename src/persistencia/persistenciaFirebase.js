@@ -598,11 +598,112 @@ export const getLocPorProvPersistencia = (provincia) => {
 // Hash simple para generar los ids de los chats
 function hash_method(inputAHash, inputBHash) { return inputAHash ^ inputBHash }
 
+////////////////////// REPUESTOS ///////////////////////////////////////////////////////////////////////////
 
+// GET Repuesto por id
+export const getRepuestoPersistencia = (id) => {
+    return new Promise((resolve, reject) => {
+        const docRef = doc(firestore, collectionNames.REPUESTOS, id);
+        getDoc(docRef)
+            .then(docSnap => {
+                if (docSnap.exists()) {
+                    resolve({ id: id, data: docSnap.data() });
+                } else {
+                    reject({ code: 'Repuesto no encontrado' });
+                }
+            })
+            .catch(error => reject(error));
+    });
+};
 
+// GET Repuestos por modelo de drone
+export const getRepuestosPorModeloPersistencia = (modelo) => {
+    return new Promise((resolve, reject) => {
+        const repuestosRef = collection(firestore, collectionNames.REPUESTOS);
+        const q = query(repuestosRef, where('modeloDrone', '==', modelo));
+        getDocs(q)
+            .then(querySnapshot => {
+                let repuestos = [];
+                querySnapshot.forEach(doc => repuestos.push({ id: doc.id, data: doc.data() }));
+                resolve(repuestos);
+            })
+            .catch(error => reject(error));
+    });
+};
 
+// GET Repuestos por proveedor
+export const getRepuestosPorProveedorPersistencia = (proveedor) => {
+    return new Promise((resolve, reject) => {
+        const repuestosRef = collection(firestore, collectionNames.REPUESTOS);
+        const q = query(repuestosRef, where('proveedor', '==', proveedor));
+        getDocs(q)
+            .then(querySnapshot => {
+                let repuestos = [];
+                querySnapshot.forEach(doc => repuestos.push({ id: doc.id, data: doc.data() }));
+                resolve(repuestos);
+            })
+            .catch(error => reject(error));
+    });
+};
 
+// GUARDAR Repuesto
+export const guardarRepuestoPersistencia = (repuesto) => {
+    return new Promise((resolve, reject) => {
+        // Si no tiene ID, generamos uno basado en la fecha
+        if (!repuesto.id) {
+            repuesto.id = new Date().getTime().toString();
+        }
+        
+        // Aseguramos que la fecha de registro esté presente
+        if (!repuesto.data.fechaRegistro) {
+            repuesto.data.fechaRegistro = new Date();
+        }
+        
+        setDoc(
+            doc(firestore, collectionNames.REPUESTOS, repuesto.id),
+            repuesto.data
+        )
+            .then(() => {
+                console.log('Repuesto guardado correctamente');
+                resolve(repuesto);
+            })
+            .catch(error => {
+                console.log('Error al guardar repuesto: ' + error);
+                reject(error);
+            });
+    });
+};
 
+// ELIMINAR Repuesto
+export const eliminarRepuestoPersistencia = (id) => {
+    return new Promise((resolve, reject) => {
+        deleteDoc(doc(firestore, collectionNames.REPUESTOS, id))
+            .then(() => {
+                console.log('Repuesto eliminado correctamente');
+                resolve(id);
+            })
+            .catch(error => {
+                console.log('Error al eliminar repuesto: ' + error);
+                reject(error);
+            });
+    });
+};
+
+// GET todos los Repuestos
+export const getRepuestosPersistencia = (setRepuestosToRedux) => {
+    console.log('getRepuestosPersistencia');
+    const q = query(collection(firestore, collectionNames.REPUESTOS), orderBy('descripcion'));
+    try {
+        const unsubscribeRep = onSnapshot(q, (querySnapshot) => {
+            let repuestos = [];
+            querySnapshot.forEach(doc => repuestos.push({ id: doc.id, data: doc.data() }));
+            setRepuestosToRedux(repuestos);
+        });
+        return unsubscribeRep;
+    } catch (error) {
+        return error;
+    }
+};
 
 /////////////////////////////////////////////////////////////////////
 

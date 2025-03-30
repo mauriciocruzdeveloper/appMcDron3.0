@@ -37,6 +37,16 @@ const Inicio = (props: InicioProps) => {
             </button>
             : null}
 
+            {admin ?
+            <button 
+              className='mb-3 btn w-100 bg-bluemcdron'
+              style={{height: '100px'}}
+              onClick={() => history.push(`${match.path}/repuestos`)}
+            >      
+              <div className='text-white text-center'>REPUESTOS</div>
+            </button>
+            : null}
+
             <button 
               className='mb-3 btn w-100 bg-bluemcdron'
               style={{height: '100px'}}
