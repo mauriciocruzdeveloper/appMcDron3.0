@@ -1,13 +1,15 @@
+// Actualizar la interfaz para la data de un repuesto
+export interface RepuestoData {
+  NombreRepu: string;
+  DescripcionRepu: string;
+  ModeloDroneRepu: string; // Cambiado de ModeloRepu a ModeloDroneRepu
+  ProveedorRepu: string;
+  PrecioRepu: number;
+  StockRepu: number;
+  EstadoRepu: string;
+}
+
 export interface Repuesto {
-    id: string;
-    data: {
-        NombreRepu: string;
-        DescripcionRepu: string;
-        ModeloRepu: string;
-        PrecioRepu: number;
-        ProveedorRepu: string;
-        FechaRegistroRepu?: Date;
-        StockRepu?: number;
-        EstadoRepu?: 'Disponible' | 'Agotado' | 'Descontinuado';
-    }
+  id: string;
+  data: RepuestoData;
 }
