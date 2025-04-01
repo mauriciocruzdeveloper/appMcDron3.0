@@ -12,7 +12,7 @@ const repuestosMock: Repuesto[] = [
         data: {
             NombreRepu: 'Hélices de carbono 8"',
             DescripcionRepu: 'Hélices de carbono 8"',
-            ModeloRepu: 'CF8045',
+            ModeloDroneRepu: 'CF8045',
             ProveedorRepu: 'DronePartes',
             PrecioRepu: 15000,
             StockRepu: 5,
@@ -24,7 +24,7 @@ const repuestosMock: Repuesto[] = [
         data: {
             NombreRepu: 'Batería LiPo 5000mAh',
             DescripcionRepu: 'Batería LiPo 5000mAh',
-            ModeloRepu: 'LP5000-4S',
+            ModeloDroneRepu: 'LP5000-4S',
             ProveedorRepu: 'PowerDrones',
             PrecioRepu: 38000,
             StockRepu: 3,
@@ -36,7 +36,7 @@ const repuestosMock: Repuesto[] = [
         data: {
             NombreRepu: 'Controlador de vuelo F7',
             DescripcionRepu: 'Controlador de vuelo F7',
-            ModeloRepu: 'F722-SE',
+            ModeloDroneRepu: 'F722-SE',
             ProveedorRepu: 'ControlTech',
             PrecioRepu: 25600,
             StockRepu: 0,
@@ -60,7 +60,7 @@ export default function ListaRepuestos(): JSX.Element {
                 if (filter) {
                     incluirPorSearch =
                         repuesto.data?.DescripcionRepu?.toLowerCase().includes(filter.toLowerCase()) ||
-                        repuesto.data?.ModeloRepu?.toLowerCase().includes(filter.toLowerCase()) ||
+                        repuesto.data?.ModeloDroneRepu?.toLowerCase().includes(filter.toLowerCase()) ||
                         repuesto.data?.ProveedorRepu?.toLowerCase().includes(filter.toLowerCase());
                 }
                 return incluirPorSearch;
@@ -127,7 +127,7 @@ export default function ListaRepuestos(): JSX.Element {
                                     <span className='badge bg-primary'>{formatPrice(repuesto.data.PrecioRepu)}</span>
                                 </div>
                                 <div>
-                                    <small className='text-muted'>Modelo: {repuesto.data.ModeloRepu}</small>
+                                    <small className='text-muted'>Modelo del Drone: {repuesto.data.ModeloDroneRepu}</small>
                                 </div>
                                 <div>
                                     <small className='text-muted'>Proveedor: {repuesto.data.ProveedorRepu}</small>
@@ -172,7 +172,7 @@ export default function ListaRepuestos(): JSX.Element {
                             <span className='badge bg-primary'>{formatPrice(repuesto.data.PrecioRepu)}</span>
                         </div>
                         <div>
-                            <small className='text-muted'>Modelo: {repuesto.data.ModeloRepu}</small>
+                            <small className='text-muted'>Modelo del Drone: {repuesto.data.ModeloDroneRepu}</small>
                         </div>
                         <div>
                             <small className='text-muted'>Proveedor: {repuesto.data.ProveedorRepu}</small>
