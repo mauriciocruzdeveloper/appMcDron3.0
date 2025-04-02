@@ -736,4 +736,206 @@ export const getRepuestosPersistencia = (setRepuestosToRedux) => {
 //         })
 //         .catch(error => reject(error))
 //     });
-// };2
+// };
+
+////////////////////// MODELO DRONE ///////////////////////////////////////////////////////////////////////////
+
+// GET ModeloDrone por id
+export const getModeloDronePersistencia = (id) => {
+    return new Promise((resolve, reject) => {
+        const docRef = doc(firestore, collectionNames.MODELOS_DRONE, id);
+        getDoc(docRef)
+            .then(docSnap => {
+                if (docSnap.exists()) {
+                    resolve({ id: id, data: docSnap.data() });
+                } else {
+                    reject({ code: 'Modelo de drone no encontrado' });
+                }
+            })
+            .catch(error => reject(error));
+    });
+};
+
+// GET ModelosDrone por fabricante
+export const getModelosDronePorFabricantePersistencia = (fabricante) => {
+    return new Promise((resolve, reject) => {
+        const modelosDroneRef = collection(firestore, collectionNames.MODELOS_DRONE);
+        const q = query(modelosDroneRef, where('Fabricante', '==', fabricante));
+        getDocs(q)
+            .then(querySnapshot => {
+                let modelosDrone = [];
+                querySnapshot.forEach(doc => modelosDrone.push({ id: doc.id, data: doc.data() }));
+                resolve(modelosDrone);
+            })
+            .catch(error => reject(error));
+    });
+};
+
+// GUARDAR ModeloDrone
+export const guardarModeloDronePersistencia = (modeloDrone) => {
+    return new Promise((resolve, reject) => {
+        // Si no tiene ID, generamos uno basado en la fecha
+        if (!modeloDrone.id) {
+            modeloDrone.id = new Date().getTime().toString();
+        }
+        
+        setDoc(
+            doc(firestore, collectionNames.MODELOS_DRONE, modeloDrone.id),
+            modeloDrone.data
+        )
+            .then(() => {
+                console.log('Modelo de drone guardado correctamente');
+                resolve(modeloDrone);
+            })
+            .catch(error => {
+                console.log('Error al guardar modelo de drone: ' + error);
+                reject(error);
+            });
+    });
+};
+
+// ELIMINAR ModeloDrone
+export const eliminarModeloDronePersistencia = (id) => {
+    return new Promise(async (resolve, reject) => {
+        // Busco si hay drones relacionados a este modelo
+        const refCol = collection(firestore, collectionNames.DRONES);
+        const q = query(refCol, where('ModeloDroneId', '==', id));
+        const querySnapshot = await getDocs(q);
+        
+        // Si la consulta no arroja ningún resultado, se elimina, sino da error
+        if (querySnapshot.empty) {
+            deleteDoc(doc(firestore, collectionNames.MODELOS_DRONE, id))
+                .then(() => {
+                    console.log('Modelo de drone eliminado correctamente');
+                    resolve(id);
+                })
+                .catch(error => {
+                    reject(error);
+                });
+        } else {
+            reject({
+                code: 'No se puede borrar este modelo de drone. Hay drones asociados a este modelo.'
+            });
+        }
+    });
+};
+
+// GET todos los ModelosDrone
+export const getModelosDronePersistencia = (setModelosDroneToRedux) => {
+    console.log('getModelosDronePersistencia');
+    const modelosDroneRef = collection(firestore, collectionNames.MODELOS_DRONE);
+    const q = query(modelosDroneRef, orderBy('NombreModelo'));
+    try {
+        const unsubscribeModelosDrone = onSnapshot(q, (querySnapshot) => {
+            let modelosDrone = [];
+            querySnapshot.forEach(doc => modelosDrone.push({ id: doc.id, data: doc.data() }));
+            setModelosDroneToRedux(modelosDrone);
+        });
+        return unsubscribeModelosDrone;
+    } catch (error) {
+        return error;
+    }
+};
+
+////////////////////// DRONE ///////////////////////////////////////////////////////////////////////////
+
+// GET Drone por id
+export const getDronePersistencia = (id) => {
+    return new Promise((resolve, reject) => {
+        const docRef = doc(firestore, collectionNames.DRONES, id);
+        getDoc(docRef)
+            .then(docSnap => {
+                if (docSnap.exists()) {
+                    resolve({ id: id, data: docSnap.data() });
+                } else {
+                    reject({ code: 'Drone no encontrado' });
+                }
+            })
+            .catch(error => reject(error));
+    });
+};
+
+// GET Drones por modelo de drone
+export const getDronesPorModeloDronePersistencia = (modeloDroneId) => {
+    return new Promise((resolve, reject) => {
+        const dronesRef = collection(firestore, collectionNames.DRONES);
+        const q = query(dronesRef, where('ModeloDroneId', '==', modeloDroneId));
+        getDocs(q)
+            .then(querySnapshot => {
+                let drones = [];
+                querySnapshot.forEach(doc => drones.push({ id: doc.id, data: doc.data() }));
+                resolve(drones);
+            })
+            .catch(error => reject(error));
+    });
+};
+
+// GET Drones por propietario
+export const getDronesPorPropietarioPersistencia = (propietario) => {
+    return new Promise((resolve, reject) => {
+        const dronesRef = collection(firestore, collectionNames.DRONES);
+        const q = query(dronesRef, where('Propietario', '==', propietario));
+        getDocs(q)
+            .then(querySnapshot => {
+                let drones = [];
+                querySnapshot.forEach(doc => drones.push({ id: doc.id, data: doc.data() }));
+                resolve(drones);
+            })
+            .catch(error => reject(error));
+    });
+};
+
+// GUARDAR Drone
+export const guardarDronePersistencia = (drone) => {
+    return new Promise((resolve, reject) => {
+        // Si no tiene ID, generamos uno basado en la fecha
+        if (!drone.id) {
+            drone.id = new Date().getTime().toString();
+        }
+        
+        setDoc(
+            doc(firestore, collectionNames.DRONES, drone.id),
+            drone.data
+        )
+            .then(() => {
+                console.log('Drone guardado correctamente');
+                resolve(drone);
+            })
+            .catch(error => {
+                console.log('Error al guardar drone: ' + error);
+                reject(error);
+            });
+    });
+};
+
+// ELIMINAR Drone
+export const eliminarDronePersistencia = (id) => {
+    return new Promise((resolve, reject) => {
+        deleteDoc(doc(firestore, collectionNames.DRONES, id))
+            .then(() => {
+                console.log('Drone eliminado correctamente');
+                resolve(id);
+            })
+            .catch(error => {
+                console.log('Error al eliminar drone: ' + error);
+                reject(error);
+            });
+    });
+};
+
+// GET todos los Drones
+export const getDronesPersistencia = (setDronesToRedux) => {
+    console.log('getDronesPersistencia');
+    const dronesRef = collection(firestore, collectionNames.DRONES);
+    const q = query(dronesRef, orderBy('NumeroSerie'));
+    try {
+        const unsubscribeDrones = onSnapshot(q, (querySnapshot) => {
+            let drones = [];
+            querySnapshot.forEach(doc => drones.push({ id: doc.id, data: doc.data() }));
+            setDronesToRedux(drones);
+        });
+        return unsubscribeDrones;
+    } catch (error) {
+        return error;
+    }
+};

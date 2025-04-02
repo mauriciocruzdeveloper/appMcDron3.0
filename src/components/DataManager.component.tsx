@@ -1,5 +1,12 @@
 import { useEffect, useState } from "react";
-import { getMessagesPersistencia, getReparacionesPersistencia, getRepuestosPersistencia, getUsuariosPersistencia } from "../persistencia/persistenciaFirebase";
+import { 
+    getMessagesPersistencia, 
+    getReparacionesPersistencia, 
+    getRepuestosPersistencia, 
+    getUsuariosPersistencia,
+    getModelosDronePersistencia,
+    getDronesPersistencia
+} from "../persistencia/persistenciaFirebase";
 import { useAppDispatch } from "../redux-tool-kit/hooks/useAppDispatch";
 import { setReparaciones } from "../redux-tool-kit/reparacion/reparacion.slice";
 import { ReparacionType } from "../types/reparacion";
@@ -9,6 +16,11 @@ import { setUsuarios, setUsuariosSelect } from "../redux-tool-kit/usuario/usuari
 import { Usuario } from "../types/usuario";
 import { setMessages } from "../redux-tool-kit/mensaje/mensaje.slice";
 import { setRepuestos } from "../redux-tool-kit/repuesto/repuesto.slice";
+import { Repuesto } from "../types/repuesto";
+import { ModeloDrone } from "../types/modeloDrone";
+import { setModelosDrone } from "../redux-tool-kit/modeloDrone/modeloDrone.slice";
+import { Drone } from "../types/drone";
+import { setDrones } from "../redux-tool-kit/drone/drone.slice";
 
 export interface DataManagerProps {
     children: React.ReactNode;
@@ -22,6 +34,9 @@ export function DataManagerComponent({ children }: DataManagerProps): React.Reac
     const [unsubscribeReparaciones, setUnsubscribeReparaciones] = useState<Unsubscribe>();
     const [unsubscribeUsuarios, setUnsubscribeUsuarios] = useState<Unsubscribe>();
     const [unsubscribeMessages, setUnsubscribeMessages] = useState<Unsubscribe>();
+    const [unsubscribeRepuestos, setUnsubscribeRepuestos] = useState<Unsubscribe>();
+    const [unsubscribeModelosDrone, setUnsubscribeModelosDrone] = useState<Unsubscribe>();
+    const [unsubscribeDrones, setUnsubscribeDrones] = useState<Unsubscribe>();
 
     useEffect(() => {
         getUsuarios();
@@ -48,7 +63,21 @@ export function DataManagerComponent({ children }: DataManagerProps): React.Reac
     useEffect(() => {
         getRepuestos();
         return () => {
-            unsubscribeReparaciones?.();
+            unsubscribeRepuestos?.();
+        };
+    }, []);
+
+    useEffect(() => {
+        getModelosDrone();
+        return () => {
+            unsubscribeModelosDrone?.();
+        };
+    }, []);
+
+    useEffect(() => {
+        getDrones();
+        return () => {
+            unsubscribeDrones?.();
         };
     }, []);
 
@@ -61,7 +90,7 @@ export function DataManagerComponent({ children }: DataManagerProps): React.Reac
                 usuario
             );
 
-            setUnsubscribeReparaciones(() => unsubscribe); // Guarda el unsubscribe en el estado local
+            setUnsubscribeReparaciones(() => unsubscribe);
         } catch (error) {
             console.error("Error al obtener reparaciones:", error);
         }
@@ -80,12 +109,11 @@ export function DataManagerComponent({ children }: DataManagerProps): React.Reac
                         }
                     });
                     dispatch(setUsuarios(usuarios));
-                    // TODO: Para los usuarios select hacer un selector específico, cuando haga selectores. Usar librería reselct
                     dispatch(setUsuariosSelect(usuariosSelect));
                 },
             );
 
-            setUnsubscribeUsuarios(() => unsubscribe); // Guarda el unsubscribe en el estado local
+            setUnsubscribeUsuarios(() => unsubscribe);
         } catch (error) {
             console.error("Error al obtener usuarios:", error);
         }
@@ -101,7 +129,7 @@ export function DataManagerComponent({ children }: DataManagerProps): React.Reac
                 emailCliMessage,
             );
 
-            setUnsubscribeMessages(() => unsubscribe); // Guarda el unsubscribe en el estado local
+            setUnsubscribeMessages(() => unsubscribe);
         } catch (error) {
             console.error("Error al obtener mensajes:", error);
         }
@@ -110,18 +138,45 @@ export function DataManagerComponent({ children }: DataManagerProps): React.Reac
     const getRepuestos = async () => {
         try {
             const unsubscribe = await getRepuestosPersistencia(
-                (repuestos: any) => {
+                (repuestos: Repuesto[]) => {
                     dispatch(setRepuestos(repuestos));
                 },
             );
 
-            setUnsubscribeReparaciones(() => unsubscribe); // Guarda el unsubscribe en el estado local
+            setUnsubscribeRepuestos(() => unsubscribe);
         } catch (error) {
-            console.error("Error al obtener reparaciones:", error);
+            console.error("Error al obtener repuestos:", error);
         }
-    }
+    };
+    
+    const getModelosDrone = async () => {
+        try {
+            const unsubscribe = await getModelosDronePersistencia(
+                (modelosDrone: ModeloDrone[]) => {
+                    dispatch(setModelosDrone(modelosDrone));
+                }
+            );
 
-    // TODO: Hace falta que sea un wrapper???
+            setUnsubscribeModelosDrone(() => unsubscribe);
+        } catch (error) {
+            console.error("Error al obtener modelos de drones:", error);
+        }
+    };
+    
+    const getDrones = async () => {
+        try {
+            const unsubscribe = await getDronesPersistencia(
+                (drones: Drone[]) => {
+                    dispatch(setDrones(drones));
+                }
+            );
+
+            setUnsubscribeDrones(() => unsubscribe);
+        } catch (error) {
+            console.error("Error al obtener drones:", error);
+        }
+    };
+
     return (
         <div>
             {children}

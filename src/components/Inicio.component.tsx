@@ -19,6 +19,22 @@ const Inicio = (props: InicioProps) => {
         > 
             <img className='mb-4' src='./img/logo.png' alt='' width='100%' max-width='100px' />   
 
+            {/* Grupo 1: Recepción - primer proceso del negocio */}
+            <button 
+              className='mb-3 btn w-100 bg-bluemcdron'
+              style={{height: '100px'}}
+              onClick={() => history.push(`${match.path}/presupuesto`)}
+            >      
+              <div className='text-white text-center'>RECEPCIÓN</div>
+            </button>
+
+            {/* Separador visual sin cambiar estilos */}
+            <div className="mb-4 text-center text-muted">
+              <small>Gestión y Administración</small>
+              <hr className="mt-1" />
+            </div>
+
+            {/* Grupo 2: Gestión y administración */}
             <button 
               className='mb-3 btn w-100 bg-bluemcdron'
               style={{height: '100px'}}
@@ -47,14 +63,33 @@ const Inicio = (props: InicioProps) => {
             </button>
             : null}
 
+            {admin ?
             <button 
               className='mb-3 btn w-100 bg-bluemcdron'
               style={{height: '100px'}}
-              onClick={() => history.push(`${match.path}/presupuesto`)}
+              onClick={() => history.push(`${match.path}/modelos-drone`)}
             >      
-              <div className='text-white text-center'>RECEPCIÓN</div>
+              <div className='text-white text-center'>MODELOS DE DRONES</div>
             </button>
+            : null}
 
+            {admin ?
+            <button 
+              className='mb-3 btn w-100 bg-bluemcdron'
+              style={{height: '100px'}}
+              onClick={() => history.push(`${match.path}/drones`)}
+            >      
+              <div className='text-white text-center'>DRONES</div>
+            </button>
+            : null}
+
+            {/* Separador visual sin cambiar estilos */}
+            <div className="mb-4 text-center text-muted">
+              <small>Comunicación</small>
+              <hr className="mt-1" />
+            </div>
+
+            {/* Grupo 3: Comunicación */}
             <button 
               className='mb-3 btn w-100 bg-bluemcdron'
               style={{height: '100px'}}
