@@ -1,5 +1,7 @@
-export enum collectionNames {
-    USUARIOS = 'USUARIOS',
-    REPARACIONES = 'REPARACIONES',
-    REPUESTOS = 'REPUESTOS'
-}
+export const collectionNames = {
+  REPARACIONES: 'REPARACIONES',
+  USUARIOS: 'USUARIOS',
+  REPUESTOS: 'REPUESTOS',
+  MODELOS_DRONE: 'MODELOS_DRONE',
+  DRONES: 'DRONES'
+};
