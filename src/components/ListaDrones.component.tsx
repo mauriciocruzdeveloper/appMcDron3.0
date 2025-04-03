@@ -68,6 +68,8 @@ export default function ListaDrones(): JSX.Element {
             setDronesList(drones);
             setMostrandoMock(false);
         } else {
+            // Usar los datos mock cuando no hay datos reales
+            setDronesList(dronesMock);
             setMostrandoMock(true);
         }
     }, [coleccionDrones, filter]);
@@ -83,6 +85,8 @@ export default function ListaDrones(): JSX.Element {
 
     return (
         <div className='p-4'>
+            <h2 className="mb-4">Drones</h2>
+            
             <div className='card mb-3'>
                 <div className='card-body'>
                     <div className='form-group'>
@@ -97,72 +101,31 @@ export default function ListaDrones(): JSX.Element {
                 </div>
             </div>
 
-            <div className="mb-2 text-muted">
-                {mostrandoMock ?
-                    <span>Mostrando {dronesMock.length} drones de ejemplo <span className="badge bg-warning text-dark">DATOS DE EJEMPLO</span></span> :
-                    <span>{dronesList.length} {dronesList.length === 1 ? 'drone' : 'drones'}</span>
-                }
+            <div className="d-flex justify-content-between align-items-center mb-3">
+                <div className="text-muted">
+                    {mostrandoMock ?
+                        <span>Mostrando {dronesList.length} drones de ejemplo <span className="badge bg-warning text-dark">DATOS DE EJEMPLO</span></span> :
+                        <span>{dronesList.length} {dronesList.length === 1 ? 'drone' : 'drones'}</span>
+                    }
+                </div>
+                
+                <button
+                    className="btn btn-primary"
+                    onClick={() => history.push('/inicio/drones/new')}
+                >
+                    <i className="bi bi-plus-circle me-1"></i> Nuevo Drone
+                </button>
             </div>
 
-            <button
-                className="btn btn-primary mb-3"
-                onClick={() => history.push('/inicio/drones/new')}
-            >
-                Nuevo Drone
-            </button>
-
             {dronesList.length === 0 ? (
-                mostrandoMock ? (
-                    <>
-                        <div className="alert alert-warning text-center mb-3" role="alert">
-                            No hay drones disponibles. Mostrando datos de ejemplo. ¡Agregue un nuevo drone!
-                        </div>
-                        {dronesMock.map(drone => (
-                            <div
-                                key={drone.id}
-                                className='card mb-3 p-3 bg-light'
-                                aria-current='true'
-                            >
-                                <div className='d-flex w-100 justify-content-between'>
-                                    <h5 className='mb-1'>{drone.data.NumeroSerie}</h5>
-                                    <span className='badge bg-primary'>{drone.data.ModeloDroneId}</span>
-                                </div>
-                                <div>
-                                    <small className='text-muted'>Propietario: {drone.data.Propietario}</small>
-                                </div>
-                                <div>
-                                    <small className='text-muted'>Adquirido: {formatDate(drone.data.FechaAdquisicion)}</small>
-                                </div>
-                                {drone.data.UltimoMantenimiento && (
-                                    <div>
-                                        <small className='text-muted'>Último mantenimiento: {formatDate(drone.data.UltimoMantenimiento)}</small>
-                                    </div>
-                                )}
-                                {drone.data.EstadoDrone && (
-                                    <div>
-                                        <small className={`${drone.data.EstadoDrone === 'Activo' ? 'text-success' :
-                                                drone.data.EstadoDrone === 'En Reparación' ? 'text-warning' : 'text-danger'
-                                            }`}>
-                                            Estado: {drone.data.EstadoDrone}
-                                        </small>
-                                    </div>
-                                )}
-                                <div className="mt-2">
-                                    <span className="badge bg-secondary">Ejemplo</span>
-                                </div>
-                            </div>
-                        ))}
-                    </>
-                ) : (
-                    <div className="alert alert-info text-center" role="alert">
-                        No hay drones disponibles. ¡Agregue un nuevo drone!
-                    </div>
-                )
+                <div className="alert alert-info text-center" role="alert">
+                    No hay drones disponibles. ¡Agregue un nuevo drone!
+                </div>
             ) : (
                 dronesList.map(drone => (
                     <div
                         key={drone.id}
-                        className='card mb-3 p-3'
+                        className={`card mb-3 p-3 ${mostrandoMock && drone.id.startsWith('mock') ? 'bg-light' : ''}`}
                         aria-current='true'
                         onClick={() => history.push(`/inicio/drones/${drone.id}`)}
                     >
@@ -171,14 +134,14 @@ export default function ListaDrones(): JSX.Element {
                             <span className='badge bg-primary'>{drone.data.ModeloDroneId}</span>
                         </div>
                         <div>
-                            <small className='text-muted'>Propietario: {drone.data.Propietario}</small>
+                            <small className='text-muted'>{drone.data.Propietario}</small>
                         </div>
                         <div>
-                            <small className='text-muted'>Adquirido: {formatDate(drone.data.FechaAdquisicion)}</small>
+                            <small className='text-muted'>{formatDate(drone.data.FechaAdquisicion)}</small>
                         </div>
                         {drone.data.UltimoMantenimiento && (
                             <div>
-                                <small className='text-muted'>Último mantenimiento: {formatDate(drone.data.UltimoMantenimiento)}</small>
+                                <small className='text-muted'>{formatDate(drone.data.UltimoMantenimiento)}</small>
                             </div>
                         )}
                         {drone.data.EstadoDrone && (
@@ -186,8 +149,13 @@ export default function ListaDrones(): JSX.Element {
                                 <small className={`${drone.data.EstadoDrone === 'Activo' ? 'text-success' :
                                         drone.data.EstadoDrone === 'En Reparación' ? 'text-warning' : 'text-danger'
                                     }`}>
-                                    Estado: {drone.data.EstadoDrone}
+                                    {drone.data.EstadoDrone}
                                 </small>
+                            </div>
+                        )}
+                        {mostrandoMock && drone.id.startsWith('mock') && (
+                            <div className="mt-2">
+                                <span className="badge bg-secondary">Ejemplo</span>
                             </div>
                         )}
                     </div>
