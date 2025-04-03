@@ -687,15 +687,18 @@ export const eliminarRepuestoPersistencia = (id) => {
 // GET todos los Repuestos
 export const getRepuestosPersistencia = (setRepuestosToRedux) => {
     console.log('getRepuestosPersistencia');
-    const q = query(collection(firestore, collectionNames.REPUESTOS), orderBy('descripcion'));
+    // Cambio el campo de ordenación de 'descripcion' a 'DescripcionRepu' para coincidir con la estructura real 
+    const q = query(collection(firestore, collectionNames.REPUESTOS), orderBy('DescripcionRepu'));
     try {
         const unsubscribeRep = onSnapshot(q, (querySnapshot) => {
             let repuestos = [];
             querySnapshot.forEach(doc => repuestos.push({ id: doc.id, data: doc.data() }));
+            console.log('Repuestos cargados:', repuestos.length);
             setRepuestosToRedux(repuestos);
         });
         return unsubscribeRep;
     } catch (error) {
+        console.error("Error en getRepuestosPersistencia:", error);
         return error;
     }
 };

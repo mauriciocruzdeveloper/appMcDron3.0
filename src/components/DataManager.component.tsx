@@ -137,9 +137,9 @@ export function DataManagerComponent({ children }: DataManagerProps): React.Reac
 
     const getRepuestos = async () => {
         try {
-            const unsubscribe = await getRepuestosPersistencia(
+                        const unsubscribe = await getRepuestosPersistencia(
                 (repuestos: Repuesto[]) => {
-                    dispatch(setRepuestos(repuestos));
+                                        dispatch(setRepuestos(repuestos));
                 },
             );
 
