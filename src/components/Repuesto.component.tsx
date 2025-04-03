@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import history from '../history';
+import history from "../history";
 import { useAppDispatch } from '../redux-tool-kit/hooks/useAppDispatch';
 import { useAppSelector } from '../redux-tool-kit/hooks/useAppSelector';
 import { Repuesto } from '../types/repuesto';
@@ -78,7 +78,6 @@ export default function RepuestoComponent(): JSX.Element {
           tipo: "success",
           titulo: "Guardar Repuesto",
         });
-        history.push('/inicio/repuestos');
       } else {
         openModal({
           mensaje: "Error al guardar el repuesto.",
@@ -110,7 +109,7 @@ export default function RepuestoComponent(): JSX.Element {
           tipo: "success",
           titulo: "Eliminar Repuesto",
         });
-        history.push('/inicio/repuestos');
+        history.goBack();
       } else {
         openModal({
           mensaje: "Error al eliminar el repuesto.",

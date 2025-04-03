@@ -93,7 +93,6 @@ export default function DroneComponent(): JSX.Element {
           tipo: "success",
           titulo: "Guardar Drone",
         });
-        history.push('/inicio/drones');
       } else {
         openModal({
           mensaje: "Error al guardar el drone.",
@@ -125,7 +124,7 @@ export default function DroneComponent(): JSX.Element {
           tipo: "success",
           titulo: "Eliminar Drone",
         });
-        history.push('/inicio/drones');
+        history.goBack();
       } else {
         const error = response.payload as any;
         openModal({
