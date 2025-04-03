@@ -110,7 +110,7 @@ export default function ListaDrones(): JSX.Element {
                 </div>
                 
                 <button
-                    className="btn btn-primary"
+                    className="btn w-auto bg-bluemcdron text-white"
                     onClick={() => history.push('/inicio/drones/new')}
                 >
                     <i className="bi bi-plus-circle me-1"></i> Nuevo Drone
@@ -125,39 +125,42 @@ export default function ListaDrones(): JSX.Element {
                 dronesList.map(drone => (
                     <div
                         key={drone.id}
-                        className={`card mb-3 p-3 ${mostrandoMock && drone.id.startsWith('mock') ? 'bg-light' : ''}`}
+                        className={`card mb-3 ${mostrandoMock && drone.id.startsWith('mock') ? 'bg-light' : ''}`}
                         aria-current='true'
                         onClick={() => history.push(`/inicio/drones/${drone.id}`)}
+                        style={{ cursor: 'pointer' }}
                     >
-                        <div className='d-flex w-100 justify-content-between'>
-                            <h5 className='mb-1'>{drone.data.NumeroSerie}</h5>
-                            <span className='badge bg-primary'>{drone.data.ModeloDroneId}</span>
-                        </div>
-                        <div>
-                            <small className='text-muted'>{drone.data.Propietario}</small>
-                        </div>
-                        <div>
-                            <small className='text-muted'>{formatDate(drone.data.FechaAdquisicion)}</small>
-                        </div>
-                        {drone.data.UltimoMantenimiento && (
+                        <div className='card-body p-3'>
+                            <div className='d-flex w-100 justify-content-between'>
+                                <h5 className='mb-1'>{drone.data.NumeroSerie}</h5>
+                                <span className='badge bg-bluemcdron'>{drone.data.ModeloDroneId}</span>
+                            </div>
                             <div>
-                                <small className='text-muted'>{formatDate(drone.data.UltimoMantenimiento)}</small>
+                                <small className='text-muted'>{drone.data.Propietario}</small>
                             </div>
-                        )}
-                        {drone.data.EstadoDrone && (
                             <div>
-                                <small className={`${drone.data.EstadoDrone === 'Activo' ? 'text-success' :
-                                        drone.data.EstadoDrone === 'En Reparación' ? 'text-warning' : 'text-danger'
-                                    }`}>
-                                    {drone.data.EstadoDrone}
-                                </small>
+                                <small className='text-muted'>{formatDate(drone.data.FechaAdquisicion)}</small>
                             </div>
-                        )}
-                        {mostrandoMock && drone.id.startsWith('mock') && (
-                            <div className="mt-2">
-                                <span className="badge bg-secondary">Ejemplo</span>
-                            </div>
-                        )}
+                            {drone.data.UltimoMantenimiento && (
+                                <div>
+                                    <small className='text-muted'>{formatDate(drone.data.UltimoMantenimiento)}</small>
+                                </div>
+                            )}
+                            {drone.data.EstadoDrone && (
+                                <div>
+                                    <small className={`${drone.data.EstadoDrone === 'Activo' ? 'text-success' :
+                                            drone.data.EstadoDrone === 'En Reparación' ? 'text-warning' : 'text-danger'
+                                        }`}>
+                                        {drone.data.EstadoDrone}
+                                    </small>
+                                </div>
+                            )}
+                            {mostrandoMock && drone.id.startsWith('mock') && (
+                                <div className="mt-2">
+                                    <span className="badge bg-secondary">Ejemplo</span>
+                                </div>
+                            )}
+                        </div>
                     </div>
                 ))
             )}
