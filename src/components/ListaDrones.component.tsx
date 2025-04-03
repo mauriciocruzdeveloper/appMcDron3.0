@@ -13,9 +13,6 @@ const dronesMock: Drone[] = [
             NumeroSerie: 'SN123456789',
             ModeloDroneId: 'mock-1', // ID de un Mavic 3
             Propietario: 'Juan Pérez',
-            FechaAdquisicion: new Date('2022-06-15'),
-            EstadoDrone: 'Activo',
-            UltimoMantenimiento: new Date('2023-02-10'),
             Observaciones: 'Utilizado principalmente para fotografía'
         }
     },
@@ -25,9 +22,6 @@ const dronesMock: Drone[] = [
             NumeroSerie: 'SN987654321',
             ModeloDroneId: 'mock-2', // ID de un Mini 3 Pro
             Propietario: 'María López',
-            FechaAdquisicion: new Date('2023-01-20'),
-            EstadoDrone: 'Activo',
-            UltimoMantenimiento: new Date('2023-07-05'),
             Observaciones: 'Usado para grabación de eventos'
         }
     },
@@ -37,9 +31,6 @@ const dronesMock: Drone[] = [
             NumeroSerie: 'SN456789123',
             ModeloDroneId: 'mock-3', // ID de un Phantom 4 Pro
             Propietario: 'Carlos Rodríguez',
-            FechaAdquisicion: new Date('2020-03-10'),
-            EstadoDrone: 'En Reparación',
-            UltimoMantenimiento: new Date('2023-03-18'),
             Observaciones: 'Problema con la batería, cambio programado'
         }
     }
@@ -61,7 +52,7 @@ export default function ListaDrones(): JSX.Element {
                     incluirPorSearch =
                         drone.data?.NumeroSerie?.toLowerCase().includes(filter.toLowerCase()) ||
                         drone.data?.Propietario?.toLowerCase().includes(filter.toLowerCase()) ||
-                        drone.data?.EstadoDrone?.toLowerCase().includes(filter.toLowerCase());
+                        (drone.data?.Observaciones?.toLowerCase().includes(filter.toLowerCase()) || false);
                 }
                 return incluirPorSearch;
             });
@@ -138,21 +129,9 @@ export default function ListaDrones(): JSX.Element {
                             <div>
                                 <small className='text-muted'>{drone.data.Propietario}</small>
                             </div>
-                            <div>
-                                <small className='text-muted'>{formatDate(drone.data.FechaAdquisicion)}</small>
-                            </div>
-                            {drone.data.UltimoMantenimiento && (
+                            {drone.data.Observaciones && (
                                 <div>
-                                    <small className='text-muted'>{formatDate(drone.data.UltimoMantenimiento)}</small>
-                                </div>
-                            )}
-                            {drone.data.EstadoDrone && (
-                                <div>
-                                    <small className={`${drone.data.EstadoDrone === 'Activo' ? 'text-success' :
-                                            drone.data.EstadoDrone === 'En Reparación' ? 'text-warning' : 'text-danger'
-                                        }`}>
-                                        {drone.data.EstadoDrone}
-                                    </small>
+                                    <small className='text-muted'>{drone.data.Observaciones}</small>
                                 </div>
                             )}
                             {mostrandoMock && drone.id.startsWith('mock') && (
