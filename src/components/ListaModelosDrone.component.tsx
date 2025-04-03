@@ -109,7 +109,7 @@ export default function ListaModelosDrone(): JSX.Element {
                 </div>
                 
                 <button
-                    className="btn btn-primary"
+                    className="btn w-auto bg-bluemcdron text-white"
                     onClick={() => history.push('/inicio/modelos-drone/new')}
                 >
                     <i className="bi bi-plus-circle me-1"></i> Nuevo Modelo
@@ -124,37 +124,40 @@ export default function ListaModelosDrone(): JSX.Element {
                 modelosList.map(modelo => (
                     <div
                         key={modelo.id}
-                        className={`card mb-3 p-3 ${mostrandoMock && modelo.id.startsWith('mock') ? 'bg-light' : ''}`}
+                        className={`card mb-3 ${mostrandoMock && modelo.id.startsWith('mock') ? 'bg-light' : ''}`}
                         aria-current='true'
                         onClick={() => history.push(`/inicio/modelos-drone/${modelo.id}`)}
+                        style={{ cursor: 'pointer' }}
                     >
-                        <div className='d-flex w-100 justify-content-between'>
-                            <h5 className='mb-1'>{modelo.data.NombreModelo}</h5>
-                            <span className='badge bg-primary'>{formatPrice(modelo.data.PrecioReferencia)}</span>
-                        </div>
-                        <div>
-                            <small className='text-muted'>{modelo.data.Fabricante}</small>
-                        </div>
-                        <div>
-                            <small className='text-muted'>{modelo.data.AnioLanzamiento}</small>
-                        </div>
-                        <div>
-                            <small className='text-muted'>{modelo.data.DescripcionModelo}</small>
-                        </div>
-                        {modelo.data.Estado && (
+                        <div className='card-body p-3'>
+                            <div className='d-flex w-100 justify-content-between'>
+                                <h5 className='mb-1'>{modelo.data.NombreModelo}</h5>
+                                <span className='badge bg-bluemcdron'>{formatPrice(modelo.data.PrecioReferencia)}</span>
+                            </div>
                             <div>
-                                <small className={`${modelo.data.Estado === 'Disponible' ? 'text-success' :
-                                        modelo.data.Estado === 'Descontinuado' ? 'text-danger' : 'text-warning'
-                                    }`}>
-                                    {modelo.data.Estado}
-                                </small>
+                                <small className='text-muted'>{modelo.data.Fabricante}</small>
                             </div>
-                        )}
-                        {mostrandoMock && modelo.id.startsWith('mock') && (
-                            <div className="mt-2">
-                                <span className="badge bg-secondary">Ejemplo</span>
+                            <div>
+                                <small className='text-muted'>{modelo.data.AnioLanzamiento}</small>
                             </div>
-                        )}
+                            <div>
+                                <small className='text-muted'>{modelo.data.DescripcionModelo}</small>
+                            </div>
+                            {modelo.data.Estado && (
+                                <div>
+                                    <small className={`${modelo.data.Estado === 'Disponible' ? 'text-success' :
+                                            modelo.data.Estado === 'Descontinuado' ? 'text-danger' : 'text-warning'
+                                        }`}>
+                                        {modelo.data.Estado}
+                                    </small>
+                                </div>
+                            )}
+                            {mostrandoMock && modelo.id.startsWith('mock') && (
+                                <div className="mt-2">
+                                    <span className="badge bg-secondary">Ejemplo</span>
+                                </div>
+                            )}
+                        </div>
                     </div>
                 ))
             )}
