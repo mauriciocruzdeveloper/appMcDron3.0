@@ -654,11 +654,6 @@ export const guardarRepuestoPersistencia = (repuesto) => {
             repuesto.id = new Date().getTime().toString();
         }
         
-        // Aseguramos que la fecha de registro esté presente
-        if (!repuesto.data.fechaRegistro) {
-            repuesto.data.fechaRegistro = new Date();
-        }
-        
         setDoc(
             doc(firestore, collectionNames.REPUESTOS, repuesto.id),
             repuesto.data

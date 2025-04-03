@@ -13,6 +13,9 @@ import ListaReparaciones from "../components/ListaReparaciones.component";
 import ListaRepuestos from "../components/ListaRepuestos.component";
 import ListaModelosDrone from "../components/ListaModelosDrone.component";
 import ListaDrones from "../components/ListaDrones.component";
+import ModeloDrone from "../components/ModeloDrone.component";
+import Repuesto from "../components/Repuesto.component";
+import Drone from "../components/Drone.component";
 import { DataManagerComponent } from "../components/DataManager.component";
 
 const InicioRoutes = ({ match, isLoggedIn, admin }) => {
@@ -35,12 +38,15 @@ const InicioRoutes = ({ match, isLoggedIn, admin }) => {
                 <Route exact path={`${match.path}/presupuesto`} render = {props => <Presupuesto {...props} admin={admin}/>} />
                 <Route exact path={`${match.path}/mensajes`} render = {props => <Mensajes {...props} admin={admin}/>} />
                 <Route exact path={`${match.path}/repuestos`} render = {props => <ListaRepuestos {...props} admin={admin}/>} />
+                <Route exact path={`${match.path}/repuestos/:id`} render = {admin ? props => <Repuesto {...props} /> : () => <h1>ACCESO NO AUTORIZADO</h1>} />
                 
-                {/* Nuevas rutas para modelos de drone y drones */}
+                {/* Rutas para modelos de drone */}
                 <Route exact path={`${match.path}/modelos-drone`} render = {admin ? props => <ListaModelosDrone {...props} /> : () => <h1>ACCESO NO AUTORIZADO</h1>} />
-                <Route exact path={`${match.path}/modelos-drone/:id`} render = {admin ? props => <ListaModelosDrone {...props} /> : () => <h1>ACCESO NO AUTORIZADO</h1>} />
+                <Route exact path={`${match.path}/modelos-drone/:id`} render = {admin ? props => <ModeloDrone {...props} /> : () => <h1>ACCESO NO AUTORIZADO</h1>} />
+                
+                {/* Rutas para drones */}
                 <Route exact path={`${match.path}/drones`} render = {admin ? props => <ListaDrones {...props} /> : () => <h1>ACCESO NO AUTORIZADO</h1>} />
-                <Route exact path={`${match.path}/drones/:id`} render = {admin ? props => <ListaDrones {...props} /> : () => <h1>ACCESO NO AUTORIZADO</h1>} />
+                <Route exact path={`${match.path}/drones/:id`} render = {admin ? props => <Drone {...props} /> : () => <h1>ACCESO NO AUTORIZADO</h1>} />
             </Switch>
         </DataManagerComponent>
         : <Redirect to="/login" />        
