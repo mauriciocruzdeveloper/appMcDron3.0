@@ -68,6 +68,8 @@ export default function ListaModelosDrone(): JSX.Element {
             setModelosList(modelos);
             setMostrandoMock(false);
         } else {
+            // Usar los datos mock cuando no hay datos reales
+            setModelosList(modelosDroneMock);
             setMostrandoMock(true);
         }
     }, [coleccionModelosDrone, filter]);
@@ -82,6 +84,8 @@ export default function ListaModelosDrone(): JSX.Element {
 
     return (
         <div className='p-4'>
+            <h2 className="mb-4">Modelos de Drone</h2>
+            
             <div className='card mb-3'>
                 <div className='card-body'>
                     <div className='form-group'>
@@ -96,70 +100,31 @@ export default function ListaModelosDrone(): JSX.Element {
                 </div>
             </div>
 
-            <div className="mb-2 text-muted">
-                {mostrandoMock ?
-                    <span>Mostrando {modelosDroneMock.length} modelos de ejemplo <span className="badge bg-warning text-dark">DATOS DE EJEMPLO</span></span> :
-                    <span>{modelosList.length} {modelosList.length === 1 ? 'modelo' : 'modelos'}</span>
-                }
+            <div className="d-flex justify-content-between align-items-center mb-3">
+                <div className="text-muted">
+                    {mostrandoMock ?
+                        <span>Mostrando {modelosList.length} modelos de ejemplo <span className="badge bg-warning text-dark">DATOS DE EJEMPLO</span></span> :
+                        <span>{modelosList.length} {modelosList.length === 1 ? 'modelo' : 'modelos'}</span>
+                    }
+                </div>
+                
+                <button
+                    className="btn btn-primary"
+                    onClick={() => history.push('/inicio/modelos-drone/new')}
+                >
+                    <i className="bi bi-plus-circle me-1"></i> Nuevo Modelo
+                </button>
             </div>
 
-            <button
-                className="btn btn-primary mb-3"
-                onClick={() => history.push('/inicio/modelos-drone/new')}
-            >
-                Nuevo Modelo de Drone
-            </button>
-
             {modelosList.length === 0 ? (
-                mostrandoMock ? (
-                    <>
-                        <div className="alert alert-warning text-center mb-3" role="alert">
-                            No hay modelos disponibles. Mostrando datos de ejemplo. ¡Agregue un nuevo modelo!
-                        </div>
-                        {modelosDroneMock.map(modelo => (
-                            <div
-                                key={modelo.id}
-                                className='card mb-3 p-3 bg-light'
-                                aria-current='true'
-                            >
-                                <div className='d-flex w-100 justify-content-between'>
-                                    <h5 className='mb-1'>{modelo.data.NombreModelo}</h5>
-                                    <span className='badge bg-primary'>{formatPrice(modelo.data.PrecioReferencia)}</span>
-                                </div>
-                                <div>
-                                    <small className='text-muted'>Fabricante: {modelo.data.Fabricante}</small>
-                                </div>
-                                <div>
-                                    <small className='text-muted'>Año: {modelo.data.AnioLanzamiento}</small>
-                                </div>
-                                <div>
-                                    <small className='text-muted'>{modelo.data.DescripcionModelo}</small>
-                                </div>
-                                {modelo.data.Estado && (
-                                    <div>
-                                        <small className={`${modelo.data.Estado === 'Disponible' ? 'text-success' :
-                                                modelo.data.Estado === 'Descontinuado' ? 'text-danger' : 'text-warning'
-                                            }`}>
-                                            Estado: {modelo.data.Estado}
-                                        </small>
-                                    </div>
-                                )}
-                                <div className="mt-2">
-                                    <span className="badge bg-secondary">Ejemplo</span>
-                                </div>
-                            </div>
-                        ))}
-                    </>
-                ) : (
-                    <div className="alert alert-info text-center" role="alert">
-                        No hay modelos disponibles. ¡Agregue un nuevo modelo!
-                    </div>
-                )
+                <div className="alert alert-info text-center" role="alert">
+                    No hay modelos disponibles. ¡Agregue un nuevo modelo!
+                </div>
             ) : (
                 modelosList.map(modelo => (
                     <div
                         key={modelo.id}
-                        className='card mb-3 p-3'
+                        className={`card mb-3 p-3 ${mostrandoMock && modelo.id.startsWith('mock') ? 'bg-light' : ''}`}
                         aria-current='true'
                         onClick={() => history.push(`/inicio/modelos-drone/${modelo.id}`)}
                     >
@@ -168,10 +133,10 @@ export default function ListaModelosDrone(): JSX.Element {
                             <span className='badge bg-primary'>{formatPrice(modelo.data.PrecioReferencia)}</span>
                         </div>
                         <div>
-                            <small className='text-muted'>Fabricante: {modelo.data.Fabricante}</small>
+                            <small className='text-muted'>{modelo.data.Fabricante}</small>
                         </div>
                         <div>
-                            <small className='text-muted'>Año: {modelo.data.AnioLanzamiento}</small>
+                            <small className='text-muted'>{modelo.data.AnioLanzamiento}</small>
                         </div>
                         <div>
                             <small className='text-muted'>{modelo.data.DescripcionModelo}</small>
@@ -181,8 +146,13 @@ export default function ListaModelosDrone(): JSX.Element {
                                 <small className={`${modelo.data.Estado === 'Disponible' ? 'text-success' :
                                         modelo.data.Estado === 'Descontinuado' ? 'text-danger' : 'text-warning'
                                     }`}>
-                                    Estado: {modelo.data.Estado}
+                                    {modelo.data.Estado}
                                 </small>
+                            </div>
+                        )}
+                        {mostrandoMock && modelo.id.startsWith('mock') && (
+                            <div className="mt-2">
+                                <span className="badge bg-secondary">Ejemplo</span>
                             </div>
                         )}
                     </div>
