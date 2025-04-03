@@ -75,7 +75,6 @@ export default function ModeloDroneComponent(): JSX.Element {
           tipo: "success",
           titulo: "Guardar Modelo de Drone",
         });
-        history.push('/inicio/modelos-drone');
       } else {
         openModal({
           mensaje: "Error al guardar el modelo de drone.",
@@ -107,7 +106,7 @@ export default function ModeloDroneComponent(): JSX.Element {
           tipo: "success",
           titulo: "Eliminar Modelo de Drone",
         });
-        history.push('/inicio/modelos-drone');
+        history.goBack();
       } else {
         const error = response.payload as any;
         openModal({
