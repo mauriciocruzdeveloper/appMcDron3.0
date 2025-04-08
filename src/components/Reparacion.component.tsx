@@ -151,21 +151,25 @@ export default function ReparacionComponent(): React.ReactElement | null {
 
     const confirmEliminarReparacion = async () => {
         if (!reparacion) return;
-        const response = await dispatch(eliminarReparacionAsync(reparacion.id));
-        if (response.meta.requestStatus === 'fulfilled') {
+        try {
+            const response = await dispatch(eliminarReparacionAsync(reparacion.id)).unwrap();
+            console.log("!!! response", response);
+            
             openModal({
-                mensaje: "Reparación eliminada correctamente.",
-                tipo: "success",
-                titulo: "Eliminar Reparación",
-            })
+              mensaje: "Reparación eliminada correctamente.",
+              tipo: "success",
+              titulo: "Eliminar Reparación",
+            });
             history.goBack();
-        } else {
+          } catch (error: any) {
+            console.error("Error al eliminar la reparación:", error);
+            
             openModal({
-                mensaje: "Error al eliminar la reparación.",
-                tipo: "danger",
-                titulo: "Eliminar Reparación",
-            })
-        }
+              mensaje: error?.code || "Error al eliminar la reparación.",
+              tipo: "danger",
+              titulo: "Eliminar Reparación",
+            });
+          }
     }
 
     const handleGuardarReparacion = async () => {

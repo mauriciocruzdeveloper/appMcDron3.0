@@ -75,6 +75,11 @@ export default function ModeloDroneComponent(): JSX.Element {
           tipo: "success",
           titulo: "Guardar Modelo de Drone",
         });
+        
+        // Si estamos creando un nuevo modelo, actualizar la URL con el ID real
+        if (isNew && response.payload?.id) {
+          history.replace(`/inicio/modelos-drone/${response.payload.id}`);
+        }
       } else {
         openModal({
           mensaje: "Error al guardar el modelo de drone.",
@@ -98,27 +103,25 @@ export default function ModeloDroneComponent(): JSX.Element {
 
   const confirmaEliminarModeloDrone = async () => {
     try {
-      const response = await dispatch(eliminarModeloDroneAsync(modeloDrone.id));
-      
-      if (response.meta.requestStatus === 'fulfilled') {
+        const response = await dispatch(eliminarModeloDroneAsync(modeloDrone.id)).unwrap();
+        console.log('!!! response', response);
+
         openModal({
-          mensaje: "Modelo de drone eliminado correctamente.",
-          tipo: "success",
-          titulo: "Eliminar Modelo de Drone",
+            mensaje: "Modelo de drone eliminado correctamente.",
+            tipo: "success",
+            titulo: "Eliminar Modelo de Drone",
         });
         history.goBack();
-      } else {
-        const error = response.payload as any;
+    } catch (error: any) {
+        console.error("Error al eliminar el modelo de drone:", error);
+
         openModal({
-          mensaje: error?.code || "Error al eliminar el modelo de drone.",
-          tipo: "danger",
-          titulo: "Error",
+            mensaje: error?.code || "Error al eliminar el modelo de drone.",
+            tipo: "danger",
+            titulo: "Error",
         });
-      }
-    } catch (error) {
-      console.error("Error al eliminar el modelo de drone:", error);
     }
-  };
+};
 
   return (
     <div className="p-4">

@@ -85,7 +85,7 @@ export default function DroneComponent(): JSX.Element {
 
   const confirmaGuardarDrone = async () => {
     try {
-            const response = await dispatch(guardarDroneAsync(drone));
+      const response = await dispatch(guardarDroneAsync(drone));
       
       if (response.meta.requestStatus === 'fulfilled') {
         openModal({
@@ -93,6 +93,11 @@ export default function DroneComponent(): JSX.Element {
           tipo: "success",
           titulo: "Guardar Drone",
         });
+        
+        // Si estamos creando un nuevo drone, actualizar la URL con el ID real
+        if (isNew && response.payload?.id) {
+          history.replace(`/inicio/drones/${response.payload.id}`);
+        }
       } else {
         openModal({
           mensaje: "Error al guardar el drone.",
@@ -116,25 +121,23 @@ export default function DroneComponent(): JSX.Element {
 
   const confirmaEliminarDrone = async () => {
     try {
-      const response = await dispatch(eliminarDroneAsync(drone.id));
+      const response = await dispatch(eliminarDroneAsync(drone.id)).unwrap();
+      console.log('!!! response', response);
       
-      if (response.meta.requestStatus === 'fulfilled') {
-        openModal({
-          mensaje: "Drone eliminado correctamente.",
-          tipo: "success",
-          titulo: "Eliminar Drone",
-        });
-        history.goBack();
-      } else {
-        const error = response.payload as any;
-        openModal({
-          mensaje: error?.code || "Error al eliminar el drone.",
-          tipo: "danger",
-          titulo: "Error",
-        });
-      }
-    } catch (error) {
+      openModal({
+        mensaje: "Drone eliminado correctamente.",
+        tipo: "success",
+        titulo: "Eliminar Drone",
+      });
+      history.goBack();
+    } catch (error: any) {
       console.error("Error al eliminar el drone:", error);
+      
+      openModal({
+        mensaje: error?.code || "Error al eliminar el drone.",
+        tipo: "danger",
+        titulo: "Error",
+      });
     }
   };
 
