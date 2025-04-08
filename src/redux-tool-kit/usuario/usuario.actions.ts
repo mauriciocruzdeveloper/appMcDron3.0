@@ -15,11 +15,13 @@ export const eliminarUsuarioAsync = createAsyncThunk(
         try {
             dispatch(isFetchingStart());
             const usuarioEliminado = await eliminarUsuarioPersistencia(id);
+            console.log("!!! usuarioEliminado", usuarioEliminado);
             dispatch(isFetchingComplete());
             return usuarioEliminado;
         } catch (error: any) {
+            console.log("!!! error", error);
             dispatch(isFetchingComplete());
-            return error;
+            throw error;
         }
     },
 )

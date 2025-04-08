@@ -67,11 +67,13 @@ export const eliminarReparacionAsync = createAsyncThunk(
         try {
             dispatch(isFetchingStart());
             const reparacionEliminada = await eliminarReparacionPersistencia(id);
+            console.log("!!! reparacionEliminada", reparacionEliminada);
             dispatch(isFetchingComplete());
             return reparacionEliminada;
         } catch (error: any) {
+            console.log("!!! error", error);
             dispatch(isFetchingComplete());
-            return error;
+            throw error;
         }
     },
 )

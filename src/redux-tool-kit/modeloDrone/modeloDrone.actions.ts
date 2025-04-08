@@ -17,11 +17,13 @@ export const eliminarModeloDroneAsync = createAsyncThunk(
         try {
             dispatch(isFetchingStart());
             const modeloDroneEliminado = await eliminarModeloDronePersistencia(id);
+            console.log("!!! modeloDroneEliminado", modeloDroneEliminado);
             dispatch(isFetchingComplete());
             return modeloDroneEliminado;
         } catch (error: any) {
+            console.log("!!! error", error);
             dispatch(isFetchingComplete());
-            return error;
+            throw error;
         }
     },
 )

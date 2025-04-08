@@ -104,19 +104,23 @@ export default function UsuarioComponent(): React.ReactElement | null {
 
     const confirmEliminarUsuario = async () => {
         if (!usuario) return;
-        const response = await dispatch(eliminarUsuarioAsync(usuario.id));
-        if (response.meta.requestStatus === 'fulfilled') {
+        try {
+            const response = await dispatch(eliminarUsuarioAsync(usuario.id)).unwrap();
+            console.log("!!! response", response);
+            
             openModal({
                 mensaje: "Usuario eliminado correctamente.",
                 tipo: "success",
                 titulo: "Eliminar Usuario",
             });
             history.goBack();
-        } else {
+        } catch (error: any) {
+            console.error("Error al eliminar el usuario:", error);
+            
             openModal({
-                mensaje: response.payload?.code || "Error al eliminar el usuario.",
+                mensaje: error?.code || "Error al eliminar el usuario.",
                 tipo: "danger",
-                titulo: "Eliminar Usuario",
+                titulo: "Error",
             });
         }
     };

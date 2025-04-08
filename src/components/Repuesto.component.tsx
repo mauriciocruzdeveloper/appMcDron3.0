@@ -78,6 +78,11 @@ export default function RepuestoComponent(): JSX.Element {
           tipo: "success",
           titulo: "Guardar Repuesto",
         });
+        
+        // Si estamos creando un nuevo repuesto, actualizar la URL con el ID real
+        if (isNew && response.payload?.id) {
+          history.replace(`/inicio/repuestos/${response.payload.id}`);
+        }
       } else {
         openModal({
           mensaje: "Error al guardar el repuesto.",
@@ -101,24 +106,23 @@ export default function RepuestoComponent(): JSX.Element {
 
   const confirmaEliminarRepuesto = async () => {
     try {
-      const response = await dispatch(eliminarRepuestoAsync(repuesto.id));
+      const response = await dispatch(eliminarRepuestoAsync(repuesto.id)).unwrap();
+      console.log("!!! response", response);
       
-      if (response.meta.requestStatus === 'fulfilled') {
-        openModal({
-          mensaje: "Repuesto eliminado correctamente.",
-          tipo: "success",
-          titulo: "Eliminar Repuesto",
-        });
-        history.goBack();
-      } else {
-        openModal({
-          mensaje: "Error al eliminar el repuesto.",
-          tipo: "danger",
-          titulo: "Error",
-        });
-      }
-    } catch (error) {
+      openModal({
+        mensaje: "Repuesto eliminado correctamente.",
+        tipo: "success",
+        titulo: "Eliminar Repuesto",
+      });
+      history.goBack();
+    } catch (error: any) {
       console.error("Error al eliminar el repuesto:", error);
+      
+      openModal({
+        mensaje: error?.code || "Error al eliminar el repuesto.",
+        tipo: "danger",
+        titulo: "Error",
+      });
     }
   };
 

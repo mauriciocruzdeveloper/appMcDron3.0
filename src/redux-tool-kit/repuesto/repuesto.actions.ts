@@ -18,11 +18,13 @@ export const eliminarRepuestoAsync = createAsyncThunk(
         try {
             dispatch(isFetchingStart());
             const repuestoEliminado = await eliminarRepuestoPersistencia(id);
+            console.log("!!! repuestoEliminado", repuestoEliminado);
             dispatch(isFetchingComplete());
             return repuestoEliminado;
         } catch (error: any) {
+            console.log("!!! error", error);
             dispatch(isFetchingComplete());
-            return error;
+            throw error;
         }
     },
 )

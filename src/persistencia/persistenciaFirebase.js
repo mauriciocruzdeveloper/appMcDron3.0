@@ -799,9 +799,14 @@ export const eliminarModeloDronePersistencia = (id) => {
         const refCol = collection(firestore, collectionNames.DRONES);
         const q = query(refCol, where('ModeloDroneId', '==', id));
         const querySnapshot = await getDocs(q);
+
+        console.log('!!! querySnapshot:', querySnapshot);
+        console.log('!!! querySnapshot.empty:', querySnapshot.empty);
+        console.log('!!! querySnapshot.docs:', querySnapshot.docs);
         
         // Si la consulta no arroja ningún resultado, se elimina, sino da error
         if (querySnapshot.empty) {
+            console.log('!!! querySnapshot vacio');
             deleteDoc(doc(firestore, collectionNames.MODELOS_DRONE, id))
                 .then(() => {
                     console.log('Modelo de drone eliminado correctamente');
@@ -811,6 +816,7 @@ export const eliminarModeloDronePersistencia = (id) => {
                     reject(error);
                 });
         } else {
+            console.log('!!! querySnapshot NO vacio');
             reject({
                 code: 'No se puede borrar este modelo de drone. Hay drones asociados a este modelo.'
             });
