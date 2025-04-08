@@ -330,30 +330,44 @@ export const guardarUsuarioPersistencia = (usuario) => {
 // DELETE Cliente
 export const eliminarUsuarioPersistencia = (id) => {
     return new Promise(async (resolve, reject) => {
-        // Busco si hay alguna reparación relacionada al usuario a eliminar
-        const refCol = collection(firestore, collectionNames.REPARACIONES);
-        const q = query(refCol, where('UsuarioRep', '==', id));
-        const querySnapshot = await getDocs(q);
-        // Si la consulta no arroja ningún resultado, se elimina, sino da error y muestra reparación relacionada.
-        if (querySnapshot.empty) {
-            deleteDoc(doc(firestore, 'USUARIOS', id))
-                .then(() => {
-                    console.log('borrando usuario ok');
-                    resolve(id);
-                })
-                .catch(error => {
-                    reject(error);
-                });
-        } else {
-            reject({
-                code:
-                    'No se puede borrar este usuario. Reparación relacionada: '
-                    // Muestra en el mesaje de error los ids de las reparaciones relacionadas al usuario
-                    + querySnapshot.docs.map(doc => doc.id).toString()
-            });
-        }
+        try {
+            // 1. Primero verificamos si hay reparaciones asociadas al usuario
+            const refRepCol = collection(firestore, collectionNames.REPARACIONES);
+            const qRep = query(refRepCol, where('UsuarioRep', '==', id));
+            const reparacionesSnapshot = await getDocs(qRep);
+            
+            // 2. Luego verificamos si hay drones asociados al usuario como propietario
+            const refDronesCol = collection(firestore, collectionNames.DRONES);
+            const qDrones = query(refDronesCol, where('Propietario', '==', id));
+            const dronesSnapshot = await getDocs(qDrones);
 
-    })
+            console.log('!!! reparacionesSnapshot: ', reparacionesSnapshot);
+            console.log('!!! dronesSnapshot: ', dronesSnapshot);
+            
+            // 3. Si hay reparaciones o drones relacionados, rechazamos la eliminación
+            if (!reparacionesSnapshot.empty) {
+                reject({
+                    code: 'No se puede borrar este usuario. Reparación relacionada: '
+                    + reparacionesSnapshot.docs.map(doc => doc.id).toString()
+                });
+            } 
+            else if (!dronesSnapshot.empty) {
+                reject({
+                    code: 'No se puede borrar este usuario. Drone relacionado: '
+                    + dronesSnapshot.docs.map(doc => doc.data().NumeroSerie || doc.id).toString()
+                });
+            } 
+            else {
+                // 4. Si no hay dependencias, procedemos a eliminar el usuario
+                await deleteDoc(doc(firestore, collectionNames.USUARIOS, id));
+                console.log('Usuario eliminado correctamente');
+                resolve(id);
+            }
+        } catch (error) {
+            console.error('Error al eliminar usuario:', error);
+            reject(error);
+        }
+    });
 };
 
 
@@ -686,7 +700,6 @@ export const eliminarRepuestoPersistencia = (id) => {
 
 // GET todos los Repuestos
 export const getRepuestosPersistencia = (setRepuestosToRedux) => {
-    console.log('getRepuestosPersistencia');
     // Cambio el campo de ordenación de 'descripcion' a 'DescripcionRepu' para coincidir con la estructura real 
     const q = query(collection(firestore, collectionNames.REPUESTOS), orderBy('DescripcionRepu'));
     try {
@@ -799,17 +812,11 @@ export const eliminarModeloDronePersistencia = (id) => {
         const refCol = collection(firestore, collectionNames.DRONES);
         const q = query(refCol, where('ModeloDroneId', '==', id));
         const querySnapshot = await getDocs(q);
-
-        console.log('!!! querySnapshot:', querySnapshot);
-        console.log('!!! querySnapshot.empty:', querySnapshot.empty);
-        console.log('!!! querySnapshot.docs:', querySnapshot.docs);
         
         // Si la consulta no arroja ningún resultado, se elimina, sino da error
         if (querySnapshot.empty) {
-            console.log('!!! querySnapshot vacio');
             deleteDoc(doc(firestore, collectionNames.MODELOS_DRONE, id))
                 .then(() => {
-                    console.log('Modelo de drone eliminado correctamente');
                     resolve(id);
                 })
                 .catch(error => {
@@ -826,7 +833,6 @@ export const eliminarModeloDronePersistencia = (id) => {
 
 // GET todos los ModelosDrone
 export const getModelosDronePersistencia = (setModelosDroneToRedux) => {
-    console.log('getModelosDronePersistencia');
     const modelosDroneRef = collection(firestore, collectionNames.MODELOS_DRONE);
     const q = query(modelosDroneRef, orderBy('NombreModelo'));
     try {
