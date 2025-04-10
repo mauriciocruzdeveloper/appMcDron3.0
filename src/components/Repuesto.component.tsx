@@ -12,6 +12,12 @@ interface ParamTypes {
   id: string;
 }
 
+// Función para calcular el estado del repuesto
+export const calcularEstadoRepuesto = (stock: number, unidadesPedidas: number): string => {
+  if (stock > 0) return 'Disponible';
+  return unidadesPedidas > 0 ? 'En Pedido' : 'Agotado';
+};
+
 export default function RepuestoComponent(): JSX.Element {
   const dispatch = useAppDispatch();
   const { openModal } = useModal();
@@ -33,26 +39,45 @@ export default function RepuestoComponent(): JSX.Element {
       ProveedorRepu: '',
       PrecioRepu: 0,
       StockRepu: 0,
-      EstadoRepu: 'Disponible'
+      UnidadesPedidas: 0
     }
   });
+
+  const [estadoCalculado, setEstadoCalculado] = useState<string>('Agotado');
 
   useEffect(() => {
     if (!isNew && id) {
       if (repuestoActual) {
-        setRepuesto(repuestoActual);
+        // Migración de datos: asegurarse de que los campos nuevos existan
+        const repuestoMigrado = {
+          ...repuestoActual,
+          data: {
+            ...repuestoActual.data,
+            UnidadesPedidas: repuestoActual.data.UnidadesPedidas || 0
+          }
+        };
+        setRepuesto(repuestoMigrado);
       } else {
         dispatch(getRepuestoAsync(id));
       }
     }
   }, [dispatch, id, isNew, repuestoActual]);
 
+  // Actualizar el estado calculado cuando cambien los valores relevantes
+  useEffect(() => {
+    const nuevoEstado = calcularEstadoRepuesto(
+      repuesto.data.StockRepu, 
+      repuesto.data.UnidadesPedidas
+    );
+    setEstadoCalculado(nuevoEstado);
+  }, [repuesto.data.StockRepu, repuesto.data.UnidadesPedidas]);
+
   const changeInput = (field: string, value: any) => {
     setRepuesto(prevState => ({
       ...prevState,
       data: {
         ...prevState.data,
-        [field]: field === 'PrecioRepu' || field === 'StockRepu' 
+        [field]: field === 'PrecioRepu' || field === 'StockRepu' || field === 'UnidadesPedidas'
           ? Number(value) 
           : value
       }
@@ -79,7 +104,6 @@ export default function RepuestoComponent(): JSX.Element {
           titulo: "Guardar Repuesto",
         });
         
-        // Si estamos creando un nuevo repuesto, actualizar la URL con el ID real
         if (isNew && response.payload?.id) {
           history.replace(`/inicio/repuestos/${response.payload.id}`);
         }
@@ -123,6 +147,16 @@ export default function RepuestoComponent(): JSX.Element {
         tipo: "danger",
         titulo: "Error",
       });
+    }
+  };
+
+  // Obtén el color para la etiqueta del estado
+  const getEstadoColor = (estado: string): string => {
+    switch (estado) {
+      case 'Disponible': return 'text-success';
+      case 'Agotado': return 'text-danger';
+      case 'En Pedido': return 'text-warning';
+      default: return '';
     }
   };
 
@@ -214,17 +248,34 @@ export default function RepuestoComponent(): JSX.Element {
           </div>
           
           <div className="mb-3">
-            <label className="form-label">Estado</label>
-            <select
-              className="form-select"
-              value={repuesto.data.EstadoRepu}
-              onChange={(e) => changeInput('EstadoRepu', e.target.value)}
-            >
-              <option value="Disponible">Disponible</option>
-              <option value="Agotado">Agotado</option>
-              <option value="Descontinuado">Descontinuado</option>
-              <option value="Pedido">En Pedido</option>
-            </select>
+            <label className="form-label">Unidades Pedidas</label>
+            <input
+              type="number"
+              className="form-control"
+              value={repuesto.data.UnidadesPedidas}
+              onChange={(e) => changeInput('UnidadesPedidas', e.target.value)}
+              min="0"
+            />
+            <small className="form-text text-muted">
+              Cantidad de unidades que están en proceso de pedido
+            </small>
+          </div>
+          
+          <div className="card bg-light mb-3">
+            <div className="card-body">
+              <h6 className="card-title">Estado del repuesto</h6>
+              <div className={`h5 ${getEstadoColor(estadoCalculado)}`}>
+                {estadoCalculado}
+              </div>
+              <p className="mb-0 small">
+                El estado se calcula automáticamente según el stock y unidades pedidas:
+                <ul className="mb-0 mt-1">
+                  <li>Stock &gt; 0 → Disponible</li>
+                  <li>Stock 0 + Unidades pedidas &gt; 0 → En Pedido</li>
+                  <li>Stock 0 + Sin unidades pedidas → Agotado</li>
+                </ul>
+              </p>
+            </div>
           </div>
         </div>
       </div>

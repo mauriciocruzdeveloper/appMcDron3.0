@@ -11,39 +11,45 @@ const repuestosMock: Repuesto[] = [
         id: 'mock-1',
         data: {
             NombreRepu: 'Hélices de carbono 8"',
-            DescripcionRepu: 'Hélices de carbono 8"',
+            DescripcionRepu: 'Hélices de carbono de 8 pulgadas para drones de carrera',
             ModeloDroneRepu: 'CF8045',
             ProveedorRepu: 'DronePartes',
             PrecioRepu: 15000,
             StockRepu: 5,
-            EstadoRepu: 'Disponible'
+            UnidadesPedidas: 1, // Simulando que hay unidades pedidas
         }
     },
     {
         id: 'mock-2',
         data: {
             NombreRepu: 'Batería LiPo 5000mAh',
-            DescripcionRepu: 'Batería LiPo 5000mAh',
+            DescripcionRepu: 'Batería de polímero de litio de 5000mAh 4S para drones',
             ModeloDroneRepu: 'LP5000-4S',
             ProveedorRepu: 'PowerDrones',
             PrecioRepu: 38000,
-            StockRepu: 3,
-            EstadoRepu: 'Disponible'
+            UnidadesPedidas: 0, // Simulando que no hay unidades pedidas
+            StockRepu: 10,
         }
     },
     {
         id: 'mock-3',
         data: {
             NombreRepu: 'Controlador de vuelo F7',
-            DescripcionRepu: 'Controlador de vuelo F7',
+            DescripcionRepu: 'Controlador de vuelo F7 con giroscopio y acelerómetro',
             ModeloDroneRepu: 'F722-SE',
             ProveedorRepu: 'ControlTech',
             PrecioRepu: 25600,
             StockRepu: 0,
-            EstadoRepu: 'Agotado'
+            UnidadesPedidas: 2, // Simulando que hay unidades pedidas
         }
     }
 ];
+
+// Función para calcular el estado del repuesto - mantenerla idéntica a la de Repuesto.component.tsx
+export const calcularEstadoRepuesto = (stock: number, unidadesPedidas: number): string => {
+    if (stock > 0) return 'Disponible';
+    return unidadesPedidas > 0 ? 'En Pedido' : 'Agotado';
+};
 
 export default function ListaRepuestos(): JSX.Element {
     const dispatch = useAppDispatch();
@@ -59,6 +65,7 @@ export default function ListaRepuestos(): JSX.Element {
                 let incluirPorSearch = true;
                 if (filter) {
                     incluirPorSearch =
+                        repuesto.data?.NombreRepu?.toLowerCase().includes(filter.toLowerCase()) ||
                         repuesto.data?.DescripcionRepu?.toLowerCase().includes(filter.toLowerCase()) ||
                         repuesto.data?.ModeloDroneRepu?.toLowerCase().includes(filter.toLowerCase()) ||
                         repuesto.data?.ProveedorRepu?.toLowerCase().includes(filter.toLowerCase());
@@ -80,6 +87,14 @@ export default function ListaRepuestos(): JSX.Element {
 
     const formatPrice = (precio: number): string => {
         return precio.toLocaleString('es-AR', { style: 'currency', currency: 'ARS' });
+    };
+    
+    // Función para determinar el estado del repuesto basado en el stock
+    const getEstadoRepuesto = (repuesto: Repuesto): string => {
+        // Manejar migración de datos
+        const unidadesPedidas = repuesto.data.UnidadesPedidas || 0;
+        
+        return calcularEstadoRepuesto(repuesto.data.StockRepu, unidadesPedidas);
     };
 
     return (
@@ -121,49 +136,52 @@ export default function ListaRepuestos(): JSX.Element {
                     No hay repuestos disponibles. ¡Agregue un nuevo repuesto!
                 </div>
             ) : (
-                repuestosList.map(repuesto => (
-                    <div
-                        key={repuesto.id}
-                        className={`card mb-3 ${mostrandoMock && repuesto.id.startsWith('mock') ? 'bg-light' : ''}`}
-                        aria-current='true'
-                        onClick={() => history.push(`/inicio/repuestos/${repuesto.id}`)}
-                        style={{ cursor: 'pointer' }}
-                    >
-                        <div className='card-body p-3'>
-                            <div className='d-flex w-100 justify-content-between'>
-                                <h5 className='mb-1'>{repuesto.data.DescripcionRepu}</h5>
-                                <span className='badge bg-bluemcdron'>{formatPrice(repuesto.data.PrecioRepu)}</span>
-                            </div>
-                            <div>
-                                <small className='text-muted'>{repuesto.data.ModeloDroneRepu}</small>
-                            </div>
-                            <div>
-                                <small className='text-muted'>{repuesto.data.ProveedorRepu}</small>
-                            </div>
-                            {repuesto.data.StockRepu !== undefined && (
-                                <div>
-                                    <small className={`${repuesto.data.StockRepu > 0 ? 'text-success' : 'text-danger'}`}>
-                                        {repuesto.data.StockRepu} {repuesto.data.StockRepu === 1 ? 'unidad' : 'unidades'}
-                                    </small>
+                repuestosList.map(repuesto => {
+                    const estado = getEstadoRepuesto(repuesto);
+                    
+                    return (
+                        <div
+                            key={repuesto.id}
+                            className={`card mb-3 ${mostrandoMock && repuesto.id.startsWith('mock') ? 'bg-light' : ''}`}
+                            aria-current='true'
+                            onClick={() => history.push(`/inicio/repuestos/${repuesto.id}`)}
+                            style={{ cursor: 'pointer' }}
+                        >
+                            <div className='card-body p-3'>
+                                <div className='d-flex w-100 justify-content-between'>
+                                    <h5 className='mb-1'>{repuesto.data.NombreRepu}</h5>
+                                    <span className='badge bg-bluemcdron'>{formatPrice(repuesto.data.PrecioRepu)}</span>
                                 </div>
-                            )}
-                            {repuesto.data.EstadoRepu && (
                                 <div>
-                                    <small className={`${repuesto.data.EstadoRepu === 'Disponible' ? 'text-success' :
-                                            repuesto.data.EstadoRepu === 'Agotado' ? 'text-danger' : 'text-warning'
+                                    <small className='text-muted'>{repuesto.data.ModeloDroneRepu}</small>
+                                </div>
+                                <div>
+                                    <small className='text-muted'>{repuesto.data.ProveedorRepu}</small>
+                                </div>
+                                <div>
+                                    <small className={`${estado === 'Disponible' ? 'text-success' :
+                                            estado === 'Agotado' ? 'text-danger' : 
+                                            estado === 'En Pedido' ? 'text-warning' : ''
                                         }`}>
-                                        {repuesto.data.EstadoRepu}
+                                        {estado}
+                                        {estado === 'En Pedido' && repuesto.data.UnidadesPedidas && 
+                                          ` (${repuesto.data.UnidadesPedidas} unid.)`}
                                     </small>
                                 </div>
-                            )}
-                            {mostrandoMock && repuesto.id.startsWith('mock') && (
-                                <div className="mt-2">
-                                    <span className="badge bg-secondary">Ejemplo</span>
-                                </div>
-                            )}
+                                {repuesto.data.DescripcionRepu && (
+                                    <div className="mt-1">
+                                        <small className="text-muted">{repuesto.data.DescripcionRepu}</small>
+                                    </div>
+                                )}
+                                {mostrandoMock && repuesto.id.startsWith('mock') && (
+                                    <div className="mt-2">
+                                        <span className="badge bg-secondary">Ejemplo</span>
+                                    </div>
+                                )}
+                            </div>
                         </div>
-                    </div>
-                ))
+                    );
+                })
             )}
         </div>
     );

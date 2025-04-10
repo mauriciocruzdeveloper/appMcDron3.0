@@ -17,6 +17,9 @@ import ModeloDrone from "../components/ModeloDrone.component";
 import Repuesto from "../components/Repuesto.component";
 import Drone from "../components/Drone.component";
 import { DataManagerComponent } from "../components/DataManager.component";
+import ListaIntervenciones from "../components/ListaIntervenciones.component";
+import IntervencionesReparacion from "../components/IntervencionesReparacion.component";
+import Intervencion from "../components/Intervencion.component";
 
 const InicioRoutes = ({ match, isLoggedIn, admin }) => {
 
@@ -47,6 +50,11 @@ const InicioRoutes = ({ match, isLoggedIn, admin }) => {
                 {/* Rutas para drones */}
                 <Route exact path={`${match.path}/drones`} render = {admin ? props => <ListaDrones {...props} /> : () => <h1>ACCESO NO AUTORIZADO</h1>} />
                 <Route exact path={`${match.path}/drones/:id`} render = {admin ? props => <Drone {...props} /> : () => <h1>ACCESO NO AUTORIZADO</h1>} />
+                
+                {/* Rutas para intervenciones */}
+                <Route exact path={`${match.path}/intervenciones`} render = {admin ? props => <ListaIntervenciones {...props} /> : () => <h1>ACCESO NO AUTORIZADO</h1>} />
+                <Route exact path={`${match.path}/intervenciones/:id`} render = {admin ? props => <Intervencion {...props} /> : () => <h1>ACCESO NO AUTORIZADO</h1>} />
+                <Route exact path={`${match.path}/intervenciones-reparacion/:id`} render = {admin ? props => <IntervencionesReparacion {...props} /> : () => <h1>ACCESO NO AUTORIZADO</h1>} />
             </Switch>
         </DataManagerComponent>
         : <Redirect to="/login" />        

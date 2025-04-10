@@ -28,6 +28,7 @@ export interface DataReparacion {
     SeguimientoEntregaRep: string;
     urlsFotos?: string[];
     urlsDocumentos?: string[];
+    IntervencionesIds?: string[]; // Lista de IDs de intervenciones aplicadas en la reparación
 }
 
 export interface ReparacionType {

@@ -5,7 +5,8 @@ import {
     getRepuestosPersistencia, 
     getUsuariosPersistencia,
     getModelosDronePersistencia,
-    getDronesPersistencia
+    getDronesPersistencia,
+    getIntervencionesPersistencia
 } from "../persistencia/persistenciaFirebase";
 import { useAppDispatch } from "../redux-tool-kit/hooks/useAppDispatch";
 import { setReparaciones } from "../redux-tool-kit/reparacion/reparacion.slice";
@@ -21,6 +22,8 @@ import { ModeloDrone } from "../types/modeloDrone";
 import { setModelosDrone } from "../redux-tool-kit/modeloDrone/modeloDrone.slice";
 import { Drone } from "../types/drone";
 import { setDrones } from "../redux-tool-kit/drone/drone.slice";
+import { Intervencion } from "../types/intervencion";
+import { setIntervenciones } from "../redux-tool-kit/intervencion/intervencion.slice";
 
 export interface DataManagerProps {
     children: React.ReactNode;
@@ -37,6 +40,7 @@ export function DataManagerComponent({ children }: DataManagerProps): React.Reac
     const [unsubscribeRepuestos, setUnsubscribeRepuestos] = useState<Unsubscribe>();
     const [unsubscribeModelosDrone, setUnsubscribeModelosDrone] = useState<Unsubscribe>();
     const [unsubscribeDrones, setUnsubscribeDrones] = useState<Unsubscribe>();
+    const [unsubscribeIntervenciones, setUnsubscribeIntervenciones] = useState<Unsubscribe>();
 
     useEffect(() => {
         getUsuarios();
@@ -78,6 +82,13 @@ export function DataManagerComponent({ children }: DataManagerProps): React.Reac
         getDrones();
         return () => {
             unsubscribeDrones?.();
+        };
+    }, []);
+
+    useEffect(() => {
+        getIntervenciones();
+        return () => {
+            unsubscribeIntervenciones?.();
         };
     }, []);
 
@@ -174,6 +185,19 @@ export function DataManagerComponent({ children }: DataManagerProps): React.Reac
             setUnsubscribeDrones(() => unsubscribe);
         } catch (error) {
             console.error("Error al obtener drones:", error);
+        }
+    };
+
+    const getIntervenciones = async () => {
+        try {
+            const unsubscribe = await getIntervencionesPersistencia(
+                (intervenciones: Intervencion[]) => {
+                    dispatch(setIntervenciones(intervenciones));
+                }
+            );
+            setUnsubscribeIntervenciones(() => unsubscribe);
+        } catch (error) {
+            console.error("Error al obtener intervenciones:", error);
         }
     };
 

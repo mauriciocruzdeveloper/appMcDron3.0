@@ -17,6 +17,7 @@ import { InputType } from "../types/types";
 import TextareaAutosize from "react-textarea-autosize";
 import { convertTimestampCORTO } from "../utils/utils";
 import "bootstrap-icons/font/bootstrap-icons.css";
+import IntervencionesReparacion from './IntervencionesReparacion.component';
 
 interface ParamTypes {
     id: string;
@@ -749,6 +750,16 @@ export default function ReparacionComponent(): React.ReactElement | null {
                 </div>
             </div>
             
+            <div className="card mb-3">
+                <div className="card-body">
+                    <h5 className="card-title bluemcdron">INTERVENCIONES - TRABAJOS REALIZADOS</h5>
+                    <IntervencionesReparacion 
+                        reparacionId={reparacion.id} 
+                        readOnly={!isAdmin} 
+                    />
+                </div>
+            </div>
+
             <div className="card mb-3">
                 <div className="card-body">
                     <div className="d-flex w-100 justify-content-between align-items-center">

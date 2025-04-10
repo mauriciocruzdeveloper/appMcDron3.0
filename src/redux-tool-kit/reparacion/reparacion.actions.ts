@@ -1,7 +1,7 @@
 import { createAsyncThunk, Unsubscribe } from "@reduxjs/toolkit";
 import { ReparacionType } from "../../types/reparacion";
-import { setReparaciones } from "./reparacion.slice";
-import { eliminarReparacionPersistencia, getReparacionesPersistencia, getReparacionPersistencia, guardarPresupuestoPersistencia, guardarReparacionPersistencia } from "../../persistencia/persistenciaFirebase";
+import { setReparaciones, setIntervencionesDeReparacionActual } from "./reparacion.slice";
+import { eliminarReparacionPersistencia, getReparacionesPersistencia, getReparacionPersistencia, guardarPresupuestoPersistencia, guardarReparacionPersistencia, getIntervencionesPorReparacionPersistencia, agregarIntervencionAReparacionPersistencia, eliminarIntervencionDeReparacionPersistencia } from "../../persistencia/persistenciaFirebase";
 import { AppState, isFetchingComplete, isFetchingStart } from "../app/app.slice";
 import { Usuario } from "../../types/usuario";
 import { enviarReciboAsync } from "../app/app.actions";
@@ -92,4 +92,57 @@ export const getReparacionAsync = createAsyncThunk(
             return error;
         }
     },
+);
+
+// GET Intervenciones de una Reparación
+export const getIntervencionesPorReparacionAsync = createAsyncThunk(
+  'app/getIntervencionesPorReparacion',
+  async (reparacionId: string, { dispatch }) => {
+    try {
+      dispatch(isFetchingStart());
+      const intervenciones = await getIntervencionesPorReparacionPersistencia(reparacionId);
+      dispatch(setIntervencionesDeReparacionActual(intervenciones));
+      dispatch(isFetchingComplete());
+      return intervenciones;
+    } catch (error: any) {
+      dispatch(isFetchingComplete());
+      throw error;
+    }
+  },
+);
+
+// Agregar Intervención a una Reparación
+export const agregarIntervencionAReparacionAsync = createAsyncThunk(
+  'app/agregarIntervencionAReparacion',
+  async ({reparacionId, intervencionId}: {reparacionId: string, intervencionId: string}, { dispatch }) => {
+    try {
+      dispatch(isFetchingStart());
+      await agregarIntervencionAReparacionPersistencia(reparacionId, intervencionId);
+      // Recargar intervenciones
+      await dispatch(getIntervencionesPorReparacionAsync(reparacionId));
+      dispatch(isFetchingComplete());
+      return true;
+    } catch (error: any) {
+      dispatch(isFetchingComplete());
+      throw error;
+    }
+  },
+);
+
+// Eliminar Intervención de una Reparación
+export const eliminarIntervencionDeReparacionAsync = createAsyncThunk(
+  'app/eliminarIntervencionDeReparacion',
+  async ({reparacionId, intervencionId}: {reparacionId: string, intervencionId: string}, { dispatch }) => {
+    try {
+      dispatch(isFetchingStart());
+      await eliminarIntervencionDeReparacionPersistencia(reparacionId, intervencionId);
+      // Recargar intervenciones
+      await dispatch(getIntervencionesPorReparacionAsync(reparacionId));
+      dispatch(isFetchingComplete());
+      return true;
+    } catch (error: any) {
+      dispatch(isFetchingComplete());
+      throw error;
+    }
+  },
 );
