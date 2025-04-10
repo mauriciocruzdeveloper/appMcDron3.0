@@ -13,10 +13,7 @@ const modelosDroneMock: ModeloDrone[] = [
             NombreModelo: 'Mavic 3',
             Fabricante: 'DJI',
             DescripcionModelo: 'Drone profesional con cámara Hasselblad',
-            EspecificacionesTecnicas: 'Cámara 4/3 CMOS, 46 minutos de vuelo, 15km de alcance',
-            PrecioReferencia: 2049000,
-            AnioLanzamiento: 2021,
-            Estado: 'Disponible'
+            PrecioReferencia: 2049000
         }
     },
     {
@@ -25,10 +22,7 @@ const modelosDroneMock: ModeloDrone[] = [
             NombreModelo: 'Mini 3 Pro',
             Fabricante: 'DJI',
             DescripcionModelo: 'Drone compacto y ligero con excelente calidad de imagen',
-            EspecificacionesTecnicas: 'Menos de 249g, cámara 1/1.3", 34 minutos de vuelo',
-            PrecioReferencia: 759000,
-            AnioLanzamiento: 2022,
-            Estado: 'Disponible'
+            PrecioReferencia: 759000
         }
     },
     {
@@ -37,10 +31,7 @@ const modelosDroneMock: ModeloDrone[] = [
             NombreModelo: 'Phantom 4 Pro V2.0',
             Fabricante: 'DJI',
             DescripcionModelo: 'Drone profesional para fotografía aérea',
-            EspecificacionesTecnicas: 'Sensor 1", 30 minutos de vuelo, sistema anticolisión',
-            PrecioReferencia: 1699000,
-            AnioLanzamiento: 2018,
-            Estado: 'Descontinuado'
+            PrecioReferencia: 1699000
         }
     }
 ];
@@ -138,20 +129,8 @@ export default function ListaModelosDrone(): JSX.Element {
                                 <small className='text-muted'>{modelo.data.Fabricante}</small>
                             </div>
                             <div>
-                                <small className='text-muted'>{modelo.data.AnioLanzamiento}</small>
-                            </div>
-                            <div>
                                 <small className='text-muted'>{modelo.data.DescripcionModelo}</small>
                             </div>
-                            {modelo.data.Estado && (
-                                <div>
-                                    <small className={`${modelo.data.Estado === 'Disponible' ? 'text-success' :
-                                            modelo.data.Estado === 'Descontinuado' ? 'text-danger' : 'text-warning'
-                                        }`}>
-                                        {modelo.data.Estado}
-                                    </small>
-                                </div>
-                            )}
                             {mostrandoMock && modelo.id.startsWith('mock') && (
                                 <div className="mt-2">
                                     <span className="badge bg-secondary">Ejemplo</span>

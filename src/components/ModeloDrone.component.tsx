@@ -27,10 +27,7 @@ export default function ModeloDroneComponent(): JSX.Element {
       NombreModelo: '',
       Fabricante: '',
       DescripcionModelo: '',
-      EspecificacionesTecnicas: '',
-      PrecioReferencia: 0,
-      AnioLanzamiento: new Date().getFullYear(),
-      Estado: 'Disponible'
+      PrecioReferencia: 0
     }
   });
 
@@ -49,7 +46,7 @@ export default function ModeloDroneComponent(): JSX.Element {
       ...prevState,
       data: {
         ...prevState.data,
-        [field]: field === 'PrecioReferencia' || field === 'AnioLanzamiento' 
+        [field]: field === 'PrecioReferencia'
           ? Number(value) 
           : value
       }
@@ -121,7 +118,7 @@ export default function ModeloDroneComponent(): JSX.Element {
             titulo: "Error",
         });
     }
-};
+  };
 
   return (
     <div className="p-4">
@@ -170,16 +167,6 @@ export default function ModeloDroneComponent(): JSX.Element {
           </div>
           
           <div className="mb-3">
-            <label className="form-label">Especificaciones Técnicas</label>
-            <textarea
-              className="form-control"
-              value={modeloDrone.data.EspecificacionesTecnicas}
-              onChange={(e) => changeInput('EspecificacionesTecnicas', e.target.value)}
-              rows={3}
-            />
-          </div>
-          
-          <div className="mb-3">
             <label className="form-label">Precio de Referencia</label>
             <div className="input-group">
               <span className="input-group-text">$</span>
@@ -191,31 +178,6 @@ export default function ModeloDroneComponent(): JSX.Element {
                 min="0"
               />
             </div>
-          </div>
-          
-          <div className="mb-3">
-            <label className="form-label">Año de Lanzamiento</label>
-            <input
-              type="number"
-              className="form-control"
-              value={modeloDrone.data.AnioLanzamiento}
-              onChange={(e) => changeInput('AnioLanzamiento', e.target.value)}
-              min="2000"
-              max={new Date().getFullYear()}
-            />
-          </div>
-          
-          <div className="mb-3">
-            <label className="form-label">Estado</label>
-            <select
-              className="form-select"
-              value={modeloDrone.data.Estado}
-              onChange={(e) => changeInput('Estado', e.target.value)}
-            >
-              <option value="Disponible">Disponible</option>
-              <option value="Descontinuado">Descontinuado</option>
-              <option value="Próximamente">Próximamente</option>
-            </select>
           </div>
         </div>
       </div>

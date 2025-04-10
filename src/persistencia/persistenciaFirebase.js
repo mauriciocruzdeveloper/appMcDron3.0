@@ -215,7 +215,120 @@ export const eliminarReparacionPersistencia = (id) => {
     })
 };
 
+// GET Intervenciones por reparación
+export const getIntervencionesPorReparacionPersistencia = (reparacionId) => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      const reparacionRef = doc(firestore, collectionNames.REPARACIONES, reparacionId);
+      const reparacionSnap = await getDoc(reparacionRef);
+      
+      if (!reparacionSnap.exists()) {
+        reject({ code: 'Reparación no encontrada' });
+        return;
+      }
+      
+      const reparacionData = reparacionSnap.data();
+      const intervencionesIds = reparacionData.IntervencionesIds || [];
+      
+      if (intervencionesIds.length === 0) {
+        resolve([]);
+        return;
+      }
+      
+      const intervenciones = [];
+      
+      // Obtener cada intervención por su ID
+      for (const intId of intervencionesIds) {
+        try {
+          const intervencionRef = doc(firestore, collectionNames.INTERVENCIONES, intId);
+          const intervencionSnap = await getDoc(intervencionRef);
+          
+          if (intervencionSnap.exists()) {
+            intervenciones.push({
+              id: intId,
+              data: intervencionSnap.data()
+            });
+          }
+        } catch (error) {
+          console.error(`Error al cargar la intervención ${intId}:`, error);
+        }
+      }
+      
+      resolve(intervenciones);
+    } catch (error) {
+      console.error('Error al cargar intervenciones de la reparación:', error);
+      reject(error);
+    }
+  });
+};
 
+// Añadir intervención a reparación
+export const agregarIntervencionAReparacionPersistencia = (reparacionId, intervencionId) => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      const reparacionRef = doc(firestore, collectionNames.REPARACIONES, reparacionId);
+      const reparacionSnap = await getDoc(reparacionRef);
+      
+      if (!reparacionSnap.exists()) {
+        reject({ code: 'Reparación no encontrada' });
+        return;
+      }
+      
+      const reparacionData = reparacionSnap.data();
+      const intervencionesIds = reparacionData.IntervencionesIds || [];
+      
+      if (intervencionesIds.includes(intervencionId)) {
+        // La intervención ya está asociada
+        resolve(true);
+        return;
+      }
+      
+      // Agregar la nueva intervención
+      intervencionesIds.push(intervencionId);
+      
+      // Actualizar la reparación
+      await updateDoc(reparacionRef, {
+        IntervencionesIds: intervencionesIds
+      });
+      
+      resolve(true);
+    } catch (error) {
+      console.error('Error al agregar intervención a la reparación:', error);
+      reject(error);
+    }
+  });
+};
+
+// Eliminar intervención de reparación
+export const eliminarIntervencionDeReparacionPersistencia = (reparacionId, intervencionId) => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      const reparacionRef = doc(firestore, collectionNames.REPARACIONES, reparacionId);
+      const reparacionSnap = await getDoc(reparacionRef);
+      
+      if (!reparacionSnap.exists()) {
+        reject({ code: 'Reparación no encontrada' });
+        return;
+      }
+      
+      const reparacionData = reparacionSnap.data();
+      const intervencionesIds = reparacionData.IntervencionesIds || [];
+      
+      // Filtrar para eliminar la intervención especificada
+      const nuevasIntervencionesIds = intervencionesIds.filter(id => id !== intervencionId);
+      
+      // Actualizar la reparación
+      await updateDoc(reparacionRef, {
+        IntervencionesIds: nuevasIntervencionesIds
+      });
+      
+      resolve(true);
+    } catch (error) {
+      console.error('Error al eliminar intervención de la reparación:', error);
+      reject(error);
+    }
+  });
+};
 
 ///////////////////// CLIENTES/USUARIOS ///////////////////////////////////////////////////////////////////////////
 
@@ -948,4 +1061,107 @@ export const getDronesPersistencia = (setDronesToRedux) => {
     } catch (error) {
         return error;
     }
+};
+
+////////////////////// INTERVENCIONES ///////////////////////////////////////////////////////////////////////////
+
+// GET Intervención por id
+export const getIntervencionPersistencia = (id) => {
+  return new Promise((resolve, reject) => {
+    const docRef = doc(firestore, collectionNames.INTERVENCIONES, id);
+    getDoc(docRef)
+      .then(docSnap => {
+        if (docSnap.exists()) {
+          resolve({ id: id, data: docSnap.data() });
+        } else {
+          reject({ code: 'Intervención no encontrada' });
+        }
+      })
+      .catch(error => reject(error));
+  });
+};
+
+// GET Intervenciones por modelo de drone
+export const getIntervencionesPorModeloDronePersistencia = (modeloDroneId) => {
+  return new Promise((resolve, reject) => {
+    const intervencionesRef = collection(firestore, collectionNames.INTERVENCIONES);
+    const q = query(intervencionesRef, where('ModeloDroneId', '==', modeloDroneId));
+    getDocs(q)
+      .then(querySnapshot => {
+        let intervenciones = [];
+        querySnapshot.forEach(doc => intervenciones.push({ id: doc.id, data: doc.data() }));
+        resolve(intervenciones);
+      })
+      .catch(error => reject(error));
+  });
+};
+
+// GUARDAR Intervención
+export const guardarIntervencionPersistencia = (intervencion) => {
+  return new Promise((resolve, reject) => {
+    // Si no tiene ID, generamos uno basado en la fecha
+    if (!intervencion.id) {
+      intervencion.id = new Date().getTime().toString();
+    }
+    
+    setDoc(
+      doc(firestore, collectionNames.INTERVENCIONES, intervencion.id),
+      intervencion.data
+    )
+      .then(() => {
+        console.log('Intervención guardada correctamente');
+        resolve(intervencion);
+      })
+      .catch(error => {
+        console.log('Error al guardar intervención: ' + error);
+        reject(error);
+      });
+  });
+};
+
+// ELIMINAR Intervención
+export const eliminarIntervencionPersistencia = (id) => {
+  return new Promise((resolve, reject) => {
+    // Antes de eliminar, verificamos si hay reparaciones que usan esta intervención
+    const reparacionesRef = collection(firestore, collectionNames.REPARACIONES);
+    const q = query(reparacionesRef, where('IntervencionId', '==', id));
+    
+    getDocs(q).then(querySnapshot => {
+      if (querySnapshot.empty) {
+        // No hay reparaciones asociadas, podemos eliminar
+        deleteDoc(doc(firestore, collectionNames.INTERVENCIONES, id))
+          .then(() => {
+            console.log('Intervención eliminada correctamente');
+            resolve(id);
+          })
+          .catch(error => {
+            console.log('Error al eliminar intervención: ' + error);
+            reject(error);
+          });
+      } else {
+        // Hay reparaciones que usan esta intervención
+        reject({
+          code: 'No se puede eliminar esta intervención porque está siendo utilizada en reparaciones.'
+        });
+      }
+    }).catch(error => reject(error));
+  });
+};
+
+// GET todas las Intervenciones
+export const getIntervencionesPersistencia = (setIntervencionesToRedux) => {
+  console.log('getIntervencionesPersistencia');
+  const q = query(collection(firestore, collectionNames.INTERVENCIONES), orderBy('NombreInt'));
+  try {
+    const unsubscribeInt = onSnapshot(q, (querySnapshot) => {
+      let intervenciones = [];
+      querySnapshot.forEach(doc => intervenciones.push({ id: doc.id, data: doc.data() }));
+      console.log('Intervenciones cargadas:', intervenciones.length);
+      setIntervencionesToRedux(intervenciones);
+    });
+    return unsubscribeInt;
+  } catch (error) {
+    console.error("Error en getIntervencionesPersistencia:", error);
+    return error;
+  }
 };
