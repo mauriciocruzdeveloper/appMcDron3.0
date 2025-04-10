@@ -73,15 +73,28 @@ export default function RepuestoComponent(): JSX.Element {
   }, [repuesto.data.StockRepu, repuesto.data.UnidadesPedidas]);
 
   const changeInput = (field: string, value: any) => {
-    setRepuesto(prevState => ({
-      ...prevState,
-      data: {
-        ...prevState.data,
-        [field]: field === 'PrecioRepu' || field === 'StockRepu' || field === 'UnidadesPedidas'
-          ? Number(value) 
-          : value
-      }
-    }));
+    // Para campos numéricos, asegurarse de que sean números válidos
+    if (field === 'PrecioRepu' || field === 'StockRepu' || field === 'UnidadesPedidas') {
+      // Permitir cadenas vacías (para facilitar la edición) o convertir a número
+      const numValue = value === '' ? 0 : parseFloat(value);
+      
+      setRepuesto(prevState => ({
+        ...prevState,
+        data: {
+          ...prevState.data,
+          [field]: numValue
+        }
+      }));
+    } else {
+      // Para campos no numéricos, mantener el comportamiento actual
+      setRepuesto(prevState => ({
+        ...prevState,
+        data: {
+          ...prevState.data,
+          [field]: value
+        }
+      }));
+    }
   };
 
   const handleGuardarRepuesto = async () => {
@@ -229,9 +242,10 @@ export default function RepuestoComponent(): JSX.Element {
               <input
                 type="number"
                 className="form-control"
-                value={repuesto.data.PrecioRepu}
+                value={repuesto.data.PrecioRepu || ''}
                 onChange={(e) => changeInput('PrecioRepu', e.target.value)}
                 min="0"
+                step="any"
               />
             </div>
           </div>
@@ -241,7 +255,7 @@ export default function RepuestoComponent(): JSX.Element {
             <input
               type="number"
               className="form-control"
-              value={repuesto.data.StockRepu}
+              value={repuesto.data.StockRepu || ''}
               onChange={(e) => changeInput('StockRepu', e.target.value)}
               min="0"
             />
@@ -252,7 +266,7 @@ export default function RepuestoComponent(): JSX.Element {
             <input
               type="number"
               className="form-control"
-              value={repuesto.data.UnidadesPedidas}
+              value={repuesto.data.UnidadesPedidas || ''}
               onChange={(e) => changeInput('UnidadesPedidas', e.target.value)}
               min="0"
             />
