@@ -40,6 +40,7 @@ export default function ListaDrones(): JSX.Element {
     const dispatch = useAppDispatch();
     const coleccionDrones = useAppSelector((state) => state.drone.coleccionDrones);
     const filter = useAppSelector((state) => state.drone.filter);
+    const modelosDrone = useAppSelector((state) => state.modeloDrone.coleccionModelosDrone);
 
     const [dronesList, setDronesList] = useState<Drone[]>([]);
     const [mostrandoMock, setMostrandoMock] = useState<boolean>(false);
@@ -72,6 +73,18 @@ export default function ListaDrones(): JSX.Element {
     const formatDate = (date: Date): string => {
         if (!date) return '';
         return new Date(date).toLocaleDateString('es-AR');
+    };
+
+    // Nueva función para obtener el nombre del modelo de drone
+    const getModeloDroneName = (modeloDroneId: string): string => {
+        // Para datos mock, usamos nombres fijos
+        if (modeloDroneId === 'mock-1') return 'Mavic 3';
+        if (modeloDroneId === 'mock-2') return 'Mini 3 Pro';
+        if (modeloDroneId === 'mock-3') return 'Phantom 4 Pro V2.0';
+        
+        // Para datos reales, buscamos el modelo por ID
+        const modelo = modelosDrone.find(modelo => modelo.id === modeloDroneId);
+        return modelo ? modelo.data.NombreModelo : modeloDroneId;
     };
 
     return (
@@ -124,7 +137,7 @@ export default function ListaDrones(): JSX.Element {
                         <div className='card-body p-3'>
                             <div className='d-flex w-100 justify-content-between'>
                                 <h5 className='mb-1'>{drone.data.NumeroSerie}</h5>
-                                <span className='badge bg-bluemcdron'>{drone.data.ModeloDroneId}</span>
+                                <span className='badge bg-bluemcdron'>{getModeloDroneName(drone.data.ModeloDroneId)}</span>
                             </div>
                             <div>
                                 <small className='text-muted'>{drone.data.Propietario}</small>
