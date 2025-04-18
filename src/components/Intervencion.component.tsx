@@ -164,7 +164,6 @@ export default function IntervencionComponent(): JSX.Element {
   const confirmaEliminarIntervencion = async () => {
     try {
       const response = await dispatch(eliminarIntervencionAsync(intervencion.id)).unwrap();
-      console.log('!!! response', response);
       
       openModal({
         mensaje: "Intervención eliminada correctamente.",
@@ -172,7 +171,7 @@ export default function IntervencionComponent(): JSX.Element {
         titulo: "Eliminar Intervención",
       });
       history.goBack();
-    } catch (error: any) {
+    } catch (error: any) { // TODO: Hacer tipo de dato para el error
       console.error("Error al eliminar la intervención:", error);
       
       openModal({

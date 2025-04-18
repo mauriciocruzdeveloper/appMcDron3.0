@@ -4,11 +4,9 @@ import {
     getModeloDronePersistencia,
     getModelosDronePorFabricantePersistencia,
     guardarModeloDronePersistencia,
-    getModelosDronePersistencia,
 } from "../../persistencia/persistenciaFirebase";
 import { isFetchingComplete, isFetchingStart } from "../app/app.slice";
 import { ModeloDrone } from "../../types/modeloDrone";
-import { setModelosDrone } from "./modeloDrone.slice";
 
 // ELIMINAR MODELO DE DRONE
 export const eliminarModeloDroneAsync = createAsyncThunk(
@@ -17,11 +15,10 @@ export const eliminarModeloDroneAsync = createAsyncThunk(
         try {
             dispatch(isFetchingStart());
             const modeloDroneEliminado = await eliminarModeloDronePersistencia(id);
-            console.log("!!! modeloDroneEliminado", modeloDroneEliminado);
             dispatch(isFetchingComplete());
             return modeloDroneEliminado;
-        } catch (error: any) {
-            console.log("!!! error", error);
+        } catch (error: any) { // TODO: Hacer tipo de dato para el error
+            console.error(error);
             dispatch(isFetchingComplete());
             throw error;
         }
@@ -37,7 +34,7 @@ export const guardarModeloDroneAsync = createAsyncThunk(
             const modeloDroneGuardado = await guardarModeloDronePersistencia(modeloDrone);
             dispatch(isFetchingComplete());
             return modeloDroneGuardado;
-        } catch (error: any) {
+        } catch (error: any) { // TODO: Hacer tipo de dato para el error
             dispatch(isFetchingComplete());
             return error;
         }
@@ -53,7 +50,7 @@ export const getModeloDroneAsync = createAsyncThunk(
             const modeloDrone = await getModeloDronePersistencia(id);
             dispatch(isFetchingComplete());
             return modeloDrone;
-        } catch (error: any) {
+        } catch (error: any) { // TODO: Hacer tipo de dato para el error
             dispatch(isFetchingComplete());
             return error;
         }
@@ -69,7 +66,7 @@ export const getModelosDronePorFabricanteAsync = createAsyncThunk(
             const modelosDrone = await getModelosDronePorFabricantePersistencia(fabricante);
             dispatch(isFetchingComplete());
             return modelosDrone;
-        } catch (error: any) {
+        } catch (error: any) { // TODO: Hacer tipo de dato para el error
             dispatch(isFetchingComplete());
             return error;
         }
@@ -87,7 +84,7 @@ export const getModelosDronePorFabricanteAsync = createAsyncThunk(
 //                 dispatch(isFetchingComplete());
 //             });
 //             return unsubscribe;
-//         } catch (error: any) {
+//         } catch (error: any) { // TODO: Hacer tipo de dato para el error
 //             dispatch(isFetchingComplete());
 //             return error;
 //         }

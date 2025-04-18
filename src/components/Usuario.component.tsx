@@ -106,7 +106,6 @@ export default function UsuarioComponent(): React.ReactElement | null {
         if (!usuario) return;
         try {
             const response = await dispatch(eliminarUsuarioAsync(usuario.id)).unwrap();
-            console.log("!!! response", response);
             
             openModal({
                 mensaje: "Usuario eliminado correctamente.",
@@ -114,7 +113,7 @@ export default function UsuarioComponent(): React.ReactElement | null {
                 titulo: "Eliminar Usuario",
             });
             history.goBack();
-        } catch (error: any) {
+        } catch (error: any) { // TODO: Hacer tipo de dato para el error
             console.error("Error al eliminar el usuario:", error);
             
             openModal({

@@ -72,7 +72,7 @@ export default function IntervencionesReparacion({ reparacionId, readOnly = fals
         tipo: "success",
         titulo: "Agregar Intervención",
       });
-    } catch (error: any) {
+    } catch (error: any) { // TODO: Hacer tipo de dato para el error
       openModal({
         mensaje: error?.code || "Error al agregar la intervención.",
         tipo: "danger",
@@ -98,7 +98,7 @@ export default function IntervencionesReparacion({ reparacionId, readOnly = fals
             tipo: "success",
             titulo: "Eliminar Intervención",
           });
-        } catch (error: any) {
+        } catch (error: any) { // TODO: Hacer tipo de dato para el error
           openModal({
             mensaje: error?.code || "Error al eliminar la intervención.",
             tipo: "danger",

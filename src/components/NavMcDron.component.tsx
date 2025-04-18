@@ -26,7 +26,6 @@ export default function NavMcDron (): JSX.Element {
     }
         
     const handleBack = () => {
-        console.log("!!!handleBack", history);
         if (history.location.pathname == "/inicio") {
             openModal({
                 mensaje: "Desea desloguearse?",

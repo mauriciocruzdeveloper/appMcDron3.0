@@ -101,7 +101,6 @@ export default function ModeloDroneComponent(): JSX.Element {
   const confirmaEliminarModeloDrone = async () => {
     try {
         const response = await dispatch(eliminarModeloDroneAsync(modeloDrone.id)).unwrap();
-        console.log('!!! response', response);
 
         openModal({
             mensaje: "Modelo de drone eliminado correctamente.",
@@ -109,7 +108,7 @@ export default function ModeloDroneComponent(): JSX.Element {
             titulo: "Eliminar Modelo de Drone",
         });
         history.goBack();
-    } catch (error: any) {
+    } catch (error: any) { // TODO: Hacer tipo de dato para el error
         console.error("Error al eliminar el modelo de drone:", error);
 
         openModal({
