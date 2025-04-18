@@ -144,7 +144,6 @@ export default function RepuestoComponent(): JSX.Element {
   const confirmaEliminarRepuesto = async () => {
     try {
       const response = await dispatch(eliminarRepuestoAsync(repuesto.id)).unwrap();
-      console.log("!!! response", response);
       
       openModal({
         mensaje: "Repuesto eliminado correctamente.",
@@ -152,7 +151,7 @@ export default function RepuestoComponent(): JSX.Element {
         titulo: "Eliminar Repuesto",
       });
       history.goBack();
-    } catch (error: any) {
+    } catch (error: any) { // TODO: Hacer tipo de dato para el error
       console.error("Error al eliminar el repuesto:", error);
       
       openModal({

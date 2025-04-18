@@ -154,7 +154,6 @@ export default function ReparacionComponent(): React.ReactElement | null {
         if (!reparacion) return;
         try {
             const response = await dispatch(eliminarReparacionAsync(reparacion.id)).unwrap();
-            console.log("!!! response", response);
             
             openModal({
               mensaje: "Reparación eliminada correctamente.",
@@ -162,7 +161,7 @@ export default function ReparacionComponent(): React.ReactElement | null {
               titulo: "Eliminar Reparación",
             });
             history.goBack();
-          } catch (error: any) {
+          } catch (error: any) { // TODO: Hacer tipo de dato para el error
             console.error("Error al eliminar la reparación:", error);
             
             openModal({

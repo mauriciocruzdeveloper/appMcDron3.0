@@ -18,7 +18,7 @@ export const getReparacionesAsync = createAsyncThunk(
         const usuario = state.app.usuario;
         const unsubscribe = getReparacionesPersistencia(callbackReparaciones, usuario);
         return unsubscribe as Unsubscribe;
-        } catch (error: any) {
+        } catch (error: any) { // TODO: Hacer tipo de dato para el error
         return;
         }
     },
@@ -37,7 +37,7 @@ export const guardarPresupuestoAsync = createAsyncThunk(
             await dispatch(enviarReciboAsync(presupuesto.reparacion));
             dispatch(isFetchingComplete());
             return presupuesto;
-        } catch (error: any) {
+        } catch (error: any) { // TODO: Hacer tipo de dato para el error
             dispatch(isFetchingComplete());
             return error;
         }
@@ -53,7 +53,7 @@ export const guardarReparacionAsync = createAsyncThunk(
             const reparacionGuardada = await guardarReparacionPersistencia(reparacion);
             dispatch(isFetchingComplete());
             return reparacionGuardada;
-        } catch (error: any) {
+        } catch (error: any) { // TODO: Hacer tipo de dato para el error
             dispatch(isFetchingComplete());
             return error;
         }
@@ -67,11 +67,10 @@ export const eliminarReparacionAsync = createAsyncThunk(
         try {
             dispatch(isFetchingStart());
             const reparacionEliminada = await eliminarReparacionPersistencia(id);
-            console.log("!!! reparacionEliminada", reparacionEliminada);
             dispatch(isFetchingComplete());
             return reparacionEliminada;
-        } catch (error: any) {
-            console.log("!!! error", error);
+        } catch (error: any) { // TODO: Hacer tipo de dato para el error
+            console.error(error);
             dispatch(isFetchingComplete());
             throw error;
         }
@@ -87,7 +86,7 @@ export const getReparacionAsync = createAsyncThunk(
             const reparacion = await getReparacionPersistencia(id);
             dispatch(isFetchingComplete());
             return reparacion;
-        } catch (error: any) {
+        } catch (error: any) { // TODO: Hacer tipo de dato para el error
             dispatch(isFetchingComplete());
             return error;
         }
@@ -104,7 +103,7 @@ export const getIntervencionesPorReparacionAsync = createAsyncThunk(
       dispatch(setIntervencionesDeReparacionActual(intervenciones));
       dispatch(isFetchingComplete());
       return intervenciones;
-    } catch (error: any) {
+    } catch (error: any) { // TODO: Hacer tipo de dato para el error
       dispatch(isFetchingComplete());
       throw error;
     }
@@ -122,7 +121,7 @@ export const agregarIntervencionAReparacionAsync = createAsyncThunk(
       await dispatch(getIntervencionesPorReparacionAsync(reparacionId));
       dispatch(isFetchingComplete());
       return true;
-    } catch (error: any) {
+    } catch (error: any) { // TODO: Hacer tipo de dato para el error
       dispatch(isFetchingComplete());
       throw error;
     }
@@ -140,7 +139,7 @@ export const eliminarIntervencionDeReparacionAsync = createAsyncThunk(
       await dispatch(getIntervencionesPorReparacionAsync(reparacionId));
       dispatch(isFetchingComplete());
       return true;
-    } catch (error: any) {
+    } catch (error: any) { // TODO: Hacer tipo de dato para el error
       dispatch(isFetchingComplete());
       throw error;
     }

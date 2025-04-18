@@ -17,11 +17,10 @@ export const eliminarIntervencionAsync = createAsyncThunk(
     try {
       dispatch(isFetchingStart());
       const intervencionEliminada = await eliminarIntervencionPersistencia(id);
-      console.log("!!! intervencionEliminada", intervencionEliminada);
       dispatch(isFetchingComplete());
       return intervencionEliminada;
-    } catch (error: any) {
-      console.log("!!! error", error);
+    } catch (error: any) { // TODO: Hacer tipo de dato para el error
+      console.error(error);
       dispatch(isFetchingComplete());
       throw error;
     }
@@ -37,7 +36,7 @@ export const guardarIntervencionAsync = createAsyncThunk(
       const intervencionGuardada = await guardarIntervencionPersistencia(intervencion);
       dispatch(isFetchingComplete());
       return intervencionGuardada;
-    } catch (error: any) {
+    } catch (error: any) { // TODO: Hacer tipo de dato para el error
       dispatch(isFetchingComplete());
       return error;
     }
@@ -53,7 +52,7 @@ export const getIntervencionAsync = createAsyncThunk(
       const intervencion = await getIntervencionPersistencia(id);
       dispatch(isFetchingComplete());
       return intervencion;
-    } catch (error: any) {
+    } catch (error: any) { // TODO: Hacer tipo de dato para el error
       dispatch(isFetchingComplete());
       return error;
     }
@@ -69,7 +68,7 @@ export const getIntervencionesPorModeloDroneAsync = createAsyncThunk(
       const intervenciones = await getIntervencionesPorModeloDronePersistencia(modeloDroneId);
       dispatch(isFetchingComplete());
       return intervenciones;
-    } catch (error: any) {
+    } catch (error: any) { // TODO: Hacer tipo de dato para el error
       dispatch(isFetchingComplete());
       return error;
     }
