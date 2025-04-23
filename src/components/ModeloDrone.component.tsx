@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, ChangeEvent } from 'react';
 import { useParams } from 'react-router-dom';
 import history from '../history';
 import { useAppDispatch } from '../redux-tool-kit/hooks/useAppDispatch';
@@ -6,6 +6,7 @@ import { useAppSelector } from '../redux-tool-kit/hooks/useAppSelector';
 import { ModeloDrone } from '../types/modeloDrone';
 import { guardarModeloDroneAsync, eliminarModeloDroneAsync, getModeloDroneAsync } from '../redux-tool-kit/modeloDrone/modeloDrone.actions';
 import { useModal } from './Modal/useModal';
+import { InputType, SelectType } from '../types/types';
 
 interface ParamTypes {
   id: string;
@@ -21,6 +22,7 @@ export default function ModeloDroneComponent(): JSX.Element {
     state.modeloDrone.coleccionModelosDrone.find(modelo => modelo.id === id)
   );
 
+  // Estado para el modelo de drone
   const [modeloDrone, setModeloDrone] = useState<ModeloDrone>({
     id: '',
     data: {
@@ -41,14 +43,28 @@ export default function ModeloDroneComponent(): JSX.Element {
     }
   }, [dispatch, id, isNew, modeloDroneActual]);
 
-  const changeInput = (field: string, value: any) => {
+  // Manejador para campos de texto comunes
+  const handleTextInputChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { id, value } = e.target;
     setModeloDrone(prevState => ({
       ...prevState,
       data: {
         ...prevState.data,
-        [field]: field === 'PrecioReferencia'
-          ? Number(value) 
-          : value
+        [id]: value
+      }
+    }));
+  };
+
+  // Manejador específico para campos numéricos
+  const handleNumberInputChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const { id, value } = e.target;
+    const numValue = value === '' ? 0 : Number(value);
+    
+    setModeloDrone(prevState => ({
+      ...prevState,
+      data: {
+        ...prevState.data,
+        [id]: numValue
       }
     }));
   };
@@ -138,8 +154,9 @@ export default function ModeloDroneComponent(): JSX.Element {
             <input
               type="text"
               className="form-control"
+              id="NombreModelo"
               value={modeloDrone.data.NombreModelo}
-              onChange={(e) => changeInput('NombreModelo', e.target.value)}
+              onChange={handleTextInputChange}
               required
             />
           </div>
@@ -149,8 +166,9 @@ export default function ModeloDroneComponent(): JSX.Element {
             <input
               type="text"
               className="form-control"
+              id="Fabricante"
               value={modeloDrone.data.Fabricante}
-              onChange={(e) => changeInput('Fabricante', e.target.value)}
+              onChange={handleTextInputChange}
               required
             />
           </div>
@@ -159,8 +177,9 @@ export default function ModeloDroneComponent(): JSX.Element {
             <label className="form-label">Descripción</label>
             <textarea
               className="form-control"
+              id="DescripcionModelo"
               value={modeloDrone.data.DescripcionModelo}
-              onChange={(e) => changeInput('DescripcionModelo', e.target.value)}
+              onChange={handleTextInputChange}
               rows={3}
             />
           </div>
@@ -172,8 +191,9 @@ export default function ModeloDroneComponent(): JSX.Element {
               <input
                 type="number"
                 className="form-control"
-                value={modeloDrone.data.PrecioReferencia}
-                onChange={(e) => changeInput('PrecioReferencia', e.target.value)}
+                id="PrecioReferencia"
+                value={modeloDrone.data.PrecioReferencia || ''}
+                onChange={handleNumberInputChange}
                 min="0"
               />
             </div>

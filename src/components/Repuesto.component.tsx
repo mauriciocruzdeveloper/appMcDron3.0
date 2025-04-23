@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, ChangeEvent } from 'react';
 import { useParams } from 'react-router-dom';
 import history from "../history";
 import { useAppDispatch } from '../redux-tool-kit/hooks/useAppDispatch';
@@ -16,6 +16,16 @@ interface ParamTypes {
 export const calcularEstadoRepuesto = (stock: number, unidadesPedidas: number): string => {
   if (stock > 0) return 'Disponible';
   return unidadesPedidas > 0 ? 'En Pedido' : 'Agotado';
+};
+
+// Obtén el color para la etiqueta del estado
+const getEstadoColor = (estado: string): string => {
+  switch (estado) {
+    case 'Disponible': return 'text-success';
+    case 'Agotado': return 'text-danger';
+    case 'En Pedido': return 'text-warning';
+    default: return '';
+  }
 };
 
 export default function RepuestoComponent(): JSX.Element {
@@ -72,29 +82,42 @@ export default function RepuestoComponent(): JSX.Element {
     setEstadoCalculado(nuevoEstado);
   }, [repuesto.data.StockRepu, repuesto.data.UnidadesPedidas]);
 
-  const changeInput = (field: string, value: any) => {
-    // Para campos numéricos, asegurarse de que sean números válidos
-    if (field === 'PrecioRepu' || field === 'StockRepu' || field === 'UnidadesPedidas') {
-      // Permitir cadenas vacías (para facilitar la edición) o convertir a número
-      const numValue = value === '' ? 0 : parseFloat(value);
+  // Manejador para campos de texto comunes
+  const handleTextInputChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { id, value } = e.target;
+    setRepuesto(prevState => ({
+      ...prevState,
+      data: {
+        ...prevState.data,
+        [id]: value
+      }
+    }));
+  };
 
-      setRepuesto(prevState => ({
-        ...prevState,
-        data: {
-          ...prevState.data,
-          [field]: numValue
-        }
-      }));
-    } else {
-      // Para campos no numéricos, mantener el comportamiento actual
-      setRepuesto(prevState => ({
-        ...prevState,
-        data: {
-          ...prevState.data,
-          [field]: value
-        }
-      }));
-    }
+  // Manejador específico para campos numéricos
+  const handleNumberInputChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const { id, value } = e.target;
+    const numValue = value === '' ? 0 : Number(value);
+    
+    setRepuesto(prevState => ({
+      ...prevState,
+      data: {
+        ...prevState.data,
+        [id]: numValue
+      }
+    }));
+  };
+
+  // Manejador para el select
+  const handleSelectChange = (e: ChangeEvent<HTMLSelectElement>) => {
+    const { id, value } = e.target;
+    setRepuesto(prevState => ({
+      ...prevState,
+      data: {
+        ...prevState.data,
+        [id]: value
+      }
+    }));
   };
 
   const handleGuardarRepuesto = async () => {
@@ -151,7 +174,7 @@ export default function RepuestoComponent(): JSX.Element {
         titulo: "Eliminar Repuesto",
       });
       history.goBack();
-    } catch (error: any) { // TODO: Hacer tipo de dato para el error
+    } catch (error: any) {
       console.error("Error al eliminar el repuesto:", error);
 
       openModal({
@@ -159,16 +182,6 @@ export default function RepuestoComponent(): JSX.Element {
         tipo: "danger",
         titulo: "Error",
       });
-    }
-  };
-
-  // Obtén el color para la etiqueta del estado
-  const getEstadoColor = (estado: string): string => {
-    switch (estado) {
-      case 'Disponible': return 'text-success';
-      case 'Agotado': return 'text-danger';
-      case 'En Pedido': return 'text-warning';
-      default: return '';
     }
   };
 
@@ -191,8 +204,9 @@ export default function RepuestoComponent(): JSX.Element {
             <input
               type="text"
               className="form-control"
+              id="NombreRepu"
               value={repuesto.data.NombreRepu}
-              onChange={(e) => changeInput('NombreRepu', e.target.value)}
+              onChange={handleTextInputChange}
               required
             />
           </div>
@@ -201,8 +215,9 @@ export default function RepuestoComponent(): JSX.Element {
             <label className="form-label">Descripción</label>
             <textarea
               className="form-control"
+              id="DescripcionRepu"
               value={repuesto.data.DescripcionRepu}
-              onChange={(e) => changeInput('DescripcionRepu', e.target.value)}
+              onChange={handleTextInputChange}
               rows={3}
             />
           </div>
@@ -211,8 +226,9 @@ export default function RepuestoComponent(): JSX.Element {
             <label className="form-label">Modelo de Drone Compatible</label>
             <select
               className="form-select"
+              id="ModeloDroneRepu"
               value={repuesto.data.ModeloDroneRepu}
-              onChange={(e) => changeInput('ModeloDroneRepu', e.target.value)}
+              onChange={handleSelectChange}
             >
               <option value="">Seleccione un modelo...</option>
               {modelosDrone.map((modelo: ModeloDrone) => (
@@ -229,8 +245,9 @@ export default function RepuestoComponent(): JSX.Element {
             <input
               type="text"
               className="form-control"
+              id="ProveedorRepu"
               value={repuesto.data.ProveedorRepu}
-              onChange={(e) => changeInput('ProveedorRepu', e.target.value)}
+              onChange={handleTextInputChange}
             />
           </div>
 
@@ -241,8 +258,9 @@ export default function RepuestoComponent(): JSX.Element {
               <input
                 type="number"
                 className="form-control"
+                id="PrecioRepu"
                 value={repuesto.data.PrecioRepu || ''}
-                onChange={(e) => changeInput('PrecioRepu', e.target.value)}
+                onChange={handleNumberInputChange}
                 min="0"
                 step="any"
               />
@@ -254,8 +272,9 @@ export default function RepuestoComponent(): JSX.Element {
             <input
               type="number"
               className="form-control"
+              id="StockRepu"
               value={repuesto.data.StockRepu || ''}
-              onChange={(e) => changeInput('StockRepu', e.target.value)}
+              onChange={handleNumberInputChange}
               min="0"
             />
           </div>
@@ -265,8 +284,9 @@ export default function RepuestoComponent(): JSX.Element {
             <input
               type="number"
               className="form-control"
+              id="UnidadesPedidas"
               value={repuesto.data.UnidadesPedidas || ''}
-              onChange={(e) => changeInput('UnidadesPedidas', e.target.value)}
+              onChange={handleNumberInputChange}
               min="0"
             />
             <small className="form-text text-muted">
