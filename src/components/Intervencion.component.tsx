@@ -252,21 +252,23 @@ export default function IntervencionComponent(): JSX.Element {
           </div>
           
           <div className="mb-3">
-            <label className="form-label">Modelo de Drone</label>
+            <label className="form-label">Modelo de Drone (opcional)</label>
             <select
               className="form-select"
               id="ModeloDroneId"
-              value={intervencion.data.ModeloDroneId}
+              value={intervencion.data.ModeloDroneId || ''}
               onChange={handleSelectChange}
-              required
             >
-              <option value="">Seleccione un modelo...</option>
+              <option value="">General (compatible con cualquier modelo)</option>
               {modelosDrone.map((modelo) => (
                 <option key={modelo.id} value={modelo.id}>
                   {modelo.data.NombreModelo} - {modelo.data.Fabricante}
                 </option>
               ))}
             </select>
+            <small className="form-text text-muted">
+              Deje en blanco para intervenciones generales que aplican a cualquier modelo
+            </small>
           </div>
           
           <div className="mb-3">
@@ -291,9 +293,12 @@ export default function IntervencionComponent(): JSX.Element {
                 id="PrecioManoObra"
                 value={intervencion.data.PrecioManoObra || ''}
                 onChange={handleNumberInputChange}
-                min="0"
+                step="any"
               />
             </div>
+            <small className="form-text text-muted">
+              Puede ingresar valores negativos para representar descuentos o ajustes
+            </small>
           </div>
           
           <div className="mb-3">
