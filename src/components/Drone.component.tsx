@@ -71,6 +71,9 @@ export default function DroneComponent(): JSX.Element {
     if (selectedOption) {
       setPropietarioValue(selectedOption);
       changeInput('Propietario', selectedOption.value);
+    } else {
+      setPropietarioValue(null);
+      changeInput('Propietario', '');
     }
   };
 

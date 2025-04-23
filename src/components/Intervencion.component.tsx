@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, ChangeEvent } from 'react';
 import { useParams } from 'react-router-dom';
 import history from '../history';
 import { useAppDispatch } from '../redux-tool-kit/hooks/useAppDispatch';
@@ -7,6 +7,7 @@ import { Intervencion } from '../types/intervencion';
 import { guardarIntervencionAsync, eliminarIntervencionAsync, getIntervencionAsync } from '../redux-tool-kit/intervencion/intervencion.actions';
 import { useModal } from './Modal/useModal';
 import Select from 'react-select';
+import { InputType, SelectType } from '../types/types';
 
 interface ParamTypes {
   id: string;
@@ -16,6 +17,9 @@ export default function IntervencionComponent(): JSX.Element {
   const dispatch = useAppDispatch();
   const { openModal } = useModal();
   const { id } = useParams<ParamTypes>();
+  
+  // Obtenemos las reparaciones para verificar si la intervención está siendo usada
+  const reparaciones = useAppSelector(state => state.reparacion.coleccionReparaciones);
   
   const isNew = id === 'new';
   const intervencionActual = useAppSelector(state => 
@@ -90,14 +94,40 @@ export default function IntervencionComponent(): JSX.Element {
     }
   }, [intervencion.data.PrecioManoObra, selectedRepuestos, isNew, intervencionActual]);
   
-  const changeInput = (field: string, value: any) => {
+  // Manejador para campos de texto comunes
+  const handleTextInputChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { id, value } = e.target;
     setIntervencion(prevState => ({
       ...prevState,
       data: {
         ...prevState.data,
-        [field]: field === 'PrecioManoObra' || field === 'PrecioTotal' || field === 'DuracionEstimada'
-          ? Number(value)
-          : value
+        [id]: value
+      }
+    }));
+  };
+
+  // Manejador específico para campos numéricos
+  const handleNumberInputChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const { id, value } = e.target;
+    const numValue = value === '' ? 0 : Number(value);
+    
+    setIntervencion(prevState => ({
+      ...prevState,
+      data: {
+        ...prevState.data,
+        [id]: numValue
+      }
+    }));
+  };
+
+  // Manejador para los selects
+  const handleSelectChange = (e: ChangeEvent<HTMLSelectElement>) => {
+    const { id, value } = e.target;
+    setIntervencion(prevState => ({
+      ...prevState,
+      data: {
+        ...prevState.data,
+        [id]: value
       }
     }));
   };
@@ -212,8 +242,9 @@ export default function IntervencionComponent(): JSX.Element {
             <input
               type="text"
               className="form-control"
+              id="NombreInt"
               value={intervencion.data.NombreInt}
-              onChange={(e) => changeInput('NombreInt', e.target.value)}
+              onChange={handleTextInputChange}
               required
             />
           </div>
@@ -222,8 +253,9 @@ export default function IntervencionComponent(): JSX.Element {
             <label className="form-label">Descripción</label>
             <textarea
               className="form-control"
+              id="DescripcionInt"
               value={intervencion.data.DescripcionInt}
-              onChange={(e) => changeInput('DescripcionInt', e.target.value)}
+              onChange={handleTextInputChange}
               rows={3}
             />
           </div>
@@ -232,8 +264,9 @@ export default function IntervencionComponent(): JSX.Element {
             <label className="form-label">Modelo de Drone</label>
             <select
               className="form-select"
+              id="ModeloDroneId"
               value={intervencion.data.ModeloDroneId}
-              onChange={(e) => changeInput('ModeloDroneId', e.target.value)}
+              onChange={handleSelectChange}
               required
             >
               <option value="">Seleccione un modelo...</option>
@@ -264,8 +297,9 @@ export default function IntervencionComponent(): JSX.Element {
               <input
                 type="number"
                 className="form-control"
-                value={intervencion.data.PrecioManoObra}
-                onChange={(e) => changeInput('PrecioManoObra', e.target.value)}
+                id="PrecioManoObra"
+                value={intervencion.data.PrecioManoObra || ''}
+                onChange={handleNumberInputChange}
                 min="0"
               />
             </div>
@@ -278,8 +312,9 @@ export default function IntervencionComponent(): JSX.Element {
               <input
                 type="number"
                 className="form-control"
-                value={intervencion.data.PrecioTotal}
-                onChange={(e) => changeInput('PrecioTotal', e.target.value)}
+                id="PrecioTotal"
+                value={intervencion.data.PrecioTotal || ''}
+                onChange={handleNumberInputChange}
                 min="0"
                 readOnly={isNew} // Solo en modo nuevo calculamos automáticamente
               />
@@ -296,8 +331,9 @@ export default function IntervencionComponent(): JSX.Element {
             <input
               type="number"
               className="form-control"
-              value={intervencion.data.DuracionEstimada}
-              onChange={(e) => changeInput('DuracionEstimada', e.target.value)}
+              id="DuracionEstimada"
+              value={intervencion.data.DuracionEstimada || ''}
+              onChange={handleNumberInputChange}
               min="1"
             />
           </div>
@@ -306,8 +342,9 @@ export default function IntervencionComponent(): JSX.Element {
             <label className="form-label">Complejidad</label>
             <select
               className="form-select"
+              id="Complejidad"
               value={intervencion.data.Complejidad}
-              onChange={(e) => changeInput('Complejidad', e.target.value)}
+              onChange={handleSelectChange}
             >
               <option value="Baja">Baja</option>
               <option value="Media">Media</option>
@@ -319,8 +356,9 @@ export default function IntervencionComponent(): JSX.Element {
             <label className="form-label">Categoría</label>
             <select
               className="form-select"
+              id="Categoria"
               value={intervencion.data.Categoria}
-              onChange={(e) => changeInput('Categoria', e.target.value)}
+              onChange={handleSelectChange}
             >
               <option value="Reparación">Reparación</option>
               <option value="Mantenimiento">Mantenimiento</option>
@@ -335,8 +373,9 @@ export default function IntervencionComponent(): JSX.Element {
             <label className="form-label">Estado</label>
             <select
               className="form-select"
+              id="Estado"
               value={intervencion.data.Estado}
-              onChange={(e) => changeInput('Estado', e.target.value)}
+              onChange={handleSelectChange}
             >
               <option value="Activa">Activa</option>
               <option value="Descontinuada">Descontinuada</option>
