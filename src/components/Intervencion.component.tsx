@@ -7,7 +7,6 @@ import { Intervencion } from '../types/intervencion';
 import { guardarIntervencionAsync, eliminarIntervencionAsync, getIntervencionAsync } from '../redux-tool-kit/intervencion/intervencion.actions';
 import { useModal } from './Modal/useModal';
 import Select from 'react-select';
-import { InputType, SelectType } from '../types/types';
 
 interface ParamTypes {
   id: string;
@@ -17,9 +16,6 @@ export default function IntervencionComponent(): JSX.Element {
   const dispatch = useAppDispatch();
   const { openModal } = useModal();
   const { id } = useParams<ParamTypes>();
-  
-  // Obtenemos las reparaciones para verificar si la intervención está siendo usada
-  const reparaciones = useAppSelector(state => state.reparacion.coleccionReparaciones);
   
   const isNew = id === 'new';
   const intervencionActual = useAppSelector(state => 
@@ -38,10 +34,7 @@ export default function IntervencionComponent(): JSX.Element {
       RepuestosIds: [],
       PrecioManoObra: 0,
       PrecioTotal: 0,
-      DuracionEstimada: 30,
-      Complejidad: 'Media',
-      Categoria: 'Reparación',
-      Estado: 'Activa'
+      DuracionEstimada: 30
     }
   });
 
@@ -79,20 +72,18 @@ export default function IntervencionComponent(): JSX.Element {
 
   // Actualizar el precio total cuando cambian los valores
   useEffect(() => {
-    if (isNew || !intervencionActual) {
-      // Calcular el precio total sumando mano de obra + repuestos
-      const precioRepuestos = selectedRepuestos.reduce((total, rep) => total + rep.precio, 0);
-      const precioTotal = intervencion.data.PrecioManoObra + precioRepuestos;
-      
-      setIntervencion(prev => ({
-        ...prev,
-        data: {
-          ...prev.data,
-          PrecioTotal: precioTotal
-        }
-      }));
-    }
-  }, [intervencion.data.PrecioManoObra, selectedRepuestos, isNew, intervencionActual]);
+    // Calcular el precio total sumando mano de obra + repuestos
+    const precioRepuestos = selectedRepuestos.reduce((total, rep) => total + rep.precio, 0);
+    const precioTotal = intervencion.data.PrecioManoObra + precioRepuestos;
+    
+    setIntervencion(prev => ({
+      ...prev,
+      data: {
+        ...prev.data,
+        PrecioTotal: precioTotal
+      }
+    }));
+  }, [intervencion.data.PrecioManoObra, selectedRepuestos]);
   
   // Manejador para campos de texto comunes
   const handleTextInputChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -306,27 +297,6 @@ export default function IntervencionComponent(): JSX.Element {
           </div>
           
           <div className="mb-3">
-            <label className="form-label">Precio Total (Mano de obra + Repuestos)</label>
-            <div className="input-group">
-              <span className="input-group-text">$</span>
-              <input
-                type="number"
-                className="form-control"
-                id="PrecioTotal"
-                value={intervencion.data.PrecioTotal || ''}
-                onChange={handleNumberInputChange}
-                min="0"
-                readOnly={isNew} // Solo en modo nuevo calculamos automáticamente
-              />
-            </div>
-            {isNew && (
-              <small className="text-muted">
-                Este valor se calcula automáticamente sumando mano de obra y repuestos seleccionados
-              </small>
-            )}
-          </div>
-          
-          <div className="mb-3">
             <label className="form-label">Duración Estimada (minutos)</label>
             <input
               type="number"
@@ -336,50 +306,6 @@ export default function IntervencionComponent(): JSX.Element {
               onChange={handleNumberInputChange}
               min="1"
             />
-          </div>
-          
-          <div className="mb-3">
-            <label className="form-label">Complejidad</label>
-            <select
-              className="form-select"
-              id="Complejidad"
-              value={intervencion.data.Complejidad}
-              onChange={handleSelectChange}
-            >
-              <option value="Baja">Baja</option>
-              <option value="Media">Media</option>
-              <option value="Alta">Alta</option>
-            </select>
-          </div>
-          
-          <div className="mb-3">
-            <label className="form-label">Categoría</label>
-            <select
-              className="form-select"
-              id="Categoria"
-              value={intervencion.data.Categoria}
-              onChange={handleSelectChange}
-            >
-              <option value="Reparación">Reparación</option>
-              <option value="Mantenimiento">Mantenimiento</option>
-              <option value="Actualización">Actualización</option>
-              <option value="Diagnóstico">Diagnóstico</option>
-              <option value="Calibración">Calibración</option>
-              <option value="Limpieza">Limpieza</option>
-            </select>
-          </div>
-          
-          <div className="mb-3">
-            <label className="form-label">Estado</label>
-            <select
-              className="form-select"
-              id="Estado"
-              value={intervencion.data.Estado}
-              onChange={handleSelectChange}
-            >
-              <option value="Activa">Activa</option>
-              <option value="Descontinuada">Descontinuada</option>
-            </select>
           </div>
           
           <div className="mt-4 card bg-light">

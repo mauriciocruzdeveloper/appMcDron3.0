@@ -16,10 +16,7 @@ const intervencionesMock: Intervencion[] = [
       RepuestosIds: ['mock-1'],
       PrecioManoObra: 5000,
       PrecioTotal: 20000,
-      DuracionEstimada: 30,
-      Complejidad: 'Baja',
-      Categoria: 'Reparación',
-      Estado: 'Activa'
+      DuracionEstimada: 30
     }
   },
   {
@@ -31,10 +28,7 @@ const intervencionesMock: Intervencion[] = [
       RepuestosIds: [],
       PrecioManoObra: 8000,
       PrecioTotal: 8000,
-      DuracionEstimada: 45,
-      Complejidad: 'Media',
-      Categoria: 'Mantenimiento',
-      Estado: 'Activa'
+      DuracionEstimada: 45
     }
   },
   {
@@ -46,10 +40,7 @@ const intervencionesMock: Intervencion[] = [
       RepuestosIds: ['mock-2'],
       PrecioManoObra: 10000,
       PrecioTotal: 48000,
-      DuracionEstimada: 60,
-      Complejidad: 'Alta',
-      Categoria: 'Actualización',
-      Estado: 'Activa'
+      DuracionEstimada: 60
     }
   }
 ];
@@ -70,8 +61,7 @@ export default function ListaIntervenciones(): JSX.Element {
         if (filter) {
           incluirPorSearch =
             intervencion.data?.NombreInt?.toLowerCase().includes(filter.toLowerCase()) ||
-            intervencion.data?.DescripcionInt?.toLowerCase().includes(filter.toLowerCase()) ||
-            intervencion.data?.Categoria?.toLowerCase().includes(filter.toLowerCase());
+            intervencion.data?.DescripcionInt?.toLowerCase().includes(filter.toLowerCase());
         }
         return incluirPorSearch;
       });
@@ -149,27 +139,17 @@ export default function ListaIntervenciones(): JSX.Element {
                 <h5 className='mb-1'>{intervencion.data.NombreInt}</h5>
                 <div>
                   <span className='badge bg-bluemcdron me-2'>{formatPrice(intervencion.data.PrecioTotal)}</span>
-                  <span className={`badge ${intervencion.data.Complejidad === 'Baja' ? 'bg-success' : 
-                    intervencion.data.Complejidad === 'Media' ? 'bg-warning' : 'bg-danger'}`}>
-                    {intervencion.data.Complejidad}
-                  </span>
                 </div>
               </div>
               <div>
                 <small className='text-muted'>Modelo: {getModeloDroneName(intervencion.data.ModeloDroneId)}</small>
               </div>
               <div>
-                <small className='text-muted'>Categoría: {intervencion.data.Categoria}</small>
-                <small className='text-muted ms-3'>Tiempo est.: {intervencion.data.DuracionEstimada} min</small>
+                <small className='text-muted'>Tiempo est.: {intervencion.data.DuracionEstimada} min</small>
               </div>
               <div>
                 <small className='text-muted'>{intervencion.data.DescripcionInt}</small>
               </div>
-              {intervencion.data.Estado && intervencion.data.Estado !== 'Activa' && (
-                <div>
-                  <small className='text-danger'>{intervencion.data.Estado}</small>
-                </div>
-              )}
               {mostrandoMock && intervencion.id.startsWith('mock') && (
                 <div className="mt-2">
                   <span className="badge bg-secondary">Ejemplo</span>

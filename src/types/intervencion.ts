@@ -6,9 +6,6 @@ export interface IntervencionData {
   PrecioManoObra: number; // Precio sin repuestos (solo mano de obra)
   PrecioTotal: number; // Precio con repuestos incluidos
   DuracionEstimada: number; // Duración estimada en minutos
-  Complejidad: 'Baja' | 'Media' | 'Alta';
-  Categoria: string; // Por ejemplo: "Reparación", "Mantenimiento", "Actualización", etc.
-  Estado: string; // "Activa", "Descontinuada", etc.
 }
 
 export interface Intervencion {
