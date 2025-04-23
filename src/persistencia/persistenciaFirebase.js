@@ -240,6 +240,13 @@ export const getIntervencionesPorReparacionPersistencia = (reparacionId) => {
       // Obtener cada intervención por su ID
       for (const intId of intervencionesIds) {
         try {
+          // Verificar que el ID sea una cadena válida
+          if (typeof intId !== 'string') {
+            console.warn(`ID de intervención inválido: ${intId}, se omitirá esta intervención`);
+            continue;
+          }
+          
+          // Usa directamente el ID para obtener la referencia al documento
           const intervencionRef = doc(firestore, collectionNames.INTERVENCIONES, intId);
           const intervencionSnap = await getDoc(intervencionRef);
           
@@ -248,9 +255,12 @@ export const getIntervencionesPorReparacionPersistencia = (reparacionId) => {
               id: intId,
               data: intervencionSnap.data()
             });
+          } else {
+            console.warn(`La intervención con ID ${intId} no existe`);
           }
         } catch (error) {
           console.error(`Error al cargar la intervención ${intId}:`, error);
+          // Continuar con la siguiente intervención en caso de error
         }
       }
       
@@ -795,16 +805,38 @@ export const guardarRepuestoPersistencia = (repuesto) => {
 
 // ELIMINAR Repuesto
 export const eliminarRepuestoPersistencia = (id) => {
-    return new Promise((resolve, reject) => {
-        deleteDoc(doc(firestore, collectionNames.REPUESTOS, id))
-            .then(() => {
-                console.log('Repuesto eliminado correctamente');
-                resolve(id);
-            })
-            .catch(error => {
-                console.log('Error al eliminar repuesto: ' + error);
-                reject(error);
+    return new Promise(async (resolve, reject) => {
+        try {
+            // Verificar si el repuesto está siendo utilizado en alguna intervención
+            const intervencionesRef = collection(firestore, collectionNames.INTERVENCIONES);
+            const intervencionesSnapshot = await getDocs(intervencionesRef);
+            
+            // Buscar en todas las intervenciones si alguna contiene este repuesto en su array RepuestosIds
+            let repuestoEnUso = false;
+            intervencionesSnapshot.forEach(doc => {
+                const intervencion = doc.data();
+                if (intervencion.RepuestosIds && Array.isArray(intervencion.RepuestosIds)) {
+                    if (intervencion.RepuestosIds.includes(id)) {
+                        repuestoEnUso = true;
+                    }
+                }
             });
+            
+            if (repuestoEnUso) {
+                reject({
+                    code: "No se puede eliminar este repuesto porque está siendo utilizado en una o más intervenciones."
+                });
+                return;
+            }
+            
+            // Si no hay dependencias, procedemos a eliminar
+            await deleteDoc(doc(firestore, collectionNames.REPUESTOS, id));
+            console.log('Repuesto eliminado correctamente');
+            resolve(id);
+        } catch (error) {
+            console.error('Error al eliminar repuesto:', error);
+            reject(error);
+        }
     });
 };
 
@@ -918,24 +950,38 @@ export const guardarModeloDronePersistencia = (modeloDrone) => {
 // ELIMINAR ModeloDrone
 export const eliminarModeloDronePersistencia = (id) => {
     return new Promise(async (resolve, reject) => {
-        // Busco si hay drones relacionados a este modelo
-        const refCol = collection(firestore, collectionNames.DRONES);
-        const q = query(refCol, where('ModeloDroneId', '==', id));
-        const querySnapshot = await getDocs(q);
-        
-        // Si la consulta no arroja ningún resultado, se elimina, sino da error
-        if (querySnapshot.empty) {
-            deleteDoc(doc(firestore, collectionNames.MODELOS_DRONE, id))
-                .then(() => {
-                    resolve(id);
-                })
-                .catch(error => {
-                    reject(error);
+        try {
+            // 1. Verificar si hay drones asociados a este modelo
+            const droneRef = collection(firestore, collectionNames.DRONES);
+            const qDrones = query(droneRef, where('ModeloDroneId', '==', id));
+            const dronesSnapshot = await getDocs(qDrones);
+            
+            if (!dronesSnapshot.empty) {
+                reject({
+                    code: 'No se puede borrar este modelo de drone. Hay drones asociados a este modelo.'
                 });
-        } else {
-            reject({
-                code: 'No se puede borrar este modelo de drone. Hay drones asociados a este modelo.'
-            });
+                return;
+            }
+            
+            // 2. Verificar si hay intervenciones asociadas a este modelo
+            const intervencionRef = collection(firestore, collectionNames.INTERVENCIONES);
+            const qIntervenciones = query(intervencionRef, where('ModeloDroneId', '==', id));
+            const intervencionesSnapshot = await getDocs(qIntervenciones);
+            
+            if (!intervencionesSnapshot.empty) {
+                reject({
+                    code: 'No se puede borrar este modelo de drone. Hay intervenciones asociadas a este modelo.'
+                });
+                return;
+            }
+            
+            // 3. Si no hay dependencias, procedemos a eliminar
+            await deleteDoc(doc(firestore, collectionNames.MODELOS_DRONE, id));
+            console.log('Modelo de drone eliminado correctamente');
+            resolve(id);
+        } catch (error) {
+            console.error('Error al eliminar modelo de drone:', error);
+            reject(error);
         }
     });
 };
@@ -1117,30 +1163,38 @@ export const guardarIntervencionPersistencia = (intervencion) => {
 
 // ELIMINAR Intervención
 export const eliminarIntervencionPersistencia = (id) => {
-  return new Promise((resolve, reject) => {
-    // Antes de eliminar, verificamos si hay reparaciones que usan esta intervención
-    const reparacionesRef = collection(firestore, collectionNames.REPARACIONES);
-    const q = query(reparacionesRef, where('IntervencionId', '==', id));
-    
-    getDocs(q).then(querySnapshot => {
-      if (querySnapshot.empty) {
-        // No hay reparaciones asociadas, podemos eliminar
-        deleteDoc(doc(firestore, collectionNames.INTERVENCIONES, id))
-          .then(() => {
-            console.log('Intervención eliminada correctamente');
-            resolve(id);
-          })
-          .catch(error => {
-            console.log('Error al eliminar intervención: ' + error);
-            reject(error);
-          });
-      } else {
-        // Hay reparaciones que usan esta intervención
+  return new Promise(async (resolve, reject) => {
+    try {
+      // Verificar si hay reparaciones que usan esta intervención en su array de IntervencionesIds
+      const reparacionesRef = collection(firestore, collectionNames.REPARACIONES);
+      const intervencionesDocs = await getDocs(reparacionesRef);
+      
+      // Buscar en todas las reparaciones si alguna contiene esta intervención en su array
+      let intervencionEnUso = false;
+      intervencionesDocs.forEach(doc => {
+        const reparacion = doc.data();
+        if (reparacion.IntervencionesIds && Array.isArray(reparacion.IntervencionesIds)) {
+          if (reparacion.IntervencionesIds.includes(id)) {
+            intervencionEnUso = true;
+          }
+        }
+      });
+      
+      if (intervencionEnUso) {
         reject({
-          code: 'No se puede eliminar esta intervención porque está siendo utilizada en reparaciones.'
+          code: "No se puede eliminar esta intervención porque está siendo utilizada en una o más reparaciones."
         });
+        return;
       }
-    }).catch(error => reject(error));
+      
+      // Si no hay dependencias, procedemos a eliminar
+      await deleteDoc(doc(firestore, collectionNames.INTERVENCIONES, id));
+      console.log('Intervención eliminada correctamente');
+      resolve(id);
+    } catch (error) {
+      console.error('Error al eliminar intervención:', error);
+      reject(error);
+    }
   });
 };
 

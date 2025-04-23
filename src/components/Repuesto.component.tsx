@@ -22,12 +22,12 @@ export default function RepuestoComponent(): JSX.Element {
   const dispatch = useAppDispatch();
   const { openModal } = useModal();
   const { id } = useParams<ParamTypes>();
-  
+
   const isNew = id === 'new';
-  const repuestoActual = useAppSelector(state => 
+  const repuestoActual = useAppSelector(state =>
     state.repuesto.coleccionRepuestos.find(repuesto => repuesto.id === id)
   );
-  
+
   const modelosDrone = useAppSelector(state => state.modeloDrone.coleccionModelosDrone);
 
   const [repuesto, setRepuesto] = useState<Repuesto>({
@@ -66,7 +66,7 @@ export default function RepuestoComponent(): JSX.Element {
   // Actualizar el estado calculado cuando cambien los valores relevantes
   useEffect(() => {
     const nuevoEstado = calcularEstadoRepuesto(
-      repuesto.data.StockRepu, 
+      repuesto.data.StockRepu,
       repuesto.data.UnidadesPedidas
     );
     setEstadoCalculado(nuevoEstado);
@@ -77,7 +77,7 @@ export default function RepuestoComponent(): JSX.Element {
     if (field === 'PrecioRepu' || field === 'StockRepu' || field === 'UnidadesPedidas') {
       // Permitir cadenas vacías (para facilitar la edición) o convertir a número
       const numValue = value === '' ? 0 : parseFloat(value);
-      
+
       setRepuesto(prevState => ({
         ...prevState,
         data: {
@@ -109,14 +109,14 @@ export default function RepuestoComponent(): JSX.Element {
   const confirmaGuardarRepuesto = async () => {
     try {
       const response = await dispatch(guardarRepuestoAsync(repuesto));
-      
+
       if (response.meta.requestStatus === 'fulfilled') {
         openModal({
           mensaje: "Repuesto guardado correctamente.",
           tipo: "success",
           titulo: "Guardar Repuesto",
         });
-        
+
         if (isNew && response.payload?.id) {
           history.replace(`/inicio/repuestos/${response.payload.id}`);
         }
@@ -144,7 +144,7 @@ export default function RepuestoComponent(): JSX.Element {
   const confirmaEliminarRepuesto = async () => {
     try {
       const response = await dispatch(eliminarRepuestoAsync(repuesto.id)).unwrap();
-      
+
       openModal({
         mensaje: "Repuesto eliminado correctamente.",
         tipo: "success",
@@ -153,7 +153,7 @@ export default function RepuestoComponent(): JSX.Element {
       history.goBack();
     } catch (error: any) { // TODO: Hacer tipo de dato para el error
       console.error("Error al eliminar el repuesto:", error);
-      
+
       openModal({
         mensaje: error?.code || "Error al eliminar el repuesto.",
         tipo: "danger",
@@ -185,7 +185,7 @@ export default function RepuestoComponent(): JSX.Element {
       <div className="card mb-3">
         <div className="card-body">
           <h5 className="card-title bluemcdron">DATOS DEL REPUESTO</h5>
-          
+
           <div className="mb-3">
             <label className="form-label">Nombre</label>
             <input
@@ -196,7 +196,7 @@ export default function RepuestoComponent(): JSX.Element {
               required
             />
           </div>
-          
+
           <div className="mb-3">
             <label className="form-label">Descripción</label>
             <textarea
@@ -206,7 +206,7 @@ export default function RepuestoComponent(): JSX.Element {
               rows={3}
             />
           </div>
-          
+
           <div className="mb-3">
             <label className="form-label">Modelo de Drone Compatible</label>
             <select
@@ -223,7 +223,7 @@ export default function RepuestoComponent(): JSX.Element {
               <option value="Universal">Universal (compatible con varios modelos)</option>
             </select>
           </div>
-          
+
           <div className="mb-3">
             <label className="form-label">Proveedor</label>
             <input
@@ -233,7 +233,7 @@ export default function RepuestoComponent(): JSX.Element {
               onChange={(e) => changeInput('ProveedorRepu', e.target.value)}
             />
           </div>
-          
+
           <div className="mb-3">
             <label className="form-label">Precio</label>
             <div className="input-group">
@@ -248,7 +248,7 @@ export default function RepuestoComponent(): JSX.Element {
               />
             </div>
           </div>
-          
+
           <div className="mb-3">
             <label className="form-label">Stock Disponible</label>
             <input
@@ -259,7 +259,7 @@ export default function RepuestoComponent(): JSX.Element {
               min="0"
             />
           </div>
-          
+
           <div className="mb-3">
             <label className="form-label">Unidades Pedidas</label>
             <input
@@ -273,7 +273,7 @@ export default function RepuestoComponent(): JSX.Element {
               Cantidad de unidades que están en proceso de pedido
             </small>
           </div>
-          
+
           <div className="card bg-light mb-3">
             <div className="card-body">
               <h6 className="card-title">Estado del repuesto</h6>
@@ -282,17 +282,17 @@ export default function RepuestoComponent(): JSX.Element {
               </div>
               <p className="mb-0 small">
                 El estado se calcula automáticamente según el stock y unidades pedidas:
-                <ul className="mb-0 mt-1">
-                  <li>Stock &gt; 0 → Disponible</li>
-                  <li>Stock 0 + Unidades pedidas &gt; 0 → En Pedido</li>
-                  <li>Stock 0 + Sin unidades pedidas → Agotado</li>
-                </ul>
               </p>
+              <ul className="mb-0 mt-1">
+                <li>Stock &gt; 0 → Disponible</li>
+                <li>Stock 0 + Unidades pedidas &gt; 0 → En Pedido</li>
+                <li>Stock 0 + Sin unidades pedidas → Agotado</li>
+              </ul>
             </div>
           </div>
         </div>
       </div>
-      
+
       <div className="text-center">
         <button
           onClick={handleGuardarRepuesto}
@@ -300,7 +300,7 @@ export default function RepuestoComponent(): JSX.Element {
         >
           Guardar
         </button>
-        
+
         {!isNew && (
           <button
             onClick={handleEliminarRepuesto}
