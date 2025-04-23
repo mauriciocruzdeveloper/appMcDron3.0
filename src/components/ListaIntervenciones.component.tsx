@@ -5,7 +5,7 @@ import { Intervencion } from '../types/intervencion';
 import { useAppDispatch } from '../redux-tool-kit/hooks/useAppDispatch';
 import { setFilter } from '../redux-tool-kit/intervencion/intervencion.slice';
 
-// Mock de intervenciones para mostrar como ejemplo
+// Mock de intervenciones para mostrar como ejemplo (modificado)
 const intervencionesMock: Intervencion[] = [
   {
     id: 'mock-1',
@@ -24,7 +24,6 @@ const intervencionesMock: Intervencion[] = [
     data: {
       NombreInt: 'Calibración de sensores',
       DescripcionInt: 'Ajuste y calibración de sensores de vuelo',
-      ModeloDroneId: 'mock-2',
       RepuestosIds: [],
       PrecioManoObra: 8000,
       PrecioTotal: 8000,
@@ -34,13 +33,13 @@ const intervencionesMock: Intervencion[] = [
   {
     id: 'mock-3',
     data: {
-      NombreInt: 'Cambio de cámara',
-      DescripcionInt: 'Reemplazo completo de la cámara',
+      NombreInt: 'Descuento por fidelidad',
+      DescripcionInt: 'Descuento especial para clientes frecuentes',
       ModeloDroneId: 'mock-1',
-      RepuestosIds: ['mock-2'],
-      PrecioManoObra: 10000,
-      PrecioTotal: 48000,
-      DuracionEstimada: 60
+      RepuestosIds: [],
+      PrecioManoObra: -5000,
+      PrecioTotal: -5000,
+      DuracionEstimada: 0
     }
   }
 ];
@@ -82,9 +81,15 @@ export default function ListaIntervenciones(): JSX.Element {
     return precio.toLocaleString('es-AR', { style: 'currency', currency: 'ARS' });
   };
 
-  const getModeloDroneName = (modeloId: string): string => {
+  const getModeloDroneName = (modeloId?: string): string => {
+    if (!modeloId) return "General";
     const modelo = modelosDrone.find(m => m.id === modeloId);
     return modelo ? modelo.data.NombreModelo : modeloId;
+  };
+
+  // Determinar el color de la insignia de precio según sea positivo o negativo
+  const getPriceBadgeClass = (precio: number): string => {
+    return precio < 0 ? 'bg-success' : 'bg-bluemcdron';
   };
 
   return (
@@ -138,11 +143,18 @@ export default function ListaIntervenciones(): JSX.Element {
               <div className='d-flex w-100 justify-content-between'>
                 <h5 className='mb-1'>{intervencion.data.NombreInt}</h5>
                 <div>
-                  <span className='badge bg-bluemcdron me-2'>{formatPrice(intervencion.data.PrecioTotal)}</span>
+                  <span className={`badge ${getPriceBadgeClass(intervencion.data.PrecioTotal)} me-2`}>
+                    {formatPrice(intervencion.data.PrecioTotal)}
+                  </span>
                 </div>
               </div>
               <div>
-                <small className='text-muted'>Modelo: {getModeloDroneName(intervencion.data.ModeloDroneId)}</small>
+                <small className='text-muted'>
+                  Modelo: {getModeloDroneName(intervencion.data.ModeloDroneId)}
+                  {!intervencion.data.ModeloDroneId && 
+                    <span className="ms-1 badge bg-secondary">General</span>
+                  }
+                </small>
               </div>
               <div>
                 <small className='text-muted'>Tiempo est.: {intervencion.data.DuracionEstimada} min</small>
@@ -150,6 +162,11 @@ export default function ListaIntervenciones(): JSX.Element {
               <div>
                 <small className='text-muted'>{intervencion.data.DescripcionInt}</small>
               </div>
+              {intervencion.data.PrecioManoObra < 0 && (
+                <div className="mt-1">
+                  <span className="badge bg-success">Descuento</span>
+                </div>
+              )}
               {mostrandoMock && intervencion.id.startsWith('mock') && (
                 <div className="mt-2">
                   <span className="badge bg-secondary">Ejemplo</span>
