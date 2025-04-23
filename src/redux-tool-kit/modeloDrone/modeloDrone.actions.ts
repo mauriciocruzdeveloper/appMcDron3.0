@@ -7,6 +7,7 @@ import {
 } from "../../persistencia/persistenciaFirebase";
 import { isFetchingComplete, isFetchingStart } from "../app/app.slice";
 import { ModeloDrone } from "../../types/modeloDrone";
+import { RootState } from '../store';
 
 // ELIMINAR MODELO DE DRONE
 export const eliminarModeloDroneAsync = createAsyncThunk(
@@ -14,13 +15,14 @@ export const eliminarModeloDroneAsync = createAsyncThunk(
     async (id: string, { dispatch }) => {
         try {
             dispatch(isFetchingStart());
+            // La verificación de dependencias ahora se hace en la función de persistencia
             const modeloDroneEliminado = await eliminarModeloDronePersistencia(id);
             dispatch(isFetchingComplete());
             return modeloDroneEliminado;
-        } catch (error: any) { // TODO: Hacer tipo de dato para el error
-            console.error(error);
+        } catch (error: any) { 
+            console.error("Error al eliminar modelo de drone:", error);
             dispatch(isFetchingComplete());
-            throw error;
+            throw error; // Propagamos el error para que se maneje correctamente como "rejected"
         }
     },
 )

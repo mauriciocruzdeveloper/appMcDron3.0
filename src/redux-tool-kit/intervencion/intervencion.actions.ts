@@ -8,28 +8,29 @@ import {
 } from "../../persistencia/persistenciaFirebase";
 import { isFetchingComplete, isFetchingStart } from "../app/app.slice";
 import { Intervencion } from "../../types/intervencion";
-import { setIntervenciones } from "./intervencion.slice";
+import { RootState } from '../store';
 
 // ELIMINAR INTERVENCIÓN
 export const eliminarIntervencionAsync = createAsyncThunk(
-  'app/eliminarIntervencion',
+  'intervencion/eliminarIntervencion',
   async (id: string, { dispatch }) => {
     try {
       dispatch(isFetchingStart());
+      // La verificación de dependencias ahora se hace en la función de persistencia
       const intervencionEliminada = await eliminarIntervencionPersistencia(id);
       dispatch(isFetchingComplete());
       return intervencionEliminada;
-    } catch (error: any) { // TODO: Hacer tipo de dato para el error
-      console.error(error);
+    } catch (error: any) {
+      console.error("Error al eliminar intervención:", error);
       dispatch(isFetchingComplete());
-      throw error;
+      throw error; // Propagamos el error para que se maneje correctamente como "rejected"
     }
   },
 )
 
 // GUARDAR INTERVENCIÓN
 export const guardarIntervencionAsync = createAsyncThunk(
-  'app/guardarIntervencion',
+  'intervencion/guardarIntervencion',
   async (intervencion: Intervencion, { dispatch }) => {
     try {
       dispatch(isFetchingStart());
@@ -45,7 +46,7 @@ export const guardarIntervencionAsync = createAsyncThunk(
 
 // GET Intervención por id
 export const getIntervencionAsync = createAsyncThunk(
-  'app/getIntervencion',
+  'intervencion/getIntervencion',
   async (id: string, { dispatch }) => {
     try {
       dispatch(isFetchingStart());

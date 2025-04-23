@@ -8,6 +8,7 @@ import {
 } from "../../persistencia/persistenciaFirebase";
 import { isFetchingComplete, isFetchingStart } from "../app/app.slice";
 import { Repuesto } from "../../types/repuesto";
+import { RootState } from '../store';
 
 // ELIMINAR REPUESTO
 export const eliminarRepuestoAsync = createAsyncThunk(
@@ -15,13 +16,14 @@ export const eliminarRepuestoAsync = createAsyncThunk(
     async (id: string, { dispatch }) => {
         try {
             dispatch(isFetchingStart());
+            // La verificación de dependencias ahora se hace en la función de persistencia
             const repuestoEliminado = await eliminarRepuestoPersistencia(id);
             dispatch(isFetchingComplete());
             return repuestoEliminado;
-        } catch (error: any) { // TODO: Hacer tipo de dato para el error
-            console.error(error);
+        } catch (error: any) {
+            console.error("Error al eliminar repuesto:", error);
             dispatch(isFetchingComplete());
-            throw error;
+            throw error; // Propagamos el error para que se maneje correctamente como "rejected"
         }
     },
 )
