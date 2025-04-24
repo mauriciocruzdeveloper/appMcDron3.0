@@ -30,7 +30,7 @@ export default function IntervencionesReparacion({ reparacionId, readOnly = fals
     .filter(intervencion => !intervenciones.some(i => i.id === intervencion.id)) // Filtrar las ya asociadas
     .map(intervencion => ({
       value: intervencion.id,
-      label: intervencion.data.NombreInt,
+      label: `${intervencion.data.NombreInt}`,
     }));
 
   useEffect(() => {
