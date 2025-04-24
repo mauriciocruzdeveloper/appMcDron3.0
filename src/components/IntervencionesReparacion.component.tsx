@@ -170,12 +170,6 @@ export default function IntervencionesReparacion({ reparacionId, readOnly = fals
                   <div className="d-flex w-100 justify-content-between mb-2">
                     <h6 className="mb-1">{intervencion.data.NombreInt}</h6>
                     <div>
-                      <span className={`badge ${
-                        intervencion.data.Complejidad === 'Baja' ? 'bg-success' : 
-                        intervencion.data.Complejidad === 'Media' ? 'bg-warning' : 'bg-danger'
-                      } me-2`}>
-                        {intervencion.data.Complejidad}
-                      </span>
                       <span className="badge bg-bluemcdron">
                         {formatPrice(intervencion.data.PrecioTotal)}
                       </span>
@@ -183,11 +177,7 @@ export default function IntervencionesReparacion({ reparacionId, readOnly = fals
                   </div>
                   
                   <div className="mb-1 small">
-                    <strong>Modelo:</strong> {getModeloDroneName(intervencion.data.ModeloDroneId)}
-                  </div>
-                  
-                  <div className="mb-1 small">
-                    <strong>Categoría:</strong> {intervencion.data.Categoria}
+                    <strong>Modelo:</strong> {intervencion.data.ModeloDroneId && getModeloDroneName(intervencion.data.ModeloDroneId)}
                   </div>
                   
                   <div className="mb-1 small">
