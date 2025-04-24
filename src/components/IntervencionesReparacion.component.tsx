@@ -14,17 +14,17 @@ interface IntervencionesReparacionProps {
 export default function IntervencionesReparacion({ reparacionId, readOnly = false }: IntervencionesReparacionProps): JSX.Element {
   const dispatch = useAppDispatch();
   const { openModal } = useModal();
-  
+
   const intervenciones = useAppSelector(state => state.reparacion.intervencionesDeReparacionActual);
   const todasLasIntervenciones = useAppSelector(state => state.intervencion.coleccionIntervenciones);
   const modelosDrone = useAppSelector(state => state.modeloDrone.coleccionModelosDrone);
   const repuestosInventario = useAppSelector(state => state.repuesto.coleccionRepuestos);
-  
+
   const [intervencionSeleccionada, setIntervencionSeleccionada] = useState<string | null>(null);
   const [totalManoObra, setTotalManoObra] = useState<number>(0);
   const [totalRepuestos, setTotalRepuestos] = useState<number>(0);
   const [totalGeneral, setTotalGeneral] = useState<number>(0);
-  
+
   // Opciones para el selector de intervenciones
   const opcionesIntervenciones = todasLasIntervenciones
     .filter(intervencion => !intervenciones.some(i => i.id === intervencion.id)) // Filtrar las ya asociadas
@@ -32,41 +32,41 @@ export default function IntervencionesReparacion({ reparacionId, readOnly = fals
       value: intervencion.id,
       label: intervencion.data.NombreInt,
     }));
-  
+
   useEffect(() => {
     // Cargar intervenciones al montar el componente
     dispatch(getIntervencionesPorReparacionAsync(reparacionId));
   }, [dispatch, reparacionId]);
-  
+
   useEffect(() => {
     // Calcular los totales cuando cambian las intervenciones
     let manoObra = 0;
     let repuestos = 0;
     let total = 0;
-    
+
     intervenciones.forEach(intervencion => {
       manoObra += intervencion.data.PrecioManoObra;
       total += intervencion.data.PrecioTotal;
     });
-    
+
     repuestos = total - manoObra;
-    
+
     setTotalManoObra(manoObra);
     setTotalRepuestos(repuestos);
     setTotalGeneral(total);
   }, [intervenciones]);
-  
+
   const handleAgregarIntervencion = async () => {
     if (!intervencionSeleccionada) return;
-    
+
     try {
       await dispatch(agregarIntervencionAReparacionAsync({
         reparacionId,
         intervencionId: intervencionSeleccionada
       })).unwrap();
-      
+
       setIntervencionSeleccionada(null);
-      
+
       openModal({
         mensaje: "Intervención agregada correctamente.",
         tipo: "success",
@@ -80,7 +80,7 @@ export default function IntervencionesReparacion({ reparacionId, readOnly = fals
       });
     }
   };
-  
+
   const handleEliminarIntervencion = async (intervencionId: string) => {
     openModal({
       mensaje: "¿Está seguro de que desea eliminar esta intervención de la reparación?",
@@ -92,7 +92,7 @@ export default function IntervencionesReparacion({ reparacionId, readOnly = fals
             reparacionId,
             intervencionId
           })).unwrap();
-          
+
           openModal({
             mensaje: "Intervención eliminada correctamente.",
             tipo: "success",
@@ -108,11 +108,11 @@ export default function IntervencionesReparacion({ reparacionId, readOnly = fals
       }
     });
   };
-  
+
   const formatPrice = (precio: number): string => {
     return precio.toLocaleString('es-AR', { style: 'currency', currency: 'ARS' });
   };
-  
+
   const getModeloDroneName = (modeloId: string): string => {
     const modelo = modelosDrone.find(m => m.id === modeloId);
     return modelo ? modelo.data.NombreModelo : modeloId;
@@ -120,53 +120,51 @@ export default function IntervencionesReparacion({ reparacionId, readOnly = fals
 
   const getRepuestoInfo = (repuestoId: string) => {
     const repuesto = repuestosInventario.find(r => r.id === repuestoId);
-    return repuesto 
-      ? `${repuesto.data.NombreRepu} (${formatPrice(repuesto.data.PrecioRepu)})` 
+    return repuesto
+      ? `${repuesto.data.NombreRepu} (${formatPrice(repuesto.data.PrecioRepu)})`
       : 'Repuesto no encontrado';
   };
-  
+
   return (
-    <div className="card mb-3">
-      <div className="card-body">
-        <h5 className="card-title bluemcdron">INTERVENCIONES APLICADAS</h5>
-        
-        {!readOnly && (
-          <div className="mb-4">
-            <div className="row g-3 align-items-center">
-              <div className="col">
-                <Select 
-                  options={opcionesIntervenciones}
-                  value={opcionesIntervenciones.find(opt => opt.value === intervencionSeleccionada) || null}
-                  onChange={(selected) => setIntervencionSeleccionada(selected?.value || null)}
-                  placeholder="Seleccionar una intervención..."
-                  isClearable
-                />
-              </div>
-              <div className="col-auto">
-                <button 
-                  className="btn bg-bluemcdron text-white"
-                  onClick={handleAgregarIntervencion}
-                  disabled={!intervencionSeleccionada}
-                >
-                  <i className="bi bi-plus-circle me-1"></i> Agregar
-                </button>
-              </div>
+    <div className="mb-3">
+      {!readOnly && (
+        <div className="mb-4">
+          <div className="row g-3 align-items-center">
+            <div className="col">
+              <Select
+                options={opcionesIntervenciones}
+                value={opcionesIntervenciones.find(opt => opt.value === intervencionSeleccionada) || null}
+                onChange={(selected) => setIntervencionSeleccionada(selected?.value || null)}
+                placeholder="Seleccionar una intervención..."
+                isClearable
+              />
+            </div>
+            <div className="col-auto">
+              <button
+                className="btn bg-bluemcdron text-white"
+                onClick={handleAgregarIntervencion}
+                disabled={!intervencionSeleccionada}
+              >
+                <i className="bi bi-plus-circle me-1"></i> Agregar
+              </button>
             </div>
           </div>
-        )}
-        
-        {intervenciones.length === 0 ? (
-          <div className="alert alert-info text-center" role="alert">
-            No hay intervenciones asociadas a esta reparación.
-          </div>
-        ) : (
-          <>
-            <div className="list-group mb-4">
-              {intervenciones.map((intervencion: Intervencion) => (
-                <div 
-                  key={intervencion.id} 
-                  className="list-group-item list-group-item-action flex-column align-items-start"
-                >
+        </div>
+      )}
+
+      {intervenciones.length === 0 ? (
+        <div className="alert alert-info text-center" role="alert">
+          No hay intervenciones asociadas a esta reparación.
+        </div>
+      ) : (
+        <>
+          <div>
+            {intervenciones.map((intervencion: Intervencion) => (
+              <div
+                key={intervencion.id}
+                className="card mb-3"
+              >
+                <div className="card-body">
                   <div className="d-flex w-100 justify-content-between mb-2">
                     <h6 className="mb-1">{intervencion.data.NombreInt}</h6>
                     <div>
@@ -175,19 +173,19 @@ export default function IntervencionesReparacion({ reparacionId, readOnly = fals
                       </span>
                     </div>
                   </div>
-                  
+
                   <div className="mb-1 small">
                     <strong>Modelo:</strong> {intervencion.data.ModeloDroneId && getModeloDroneName(intervencion.data.ModeloDroneId)}
                   </div>
-                  
+
                   <div className="mb-1 small">
                     <strong>Tiempo estimado:</strong> {intervencion.data.DuracionEstimada} minutos
                   </div>
-                  
+
                   <div className="mb-2 small">
                     <strong>Descripción:</strong> {intervencion.data.DescripcionInt}
                   </div>
-                  
+
                   {intervencion.data.RepuestosIds && intervencion.data.RepuestosIds.length > 0 && (
                     <div className="mb-2 small">
                       <strong>Repuestos:</strong>
@@ -200,7 +198,7 @@ export default function IntervencionesReparacion({ reparacionId, readOnly = fals
                       </ul>
                     </div>
                   )}
-                  
+
                   <div className="d-flex justify-content-between align-items-center mt-2">
                     <div>
                       <span className="badge bg-secondary me-2">
@@ -210,10 +208,10 @@ export default function IntervencionesReparacion({ reparacionId, readOnly = fals
                         Repuestos: {formatPrice(intervencion.data.PrecioTotal - intervencion.data.PrecioManoObra)}
                       </span>
                     </div>
-                    
+
                     {!readOnly && (
-                      <button 
-                        className="btn btn-sm btn-danger" 
+                      <button
+                        className="btn btn-sm btn-danger"
                         onClick={() => handleEliminarIntervencion(intervencion.id)}
                       >
                         <i className="bi bi-trash"></i> Eliminar
@@ -221,29 +219,29 @@ export default function IntervencionesReparacion({ reparacionId, readOnly = fals
                     )}
                   </div>
                 </div>
-              ))}
-            </div>
-            
-            <div className="card bg-light">
-              <div className="card-body">
-                <h6 className="card-title">Resumen</h6>
-                <div className="row">
-                  <div className="col">
-                    <div className="mb-2">Mano de obra:</div>
-                    <div className="mb-2">Repuestos:</div>
-                    <div className="fw-bold">Total:</div>
-                  </div>
-                  <div className="col-auto text-end">
-                    <div className="mb-2">{formatPrice(totalManoObra)}</div>
-                    <div className="mb-2">{formatPrice(totalRepuestos)}</div>
-                    <div className="fw-bold">{formatPrice(totalGeneral)}</div>
-                  </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="card bg-light">
+            <div className="card-body">
+              <h6 className="card-title">Resumen</h6>
+              <div className="row">
+                <div className="col">
+                  <div className="mb-2">Mano de obra:</div>
+                  <div className="mb-2">Repuestos:</div>
+                  <div className="fw-bold">Total:</div>
+                </div>
+                <div className="col-auto text-end">
+                  <div className="mb-2">{formatPrice(totalManoObra)}</div>
+                  <div className="mb-2">{formatPrice(totalRepuestos)}</div>
+                  <div className="fw-bold">{formatPrice(totalGeneral)}</div>
                 </div>
               </div>
             </div>
-          </>
-        )}
-      </div>
+          </div>
+        </>
+      )}
     </div>
   );
 }
