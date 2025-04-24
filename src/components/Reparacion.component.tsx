@@ -38,20 +38,54 @@ export default function ReparacionComponent(): React.ReactElement | null {
         state => state.usuario.coleccionUsuarios.find(usuario => usuario.id === reparacionStore?.data.UsuarioRep)
     );
 
+    // Obtener las intervenciones aplicadas a esta reparación
+    const intervencionesAplicadas = useAppSelector(state => state.reparacion.intervencionesDeReparacionActual);
+    
+    // Calcular el total de las intervenciones
+    const totalIntervenciones = intervencionesAplicadas.reduce((total, intervencion) => 
+        total + intervencion.data.PrecioTotal, 0);
+
     const [reparacionOriginal, setReparacionOriginal] = useState<ReparacionType>();
     const [reparacion, setReparacion] = useState<ReparacionType | undefined>(reparacionStore);
     const [fotoSeleccionada, setFotoSeleccionada] = useState<string | null>(null);
+    const [precioModificado, setPrecioModificado] = useState(false);
 
     useEffect(() => {
         if (reparacionStore) {
             setReparacion(reparacionStore);
             setReparacionOriginal(reparacionStore);
+            
+            // Verificamos si el precio ya había sido modificado manualmente
+            // Si el precio no coincide con el total de intervenciones y hay intervenciones, asumimos que fue modificado
+            if (intervencionesAplicadas.length > 0 && reparacionStore.data.PresuFiRep !== totalIntervenciones) {
+                setPrecioModificado(true);
+            } else {
+                setPrecioModificado(false);
+            }
         }
-    }, [reparacionStore, id]);
+    }, [reparacionStore, id, intervencionesAplicadas, totalIntervenciones]);
+
+    // Actualizar automáticamente el precio final si no ha sido modificado manualmente
+    useEffect(() => {
+        if (reparacion && !precioModificado && totalIntervenciones !== reparacion.data.PresuFiRep) {
+            setReparacion(prevState => prevState ? {
+                ...prevState,
+                data: {
+                    ...prevState.data,
+                    PresuFiRep: totalIntervenciones
+                }
+            } : prevState);
+        }
+    }, [totalIntervenciones, precioModificado, reparacion]);
 
     if (!reparacion || !usuarioStore) return null;
 
     const changeInputRep = (field: string, value: string) => {
+        // Si estamos modificando el precio final, marcar como modificado
+        if (field === 'PresuFiRep') {
+            setPrecioModificado(true);
+        }
+        
         setReparacion(prevReparacion => prevReparacion ? {
             ...prevReparacion,
             data: {
@@ -343,6 +377,11 @@ export default function ReparacionComponent(): React.ReactElement | null {
     const handleGoToUser = () => {
         history.push(`/inicio/usuarios/${usuarioStore.data.EmailUsu}`)
     }
+
+    // Formatear precio para mostrar
+    const formatPrice = (precio: number): string => {
+        return precio.toLocaleString('es-AR', { style: 'currency', currency: 'ARS' });
+    };
 
     // UI RENDER
     return (
@@ -647,7 +686,15 @@ export default function ReparacionComponent(): React.ReactElement | null {
                             id="PresuFiRep"
                             value={reparacion?.data?.PresuFiRep || ""}
                             disabled={!isAdmin}
+                            title="El precio se calcula automáticamente a partir de las intervenciones. Puede modificarlo manualmente."
                         />
+                        {isAdmin && intervencionesAplicadas.length > 0 && (
+                            <small className="form-text text-muted">
+                                {precioModificado 
+                                    ? `Precio establecido manualmente. Total de intervenciones: ${formatPrice(totalIntervenciones)}`
+                                    : `Precio calculado a partir de las intervenciones: ${formatPrice(totalIntervenciones)}`}
+                            </small>
+                        )}
                     </div>
                     <div>
                         <label className="form-label">Diagnóstico $</label>
