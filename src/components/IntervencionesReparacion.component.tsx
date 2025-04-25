@@ -5,6 +5,7 @@ import { getIntervencionesPorReparacionAsync, agregarIntervencionAReparacionAsyn
 import { Intervencion } from '../types/intervencion';
 import { useModal } from './Modal/useModal';
 import Select from 'react-select';
+import { setIntervencionesDeReparacionActual } from '../redux-tool-kit/reparacion/reparacion.slice';
 
 interface IntervencionesReparacionProps {
   reparacionId: string;
@@ -36,6 +37,11 @@ export default function IntervencionesReparacion({ reparacionId, readOnly = fals
   useEffect(() => {
     // Cargar intervenciones al montar el componente
     dispatch(getIntervencionesPorReparacionAsync(reparacionId));
+
+    return () => {
+      // Limpiar el estado de intervenciones al desmontar el componente
+      dispatch(setIntervencionesDeReparacionActual([]));
+    }
   }, [dispatch, reparacionId]);
 
   useEffect(() => {

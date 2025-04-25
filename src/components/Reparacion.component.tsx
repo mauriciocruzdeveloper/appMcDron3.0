@@ -48,42 +48,59 @@ export default function ReparacionComponent(): React.ReactElement | null {
     const [reparacionOriginal, setReparacionOriginal] = useState<ReparacionType>();
     const [reparacion, setReparacion] = useState<ReparacionType | undefined>(reparacionStore);
     const [fotoSeleccionada, setFotoSeleccionada] = useState<string | null>(null);
-    const [precioModificado, setPrecioModificado] = useState(false);
+    const [precioManualmenteModificado, setPrecioManualmenteModificado] = useState(false);
+
+    // Este useEffect reinicia completamente el estado cuando cambia el ID de la reparación
+    useEffect(() => {
+        // Reiniciar todos los estados cuando cambia el ID
+        setPrecioManualmenteModificado(false);
+        setFotoSeleccionada(null);
+        
+        // Al cambiar de ID, solo establecemos el estado con los datos del store
+        // y dejamos que el siguiente useEffect haga el trabajo específico
+    }, [id]);
 
     useEffect(() => {
         if (reparacionStore) {
+            // Cuando hay un cambio en reparacionStore, actualizamos el estado local completamente
             setReparacion(reparacionStore);
             setReparacionOriginal(reparacionStore);
             
-            // Verificamos si el precio ya había sido modificado manualmente
-            // Si el precio no coincide con el total de intervenciones y hay intervenciones, asumimos que fue modificado
-            if (intervencionesAplicadas.length > 0 && reparacionStore.data.PresuFiRep !== totalIntervenciones) {
-                setPrecioModificado(true);
-            } else {
-                setPrecioModificado(false);
+            // Reiniciamos el flag de modificación manual para asegurar que
+            // cada reparación tenga su propio comportamiento
+            setPrecioManualmenteModificado(false);
+        }
+    }, [reparacionStore, id]);
+
+    // Actualizar automáticamente el precio final solo cuando:
+    // 1. La reparación existe
+    // 2. No ha sido modificado manualmente 
+    // 3. Hay intervenciones con un total > 0
+    // 4. No hay un precio previamente establecido o ha cambiado el total
+    useEffect(() => {
+        if (reparacion && !precioManualmenteModificado && totalIntervenciones > 0) {
+            // Solo actualizamos el precio si:
+            // - No tiene precio existente (reparación nueva o precio no establecido)
+            // - O el precio calculado es diferente del actual Y no ha sido modificado manualmente
+            if (!reparacion.data.PresuFiRep || 
+               (totalIntervenciones !== reparacion.data.PresuFiRep && !precioManualmenteModificado)) {
+                setReparacion(prevState => prevState ? {
+                    ...prevState,
+                    data: {
+                        ...prevState.data,
+                        PresuFiRep: totalIntervenciones
+                    }
+                } : prevState);
             }
         }
-    }, [reparacionStore, id, intervencionesAplicadas, totalIntervenciones]);
-
-    // Actualizar automáticamente el precio final si no ha sido modificado manualmente
-    useEffect(() => {
-        if (reparacion && !precioModificado && totalIntervenciones !== reparacion.data.PresuFiRep) {
-            setReparacion(prevState => prevState ? {
-                ...prevState,
-                data: {
-                    ...prevState.data,
-                    PresuFiRep: totalIntervenciones
-                }
-            } : prevState);
-        }
-    }, [totalIntervenciones, precioModificado, reparacion]);
+    }, [totalIntervenciones, precioManualmenteModificado, reparacion]);
 
     if (!reparacion || !usuarioStore) return null;
 
     const changeInputRep = (field: string, value: string) => {
-        // Si estamos modificando el precio final, marcar como modificado
+        // Si estamos modificando el precio final, marcar como modificado manualmente
         if (field === 'PresuFiRep') {
-            setPrecioModificado(true);
+            setPrecioManualmenteModificado(true);
         }
         
         setReparacion(prevReparacion => prevReparacion ? {
@@ -686,12 +703,12 @@ export default function ReparacionComponent(): React.ReactElement | null {
                             id="PresuFiRep"
                             value={reparacion?.data?.PresuFiRep || ""}
                             disabled={!isAdmin}
-                            title="El precio se calcula automáticamente a partir de las intervenciones. Puede modificarlo manualmente."
+                            title="El precio se calcula automáticamente en base a las intervenciones, o puede ingresar un valor manual"
                         />
                         {isAdmin && intervencionesAplicadas.length > 0 && (
                             <small className="form-text text-muted">
-                                {precioModificado 
-                                    ? `Precio establecido manualmente. Total de intervenciones: ${formatPrice(totalIntervenciones)}`
+                                {totalIntervenciones !== reparacion.data.PresuFiRep 
+                                    ? `El precio actual difiere del total de intervenciones (${formatPrice(totalIntervenciones)})`
                                     : `Precio calculado a partir de las intervenciones: ${formatPrice(totalIntervenciones)}`}
                             </small>
                         )}
