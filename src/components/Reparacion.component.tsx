@@ -40,69 +40,37 @@ export default function ReparacionComponent(): React.ReactElement | null {
 
     // Obtener las intervenciones aplicadas a esta reparación
     const intervencionesAplicadas = useAppSelector(state => state.reparacion.intervencionesDeReparacionActual);
-    
+
     // Calcular el total de las intervenciones
-    const totalIntervenciones = intervencionesAplicadas.reduce((total, intervencion) => 
+    const totalIntervenciones = intervencionesAplicadas.reduce((total, intervencion) =>
         total + intervencion.data.PrecioTotal, 0);
 
     const [reparacionOriginal, setReparacionOriginal] = useState<ReparacionType>();
     const [reparacion, setReparacion] = useState<ReparacionType | undefined>(reparacionStore);
-    const [fotoSeleccionada, setFotoSeleccionada] = useState<string | null>(null);
-    const [precioManualmenteModificado, setPrecioManualmenteModificado] = useState(false);
-
-    // Este useEffect reinicia completamente el estado cuando cambia el ID de la reparación
-    useEffect(() => {
-        // Reiniciar todos los estados cuando cambia el ID
-        setPrecioManualmenteModificado(false);
-        setFotoSeleccionada(null);
-        
-        // Al cambiar de ID, solo establecemos el estado con los datos del store
-        // y dejamos que el siguiente useEffect haga el trabajo específico
-    }, [id]);
+    const [fotoSeleccionada, setFotoSeleccionada] = useState<string | null>(id === 'new' ? null : reparacionStore?.data.urlsFotos?.[0] || null);
 
     useEffect(() => {
         if (reparacionStore) {
-            // Cuando hay un cambio en reparacionStore, actualizamos el estado local completamente
             setReparacion(reparacionStore);
             setReparacionOriginal(reparacionStore);
-            
-            // Reiniciamos el flag de modificación manual para asegurar que
-            // cada reparación tenga su propio comportamiento
-            setPrecioManualmenteModificado(false);
         }
     }, [reparacionStore, id]);
 
-    // Actualizar automáticamente el precio final solo cuando:
-    // 1. La reparación existe
-    // 2. No ha sido modificado manualmente 
-    // 3. Hay intervenciones con un total > 0
-    // 4. No hay un precio previamente establecido o ha cambiado el total
     useEffect(() => {
-        if (reparacion && !precioManualmenteModificado && totalIntervenciones > 0) {
-            // Solo actualizamos el precio si:
-            // - No tiene precio existente (reparación nueva o precio no establecido)
-            // - O el precio calculado es diferente del actual Y no ha sido modificado manualmente
-            if (!reparacion.data.PresuFiRep || 
-               (totalIntervenciones !== reparacion.data.PresuFiRep && !precioManualmenteModificado)) {
-                setReparacion(prevState => prevState ? {
-                    ...prevState,
-                    data: {
-                        ...prevState.data,
-                        PresuFiRep: totalIntervenciones
-                    }
-                } : prevState);
-            }
+        if (reparacion && totalIntervenciones && !reparacion.data.PresuFiRep) {
+            setReparacion(prevState => prevState ? {
+                ...prevState,
+                data: {
+                    ...prevState.data,
+                    PresuFiRep: totalIntervenciones
+                }
+            } : prevState);
         }
-    }, [totalIntervenciones, precioManualmenteModificado, reparacion]);
+    }, [totalIntervenciones, reparacion]);
 
     if (!reparacion || !usuarioStore) return null;
 
     const changeInputRep = (field: string, value: string) => {
-        // Si estamos modificando el precio final, marcar como modificado manualmente
-        if (field === 'PresuFiRep') {
-            setPrecioManualmenteModificado(true);
-        }
-        
         setReparacion(prevReparacion => prevReparacion ? {
             ...prevReparacion,
             data: {
@@ -204,23 +172,23 @@ export default function ReparacionComponent(): React.ReactElement | null {
     const confirmEliminarReparacion = async () => {
         if (!reparacion) return;
         try {
-            const response = await dispatch(eliminarReparacionAsync(reparacion.id)).unwrap();
-            
+            await dispatch(eliminarReparacionAsync(reparacion.id)).unwrap();
+
             openModal({
-              mensaje: "Reparación eliminada correctamente.",
-              tipo: "success",
-              titulo: "Eliminar Reparación",
+                mensaje: "Reparación eliminada correctamente.",
+                tipo: "success",
+                titulo: "Eliminar Reparación",
             });
             history.goBack();
-          } catch (error: any) { // TODO: Hacer tipo de dato para el error
+        } catch (error: any) { // TODO: Hacer tipo de dato para el error
             console.error("Error al eliminar la reparación:", error);
-            
+
             openModal({
-              mensaje: error?.code || "Error al eliminar la reparación.",
-              tipo: "danger",
-              titulo: "Eliminar Reparación",
+                mensaje: error?.code || "Error al eliminar la reparación.",
+                tipo: "danger",
+                titulo: "Eliminar Reparación",
             });
-          }
+        }
     }
 
     const handleGuardarReparacion = async () => {
@@ -310,7 +278,7 @@ export default function ReparacionComponent(): React.ReactElement | null {
     const handleFotoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         if (!e.target.files?.length || !reparacion) return;
         const file = e.target.files[0];
-        const response = await dispatch(subirFotoAsync({reparacionId: reparacion.id, file}));
+        const response = await dispatch(subirFotoAsync({ reparacionId: reparacion.id, file }));
         if (response.meta.requestStatus === 'fulfilled') {
             const urlFoto = response.payload;
             setReparacion({
@@ -332,7 +300,7 @@ export default function ReparacionComponent(): React.ReactElement | null {
     const handleDocumentoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         if (!e.target.files?.length || !reparacion) return;
         const file = e.target.files[0];
-        const response = await dispatch(subirDocumentoAsync({reparacionId: reparacion.id, file}));
+        const response = await dispatch(subirDocumentoAsync({ reparacionId: reparacion.id, file }));
         if (response.meta.requestStatus === 'fulfilled') {
             const urlDoc = response.payload;
             setReparacion({
@@ -353,7 +321,7 @@ export default function ReparacionComponent(): React.ReactElement | null {
 
     const handleDeleteFoto = async (fotoUrl: string) => {
         if (!reparacion) return;
-        const response = await dispatch(borrarFotoAsync({reparacionId: reparacion.id, fotoUrl}));
+        const response = await dispatch(borrarFotoAsync({ reparacionId: reparacion.id, fotoUrl }));
         if (response.meta.requestStatus === 'fulfilled') {
             setReparacion({
                 ...reparacion,
@@ -368,12 +336,12 @@ export default function ReparacionComponent(): React.ReactElement | null {
                 tipo: "danger",
                 titulo: "Eliminar Foto",
             })
-        }   
+        }
     };
 
     const handleDeleteDocumento = async (docUrl: string) => {
         if (!reparacion) return;
-        const response = await dispatch(borrarDocumentoAsync({reparacionId: reparacion.id, documentoUrl: docUrl}));
+        const response = await dispatch(borrarDocumentoAsync({ reparacionId: reparacion.id, documentoUrl: docUrl }));
         if (response.meta.requestStatus === 'fulfilled') {
             setReparacion({
                 ...reparacion,
@@ -388,7 +356,7 @@ export default function ReparacionComponent(): React.ReactElement | null {
                 tipo: "danger",
                 titulo: "Eliminar Documento",
             })
-        }   
+        }
     };
 
     const handleGoToUser = () => {
@@ -618,7 +586,7 @@ export default function ReparacionComponent(): React.ReactElement | null {
                     </div>
                 </div>
             </div>
-            
+
             {/* Resto de secciones del formulario */}
             <div className="card mb-3">
                 <div className="card-body">
@@ -646,7 +614,7 @@ export default function ReparacionComponent(): React.ReactElement | null {
                     </div>
                 </div>
             </div>
-            
+
             <div className="card mb-3">
                 <div className="card-body">
                     <h5 className="card-title bluemcdron">REVISIÓN - DIAGNÓSTICO Y PRESUPUESTO DATOS</h5>
@@ -707,7 +675,7 @@ export default function ReparacionComponent(): React.ReactElement | null {
                         />
                         {isAdmin && intervencionesAplicadas.length > 0 && (
                             <small className="form-text text-muted">
-                                {totalIntervenciones !== reparacion.data.PresuFiRep 
+                                {totalIntervenciones !== reparacion.data.PresuFiRep
                                     ? `El precio actual difiere del total de intervenciones (${formatPrice(totalIntervenciones)})`
                                     : `Precio calculado a partir de las intervenciones: ${formatPrice(totalIntervenciones)}`}
                             </small>
@@ -726,7 +694,7 @@ export default function ReparacionComponent(): React.ReactElement | null {
                     </div>
                 </div>
             </div>
-            
+
             {isAdmin ? // Sólo para administrador
                 <div className="card mb-3">
                     <div className="card-body">
@@ -745,7 +713,7 @@ export default function ReparacionComponent(): React.ReactElement | null {
                 </div>
                 : null
             }
-            
+
             <div className="card mb-3">
                 <div className="card-body">
                     <h5 className="card-title bluemcdron">REPARACIÓN - DATOS DE LA REPARACIÓN</h5>
@@ -773,7 +741,7 @@ export default function ReparacionComponent(): React.ReactElement | null {
                     </div>
                 </div>
             </div>
-            
+
             <div className="card mb-3">
                 <div className="card-body">
                     <h5 className="card-title bluemcdron">ENTREGA - DATOS DE LA ENTREGA</h5>
@@ -812,13 +780,13 @@ export default function ReparacionComponent(): React.ReactElement | null {
                     </div>
                 </div>
             </div>
-            
+
             <div className="card mb-3">
                 <div className="card-body">
                     <h5 className="card-title bluemcdron">INTERVENCIONES - TRABAJOS REALIZADOS</h5>
-                    <IntervencionesReparacion 
-                        reparacionId={reparacion.id} 
-                        readOnly={!isAdmin} 
+                    <IntervencionesReparacion
+                        reparacionId={reparacion.id}
+                        readOnly={!isAdmin}
                     />
                 </div>
             </div>
@@ -943,10 +911,10 @@ export default function ReparacionComponent(): React.ReactElement | null {
                                     fileName = fileName.split('/').pop() || `Documento ${idx + 1}`;
                                     // Eliminar los parámetros de consulta
                                     fileName = fileName.split('?')[0];
-                                    
+
                                     return (
-                                        <div 
-                                            key={idx} 
+                                        <div
+                                            key={idx}
                                             className="list-group-item list-group-item-action d-flex justify-content-between align-items-center mb-2"
                                         >
                                             <div className="text-truncate" style={{ maxWidth: "70%" }}>
@@ -954,16 +922,16 @@ export default function ReparacionComponent(): React.ReactElement | null {
                                                 <span className="text-truncate">{fileName}</span>
                                             </div>
                                             <div>
-                                                <a 
-                                                    href={url} 
-                                                    target="_blank" 
+                                                <a
+                                                    href={url}
+                                                    target="_blank"
                                                     className="btn btn-sm btn-success me-3"
                                                     download
                                                 >
                                                     <i className="bi bi-cloud-download"></i>
                                                 </a>
                                                 {isAdmin && (
-                                                    <button 
+                                                    <button
                                                         className="btn btn-sm btn-danger"
                                                         onClick={() => handleDeleteDocumento(url)}
                                                     >
@@ -983,7 +951,7 @@ export default function ReparacionComponent(): React.ReactElement | null {
                     </div>
                 </div>
             </div>
-            
+
             {isAdmin ? // Sólo para administrador
                 <div className="text-center">
                     <button
