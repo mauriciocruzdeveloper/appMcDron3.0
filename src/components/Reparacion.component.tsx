@@ -47,7 +47,7 @@ export default function ReparacionComponent(): React.ReactElement | null {
 
     const [reparacionOriginal, setReparacionOriginal] = useState<ReparacionType>();
     const [reparacion, setReparacion] = useState<ReparacionType | undefined>(reparacionStore);
-    const [fotoSeleccionada, setFotoSeleccionada] = useState<string | null>(id === 'new' ? null : reparacionStore?.data.urlsFotos?.[0] || null);
+    const [fotoSeleccionada, setFotoSeleccionada] = useState<string | null>(null);
 
     useEffect(() => {
         if (reparacionStore) {
