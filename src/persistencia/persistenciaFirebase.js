@@ -215,7 +215,130 @@ export const eliminarReparacionPersistencia = (id) => {
     })
 };
 
+// GET Intervenciones por reparación
+export const getIntervencionesPorReparacionPersistencia = (reparacionId) => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      const reparacionRef = doc(firestore, collectionNames.REPARACIONES, reparacionId);
+      const reparacionSnap = await getDoc(reparacionRef);
+      
+      if (!reparacionSnap.exists()) {
+        reject({ code: 'Reparación no encontrada' });
+        return;
+      }
+      
+      const reparacionData = reparacionSnap.data();
+      const intervencionesIds = reparacionData.IntervencionesIds || [];
+      
+      if (intervencionesIds.length === 0) {
+        resolve([]);
+        return;
+      }
+      
+      const intervenciones = [];
+      
+      // Obtener cada intervención por su ID
+      for (const intId of intervencionesIds) {
+        try {
+          // Verificar que el ID sea una cadena válida
+          if (typeof intId !== 'string') {
+            console.warn(`ID de intervención inválido: ${intId}, se omitirá esta intervención`);
+            continue;
+          }
+          
+          // Usa directamente el ID para obtener la referencia al documento
+          const intervencionRef = doc(firestore, collectionNames.INTERVENCIONES, intId);
+          const intervencionSnap = await getDoc(intervencionRef);
+          
+          if (intervencionSnap.exists()) {
+            intervenciones.push({
+              id: intId,
+              data: intervencionSnap.data()
+            });
+          } else {
+            console.warn(`La intervención con ID ${intId} no existe`);
+          }
+        } catch (error) {
+          console.error(`Error al cargar la intervención ${intId}:`, error);
+          // Continuar con la siguiente intervención en caso de error
+        }
+      }
+      
+      resolve(intervenciones);
+    } catch (error) {
+      console.error('Error al cargar intervenciones de la reparación:', error);
+      reject(error);
+    }
+  });
+};
 
+// Añadir intervención a reparación
+export const agregarIntervencionAReparacionPersistencia = (reparacionId, intervencionId) => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      const reparacionRef = doc(firestore, collectionNames.REPARACIONES, reparacionId);
+      const reparacionSnap = await getDoc(reparacionRef);
+      
+      if (!reparacionSnap.exists()) {
+        reject({ code: 'Reparación no encontrada' });
+        return;
+      }
+      
+      const reparacionData = reparacionSnap.data();
+      const intervencionesIds = reparacionData.IntervencionesIds || [];
+      
+      if (intervencionesIds.includes(intervencionId)) {
+        // La intervención ya está asociada
+        resolve(true);
+        return;
+      }
+      
+      // Agregar la nueva intervención
+      intervencionesIds.push(intervencionId);
+      
+      // Actualizar la reparación
+      await updateDoc(reparacionRef, {
+        IntervencionesIds: intervencionesIds
+      });
+      
+      resolve(true);
+    } catch (error) {
+      console.error('Error al agregar intervención a la reparación:', error);
+      reject(error);
+    }
+  });
+};
+
+// Eliminar intervención de reparación
+export const eliminarIntervencionDeReparacionPersistencia = (reparacionId, intervencionId) => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      const reparacionRef = doc(firestore, collectionNames.REPARACIONES, reparacionId);
+      const reparacionSnap = await getDoc(reparacionRef);
+      
+      if (!reparacionSnap.exists()) {
+        reject({ code: 'Reparación no encontrada' });
+        return;
+      }
+      
+      const reparacionData = reparacionSnap.data();
+      const intervencionesIds = reparacionData.IntervencionesIds || [];
+      
+      // Filtrar para eliminar la intervención especificada
+      const nuevasIntervencionesIds = intervencionesIds.filter(id => id !== intervencionId);
+      
+      // Actualizar la reparación
+      await updateDoc(reparacionRef, {
+        IntervencionesIds: nuevasIntervencionesIds
+      });
+      
+      resolve(true);
+    } catch (error) {
+      console.error('Error al eliminar intervención de la reparación:', error);
+      reject(error);
+    }
+  });
+};
 
 ///////////////////// CLIENTES/USUARIOS ///////////////////////////////////////////////////////////////////////////
 
@@ -330,30 +453,41 @@ export const guardarUsuarioPersistencia = (usuario) => {
 // DELETE Cliente
 export const eliminarUsuarioPersistencia = (id) => {
     return new Promise(async (resolve, reject) => {
-        // Busco si hay alguna reparación relacionada al usuario a eliminar
-        const refCol = collection(firestore, collectionNames.REPARACIONES);
-        const q = query(refCol, where('UsuarioRep', '==', id));
-        const querySnapshot = await getDocs(q);
-        // Si la consulta no arroja ningún resultado, se elimina, sino da error y muestra reparación relacionada.
-        if (querySnapshot.empty) {
-            deleteDoc(doc(firestore, 'USUARIOS', id))
-                .then(() => {
-                    console.log('borrando usuario ok');
-                    resolve(id);
-                })
-                .catch(error => {
-                    reject(error);
+        try {
+            // 1. Primero verificamos si hay reparaciones asociadas al usuario
+            const refRepCol = collection(firestore, collectionNames.REPARACIONES);
+            const qRep = query(refRepCol, where('UsuarioRep', '==', id));
+            const reparacionesSnapshot = await getDocs(qRep);
+            
+            // 2. Luego verificamos si hay drones asociados al usuario como propietario
+            const refDronesCol = collection(firestore, collectionNames.DRONES);
+            const qDrones = query(refDronesCol, where('Propietario', '==', id));
+            const dronesSnapshot = await getDocs(qDrones);
+            
+            // 3. Si hay reparaciones o drones relacionados, rechazamos la eliminación
+            if (!reparacionesSnapshot.empty) {
+                reject({
+                    code: 'No se puede borrar este usuario. Reparación relacionada: '
+                    + reparacionesSnapshot.docs.map(doc => doc.id).toString()
                 });
-        } else {
-            reject({
-                code:
-                    'No se puede borrar este usuario. Reparación relacionada: '
-                    // Muestra en el mesaje de error los ids de las reparaciones relacionadas al usuario
-                    + querySnapshot.docs.map(doc => doc.id).toString()
-            });
+            } 
+            else if (!dronesSnapshot.empty) {
+                reject({
+                    code: 'No se puede borrar este usuario. Drone relacionado: '
+                    + dronesSnapshot.docs.map(doc => doc.data().NumeroSerie || doc.id).toString()
+                });
+            } 
+            else {
+                // 4. Si no hay dependencias, procedemos a eliminar el usuario
+                await deleteDoc(doc(firestore, collectionNames.USUARIOS, id));
+                console.log('Usuario eliminado correctamente');
+                resolve(id);
+            }
+        } catch (error) {
+            console.error('Error al eliminar usuario:', error);
+            reject(error);
         }
-
-    })
+    });
 };
 
 
@@ -598,11 +732,131 @@ export const getLocPorProvPersistencia = (provincia) => {
 // Hash simple para generar los ids de los chats
 function hash_method(inputAHash, inputBHash) { return inputAHash ^ inputBHash }
 
+////////////////////// REPUESTOS ///////////////////////////////////////////////////////////////////////////
 
+// GET Repuesto por id
+export const getRepuestoPersistencia = (id) => {
+    return new Promise((resolve, reject) => {
+        const docRef = doc(firestore, collectionNames.REPUESTOS, id);
+        getDoc(docRef)
+            .then(docSnap => {
+                if (docSnap.exists()) {
+                    resolve({ id: id, data: docSnap.data() });
+                } else {
+                    reject({ code: 'Repuesto no encontrado' });
+                }
+            })
+            .catch(error => reject(error));
+    });
+};
 
+// GET Repuestos por modelo de drone
+export const getRepuestosPorModeloPersistencia = (modelo) => {
+    return new Promise((resolve, reject) => {
+        const repuestosRef = collection(firestore, collectionNames.REPUESTOS);
+        const q = query(repuestosRef, where('modeloDrone', '==', modelo));
+        getDocs(q)
+            .then(querySnapshot => {
+                let repuestos = [];
+                querySnapshot.forEach(doc => repuestos.push({ id: doc.id, data: doc.data() }));
+                resolve(repuestos);
+            })
+            .catch(error => reject(error));
+    });
+};
 
+// GET Repuestos por proveedor
+export const getRepuestosPorProveedorPersistencia = (proveedor) => {
+    return new Promise((resolve, reject) => {
+        const repuestosRef = collection(firestore, collectionNames.REPUESTOS);
+        const q = query(repuestosRef, where('proveedor', '==', proveedor));
+        getDocs(q)
+            .then(querySnapshot => {
+                let repuestos = [];
+                querySnapshot.forEach(doc => repuestos.push({ id: doc.id, data: doc.data() }));
+                resolve(repuestos);
+            })
+            .catch(error => reject(error));
+    });
+};
 
+// GUARDAR Repuesto
+export const guardarRepuestoPersistencia = (repuesto) => {
+    return new Promise((resolve, reject) => {
+        // Si no tiene ID, generamos uno basado en la fecha
+        if (!repuesto.id) {
+            repuesto.id = new Date().getTime().toString();
+        }
+        
+        setDoc(
+            doc(firestore, collectionNames.REPUESTOS, repuesto.id),
+            repuesto.data
+        )
+            .then(() => {
+                console.log('Repuesto guardado correctamente');
+                resolve(repuesto);
+            })
+            .catch(error => {
+                console.log('Error al guardar repuesto: ' + error);
+                reject(error);
+            });
+    });
+};
 
+// ELIMINAR Repuesto
+export const eliminarRepuestoPersistencia = (id) => {
+    return new Promise(async (resolve, reject) => {
+        try {
+            // Verificar si el repuesto está siendo utilizado en alguna intervención
+            const intervencionesRef = collection(firestore, collectionNames.INTERVENCIONES);
+            const intervencionesSnapshot = await getDocs(intervencionesRef);
+            
+            // Buscar en todas las intervenciones si alguna contiene este repuesto en su array RepuestosIds
+            let repuestoEnUso = false;
+            intervencionesSnapshot.forEach(doc => {
+                const intervencion = doc.data();
+                if (intervencion.RepuestosIds && Array.isArray(intervencion.RepuestosIds)) {
+                    if (intervencion.RepuestosIds.includes(id)) {
+                        repuestoEnUso = true;
+                    }
+                }
+            });
+            
+            if (repuestoEnUso) {
+                reject({
+                    code: "No se puede eliminar este repuesto porque está siendo utilizado en una o más intervenciones."
+                });
+                return;
+            }
+            
+            // Si no hay dependencias, procedemos a eliminar
+            await deleteDoc(doc(firestore, collectionNames.REPUESTOS, id));
+            console.log('Repuesto eliminado correctamente');
+            resolve(id);
+        } catch (error) {
+            console.error('Error al eliminar repuesto:', error);
+            reject(error);
+        }
+    });
+};
+
+// GET todos los Repuestos
+export const getRepuestosPersistencia = (setRepuestosToRedux) => {
+    // Cambio el campo de ordenación de 'descripcion' a 'DescripcionRepu' para coincidir con la estructura real 
+    const q = query(collection(firestore, collectionNames.REPUESTOS), orderBy('DescripcionRepu'));
+    try {
+        const unsubscribeRep = onSnapshot(q, (querySnapshot) => {
+            let repuestos = [];
+            querySnapshot.forEach(doc => repuestos.push({ id: doc.id, data: doc.data() }));
+            console.log('Repuestos cargados:', repuestos.length);
+            setRepuestosToRedux(repuestos);
+        });
+        return unsubscribeRep;
+    } catch (error) {
+        console.error("Error en getRepuestosPersistencia:", error);
+        return error;
+    }
+};
 
 /////////////////////////////////////////////////////////////////////
 
@@ -635,4 +889,329 @@ function hash_method(inputAHash, inputBHash) { return inputAHash ^ inputBHash }
 //         })
 //         .catch(error => reject(error))
 //     });
-// };2
+// };
+
+////////////////////// MODELO DRONE ///////////////////////////////////////////////////////////////////////////
+
+// GET ModeloDrone por id
+export const getModeloDronePersistencia = (id) => {
+    return new Promise((resolve, reject) => {
+        const docRef = doc(firestore, collectionNames.MODELOS_DRONE, id);
+        getDoc(docRef)
+            .then(docSnap => {
+                if (docSnap.exists()) {
+                    resolve({ id: id, data: docSnap.data() });
+                } else {
+                    reject({ code: 'Modelo de drone no encontrado' });
+                }
+            })
+            .catch(error => reject(error));
+    });
+};
+
+// GET ModelosDrone por fabricante
+export const getModelosDronePorFabricantePersistencia = (fabricante) => {
+    return new Promise((resolve, reject) => {
+        const modelosDroneRef = collection(firestore, collectionNames.MODELOS_DRONE);
+        const q = query(modelosDroneRef, where('Fabricante', '==', fabricante));
+        getDocs(q)
+            .then(querySnapshot => {
+                let modelosDrone = [];
+                querySnapshot.forEach(doc => modelosDrone.push({ id: doc.id, data: doc.data() }));
+                resolve(modelosDrone);
+            })
+            .catch(error => reject(error));
+    });
+};
+
+// GUARDAR ModeloDrone
+export const guardarModeloDronePersistencia = (modeloDrone) => {
+    return new Promise((resolve, reject) => {
+        // Si no tiene ID, generamos uno basado en la fecha
+        if (!modeloDrone.id) {
+            modeloDrone.id = new Date().getTime().toString();
+        }
+        
+        setDoc(
+            doc(firestore, collectionNames.MODELOS_DRONE, modeloDrone.id),
+            modeloDrone.data
+        )
+            .then(() => {
+                console.log('Modelo de drone guardado correctamente');
+                resolve(modeloDrone);
+            })
+            .catch(error => {
+                console.log('Error al guardar modelo de drone: ' + error);
+                reject(error);
+            });
+    });
+};
+
+// ELIMINAR ModeloDrone
+export const eliminarModeloDronePersistencia = (id) => {
+    return new Promise(async (resolve, reject) => {
+        try {
+            // 1. Verificar si hay drones asociados a este modelo
+            const droneRef = collection(firestore, collectionNames.DRONES);
+            const qDrones = query(droneRef, where('ModeloDroneId', '==', id));
+            const dronesSnapshot = await getDocs(qDrones);
+            
+            if (!dronesSnapshot.empty) {
+                reject({
+                    code: 'No se puede borrar este modelo de drone. Hay drones asociados a este modelo.'
+                });
+                return;
+            }
+            
+            // 2. Verificar si hay intervenciones asociadas a este modelo
+            const intervencionRef = collection(firestore, collectionNames.INTERVENCIONES);
+            const qIntervenciones = query(intervencionRef, where('ModeloDroneId', '==', id));
+            const intervencionesSnapshot = await getDocs(qIntervenciones);
+            
+            if (!intervencionesSnapshot.empty) {
+                reject({
+                    code: 'No se puede borrar este modelo de drone. Hay intervenciones asociadas a este modelo.'
+                });
+                return;
+            }
+            
+            // 3. Si no hay dependencias, procedemos a eliminar
+            await deleteDoc(doc(firestore, collectionNames.MODELOS_DRONE, id));
+            console.log('Modelo de drone eliminado correctamente');
+            resolve(id);
+        } catch (error) {
+            console.error('Error al eliminar modelo de drone:', error);
+            reject(error);
+        }
+    });
+};
+
+// GET todos los ModelosDrone
+export const getModelosDronePersistencia = (setModelosDroneToRedux) => {
+    const modelosDroneRef = collection(firestore, collectionNames.MODELOS_DRONE);
+    const q = query(modelosDroneRef, orderBy('NombreModelo'));
+    try {
+        const unsubscribeModelosDrone = onSnapshot(q, (querySnapshot) => {
+            let modelosDrone = [];
+            querySnapshot.forEach(doc => modelosDrone.push({ id: doc.id, data: doc.data() }));
+            setModelosDroneToRedux(modelosDrone);
+        });
+        return unsubscribeModelosDrone;
+    } catch (error) {
+        return error;
+    }
+};
+
+////////////////////// DRONE ///////////////////////////////////////////////////////////////////////////
+
+// GET Drone por id
+export const getDronePersistencia = (id) => {
+    return new Promise((resolve, reject) => {
+        const docRef = doc(firestore, collectionNames.DRONES, id);
+        getDoc(docRef)
+            .then(docSnap => {
+                if (docSnap.exists()) {
+                    resolve({ id: id, data: docSnap.data() });
+                } else {
+                    reject({ code: 'Drone no encontrado' });
+                }
+            })
+            .catch(error => reject(error));
+    });
+};
+
+// GET Drones por modelo de drone
+export const getDronesPorModeloDronePersistencia = (modeloDroneId) => {
+    return new Promise((resolve, reject) => {
+        const dronesRef = collection(firestore, collectionNames.DRONES);
+        const q = query(dronesRef, where('ModeloDroneId', '==', modeloDroneId));
+        getDocs(q)
+            .then(querySnapshot => {
+                let drones = [];
+                querySnapshot.forEach(doc => drones.push({ id: doc.id, data: doc.data() }));
+                resolve(drones);
+            })
+            .catch(error => reject(error));
+    });
+};
+
+// GET Drones por propietario
+export const getDronesPorPropietarioPersistencia = (propietario) => {
+    return new Promise((resolve, reject) => {
+        const dronesRef = collection(firestore, collectionNames.DRONES);
+        const q = query(dronesRef, where('Propietario', '==', propietario));
+        getDocs(q)
+            .then(querySnapshot => {
+                let drones = [];
+                querySnapshot.forEach(doc => drones.push({ id: doc.id, data: doc.data() }));
+                resolve(drones);
+            })
+            .catch(error => reject(error));
+    });
+};
+
+// GUARDAR Drone
+export const guardarDronePersistencia = (drone) => {
+    return new Promise((resolve, reject) => {
+        // Si no tiene ID, generamos uno basado en la fecha
+        if (!drone.id) {
+            drone.id = new Date().getTime().toString();
+        }
+        
+        setDoc(
+            doc(firestore, collectionNames.DRONES, drone.id),
+            drone.data
+        )
+            .then(() => {
+                console.log('Drone guardado correctamente');
+                resolve(drone);
+            })
+            .catch(error => {
+                console.log('Error al guardar drone: ' + error);
+                reject(error);
+            });
+    });
+};
+
+// ELIMINAR Drone
+export const eliminarDronePersistencia = (id) => {
+    return new Promise((resolve, reject) => {
+        deleteDoc(doc(firestore, collectionNames.DRONES, id))
+            .then(() => {
+                console.log('Drone eliminado correctamente');
+                resolve(id);
+            })
+            .catch(error => {
+                console.log('Error al eliminar drone: ' + error);
+                reject(error);
+            });
+    });
+};
+
+// GET todos los Drones
+export const getDronesPersistencia = (setDronesToRedux) => {
+    console.log('getDronesPersistencia');
+    const dronesRef = collection(firestore, collectionNames.DRONES);
+    const q = query(dronesRef, orderBy('NumeroSerie'));
+    try {
+        const unsubscribeDrones = onSnapshot(q, (querySnapshot) => {
+            let drones = [];
+            querySnapshot.forEach(doc => drones.push({ id: doc.id, data: doc.data() }));
+            setDronesToRedux(drones);
+        });
+        return unsubscribeDrones;
+    } catch (error) {
+        return error;
+    }
+};
+
+////////////////////// INTERVENCIONES ///////////////////////////////////////////////////////////////////////////
+
+// GET Intervención por id
+export const getIntervencionPersistencia = (id) => {
+  return new Promise((resolve, reject) => {
+    const docRef = doc(firestore, collectionNames.INTERVENCIONES, id);
+    getDoc(docRef)
+      .then(docSnap => {
+        if (docSnap.exists()) {
+          resolve({ id: id, data: docSnap.data() });
+        } else {
+          reject({ code: 'Intervención no encontrada' });
+        }
+      })
+      .catch(error => reject(error));
+  });
+};
+
+// GET Intervenciones por modelo de drone
+export const getIntervencionesPorModeloDronePersistencia = (modeloDroneId) => {
+  return new Promise((resolve, reject) => {
+    const intervencionesRef = collection(firestore, collectionNames.INTERVENCIONES);
+    const q = query(intervencionesRef, where('ModeloDroneId', '==', modeloDroneId));
+    getDocs(q)
+      .then(querySnapshot => {
+        let intervenciones = [];
+        querySnapshot.forEach(doc => intervenciones.push({ id: doc.id, data: doc.data() }));
+        resolve(intervenciones);
+      })
+      .catch(error => reject(error));
+  });
+};
+
+// GUARDAR Intervención
+export const guardarIntervencionPersistencia = (intervencion) => {
+  return new Promise((resolve, reject) => {
+    // Si no tiene ID, generamos uno basado en la fecha
+    if (!intervencion.id) {
+      intervencion.id = new Date().getTime().toString();
+    }
+    
+    setDoc(
+      doc(firestore, collectionNames.INTERVENCIONES, intervencion.id),
+      intervencion.data
+    )
+      .then(() => {
+        console.log('Intervención guardada correctamente');
+        resolve(intervencion);
+      })
+      .catch(error => {
+        console.log('Error al guardar intervención: ' + error);
+        reject(error);
+      });
+  });
+};
+
+// ELIMINAR Intervención
+export const eliminarIntervencionPersistencia = (id) => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      // Verificar si hay reparaciones que usan esta intervención en su array de IntervencionesIds
+      const reparacionesRef = collection(firestore, collectionNames.REPARACIONES);
+      const intervencionesDocs = await getDocs(reparacionesRef);
+      
+      // Buscar en todas las reparaciones si alguna contiene esta intervención en su array
+      let intervencionEnUso = false;
+      intervencionesDocs.forEach(doc => {
+        const reparacion = doc.data();
+        if (reparacion.IntervencionesIds && Array.isArray(reparacion.IntervencionesIds)) {
+          if (reparacion.IntervencionesIds.includes(id)) {
+            intervencionEnUso = true;
+          }
+        }
+      });
+      
+      if (intervencionEnUso) {
+        reject({
+          code: "No se puede eliminar esta intervención porque está siendo utilizada en una o más reparaciones."
+        });
+        return;
+      }
+      
+      // Si no hay dependencias, procedemos a eliminar
+      await deleteDoc(doc(firestore, collectionNames.INTERVENCIONES, id));
+      console.log('Intervención eliminada correctamente');
+      resolve(id);
+    } catch (error) {
+      console.error('Error al eliminar intervención:', error);
+      reject(error);
+    }
+  });
+};
+
+// GET todas las Intervenciones
+export const getIntervencionesPersistencia = (setIntervencionesToRedux) => {
+  console.log('getIntervencionesPersistencia');
+  const q = query(collection(firestore, collectionNames.INTERVENCIONES), orderBy('NombreInt'));
+  try {
+    const unsubscribeInt = onSnapshot(q, (querySnapshot) => {
+      let intervenciones = [];
+      querySnapshot.forEach(doc => intervenciones.push({ id: doc.id, data: doc.data() }));
+      console.log('Intervenciones cargadas:', intervenciones.length);
+      setIntervencionesToRedux(intervenciones);
+    });
+    return unsubscribeInt;
+  } catch (error) {
+    console.error("Error en getIntervencionesPersistencia:", error);
+    return error;
+  }
+};

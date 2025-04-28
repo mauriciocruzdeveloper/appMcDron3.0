@@ -67,7 +67,7 @@ export async function eliminarFotoReparacionPersistencia(
   const fotoRef = ref(storage, fotoUrl);
   const response = await deleteObject(fotoRef);
   // TODO: Verificar que la respuesta sea correcta
-  console.log('!!! response', response);
+  console.log('TODO response', response);
   // 2) Remover la URL en Firestore
   const db = getFirestore();
   await updateDoc(doc(db, collectionNames.REPARACIONES, reparacionId), {
@@ -84,7 +84,7 @@ export async function eliminarDocumentoReparacionPersistencia(
   const documentoRef = ref(storage, documentoUrl);
   const response = await deleteObject(documentoRef);
   // TODO: Verificar que la respuesta sea correcta
-  console.log('!!! response', response);
+  console.log('TODO response', response);
   // 2) Remover la URL en Firestore
   const db = getFirestore();
   await updateDoc(doc(db, collectionNames.REPARACIONES, reparacionId), {
