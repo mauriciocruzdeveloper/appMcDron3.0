@@ -1,57 +1,84 @@
 /* eslint-disable react/jsx-no-target-blank */
-import { convertTimestampCORTO } from "../utils/utils";
-// Components
-import TextareaAutosize from "react-textarea-autosize";
-import "bootstrap-icons/font/bootstrap-icons.css";
-import { ChangeEvent, useState } from "react";
-import { InputType } from "../types/types";
+import React, { useEffect, useState } from "react";
+import history from "../history";
+import { useParams } from "react-router-dom";
+import { enviarSms, generarAutoDiagnostico } from "../utils/utils";
+import { estados } from '../datos/estados';
+import { Estado } from "../types/estado";
 import { ReparacionType } from "../types/reparacion";
-import { Estado, Estados } from "../types/estado";
-import { Usuario } from "../types/usuario";
-import history from '../history';
+import { enviarEmailVacio } from "../utils/sendEmails";
+import { useAppSelector } from "../redux-tool-kit/hooks/useAppSelector";
+import { useAppDispatch } from "../redux-tool-kit/hooks/useAppDispatch";
+import { useModal } from "./Modal/useModal";
+import { eliminarReparacionAsync, guardarReparacionAsync } from "../redux-tool-kit/reparacion/reparacion.actions";
+import { borrarFotoAsync, enviarReciboAsync, subirFotoAsync, subirDocumentoAsync, borrarDocumentoAsync } from "../redux-tool-kit/app/app.actions";
+import { ChangeEvent } from "react";
+import { InputType } from "../types/types";
+import TextareaAutosize from "react-textarea-autosize";
+import { convertTimestampCORTO } from "../utils/utils";
+import "bootstrap-icons/font/bootstrap-icons.css";
+import IntervencionesReparacion from './IntervencionesReparacion.component';
 
-interface ReparacionPresentationalProps {
-    admin: boolean;
-    reparacion: ReparacionType;
-    usuario: Usuario;
-    estados: Estados;
-    setEstado: (estado: Estado) => void;
-    changeInputRep: (field: string, value: string) => void;
-    handleGuardarReparacion: () => void;
-    handleEliminarReparacion: () => void;
-    handleSendEmail: () => void;
-    handleSendSms: () => void;
-    handleSendRecibo: () => void;
-    handleGenerarAutoDiagnostico: () => void;
-    handleFotoChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-    handleDeleteFoto: (url: string) => void;
-    handleDocumentoChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-    handleDeleteDocumento: (url: string) => void;
+interface ParamTypes {
+    id: string;
 }
 
-const ReparacionPresentational = (props: ReparacionPresentationalProps) => {
-    const {
-        admin,
-        reparacion,
-        usuario,
-        estados,
-        setEstado,
-        changeInputRep,
-        handleGuardarReparacion,
-        handleEliminarReparacion,
-        handleSendEmail,
-        handleSendSms,
-        handleSendRecibo,
-        handleGenerarAutoDiagnostico,
-        handleFotoChange,
-        handleDeleteFoto,
-        handleDocumentoChange,
-        handleDeleteDocumento,
-    } = props;
+export default function ReparacionComponent(): React.ReactElement | null {
+    console.log("REPARACION component");
 
-    console.log("REPARACION presentational");
+    const dispatch = useAppDispatch();
+    const { openModal } = useModal();
 
+    const isAdmin = useAppSelector(state => state.app.usuario?.data.Admin) ?? false;
+    const { id } = useParams<ParamTypes>();
+    const reparacionStore = useAppSelector(
+        state => state.reparacion.coleccionReparaciones.find(reparacion => String(reparacion.id) === id)
+    );
+    const usuarioStore = useAppSelector(
+        state => state.usuario.coleccionUsuarios.find(usuario => usuario.id === reparacionStore?.data.UsuarioRep)
+    );
+
+    // Obtener las intervenciones aplicadas a esta reparación
+    const intervencionesAplicadas = useAppSelector(state => state.reparacion.intervencionesDeReparacionActual);
+
+    // Calcular el total de las intervenciones
+    const totalIntervenciones = intervencionesAplicadas.reduce((total, intervencion) =>
+        total + intervencion.data.PrecioTotal, 0);
+
+    const [reparacionOriginal, setReparacionOriginal] = useState<ReparacionType>();
+    const [reparacion, setReparacion] = useState<ReparacionType | undefined>(reparacionStore);
     const [fotoSeleccionada, setFotoSeleccionada] = useState<string | null>(null);
+
+    useEffect(() => {
+        if (reparacionStore) {
+            setReparacion(reparacionStore);
+            setReparacionOriginal(reparacionStore);
+        }
+    }, [reparacionStore, id]);
+
+    useEffect(() => {
+        if (reparacion && totalIntervenciones && !reparacion.data.PresuFiRep) {
+            setReparacion(prevState => prevState ? {
+                ...prevState,
+                data: {
+                    ...prevState.data,
+                    PresuFiRep: totalIntervenciones
+                }
+            } : prevState);
+        }
+    }, [totalIntervenciones, reparacion]);
+
+    if (!reparacion || !usuarioStore) return null;
+
+    const changeInputRep = (field: string, value: string) => {
+        setReparacion(prevReparacion => prevReparacion ? {
+            ...prevReparacion,
+            data: {
+                ...prevReparacion.data,
+                [field]: value
+            }
+        } : prevReparacion);
+    };
 
     const handleOnChange = (event: ChangeEvent<InputType>) => {
         const target = event.target;
@@ -67,10 +94,281 @@ const ReparacionPresentational = (props: ReparacionPresentationalProps) => {
         changeInputRep(field, value);
     }
 
-    const handleGoToUser = () => {
-        history.push(`/inicio/usuarios/${usuario.data.EmailUsu}`)
+    const setEstado = (estado: Estado) => {
+        if (!reparacion || !reparacionOriginal) return;
+
+        const estadoActual = estados[reparacionOriginal.data.EstadoRep];
+        const nuevaEtapa = estado.etapa;
+
+        // No permitir bajar de estado o seleccionar el mismo estado
+        // if (nuevaEtapa <= estadoActual.etapa) return;
+
+        // Reglas específicas para ciertos estados
+        if (estadoActual.nombre === 'Recibido' && nuevaEtapa < estados['Recibido'].etapa) return;
+        if (estadoActual.nombre === 'Reparado' && nuevaEtapa < estados['Reparado'].etapa) return;
+        if (estadoActual.nombre === 'Entregado') return;
+
+        type CampoFecha = 'FeConRep' | 'FeFinRep' | 'FeRecRep' | 'FeEntRep';
+
+        let campofecha: CampoFecha | null = null;
+        switch (estado.nombre) {
+            case "Consulta":
+                campofecha = "FeConRep";
+                break;
+            case "Reparado":
+                campofecha = "FeFinRep";
+                break;
+            case "Recibido":
+                campofecha = "FeRecRep";
+                break;
+            case "Entregado":
+                campofecha = "FeEntRep";
+                break;
+            default:
+                break;
+        }
+
+        const newReparacion = {
+            ...reparacion,
+            data: {
+                ...reparacion.data,
+                EstadoRep: estado.nombre,
+                PrioridadRep: estado.prioridad,
+            }
+        };
+
+        // Regla: Si hay un campo de fecha y no está seteado, se setea con la fecha actual.
+        if (campofecha && !newReparacion.data[`${campofecha}`]) {
+            newReparacion.data = {
+                ...newReparacion.data,
+                [campofecha]: new Date().getTime(),
+            };
+        }
+
+        setReparacion(newReparacion);
     }
 
+    const confirmaGuardarReparacion = async () => {
+        if (reparacion.data.EstadoRep === 'Recibido' && !reparacion.data.DiagnosticoRep) {
+            reparacion.data.DiagnosticoRep = await dispatch(generarAutoDiagnostico(reparacion));
+        }
+        const response = await dispatch(guardarReparacionAsync(reparacion));
+        setReparacionOriginal(reparacion);
+        if (response.meta.requestStatus === 'fulfilled') {
+            openModal({
+                mensaje: "Reparación guardada correctamente.",
+                tipo: "success",
+                titulo: "Guardar Reparación",
+            })
+        } else {
+            openModal({
+                mensaje: "Error al guardar la reparación.",
+                tipo: "danger",
+                titulo: "Guardar Reparación",
+            })
+        }
+    }
+
+    const confirmEliminarReparacion = async () => {
+        if (!reparacion) return;
+        try {
+            await dispatch(eliminarReparacionAsync(reparacion.id)).unwrap();
+
+            openModal({
+                mensaje: "Reparación eliminada correctamente.",
+                tipo: "success",
+                titulo: "Eliminar Reparación",
+            });
+            history.goBack();
+        } catch (error: any) { // TODO: Hacer tipo de dato para el error
+            console.error("Error al eliminar la reparación:", error);
+
+            openModal({
+                mensaje: error?.code || "Error al eliminar la reparación.",
+                tipo: "danger",
+                titulo: "Eliminar Reparación",
+            });
+        }
+    }
+
+    const handleGuardarReparacion = async () => {
+        openModal({
+            mensaje: "Desea guardar los cambios?",
+            tipo: "warning",
+            titulo: "Guardar Reparación",
+            confirmCallback: confirmaGuardarReparacion,
+        })
+    }
+
+    const handleEliminarReparacion = () => {
+        openModal({
+            mensaje: "Eliminar Reparación?",
+            tipo: "danger",
+            titulo: "Atención",
+            confirmCallback: confirmEliminarReparacion,
+        })
+    }
+
+    const handleSendEmail = () => {
+        if (!reparacion) return;
+        enviarEmailVacio(reparacion);
+    }
+
+    const handleSendRecibo = async () => {
+        if (!reparacion) return;
+
+        const response = await dispatch(enviarReciboAsync(reparacion));
+        setReparacionOriginal(reparacion);
+        if (response.meta.requestStatus === 'fulfilled') {
+            openModal({
+                mensaje: "Recibo enviado correctamente.",
+                tipo: "success",
+                titulo: "Enviar Recibo",
+            })
+        } else {
+            openModal({
+                mensaje: "Error al enviar el recibo.",
+                tipo: "danger",
+                titulo: "Enviar Recibo",
+            })
+        }
+    }
+
+    const handleSendSms = () => {
+        const data = {
+            number: usuarioStore?.data?.TelefonoUsu || '', /* iOS: ensure number is actually a string */
+            message: 'Prueba de sms',
+
+            //CONFIGURATION
+            options: {
+                replaceLineBreaks: false, // true to replace \n by a new line, false by default
+                android: {
+                    intent: 'INTENT'  // send SMS with the native android SMS messaging
+                    //intent: '' // send SMS without opening any other app, require : android.permission.SEND_SMS and android.permission.READ_PHONE_STATE
+                }
+            },
+
+            success: () => null,
+            error: (e: unknown) => alert('Message Failed:' + e)
+        };
+        enviarSms(data);
+    }
+
+    const handleGenerarAutoDiagnostico = async () => {
+        if (!reparacion) return;
+        const diagnostico = await dispatch(generarAutoDiagnostico(reparacion));
+        const newReparacion = {
+            ...reparacion,
+            data: {
+                ...reparacion.data,
+                DiagnosticoRep: diagnostico,
+            }
+        }
+        const response = await dispatch(guardarReparacionAsync(newReparacion));
+        setReparacionOriginal(newReparacion);
+        if (response.meta.requestStatus === 'rejected') {
+            openModal({
+                mensaje: "Error al guardar la reparación.",
+                tipo: "danger",
+                titulo: "Guardar Reparación",
+            })
+        }
+    }
+
+    const handleFotoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (!e.target.files?.length || !reparacion) return;
+        const file = e.target.files[0];
+        const response = await dispatch(subirFotoAsync({ reparacionId: reparacion.id, file }));
+        if (response.meta.requestStatus === 'fulfilled') {
+            const urlFoto = response.payload;
+            setReparacion({
+                ...reparacion,
+                data: {
+                    ...reparacion.data,
+                    urlsFotos: [...(reparacion.data.urlsFotos || []), urlFoto]
+                }
+            });
+        } else {
+            openModal({
+                mensaje: "Error al subir la foto.",
+                tipo: "danger",
+                titulo: "Subir Foto",
+            })
+        }
+    };
+
+    const handleDocumentoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (!e.target.files?.length || !reparacion) return;
+        const file = e.target.files[0];
+        const response = await dispatch(subirDocumentoAsync({ reparacionId: reparacion.id, file }));
+        if (response.meta.requestStatus === 'fulfilled') {
+            const urlDoc = response.payload;
+            setReparacion({
+                ...reparacion,
+                data: {
+                    ...reparacion.data,
+                    urlsDocumentos: [...(reparacion.data.urlsDocumentos || []), urlDoc]
+                }
+            });
+        } else {
+            openModal({
+                mensaje: "Error al subir el documento.",
+                tipo: "danger",
+                titulo: "Subir Documento",
+            })
+        }
+    }
+
+    const handleDeleteFoto = async (fotoUrl: string) => {
+        if (!reparacion) return;
+        const response = await dispatch(borrarFotoAsync({ reparacionId: reparacion.id, fotoUrl }));
+        if (response.meta.requestStatus === 'fulfilled') {
+            setReparacion({
+                ...reparacion,
+                data: {
+                    ...reparacion.data,
+                    urlsFotos: reparacion.data.urlsFotos?.filter(url => url !== fotoUrl)
+                }
+            });
+        } else {
+            openModal({
+                mensaje: "Error al eliminar la foto.",
+                tipo: "danger",
+                titulo: "Eliminar Foto",
+            })
+        }
+    };
+
+    const handleDeleteDocumento = async (docUrl: string) => {
+        if (!reparacion) return;
+        const response = await dispatch(borrarDocumentoAsync({ reparacionId: reparacion.id, documentoUrl: docUrl }));
+        if (response.meta.requestStatus === 'fulfilled') {
+            setReparacion({
+                ...reparacion,
+                data: {
+                    ...reparacion.data,
+                    urlsDocumentos: reparacion.data.urlsDocumentos?.filter(url => url !== docUrl)
+                }
+            });
+        } else {
+            openModal({
+                mensaje: "Error al eliminar el documento.",
+                tipo: "danger",
+                titulo: "Eliminar Documento",
+            })
+        }
+    };
+
+    const handleGoToUser = () => {
+        history.push(`/inicio/usuarios/${usuarioStore.data.EmailUsu}`)
+    }
+
+    // Formatear precio para mostrar
+    const formatPrice = (precio: number): string => {
+        return precio.toLocaleString('es-AR', { style: 'currency', currency: 'ARS' });
+    };
+
+    // UI RENDER
     return (
         <div
             className="p-4"
@@ -90,7 +388,7 @@ const ReparacionPresentational = (props: ReparacionPresentationalProps) => {
                     </h3>
                     <div>id: {reparacion?.id}</div>
                     <div>Drone: {reparacion?.data?.DroneRep}</div>
-                    <div>Cliente: {usuario?.data?.NombreUsu} {usuario?.data?.ApellidoUsu}</div>
+                    <div>Cliente: {usuarioStore?.data?.NombreUsu} {usuarioStore?.data?.ApellidoUsu}</div>
                 </div>
             </div>
 
@@ -120,7 +418,7 @@ const ReparacionPresentational = (props: ReparacionPresentationalProps) => {
                     </div>
                 </div>
             </div>
-            {admin ? // Sólo para administrador
+            {isAdmin ? // Sólo para administrador
                 <div className="card mb-3">
                     <div className="card-body">
                         <h5 className="card-title bluemcdron">ENLACE A DRIVE</h5>
@@ -144,7 +442,7 @@ const ReparacionPresentational = (props: ReparacionPresentationalProps) => {
                 </div>
                 : null}
 
-            {admin ? // Sólo para administrador
+            {isAdmin ? // Sólo para administrador
                 <div
                     className="card mb-3"
                     style={{
@@ -196,7 +494,7 @@ const ReparacionPresentational = (props: ReparacionPresentationalProps) => {
                                 type="text"
                                 className="form-control"
                                 id="EmailUsu"
-                                value={usuario?.data?.EmailUsu || ''}
+                                value={usuarioStore?.data?.EmailUsu || ''}
                                 disabled
                             />
                             <button
@@ -214,7 +512,7 @@ const ReparacionPresentational = (props: ReparacionPresentationalProps) => {
                             type="text"
                             className="form-control"
                             id="NombreUsu"
-                            value={usuario?.data?.NombreUsu}
+                            value={usuarioStore?.data?.NombreUsu}
                             disabled
                         />
                     </div>
@@ -224,7 +522,7 @@ const ReparacionPresentational = (props: ReparacionPresentationalProps) => {
                             type="text"
                             className="form-control"
                             id="ApellidoUsu"
-                            value={usuario?.data?.ApellidoUsu}
+                            value={usuarioStore?.data?.ApellidoUsu}
                             disabled
                         />
                     </div>
@@ -235,7 +533,7 @@ const ReparacionPresentational = (props: ReparacionPresentationalProps) => {
                                 type="tel"
                                 className="form-control"
                                 id="TelefonoUsu"
-                                value={usuario?.data?.TelefonoUsu}
+                                value={usuarioStore?.data?.TelefonoUsu}
                                 disabled
                             />
                             <button
@@ -255,7 +553,7 @@ const ReparacionPresentational = (props: ReparacionPresentationalProps) => {
                             className="form-control"
                             id="DroneRep"
                             value={reparacion?.data?.DroneRep || ""}
-                            disabled={!admin}
+                            disabled={!isAdmin}
                         />
                     </div>
                     <div>
@@ -265,7 +563,7 @@ const ReparacionPresentational = (props: ReparacionPresentationalProps) => {
                             className="form-control"
                             id="DescripcionUsuRep"
                             value={reparacion?.data?.DescripcionUsuRep || ""}
-                            disabled={!admin}
+                            disabled={!isAdmin}
                         />
                     </div>
                     <div>
@@ -288,6 +586,8 @@ const ReparacionPresentational = (props: ReparacionPresentationalProps) => {
                     </div>
                 </div>
             </div>
+
+            {/* Resto de secciones del formulario */}
             <div className="card mb-3">
                 <div className="card-body">
                     <h5 className="card-title bluemcdron">RECEPCIÓN</h5>
@@ -301,7 +601,7 @@ const ReparacionPresentational = (props: ReparacionPresentationalProps) => {
                                 className="form-control"
                                 id="FeRecRep"
                                 value={convertTimestampCORTO(reparacion?.data?.FeRecRep)}
-                                disabled={!admin}
+                                disabled={!isAdmin}
                             />
                             <button
                                 type="submit"
@@ -314,6 +614,7 @@ const ReparacionPresentational = (props: ReparacionPresentationalProps) => {
                     </div>
                 </div>
             </div>
+
             <div className="card mb-3">
                 <div className="card-body">
                     <h5 className="card-title bluemcdron">REVISIÓN - DIAGNÓSTICO Y PRESUPUESTO DATOS</h5>
@@ -325,7 +626,7 @@ const ReparacionPresentational = (props: ReparacionPresentationalProps) => {
                             className="form-control"
                             id="NumeroSerieRep"
                             value={reparacion?.data?.NumeroSerieRep || ""}
-                            disabled={!admin}
+                            disabled={!isAdmin}
                         />
                     </div>
                     <div>
@@ -336,7 +637,7 @@ const ReparacionPresentational = (props: ReparacionPresentationalProps) => {
                             id="DescripcionTecRep"
                             value={reparacion?.data?.DescripcionTecRep || ""}
                             rows={5}
-                            disabled={!admin}
+                            disabled={!isAdmin}
                         />
                     </div>
                     <div>
@@ -347,7 +648,7 @@ const ReparacionPresentational = (props: ReparacionPresentationalProps) => {
                             className="form-control"
                             id="PresuMoRep"
                             value={reparacion?.data?.PresuMoRep || ""}
-                            disabled={!admin}
+                            disabled={!isAdmin}
                         />
                     </div>
                     <div>
@@ -358,7 +659,7 @@ const ReparacionPresentational = (props: ReparacionPresentationalProps) => {
                             className="form-control"
                             id="PresuReRep"
                             value={reparacion?.data?.PresuReRep || ""}
-                            disabled={!admin}
+                            disabled={!isAdmin}
                         />
                     </div>
                     <div>
@@ -369,8 +670,16 @@ const ReparacionPresentational = (props: ReparacionPresentationalProps) => {
                             className="form-control"
                             id="PresuFiRep"
                             value={reparacion?.data?.PresuFiRep || ""}
-                            disabled={!admin}
+                            disabled={!isAdmin}
+                            title="El precio se calcula automáticamente en base a las intervenciones, o puede ingresar un valor manual"
                         />
+                        {isAdmin && intervencionesAplicadas.length > 0 && (
+                            <small className="form-text text-muted">
+                                {totalIntervenciones !== reparacion.data.PresuFiRep
+                                    ? `El precio actual difiere del total de intervenciones (${formatPrice(totalIntervenciones)})`
+                                    : `Precio calculado a partir de las intervenciones: ${formatPrice(totalIntervenciones)}`}
+                            </small>
+                        )}
                     </div>
                     <div>
                         <label className="form-label">Diagnóstico $</label>
@@ -380,12 +689,13 @@ const ReparacionPresentational = (props: ReparacionPresentationalProps) => {
                             className="form-control"
                             id="PresuDiRep"
                             value={reparacion?.data?.PresuDiRep || ""}
-                            disabled={!admin}
+                            disabled={!isAdmin}
                         />
                     </div>
                 </div>
             </div>
-            {admin ? // Sólo para administrador
+
+            {isAdmin ? // Sólo para administrador
                 <div className="card mb-3">
                     <div className="card-body">
                         <h5 className="card-title bluemcdron">REPUESTOS - CUALES Y SEGUIMIENTO</h5>
@@ -401,7 +711,9 @@ const ReparacionPresentational = (props: ReparacionPresentationalProps) => {
                         </div>
                     </div>
                 </div>
-                : null}
+                : null
+            }
+
             <div className="card mb-3">
                 <div className="card-body">
                     <h5 className="card-title bluemcdron">REPARACIÓN - DATOS DE LA REPARACIÓN</h5>
@@ -413,7 +725,7 @@ const ReparacionPresentational = (props: ReparacionPresentationalProps) => {
                             id="InformeRep"
                             value={reparacion?.data?.InformeRep || ""}
                             rows={5}
-                            disabled={!admin}
+                            disabled={!isAdmin}
                         />
                     </div>
                     <div>
@@ -424,11 +736,12 @@ const ReparacionPresentational = (props: ReparacionPresentationalProps) => {
                             className="form-control"
                             id="FeFinRep"
                             value={convertTimestampCORTO(reparacion?.data?.FeFinRep)}
-                            disabled={!admin}
+                            disabled={!isAdmin}
                         />
                     </div>
                 </div>
             </div>
+
             <div className="card mb-3">
                 <div className="card-body">
                     <h5 className="card-title bluemcdron">ENTREGA - DATOS DE LA ENTREGA</h5>
@@ -440,7 +753,7 @@ const ReparacionPresentational = (props: ReparacionPresentationalProps) => {
                             className="form-control"
                             id="FeEntRep"
                             value={convertTimestampCORTO(reparacion?.data?.FeEntRep)}
-                            disabled={!admin}
+                            disabled={!isAdmin}
                         />
                     </div>
                     <div>
@@ -451,7 +764,7 @@ const ReparacionPresentational = (props: ReparacionPresentationalProps) => {
                             id="TxtEntregaRep"
                             value={reparacion?.data?.TxtEntregaRep || ""}
                             rows={5}
-                            disabled={!admin}
+                            disabled={!isAdmin}
                         />
                     </div>
                     <div>
@@ -462,11 +775,22 @@ const ReparacionPresentational = (props: ReparacionPresentationalProps) => {
                             className="form-control"
                             id="SeguimientoEntregaRep"
                             value={reparacion?.data?.SeguimientoEntregaRep || ""}
-                            disabled={!admin}
+                            disabled={!isAdmin}
                         />
                     </div>
                 </div>
             </div>
+
+            <div className="card mb-3">
+                <div className="card-body">
+                    <h5 className="card-title bluemcdron">INTERVENCIONES - TRABAJOS REALIZADOS</h5>
+                    <IntervencionesReparacion
+                        reparacionId={reparacion.id}
+                        readOnly={!isAdmin}
+                    />
+                </div>
+            </div>
+
             <div className="card mb-3">
                 <div className="card-body">
                     <div className="d-flex w-100 justify-content-between align-items-center">
@@ -508,7 +832,7 @@ const ReparacionPresentational = (props: ReparacionPresentationalProps) => {
                                         style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain" }}
                                     />
                                 </div>
-                                {admin && (
+                                {isAdmin && (
                                     <div className="flex text-center my-2">
                                         <a
                                             target="_blank"
@@ -587,10 +911,10 @@ const ReparacionPresentational = (props: ReparacionPresentationalProps) => {
                                     fileName = fileName.split('/').pop() || `Documento ${idx + 1}`;
                                     // Eliminar los parámetros de consulta
                                     fileName = fileName.split('?')[0];
-                                    
+
                                     return (
-                                        <div 
-                                            key={idx} 
+                                        <div
+                                            key={idx}
                                             className="list-group-item list-group-item-action d-flex justify-content-between align-items-center mb-2"
                                         >
                                             <div className="text-truncate" style={{ maxWidth: "70%" }}>
@@ -598,16 +922,16 @@ const ReparacionPresentational = (props: ReparacionPresentationalProps) => {
                                                 <span className="text-truncate">{fileName}</span>
                                             </div>
                                             <div>
-                                                <a 
-                                                    href={url} 
-                                                    target="_blank" 
+                                                <a
+                                                    href={url}
+                                                    target="_blank"
                                                     className="btn btn-sm btn-success me-3"
                                                     download
                                                 >
                                                     <i className="bi bi-cloud-download"></i>
                                                 </a>
-                                                {admin && (
-                                                    <button 
+                                                {isAdmin && (
+                                                    <button
                                                         className="btn btn-sm btn-danger"
                                                         onClick={() => handleDeleteDocumento(url)}
                                                     >
@@ -627,8 +951,8 @@ const ReparacionPresentational = (props: ReparacionPresentationalProps) => {
                     </div>
                 </div>
             </div>
-            
-            {admin ? // Sólo para administrador
+
+            {isAdmin ? // Sólo para administrador
                 <div className="text-center">
                     <button
                         key="botonGuardar"
@@ -646,10 +970,6 @@ const ReparacionPresentational = (props: ReparacionPresentationalProps) => {
                     </button>
                 </div>
                 : null}
-
         </div>
-
-    )
+    );
 }
-
-export default ReparacionPresentational;

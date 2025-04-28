@@ -16,10 +16,12 @@ export const eliminarUsuarioAsync = createAsyncThunk(
             dispatch(isFetchingStart());
             const usuarioEliminado = await eliminarUsuarioPersistencia(id);
             dispatch(isFetchingComplete());
+            
             return usuarioEliminado;
-        } catch (error: any) {
+        } catch (error: any) { // TODO: Hacer tipo de dato para el error // TODO: Hacer tipo de dato para el error
+            console.error(error);
             dispatch(isFetchingComplete());
-            return error;
+            throw error;
         }
     },
 )
@@ -33,7 +35,7 @@ export const guardarUsuarioAsync = createAsyncThunk(
             const usuarioGuardado = await guardarUsuarioPersistencia(usuario);
             dispatch(isFetchingComplete());
             return usuarioGuardado;
-        } catch (error: any) {
+        } catch (error: any) { // TODO: Hacer tipo de dato para el error
             dispatch(isFetchingComplete());
             return error;
         }
@@ -49,7 +51,7 @@ export const getClienteAsync = createAsyncThunk(
             const cliente = await getClientePersistencia(id);
             dispatch(isFetchingComplete());
             return cliente;
-        } catch (error: any) {
+        } catch (error: any) { // TODO: Hacer tipo de dato para el error
             dispatch(isFetchingComplete());
             return error;
         }
@@ -65,7 +67,7 @@ export const getClienteByEmailAsync = createAsyncThunk(
             const cliente = await getClientePorEmailPersistencia(id);
             dispatch(isFetchingComplete());
             return cliente;
-        } catch (error: any) {
+        } catch (error: any) { // TODO: Hacer tipo de dato para el error
             dispatch(isFetchingComplete());
             return error;
         }

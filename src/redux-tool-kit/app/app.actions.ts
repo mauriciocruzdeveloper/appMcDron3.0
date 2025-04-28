@@ -16,7 +16,7 @@ export const loginAsync = createAsyncThunk(
         try {
             const usuario = await loginPersistencia(email, password);
             return usuario;
-        } catch (error: any) {
+        } catch (error: any) { // TODO: Hacer tipo de dato para el error
             return rejectWithValue(error.code || 'Error de login');
         }
     }
@@ -61,7 +61,7 @@ export const enviarReciboAsync = createAsyncThunk(
 
             dispatch(isFetchingComplete());
             return response;
-        } catch (error: any) {
+        } catch (error: any) { // TODO: Hacer tipo de dato para el error
             dispatch(isFetchingComplete());
             return error;
         }
@@ -77,7 +77,7 @@ export const subirFotoAsync = createAsyncThunk(
             const urlFoto = await subirFotoReparacionPersistencia(reparacionId, file);
             dispatch(isFetchingComplete());
             return urlFoto;
-        } catch (error: any) {
+        } catch (error: any) { // TODO: Hacer tipo de dato para el error
             dispatch(isFetchingComplete());
             return error;
         }
@@ -93,7 +93,7 @@ export const subirDocumentoAsync = createAsyncThunk(
             const urlDoc = await subirDocumentoReparacionPersistencia(reparacionId, file);
             dispatch(isFetchingComplete());
             return urlDoc;
-        } catch (error: any) {
+        } catch (error: any) { // TODO: Hacer tipo de dato para el error
             dispatch(isFetchingComplete());
             return error;
         }
@@ -109,7 +109,7 @@ export const borrarFotoAsync = createAsyncThunk(
             await eliminarFotoReparacionPersistencia(reparacionId, fotoUrl);
             dispatch(isFetchingComplete());
             return fotoUrl;
-        } catch (error: any) {
+        } catch (error: any) { // TODO: Hacer tipo de dato para el error
             dispatch(isFetchingComplete());
             return error;
         }
@@ -125,7 +125,7 @@ export const borrarDocumentoAsync = createAsyncThunk(
             await eliminarDocumentoReparacionPersistencia(reparacionId, documentoUrl);
             dispatch(isFetchingComplete());
             return documentoUrl;
-        } catch (error: any) {
+        } catch (error: any) { // TODO: Hacer tipo de dato para el error
             dispatch(isFetchingComplete());
             return error;
         }

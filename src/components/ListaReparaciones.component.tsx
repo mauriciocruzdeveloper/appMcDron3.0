@@ -82,25 +82,31 @@ export default function ListaReparaciones(): JSX.Element {
         {reparacionesList.length} {reparacionesList.length === 1 ? 'reparación' : 'reparaciones'}
       </div>
 
-      {reparacionesList.map(reparacion => (
-        <div
-          key={reparacion.id}
-          className="card mb-3 p-1"
-          aria-current="true"
-          onClick={() => history.push(`/inicio/reparaciones/${reparacion.id}`)}
-        >
-          <div className="d-flex w-100 justify-content-between">
-            <h5 className="mb-1">{reparacion.data.DroneRep}</h5>
-          </div>
-          <small>{reparacion.data?.NombreUsu || reparacion.data?.UsuarioRep}</small>
-          <p
-            className="mb-1"
-            style={{ backgroundColor: estados[reparacion.data.EstadoRep].color }}
-          >
-            {reparacion.data.EstadoRep} - {estados[reparacion.data.EstadoRep].accion}
-          </p>
+      {reparacionesList.length === 0 ? (
+        <div className="alert alert-info text-center" role="alert">
+          No hay reparaciones disponibles.
         </div>
-      ))}
+      ) : (
+        reparacionesList.map(reparacion => (
+          <div
+            key={reparacion.id}
+            className="card mb-3 p-1"
+            aria-current="true"
+            onClick={() => history.push(`/inicio/reparaciones/${reparacion.id}`)}
+          >
+            <div className="d-flex w-100 justify-content-between">
+              <h5 className="mb-1">{reparacion.data.DroneRep}</h5>
+            </div>
+            <small>{reparacion.data?.NombreUsu || reparacion.data?.UsuarioRep}</small>
+            <p
+              className="mb-1"
+              style={{ backgroundColor: estados[reparacion.data.EstadoRep].color }}
+            >
+              {reparacion.data.EstadoRep} - {estados[reparacion.data.EstadoRep].accion}
+            </p>
+          </div>
+        ))
+      )}
     </div>
   );
 }

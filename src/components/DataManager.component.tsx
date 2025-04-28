@@ -1,5 +1,13 @@
 import { useEffect, useState } from "react";
-import { getMessagesPersistencia, getReparacionesPersistencia, getUsuariosPersistencia } from "../persistencia/persistenciaFirebase";
+import { 
+    getMessagesPersistencia, 
+    getReparacionesPersistencia, 
+    getRepuestosPersistencia, 
+    getUsuariosPersistencia,
+    getModelosDronePersistencia,
+    getDronesPersistencia,
+    getIntervencionesPersistencia
+} from "../persistencia/persistenciaFirebase";
 import { useAppDispatch } from "../redux-tool-kit/hooks/useAppDispatch";
 import { setReparaciones } from "../redux-tool-kit/reparacion/reparacion.slice";
 import { ReparacionType } from "../types/reparacion";
@@ -8,6 +16,14 @@ import { useAppSelector } from "../redux-tool-kit/hooks/useAppSelector";
 import { setUsuarios, setUsuariosSelect } from "../redux-tool-kit/usuario/usuario.slice";
 import { Usuario } from "../types/usuario";
 import { setMessages } from "../redux-tool-kit/mensaje/mensaje.slice";
+import { setRepuestos } from "../redux-tool-kit/repuesto/repuesto.slice";
+import { Repuesto } from "../types/repuesto";
+import { ModeloDrone } from "../types/modeloDrone";
+import { setModelosDrone } from "../redux-tool-kit/modeloDrone/modeloDrone.slice";
+import { Drone } from "../types/drone";
+import { setDrones } from "../redux-tool-kit/drone/drone.slice";
+import { Intervencion } from "../types/intervencion";
+import { setIntervenciones } from "../redux-tool-kit/intervencion/intervencion.slice";
 
 export interface DataManagerProps {
     children: React.ReactNode;
@@ -21,6 +37,10 @@ export function DataManagerComponent({ children }: DataManagerProps): React.Reac
     const [unsubscribeReparaciones, setUnsubscribeReparaciones] = useState<Unsubscribe>();
     const [unsubscribeUsuarios, setUnsubscribeUsuarios] = useState<Unsubscribe>();
     const [unsubscribeMessages, setUnsubscribeMessages] = useState<Unsubscribe>();
+    const [unsubscribeRepuestos, setUnsubscribeRepuestos] = useState<Unsubscribe>();
+    const [unsubscribeModelosDrone, setUnsubscribeModelosDrone] = useState<Unsubscribe>();
+    const [unsubscribeDrones, setUnsubscribeDrones] = useState<Unsubscribe>();
+    const [unsubscribeIntervenciones, setUnsubscribeIntervenciones] = useState<Unsubscribe>();
 
     useEffect(() => {
         getUsuarios();
@@ -44,6 +64,34 @@ export function DataManagerComponent({ children }: DataManagerProps): React.Reac
         };
     }, [emailUsuMessage, emailCliMessage]);
 
+    useEffect(() => {
+        getRepuestos();
+        return () => {
+            unsubscribeRepuestos?.();
+        };
+    }, []);
+
+    useEffect(() => {
+        getModelosDrone();
+        return () => {
+            unsubscribeModelosDrone?.();
+        };
+    }, []);
+
+    useEffect(() => {
+        getDrones();
+        return () => {
+            unsubscribeDrones?.();
+        };
+    }, []);
+
+    useEffect(() => {
+        getIntervenciones();
+        return () => {
+            unsubscribeIntervenciones?.();
+        };
+    }, []);
+
     const getReparaciones = async () => {
         try {
             const unsubscribe = await getReparacionesPersistencia(
@@ -53,7 +101,7 @@ export function DataManagerComponent({ children }: DataManagerProps): React.Reac
                 usuario
             );
 
-            setUnsubscribeReparaciones(() => unsubscribe); // Guarda el unsubscribe en el estado local
+            setUnsubscribeReparaciones(() => unsubscribe);
         } catch (error) {
             console.error("Error al obtener reparaciones:", error);
         }
@@ -72,12 +120,11 @@ export function DataManagerComponent({ children }: DataManagerProps): React.Reac
                         }
                     });
                     dispatch(setUsuarios(usuarios));
-                    // TODO: Para los usuarios select hacer un selector específico, cuando haga selectores. Usar librería reselct
                     dispatch(setUsuariosSelect(usuariosSelect));
                 },
             );
 
-            setUnsubscribeUsuarios(() => unsubscribe); // Guarda el unsubscribe en el estado local
+            setUnsubscribeUsuarios(() => unsubscribe);
         } catch (error) {
             console.error("Error al obtener usuarios:", error);
         }
@@ -93,13 +140,67 @@ export function DataManagerComponent({ children }: DataManagerProps): React.Reac
                 emailCliMessage,
             );
 
-            setUnsubscribeMessages(() => unsubscribe); // Guarda el unsubscribe en el estado local
+            setUnsubscribeMessages(() => unsubscribe);
         } catch (error) {
             console.error("Error al obtener mensajes:", error);
         }
     };
 
-    // TODO: Hace falta que sea un wrapper???
+    const getRepuestos = async () => {
+        try {
+                        const unsubscribe = await getRepuestosPersistencia(
+                (repuestos: Repuesto[]) => {
+                                        dispatch(setRepuestos(repuestos));
+                },
+            );
+
+            setUnsubscribeRepuestos(() => unsubscribe);
+        } catch (error) {
+            console.error("Error al obtener repuestos:", error);
+        }
+    };
+    
+    const getModelosDrone = async () => {
+        try {
+            const unsubscribe = await getModelosDronePersistencia(
+                (modelosDrone: ModeloDrone[]) => {
+                    dispatch(setModelosDrone(modelosDrone));
+                }
+            );
+
+            setUnsubscribeModelosDrone(() => unsubscribe);
+        } catch (error) {
+            console.error("Error al obtener modelos de drones:", error);
+        }
+    };
+    
+    const getDrones = async () => {
+        try {
+            const unsubscribe = await getDronesPersistencia(
+                (drones: Drone[]) => {
+                    dispatch(setDrones(drones));
+                }
+            );
+
+            setUnsubscribeDrones(() => unsubscribe);
+        } catch (error) {
+            console.error("Error al obtener drones:", error);
+        }
+    };
+
+    const getIntervenciones = async () => {
+        try {
+            const unsubscribe = await getIntervencionesPersistencia(
+                (intervenciones: Intervencion[]) => {
+                    dispatch(setIntervenciones(intervenciones));
+                }
+            );
+            setUnsubscribeIntervenciones(() => unsubscribe);
+        } catch (error) {
+            console.error("Error al obtener intervenciones:", error);
+        }
+    };
+
     return (
         <div>
             {children}

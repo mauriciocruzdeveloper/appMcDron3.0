@@ -12,7 +12,7 @@ export const sendMessageAsync = createAsyncThunk(
             const messageGuardado = await sendMessagePersistencia(message);
             dispatch(isFetchingComplete());
             return messageGuardado;
-        } catch (error: any) {
+        } catch (error: any) { // TODO: Hacer tipo de dato para el error
             dispatch(isFetchingComplete());
             return error;
         }
@@ -29,7 +29,7 @@ export const sendMessageAsync = createAsyncThunk(
 //             dispatch(setMessagesToRedux(mensajes));
 //             dispatch(isFetchingComplete());
 //             return mensajes;
-//         } catch (error: any) {
+//         } catch (error: any) { // TODO: Hacer tipo de dato para el error
 //             dispatch(isFetchingComplete());
 //             return error;
 //         }

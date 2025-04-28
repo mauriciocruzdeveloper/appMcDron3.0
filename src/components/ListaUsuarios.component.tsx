@@ -53,19 +53,25 @@ export default function ListaUsuarios(): JSX.Element {
         {usuariosList.length} {usuariosList.length === 1 ? 'usuario' : 'usuarios'}
       </div>
 
-      {usuariosList.map(usuario => (
-        <div
-          key={usuario.id}
-          className='card mb-3 p-1' 
-          aria-current='true'
-          onClick={() => history.push(`/inicio/usuarios/${usuario.id}`)}
-        >
-          <div className='d-flex w-100 justify-content-between'>
-            <h5 className='mb-1'>{usuario.data.NombreUsu} {usuario.data.ApellidoUsu}</h5>
-          </div>
-          <small>{usuario?.data?.EmailUsu}</small>
+      {usuariosList.length === 0 ? (
+        <div className="alert alert-info text-center" role="alert">
+          No hay usuarios disponibles.
         </div>
-      ))}
+      ) : (
+        usuariosList.map(usuario => (
+          <div
+            key={usuario.id}
+            className='card mb-3 p-1' 
+            aria-current='true'
+            onClick={() => history.push(`/inicio/usuarios/${usuario.id}`)}
+          >
+            <div className='d-flex w-100 justify-content-between'>
+              <h5 className='mb-1'>{usuario.data.NombreUsu} {usuario.data.ApellidoUsu}</h5>
+            </div>
+            <small>{usuario?.data?.EmailUsu}</small>
+          </div>
+        ))
+      )}
     </div>
   );
 }
