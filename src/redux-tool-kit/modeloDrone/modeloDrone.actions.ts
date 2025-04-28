@@ -7,7 +7,6 @@ import {
 } from "../../persistencia/persistenciaFirebase";
 import { isFetchingComplete, isFetchingStart } from "../app/app.slice";
 import { ModeloDrone } from "../../types/modeloDrone";
-import { RootState } from '../store';
 
 // ELIMINAR MODELO DE DRONE
 export const eliminarModeloDroneAsync = createAsyncThunk(
