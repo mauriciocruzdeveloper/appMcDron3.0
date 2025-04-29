@@ -616,4 +616,522 @@ export const guardarUsuarioPersistencia = async (usuario) => {
   }
 };
 
+// GET Repuesto por id
+export const getRepuestoPersistencia = async (id) => {
+  try {
+    const { data, error } = await supabase
+      .from('part')
+      .select(`
+        *,
+        drone_model:drone_model_id (*)
+      `)
+      .eq('id', id)
+      .single();
+    
+    if (error) throw error;
+    
+    if (!data) {
+      throw new Error('Repuesto no encontrado');
+    }
+    
+    // Transformar al formato esperado por el frontend
+    return {
+      id: String(data.id),
+      data: {
+        NombreRepu: data.name,
+        DescripcionRepu: data.description || '',
+        ModeloDroneRepu: data.drone_model?.name || '',
+        ModeloDroneId: data.drone_model_id,  // Añadido para mantener la referencia directa al ID
+        ProveedorRepu: data.provider || '',
+        PrecioRepu: data.price || 0,
+        StockRepu: data.stock || 0,
+        UnidadesPedidas: data.backorder || 0
+      }
+    };
+  } catch (error) {
+    console.error("Error al obtener repuesto:", error);
+    throw error;
+  }
+};
+
+// GET Repuestos por modelo de drone
+export const getRepuestosPorModeloPersistencia = async (modeloDroneId) => {
+  try {
+    const { data, error } = await supabase
+      .from('part')
+      .select(`
+        *,
+        drone_model:drone_model_id (*)
+      `)
+      .eq('drone_model_id', modeloDroneId);
+    
+    if (error) throw error;
+    
+    // Transformar al formato esperado por el frontend
+    const repuestos = data.map(item => ({
+      id: String(item.id),
+      data: {
+        NombreRepu: item.name,
+        DescripcionRepu: item.description || '',
+        ModeloDroneRepu: item.drone_model?.name || '',
+        ModeloDroneId: item.drone_model_id,  // Añadido para mantener la referencia directa
+        ProveedorRepu: item.provider || '',
+        PrecioRepu: item.price || 0,
+        StockRepu: item.stock || 0,
+        UnidadesPedidas: item.backorder || 0
+      }
+    }));
+    
+    return repuestos;
+  } catch (error) {
+    console.error("Error al obtener repuestos por modelo:", error);
+    throw error;
+  }
+};
+
+// GET Repuestos por proveedor
+export const getRepuestosPorProveedorPersistencia = async (proveedor) => {
+  try {
+    const { data, error } = await supabase
+      .from('part')
+      .select(`
+        *,
+        drone_model:drone_model_id (id, name)
+      `)
+      .eq('provider', proveedor);
+    
+    if (error) throw error;
+    
+    // Transformar al formato esperado por el frontend
+    const repuestos = data.map(item => ({
+      id: String(item.id),
+      data: {
+        NombreRepu: item.name,
+        DescripcionRepu: item.description || '',
+        ModeloDroneRepu: item.drone_model?.name || '',
+        ProveedorRepu: item.provider || '',
+        PrecioRepu: item.price || 0,
+        StockRepu: item.stock || 0,
+        UnidadesPedidas: item.backorder || 0
+      }
+    }));
+    
+    return repuestos;
+  } catch (error) {
+    console.error("Error al obtener repuestos por proveedor:", error);
+    throw error;
+  }
+};
+
+// GUARDAR Repuesto - Mejorado para trabajar con IDs o nombres de modelo
+export const guardarRepuestoPersistencia = async (repuesto) => {
+  try {
+    // 1. Determinar el ID del modelo de drone
+    let drone_model_id = null;
+    
+    // Si ya tenemos el ID directamente, lo usamos
+    if (repuesto.data.ModeloDroneId) {
+      drone_model_id = repuesto.data.ModeloDroneId;
+    }
+    // Si no, pero tenemos el nombre, buscamos el ID
+    else if (repuesto.data.ModeloDroneRepu && repuesto.data.ModeloDroneRepu !== 'Universal') {
+      const { data: modeloDrone, error: errorModelo } = await supabase
+        .from('drone_model')
+        .select('id')
+        .eq('name', repuesto.data.ModeloDroneRepu)
+        .maybeSingle();
+      
+      if (!errorModelo && modeloDrone) {
+        drone_model_id = modeloDrone.id;
+      }
+    }
+    
+    // 2. Preparar datos para Supabase
+    const repuestoData = {
+      name: repuesto.data.NombreRepu,
+      description: repuesto.data.DescripcionRepu || '',
+      provider: repuesto.data.ProveedorRepu || '',
+      price: repuesto.data.PrecioRepu || 0,
+      stock: repuesto.data.StockRepu || 0,
+      backorder: repuesto.data.UnidadesPedidas || 0,
+      drone_model_id: drone_model_id
+    };
+    
+    let result;
+    
+    if (repuesto.id) {
+      // Actualización
+      const { data, error } = await supabase
+        .from('part')
+        .update(repuestoData)
+        .eq('id', repuesto.id)
+        .select(`
+          *,
+          drone_model:drone_model_id (id, name)
+        `);
+      
+      if (error) throw error;
+      result = data[0];
+    } else {
+      // Inserción
+      const { data, error } = await supabase
+        .from('part')
+        .insert(repuestoData)
+        .select(`
+          *,
+          drone_model:drone_model_id (id, name)
+        `);
+      
+      if (error) throw error;
+      result = data[0];
+    }
+    
+    // 3. Devolver el resultado en formato esperado por el frontend
+    return {
+      id: String(result.id),
+      data: {
+        NombreRepu: result.name,
+        DescripcionRepu: result.description || '',
+        ModeloDroneRepu: result.drone_model?.name || '',
+        ProveedorRepu: result.provider || '',
+        PrecioRepu: result.price || 0,
+        StockRepu: result.stock || 0,
+        UnidadesPedidas: result.backorder || 0
+      }
+    };
+  } catch (error) {
+    console.error("Error al guardar repuesto:", error);
+    throw error;
+  }
+};
+
+// ELIMINAR Repuesto
+export const eliminarRepuestoPersistencia = async (id) => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      // 1. Verificar si el repuesto está siendo utilizado en alguna intervención
+      const { data: relacionesRepuestoIntervencion, error: errorRelaciones } = await supabase
+        .from('intervention_part')
+        .select('*')
+        .eq('part_id', id);
+      
+      if (errorRelaciones) throw errorRelaciones;
+      
+      if (relacionesRepuestoIntervencion && relacionesRepuestoIntervencion.length > 0) {
+        reject({
+          code: "No se puede eliminar este repuesto porque está siendo utilizado en una o más intervenciones."
+        });
+        return;
+      }
+      
+      // 2. Si no hay dependencias, procedemos a eliminar
+      const { error: errorEliminacion } = await supabase
+        .from('part')
+        .delete()
+        .eq('id', id);
+      
+      if (errorEliminacion) throw errorEliminacion;
+      
+      resolve(id);
+    } catch (error) {
+      console.error('Error al eliminar repuesto:', error);
+      reject(error);
+    }
+  });
+};
+
+// GET todos los Repuestos con suscripción en tiempo real
+export const getRepuestosPersistencia = (setRepuestosToRedux) => {
+  console.log('getRepuestosPersistencia con Supabase');
+  
+  // Función para cargar los datos iniciales
+  const cargarRepuestos = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('part')
+        .select(`
+          *,
+          drone_model:drone_model_id (*)
+        `)
+        .order('name');
+      
+      if (error) throw error;
+      
+      // Transformar los datos al formato esperado por el frontend
+      const repuestos = data.map(item => ({
+        id: String(item.id),
+        data: {
+          NombreRepu: item.name,
+          DescripcionRepu: item.description || '',
+          ModeloDroneRepu: item.drone_model?.name || '',
+          ModeloDroneId: item.drone_model_id,  // Añadido para mantener la referencia directa
+          ProveedorRepu: item.provider || '',
+          PrecioRepu: item.price || 0,
+          StockRepu: item.stock || 0,
+          UnidadesPedidas: item.backorder || 0
+        }
+      }));
+      
+      // Actualizar el estado en Redux
+      setRepuestosToRedux(repuestos);
+    } catch (error) {
+      console.error("Error al cargar repuestos:", error);
+    }
+  };
+  
+  // Cargar datos iniciales
+  cargarRepuestos();
+  
+  // Configurar la suscripción en tiempo real
+  const channel = supabase
+    .channel('repuestos-changes')
+    .on('postgres_changes', { 
+      event: '*', 
+      schema: 'public', 
+      table: 'part' 
+    }, (payload) => {
+      console.log('Cambio detectado en repuestos:', payload);
+      // Cuando hay cambios, recargamos todos los datos
+      cargarRepuestos();
+    })
+    .subscribe();
+  
+  // Devolver función para cancelar la suscripción
+  return () => {
+    supabase.removeChannel(channel);
+  };
+};
+
+// GET ModeloDrone por id
+export const getModeloDronePersistencia = async (id) => {
+  try {
+    const { data, error } = await supabase
+      .from('drone_model')
+      .select('*')
+      .eq('id', id)
+      .single();
+    
+    if (error) throw error;
+    
+    if (!data) {
+      throw new Error('Modelo de drone no encontrado');
+    }
+    
+    // Transformar al formato esperado por el frontend
+    return {
+      id: String(data.id),
+      data: {
+        NombreModelo: data.name,
+        DescripcionModelo: data.description || '',
+        Fabricante: data.manufacturer || '', // Asumiendo que se añadió esta columna
+        PrecioReferencia: data.price_ref || 0
+      }
+    };
+  } catch (error) {
+    console.error("Error al obtener modelo de drone:", error);
+    throw error;
+  }
+};
+
+// GET ModelosDrone por fabricante
+export const getModelosDronePorFabricantePersistencia = async (fabricante) => {
+  try {
+    const { data, error } = await supabase
+      .from('drone_model')
+      .select('*')
+      .ilike('manufacturer', `%${fabricante}%`);
+    
+    if (error) throw error;
+    
+    // Transformar al formato esperado por el frontend
+    const modelosDrone = data.map(item => ({
+      id: String(item.id),
+      data: {
+        NombreModelo: item.name,
+        DescripcionModelo: item.description || '',
+        Fabricante: item.manufacturer || '',
+        PrecioReferencia: item.price_ref || 0
+      }
+    }));
+    
+    return modelosDrone;
+  } catch (error) {
+    console.error("Error al obtener modelos de drone por fabricante:", error);
+    throw error;
+  }
+};
+
+// GUARDAR ModeloDrone
+export const guardarModeloDronePersistencia = async (modeloDrone) => {
+  try {
+    // Preparar datos para Supabase
+    const modeloDroneData = {
+      name: modeloDrone.data.NombreModelo,
+      description: modeloDrone.data.DescripcionModelo || '',
+      manufacturer: modeloDrone.data.Fabricante || '',
+      price_ref: modeloDrone.data.PrecioReferencia || 0
+    };
+    
+    let result;
+    
+    if (modeloDrone.id) {
+      // Actualización
+      const { data, error } = await supabase
+        .from('drone_model')
+        .update(modeloDroneData)
+        .eq('id', modeloDrone.id)
+        .select();
+      
+      if (error) throw error;
+      result = data[0];
+    } else {
+      // Inserción
+      const { data, error } = await supabase
+        .from('drone_model')
+        .insert({
+          ...modeloDroneData,
+          created_at: new Date()
+        })
+        .select();
+      
+      if (error) throw error;
+      result = data[0];
+    }
+    
+    // Transformar el resultado al formato esperado por el frontend
+    return {
+      id: String(result.id),
+      data: {
+        NombreModelo: result.name,
+        DescripcionModelo: result.description || '',
+        Fabricante: result.manufacturer || '',
+        PrecioReferencia: result.price_ref || 0
+      }
+    };
+  } catch (error) {
+    console.error("Error al guardar modelo de drone:", error);
+    throw error;
+  }
+};
+
+// ELIMINAR ModeloDrone
+export const eliminarModeloDronePersistencia = async (id) => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      // 1. Verificar si hay drones asociados a este modelo
+      const { data: dronesAsociados, error: errorDrones } = await supabase
+        .from('drone')
+        .select('id')
+        .eq('drone_model_id', id);
+      
+      if (errorDrones) throw errorDrones;
+      
+      if (dronesAsociados && dronesAsociados.length > 0) {
+        reject({
+          code: 'No se puede borrar este modelo de drone. Hay drones asociados a este modelo.'
+        });
+        return;
+      }
+      
+      // 2. Verificar si hay intervenciones asociadas a este modelo
+      const { data: intervencionesAsociadas, error: errorIntervenciones } = await supabase
+        .from('intervention')
+        .select('id')
+        .eq('drone_model_id', id);
+      
+      if (errorIntervenciones) throw errorIntervenciones;
+      
+      if (intervencionesAsociadas && intervencionesAsociadas.length > 0) {
+        reject({
+          code: 'No se puede borrar este modelo de drone. Hay intervenciones asociadas a este modelo.'
+        });
+        return;
+      }
+      
+      // 3. Verificar si hay repuestos asociados a este modelo
+      const { data: repuestosAsociados, error: errorRepuestos } = await supabase
+        .from('part')
+        .select('id')
+        .eq('drone_model_id', id);
+      
+      if (errorRepuestos) throw errorRepuestos;
+      
+      if (repuestosAsociados && repuestosAsociados.length > 0) {
+        reject({
+          code: 'No se puede borrar este modelo de drone. Hay repuestos asociados a este modelo.'
+        });
+        return;
+      }
+      
+      // 4. Si no hay dependencias, procedemos a eliminar
+      const { error: errorEliminacion } = await supabase
+        .from('drone_model')
+        .delete()
+        .eq('id', id);
+      
+      if (errorEliminacion) throw errorEliminacion;
+      
+      resolve(id);
+    } catch (error) {
+      console.error('Error al eliminar modelo de drone:', error);
+      reject(error);
+    }
+  });
+};
+
+// GET todos los ModelosDrone con suscripción en tiempo real
+export const getModelosDronePersistencia = (setModelosDroneToRedux) => {
+  console.log('getModelosDronePersistencia con Supabase');
+  
+  // Función para cargar los datos iniciales
+  const cargarModelosDrone = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('drone_model')
+        .select('*')
+        .order('name');
+      
+      if (error) throw error;
+      
+      // Transformar los datos al formato esperado por el frontend
+      const modelosDrone = data.map(item => ({
+        id: String(item.id),
+        data: {
+          NombreModelo: item.name,
+          DescripcionModelo: item.description || '',
+          Fabricante: item.manufacturer || '',
+          PrecioReferencia: item.price_ref || 0
+        }
+      }));
+      
+      // Actualizar el estado en Redux
+      setModelosDroneToRedux(modelosDrone);
+    } catch (error) {
+      console.error("Error al cargar modelos de drone:", error);
+    }
+  };
+  
+  // Cargar datos iniciales
+  cargarModelosDrone();
+  
+  // Configurar la suscripción en tiempo real
+  const channel = supabase
+    .channel('modelos-drone-changes')
+    .on('postgres_changes', { 
+      event: '*', 
+      schema: 'public', 
+      table: 'drone_model' 
+    }, (payload) => {
+      console.log('Cambio detectado en modelos de drone:', payload);
+      // Cuando hay cambios, recargamos todos los datos
+      cargarModelosDrone();
+    })
+    .subscribe();
+  
+  // Devolver función para cancelar la suscripción
+  return () => {
+    supabase.removeChannel(channel);
+  };
+};
+
 // Aquí puedes agregar más funciones para trabajar con Supabase
