@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
+import { collectionNames } from '../types/collectionNames';
 
 // Estas credenciales deberían estar en un archivo de configuración o variables de entorno
 const supabaseUrl = process.env.REACT_APP_SUPABASE_URL || 'TU_URL_DE_SUPABASE';
@@ -186,6 +187,432 @@ export const eliminarIntervencionDeReparacionPersistencia = async (reparacionId,
       success: false, 
       error: error.message || 'Error al eliminar la intervención de la reparación'
     };
+  }
+};
+
+// GET todas las Reparaciones con suscripción en tiempo real
+export const getReparacionesPersistencia = (setReparacionesToRedux, usuario) => {
+  // Función para cargar los datos iniciales
+  const cargarReparaciones = async () => {
+    try {
+      let query = supabase.from('repair').select(`
+        id,
+        created_at,
+        state,
+        priority,
+        drone_id,
+        owner_id,
+        drive_link,
+        notes,
+        contact_date,
+        description,
+        diagnosis,
+        reception_date,
+        repair_resume,
+        price_labor,
+        price_parts,
+        price_total,
+        price_diagnosis,
+        delivery_description,
+        delivery_tracking,
+        photo_urls,
+        document_urls,
+        drone:drone_id (id, number_series),
+        owner:owner_id (id, email, first_name, last_name, telephone)
+      `);
+      
+      // Si el usuario no es administrador, filtrar por owner_id
+      if (!usuario?.data?.Admin) {
+        query = query.eq('owner_id', usuario.id);
+      }
+      
+      // Ordenar por prioridad
+      query = query.order('priority', { ascending: true });
+      
+      const { data, error } = await query;
+      
+      if (error) throw error;
+      
+      // Transformar los datos al formato esperado por el frontend
+      const reparaciones = data.map(item => ({
+        id: String(item.id),
+        data: {
+          EstadoRep: item.state,
+          PrioridadRep: item.priority,
+          DroneRep: item.drone?.number_series || '',
+          NombreUsu: item.owner?.first_name || '',
+          ApellidoUsu: item.owner?.last_name || '',
+          UsuarioRep: String(item.owner_id),
+          DriveRep: item.drive_link || '',
+          AnotacionesRep: item.notes || '',
+          FeConRep: item.contact_date,
+          EmailUsu: item.owner?.email || '',
+          TelefonoUsu: item.owner?.telephone || '',
+          DescripcionUsuRep: item.description || '',
+          DiagnosticoRep: item.diagnosis || '',
+          FeRecRep: item.reception_date,
+          NumeroSerieRep: item.drone?.number_series || '',
+          DescripcionTecRep: item.repair_resume || '',
+          PresuMoRep: item.price_labor || 0,
+          PresuReRep: item.price_parts || 0,
+          PresuFiRep: item.price_total || 0,
+          PresuDiRep: item.price_diagnosis || 0,
+          TxtRepuestosRep: '',  // No hay equivalente directo
+          InformeRep: item.repair_resume || '',
+          FeFinRep: 0,  // No hay equivalente directo
+          FeEntRep: 0,  // No hay equivalente directo
+          TxtEntregaRep: item.delivery_description || '',
+          SeguimientoEntregaRep: item.delivery_tracking || '',
+          urlsFotos: item.photo_urls || [],
+          urlsDocumentos: item.document_urls || [],
+          IntervencionesIds: []  // Obtendremos estos de otra consulta
+        }
+      }));
+      
+      // Actualizar el estado en Redux
+      setReparacionesToRedux(reparaciones);
+    } catch (error) {
+      console.error("Error al cargar reparaciones:", error);
+    }
+  };
+  
+  // Cargar datos iniciales
+  cargarReparaciones();
+  
+  // Configurar la suscripción en tiempo real
+  const channel = supabase
+    .channel('reparaciones-changes')
+    .on('postgres_changes', { 
+      event: '*', 
+      schema: 'public', 
+      table: 'repair' 
+    }, (payload) => {
+      console.log('Cambio detectado en reparaciones:', payload);
+      // Cuando hay cambios, recargamos todos los datos
+      cargarReparaciones();
+    })
+    .subscribe();
+  
+  // Devolver función para cancelar la suscripción
+  return () => {
+    supabase.removeChannel(channel);
+  };
+};
+
+// GET Reparación por id
+export const getReparacionPersistencia = async (id) => {
+  try {
+    const { data, error } = await supabase
+      .from('repair')
+      .select(`
+        *,
+        drone:drone_id (*),
+        owner:owner_id (*)
+      `)
+      .eq('id', id)
+      .single();
+    
+    if (error) throw error;
+    
+    if (!data) {
+      throw new Error('Reparación no encontrada');
+    }
+    
+    // Transformar al formato esperado por el frontend
+    return {
+      id: String(data.id),
+      data: {
+        EstadoRep: data.state,
+        PrioridadRep: data.priority,
+        DroneRep: data.drone?.number_series || '',
+        NombreUsu: data.owner?.first_name || '',
+        ApellidoUsu: data.owner?.last_name || '',
+        UsuarioRep: String(data.owner_id),
+        DriveRep: data.drive_link || '',
+        AnotacionesRep: data.notes || '',
+        FeConRep: data.contact_date,
+        EmailUsu: data.owner?.email || '',
+        TelefonoUsu: data.owner?.telephone || '',
+        DescripcionUsuRep: data.description || '',
+        DiagnosticoRep: data.diagnosis || '',
+        FeRecRep: data.reception_date,
+        NumeroSerieRep: data.drone?.number_series || '',
+        DescripcionTecRep: data.repair_resume || '',
+        PresuMoRep: data.price_labor || 0,
+        PresuReRep: data.price_parts || 0,
+        PresuFiRep: data.price_total || 0,
+        PresuDiRep: data.price_diagnosis || 0,
+        TxtRepuestosRep: '',  // No hay equivalente directo
+        InformeRep: data.repair_resume || '',
+        FeFinRep: 0,  // No hay equivalente directo
+        FeEntRep: 0,  // No hay equivalente directo
+        TxtEntregaRep: data.delivery_description || '',
+        SeguimientoEntregaRep: data.delivery_tracking || '',
+        urlsFotos: data.photo_urls || [],
+        urlsDocumentos: data.document_urls || [],
+        IntervencionesIds: []  // Obtendremos estos de otra consulta
+      }
+    };
+  } catch (error) {
+    console.error("Error al obtener reparación:", error);
+    throw error;
+  }
+};
+
+// GUARDAR Reparación
+export const guardarReparacionPersistencia = async (reparacion) => {
+  try {
+    // Transformar el objeto al formato de Supabase
+    const reparacionData = {
+      state: reparacion.data.EstadoRep,
+      priority: reparacion.data.PrioridadRep,
+      drone_id: null, // Se obtendría del drone con número de serie DroneRep
+      owner_id: reparacion.data.UsuarioRep,
+      drive_link: reparacion.data.DriveRep,
+      notes: reparacion.data.AnotacionesRep,
+      contact_date: reparacion.data.FeConRep,
+      description: reparacion.data.DescripcionUsuRep,
+      diagnosis: reparacion.data.DiagnosticoRep,
+      reception_date: reparacion.data.FeRecRep,
+      repair_resume: reparacion.data.DescripcionTecRep,
+      price_labor: reparacion.data.PresuMoRep,
+      price_parts: reparacion.data.PresuReRep,
+      price_total: reparacion.data.PresuFiRep,
+      price_diagnosis: reparacion.data.PresuDiRep,
+      delivery_description: reparacion.data.TxtEntregaRep,
+      delivery_tracking: reparacion.data.SeguimientoEntregaRep,
+      photo_urls: reparacion.data.urlsFotos,
+      document_urls: reparacion.data.urlsDocumentos
+    };
+    
+    let result;
+    
+    if (reparacion.id) {
+      // Actualización
+      const { data, error } = await supabase
+        .from('repair')
+        .update(reparacionData)
+        .eq('id', reparacion.id)
+        .select();
+      
+      if (error) throw error;
+      result = data[0];
+    } else {
+      // Inserción
+      const { data, error } = await supabase
+        .from('repair')
+        .insert(reparacionData)
+        .select();
+      
+      if (error) throw error;
+      result = data[0];
+    }
+    
+    return {
+      id: String(result.id),
+      data: reparacion.data
+    };
+  } catch (error) {
+    console.error("Error al guardar reparación:", error);
+    throw error;
+  }
+};
+
+// GET todos los usuarios con suscripción en tiempo real
+export const getUsuariosPersistencia = (setUsuariosToRedux) => {
+  console.log('getUsuariosPersistencia con Supabase');
+  
+  // Función para cargar los datos iniciales
+  const cargarUsuarios = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('user')
+        .select(`
+          id,
+          email,
+          first_name,
+          last_name,
+          telephone,
+          address,
+          city,
+          province,
+          is_admin
+        `)
+        .order('first_name');
+      
+      if (error) throw error;
+      
+      // Transformar los datos al formato esperado por el frontend
+      const usuarios = data.map(item => ({
+        id: String(item.id),
+        data: {
+          EmailUsu: item.email,
+          NombreUsu: item.first_name || '',
+          ApellidoUsu: item.last_name || '',
+          TelefonoUsu: item.telephone || '',
+          DireccionUsu: item.address || '',
+          CiudadUsu: item.city || '',
+          ProvinciaUsu: item.province || '',
+          Admin: item.is_admin || false
+        }
+      }));
+      
+      // Actualizar el estado en Redux
+      setUsuariosToRedux(usuarios);
+    } catch (error) {
+      console.error("Error al cargar usuarios:", error);
+    }
+  };
+  
+  // Cargar datos iniciales
+  cargarUsuarios();
+  
+  // Configurar la suscripción en tiempo real
+  const channel = supabase
+    .channel('usuarios-changes')
+    .on('postgres_changes', { 
+      event: '*', 
+      schema: 'public', 
+      table: 'user' 
+    }, (payload) => {
+      console.log('Cambio detectado en usuarios:', payload);
+      // Cuando hay cambios, recargamos todos los datos
+      cargarUsuarios();
+    })
+    .subscribe();
+  
+  // Devolver función para cancelar la suscripción
+  return () => {
+    supabase.removeChannel(channel);
+  };
+};
+
+// GET Cliente por id
+export const getClientePersistencia = async (id) => {
+  try {
+    const { data, error } = await supabase
+      .from('user')
+      .select('*')
+      .eq('id', id)
+      .single();
+    
+    if (error) throw error;
+    
+    if (!data) {
+      throw new Error('Usuario no encontrado');
+    }
+    
+    // Transformar al formato esperado por el frontend
+    return {
+      id: String(data.id),
+      data: {
+        EmailUsu: data.email,
+        NombreUsu: data.first_name || '',
+        ApellidoUsu: data.last_name || '',
+        TelefonoUsu: data.telephone || '',
+        DireccionUsu: data.address || '',
+        CiudadUsu: data.city || '',
+        ProvinciaUsu: data.province || '',
+        Admin: data.is_admin || false
+      }
+    };
+  } catch (error) {
+    console.error("Error al obtener cliente:", error);
+    throw error;
+  }
+};
+
+// GET Cliente por email
+export const getClientePorEmailPersistencia = async (email) => {
+  try {
+    const { data, error } = await supabase
+      .from('user')
+      .select('*')
+      .eq('email', email)
+      .single();
+    
+    if (error) {
+      // Si es un error de "no data found", retornamos null
+      if (error.code === 'PGRST116') {
+        return null;
+      }
+      throw error;
+    }
+    
+    if (!data) return null;
+    
+    // Transformar al formato esperado por el frontend
+    return {
+      id: String(data.id),
+      data: {
+        EmailUsu: data.email,
+        NombreUsu: data.first_name || '',
+        ApellidoUsu: data.last_name || '',
+        TelefonoUsu: data.telephone || '',
+        DireccionUsu: data.address || '',
+        CiudadUsu: data.city || '',
+        ProvinciaUsu: data.province || '',
+        Admin: data.is_admin || false
+      }
+    };
+  } catch (error) {
+    console.error("Error al obtener cliente por email:", error);
+    throw error;
+  }
+};
+
+// GUARDAR Cliente
+export const guardarUsuarioPersistencia = async (usuario) => {
+  try {
+    // Preparar datos para Supabase
+    const userData = {
+      email: usuario.data.EmailUsu,
+      first_name: usuario.data.NombreUsu || '',
+      last_name: usuario.data.ApellidoUsu || '',
+      telephone: usuario.data.TelefonoUsu || '',
+      address: usuario.data.DireccionUsu || '',
+      city: usuario.data.CiudadUsu || '',
+      province: usuario.data.ProvinciaUsu || '',
+      is_admin: usuario.data.Admin || false
+    };
+    
+    let result;
+    
+    if (usuario.id) {
+      // Actualización
+      const { data, error } = await supabase
+        .from('user')
+        .update(userData)
+        .eq('id', usuario.id)
+        .select();
+      
+      if (error) throw error;
+      result = data[0];
+      
+      // En lugar de actualizar los datos en las reparaciones, confiar en las relaciones
+      // y joins para obtener la información actualizada del usuario
+    } else {
+      // Inserción
+      const { data, error } = await supabase
+        .from('user')
+        .insert({
+          ...userData,
+          // Adicional para nuevos usuarios
+          created_at: new Date()
+        })
+        .select();
+      
+      if (error) throw error;
+      result = data[0];
+    }
+    
+    return {
+      id: String(result.id),
+      data: usuario.data
+    };
+  } catch (error) {
+    console.error("Error al guardar usuario:", error);
+    throw error;
   }
 };
 
