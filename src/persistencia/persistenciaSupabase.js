@@ -418,6 +418,45 @@ export const guardarReparacionPersistencia = async (reparacion) => {
   }
 };
 
+// DELETE Reparación por id
+export const eliminarReparacionPersistencia = async (id) => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      // 1. Primero verificamos si hay relaciones en repair_intervention
+      const { data: relacionesIntervenciones, error: errorRelaciones } = await supabase
+        .from('repair_intervention')
+        .select('id')
+        .eq('repair_id', id);
+      
+      if (errorRelaciones) throw errorRelaciones;
+      
+      // 2. Si existen relaciones, las eliminamos primero
+      if (relacionesIntervenciones && relacionesIntervenciones.length > 0) {
+        const { error: errorBorradoRelaciones } = await supabase
+          .from('repair_intervention')
+          .delete()
+          .eq('repair_id', id);
+        
+        if (errorBorradoRelaciones) throw errorBorradoRelaciones;
+      }
+      
+      // 3. Ahora eliminamos la reparación
+      const { error: errorBorrado } = await supabase
+        .from('repair')
+        .delete()
+        .eq('id', id);
+      
+      if (errorBorrado) throw errorBorrado;
+      
+      console.log('Reparación eliminada correctamente');
+      resolve(id);
+    } catch (error) {
+      console.error('Error al eliminar reparación:', error);
+      reject(error);
+    }
+  });
+};
+
 // GET todos los usuarios con suscripción en tiempo real
 export const getUsuariosPersistencia = (setUsuariosToRedux) => {
   console.log('getUsuariosPersistencia con Supabase');
@@ -614,6 +653,59 @@ export const guardarUsuarioPersistencia = async (usuario) => {
     console.error("Error al guardar usuario:", error);
     throw error;
   }
+};
+
+// DELETE Usuario/Cliente
+export const eliminarUsuarioPersistencia = async (id) => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      // 1. Primero verificamos si hay reparaciones asociadas al usuario
+      const { data: reparacionesAsociadas, error: errorReparaciones } = await supabase
+        .from('repair')
+        .select('id')
+        .eq('owner_id', id);
+      
+      if (errorReparaciones) throw errorReparaciones;
+      
+      if (reparacionesAsociadas && reparacionesAsociadas.length > 0) {
+        reject({
+          code: 'No se puede borrar este usuario. Reparación relacionada: ' + 
+                reparacionesAsociadas.map(rep => rep.id).toString()
+        });
+        return;
+      }
+      
+      // 2. Verificar si hay drones asociados al usuario como propietario
+      const { data: dronesAsociados, error: errorDrones } = await supabase
+        .from('drone')
+        .select('id, number_series')
+        .eq('owner_id', id);
+      
+      if (errorDrones) throw errorDrones;
+      
+      if (dronesAsociados && dronesAsociados.length > 0) {
+        reject({
+          code: 'No se puede borrar este usuario. Drone relacionado: ' + 
+                dronesAsociados.map(drone => drone.number_series || drone.id).toString()
+        });
+        return;
+      }
+      
+      // 3. Si no hay dependencias, procedemos a eliminar
+      const { error: errorEliminacion } = await supabase
+        .from('user')
+        .delete()
+        .eq('id', id);
+      
+      if (errorEliminacion) throw errorEliminacion;
+      
+      console.log('Usuario eliminado correctamente');
+      resolve(id);
+    } catch (error) {
+      console.error('Error al eliminar usuario:', error);
+      reject(error);
+    }
+  });
 };
 
 // GET Repuesto por id
