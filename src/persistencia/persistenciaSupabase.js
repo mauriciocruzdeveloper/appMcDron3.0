@@ -2289,3 +2289,31 @@ export const notificacionesPorMensajesPersistencia = (emailUsu) => {
     console.error('Error en notificacionesPorMensajesPersistencia:', error);
   }
 };
+
+///////////// PRESUPUESTO ///////////////////////////////////////////////////
+
+export const guardarPresupuestoPersistencia = (presupuesto) => {
+  // En Supabase también agregamos información del usuario a la reparación 
+  // para mantener consistencia con la implementación original
+  presupuesto.reparacion.data.NombreUsu = presupuesto.usuario.data?.NombreUsu || '';
+  presupuesto.reparacion.data.ApellidoUsu = presupuesto.usuario.data?.ApellidoUsu || '';
+  presupuesto.reparacion.data.EmailUsu = presupuesto.usuario.data?.EmailUsu || '';
+  presupuesto.reparacion.data.TelefonoUsu = presupuesto.usuario.data?.TelefonoUsu || '';
+  
+  return new Promise(async (resolve, reject) => {
+    try {
+      // 1. Primero guardar el usuario
+      await guardarUsuarioPersistencia(presupuesto.usuario);
+      
+      // 2. Luego guardar la reparación asociada al usuario
+      presupuesto.reparacion.data.UsuarioRep = presupuesto.usuario.id;
+      await guardarReparacionPersistencia(presupuesto.reparacion);
+      
+      // 3. Devolver el presupuesto completo
+      resolve(presupuesto);
+    } catch (error) {
+      console.error('Error en guardarPresupuestoPersistencia:', error);
+      reject(error);
+    }
+  });
+};
