@@ -7,7 +7,7 @@ import {
     getModelosDronePersistencia,
     getDronesPersistencia,
     getIntervencionesPersistencia
-} from "../persistencia/persistenciaFirebase";
+} from "../persistencia/persistencia"; // Actualizado para usar la importación centralizada
 import { useAppDispatch } from "../redux-tool-kit/hooks/useAppDispatch";
 import { setReparaciones } from "../redux-tool-kit/reparacion/reparacion.slice";
 import { ReparacionType } from "../types/reparacion";

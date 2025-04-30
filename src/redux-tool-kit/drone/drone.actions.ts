@@ -5,7 +5,7 @@ import {
     getDronesPorModeloDronePersistencia,
     guardarDronePersistencia,
     getDronesPorPropietarioPersistencia,
-} from "../../persistencia/persistenciaFirebase";
+} from "../../persistencia/persistencia"; // Actualizado para usar la importación centralizada
 import { isFetchingComplete, isFetchingStart } from "../app/app.slice";
 import { Drone } from "../../types/drone";
 

@@ -1,10 +1,15 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
-import { loginPersistencia, registroPersistencia } from "../../persistencia/persistenciaFirebase";
+import { loginPersistencia, registroPersistencia } from "../../persistencia/persistencia"; // Actualizado para usar la importación centralizada
 import { ReparacionType } from "../../types/reparacion";
 import { isFetchingComplete, isFetchingStart } from "./app.slice";
 import { callEndpoint } from "../../utils/utils";
 import { HttpMethod } from "../../types/httpMethods";
-import { eliminarDocumentoReparacionPersistencia, eliminarFotoReparacionPersistencia, subirDocumentoReparacionPersistencia, subirFotoReparacionPersistencia } from "../../persistencia/subeFotoFirebase";
+import { 
+  eliminarDocumentoReparacionPersistencia, 
+  eliminarFotoReparacionPersistencia, 
+  subirDocumentoReparacionPersistencia, 
+  subirFotoReparacionPersistencia 
+} from "../../persistencia/subeFotoFirebase"; // Estas importaciones aún deberían mantenerse específicas por ahora
 
 // LOGIN
 export const loginAsync = createAsyncThunk(

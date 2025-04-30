@@ -4,7 +4,7 @@ import {
     getClientePersistencia,
     getClientePorEmailPersistencia,
     guardarUsuarioPersistencia,
-} from "../../persistencia/persistenciaFirebase";
+} from "../../persistencia/persistencia"; // Actualizado para usar la importación centralizada
 import { isFetchingComplete, isFetchingStart } from "../app/app.slice";
 import { Usuario } from "../../types/usuario";
 
