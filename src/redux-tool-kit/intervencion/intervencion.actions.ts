@@ -5,7 +5,7 @@ import {
   getIntervencionesPorModeloDronePersistencia,
   guardarIntervencionPersistencia,
   getIntervencionesPersistencia,
-} from "../../persistencia/persistenciaFirebase";
+} from "../../persistencia/persistencia"; // Cambiado a la nueva importación centralizada
 import { isFetchingComplete, isFetchingStart } from "../app/app.slice";
 import { Intervencion } from "../../types/intervencion";
 import { RootState } from '../store';
