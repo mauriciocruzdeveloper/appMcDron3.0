@@ -1226,4 +1226,356 @@ export const getModelosDronePersistencia = (setModelosDroneToRedux) => {
   };
 };
 
-// Aquí puedes agregar más funciones para trabajar con Supabase
+////////////////////// DRONE ///////////////////////////////////////////////////////////////////////////
+
+// GET Drone por id
+export const getDronePersistencia = async (id) => {
+  try {
+    const { data, error } = await supabase
+      .from('drone')
+      .select(`
+        *,
+        drone_model:drone_model_id (*),
+        owner:owner_id (*)
+      `)
+      .eq('id', id)
+      .single();
+    
+    if (error) throw error;
+    
+    if (!data) {
+      throw new Error('Drone no encontrado');
+    }
+    
+    // Transformar al formato esperado por el frontend
+    return {
+      id: String(data.id),
+      data: {
+        NumeroSerie: data.number_series || '',
+        ModeloDroneId: data.drone_model_id || '',
+        ModeloDroneRepu: data.drone_model?.name || '',
+        Propietario: data.owner_id || '',
+        Observaciones: data.observations || ''
+      }
+    };
+  } catch (error) {
+    console.error("Error al obtener drone:", error);
+    throw error;
+  }
+};
+
+// GET Drones por modelo de drone
+export const getDronesPorModeloDronePersistencia = async (modeloDroneId) => {
+  try {
+    const { data, error } = await supabase
+      .from('drone')
+      .select(`
+        *,
+        drone_model:drone_model_id (*),
+        owner:owner_id (*)
+      `)
+      .eq('drone_model_id', modeloDroneId);
+    
+    if (error) throw error;
+    
+    // Transformar al formato esperado por el frontend
+    const drones = data.map(item => ({
+      id: String(item.id),
+      data: {
+        NumeroSerie: item.number_series || '',
+        ModeloDroneId: item.drone_model_id || '',
+        ModeloDroneRepu: item.drone_model?.name || '',
+        Propietario: item.owner_id || '',
+        Observaciones: item.observations || ''
+      }
+    }));
+    
+    return drones;
+  } catch (error) {
+    console.error("Error al obtener drones por modelo:", error);
+    throw error;
+  }
+};
+
+// GET Drones por propietario
+export const getDronesPorPropietarioPersistencia = async (propietarioId) => {
+  try {
+    const { data, error } = await supabase
+      .from('drone')
+      .select(`
+        *,
+        drone_model:drone_model_id (*),
+        owner:owner_id (*)
+      `)
+      .eq('owner_id', propietarioId);
+    
+    if (error) throw error;
+    
+    // Transformar al formato esperado por el frontend
+    const drones = data.map(item => ({
+      id: String(item.id),
+      data: {
+        NumeroSerie: item.number_series || '',
+        ModeloDroneId: item.drone_model_id || '',
+        ModeloDroneRepu: item.drone_model?.name || '',
+        Propietario: item.owner_id || '',
+        Observaciones: item.observations || ''
+      }
+    }));
+    
+    return drones;
+  } catch (error) {
+    console.error("Error al obtener drones por propietario:", error);
+    throw error;
+  }
+};
+
+// GUARDAR Drone
+export const guardarDronePersistencia = async (drone) => {
+  try {
+    // Preparar datos para Supabase
+    const droneData = {
+      number_series: drone.data.NumeroSerie || '',
+      drone_model_id: drone.data.ModeloDroneId || null,
+      owner_id: drone.data.Propietario || null,
+      observations: drone.data.Observaciones || ''
+    };
+    
+    let result;
+    
+    if (drone.id) {
+      // Actualización
+      const { data, error } = await supabase
+        .from('drone')
+        .update(droneData)
+        .eq('id', drone.id)
+        .select(`
+          *,
+          drone_model:drone_model_id (*),
+          owner:owner_id (*)
+        `);
+      
+      if (error) throw error;
+      result = data[0];
+    } else {
+      // Inserción
+      const { data, error } = await supabase
+        .from('drone')
+        .insert({
+          ...droneData,
+          created_at: new Date()
+        })
+        .select(`
+          *,
+          drone_model:drone_model_id (*),
+          owner:owner_id (*)
+        `);
+      
+      if (error) throw error;
+      result = data[0];
+    }
+    
+    // Transformar el resultado al formato esperado por el frontend
+    return {
+      id: String(result.id),
+      data: {
+        NumeroSerie: result.number_series || '',
+        ModeloDroneId: result.drone_model_id || '',
+        ModeloDroneRepu: result.drone_model?.name || '',
+        Propietario: result.owner_id || '',
+        Observaciones: result.observations || ''
+      }
+    };
+  } catch (error) {
+    console.error("Error al guardar drone:", error);
+    throw error;
+  }
+};
+
+// ELIMINAR Drone
+export const eliminarDronePersistencia = async (id) => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      // 1. Verificar si hay reparaciones asociadas a este drone
+      const { data: reparacionesAsociadas, error: errorReparaciones } = await supabase
+        .from('repair')
+        .select('id')
+        .eq('drone_id', id);
+      
+      if (errorReparaciones) throw errorReparaciones;
+      
+      if (reparacionesAsociadas && reparacionesAsociadas.length > 0) {
+        reject({
+          code: 'No se puede borrar este drone. Hay reparaciones asociadas a este drone.'
+        });
+        return;
+      }
+      
+      // 2. Si no hay dependencias, procedemos a eliminar
+      const { error: errorEliminacion } = await supabase
+        .from('drone')
+        .delete()
+        .eq('id', id);
+      
+      if (errorEliminacion) throw errorEliminacion;
+      
+      resolve(id);
+    } catch (error) {
+      console.error('Error al eliminar drone:', error);
+      reject(error);
+    }
+  });
+};
+
+// GET todos los Drones con suscripción en tiempo real
+export const getDronesPersistencia = (setDronesToRedux) => {
+  console.log('getDronesPersistencia con Supabase');
+  
+  // Función para cargar los datos iniciales
+  const cargarDrones = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('drone')
+        .select(`
+          *,
+          drone_model:drone_model_id (*),
+          owner:owner_id (*)
+        `)
+        .order('number_series');
+      
+      if (error) throw error;
+      
+      // Transformar los datos al formato esperado por el frontend
+      const drones = data.map(item => ({
+        id: String(item.id),
+        data: {
+          NumeroSerie: item.number_series || '',
+          ModeloDroneId: item.drone_model_id || '',
+          ModeloDroneRepu: item.drone_model?.name || '',
+          Propietario: item.owner_id || '',
+          Observaciones: item.observations || ''
+        }
+      }));
+      
+      // Actualizar el estado en Redux
+      setDronesToRedux(drones);
+    } catch (error) {
+      console.error("Error al cargar drones:", error);
+    }
+  };
+  
+  // Cargar datos iniciales
+  cargarDrones();
+  
+  // Configurar la suscripción en tiempo real
+  const channel = supabase
+    .channel('drones-changes')
+    .on('postgres_changes', { 
+      event: '*', 
+      schema: 'public', 
+      table: 'drone' 
+    }, (payload) => {
+      console.log('Cambio detectado en drones:', payload);
+      // Cuando hay cambios, recargamos todos los datos
+      cargarDrones();
+    })
+    .subscribe();
+  
+  // Devolver función para cancelar la suscripción
+  return () => {
+    supabase.removeChannel(channel);
+  };
+};
+
+/////// OBTENER DATOS PARA LA PRESENTACIÓN DESDE LA PERSISTENCIA ////////////////////
+// Todos los datos deberían provenir desde la persistencia.
+// Estas funciones cargan los en la app.
+
+// Método 1: Mantener los mismos datos locales como en Firebase
+import { provincias } from '../datos/provincias.json';
+import { localidades } from '../datos/localidades.json';
+
+// Obtengo las provincias desde un archivo propio
+export const getProvinciasSelectPersistencia = () => {
+  console.log('getProvinciasSelectPersistencia con Supabase');
+  return new Promise((resolve, reject) => {
+    try {
+      resolve(provincias.map(provincia => {
+        return {
+          value: provincia.provincia,
+          label: provincia.provincia
+        }
+      }))
+    } catch (error) {
+      console.error('Error al obtener provincias:', error);
+      reject(error);
+    }
+  });
+}
+
+// Obtengo las localidades por provincia
+export const getLocPorProvPersistencia = (provincia) => {
+  console.log('getLocPorProvPersistencia con Supabase');
+  return new Promise((resolve, reject) => {
+    try {
+      const localidadesFiltradas = localidades.filter(localidad => (
+        localidad.provincia.nombre == provincia
+      )).map(localidad => {
+        return {
+          value: localidad.nombre,
+          label: localidad.nombre
+        }
+      });
+      resolve(localidadesFiltradas);
+    } catch (error) {
+      console.error('Error al obtener localidades:', error);
+      reject(error);
+    }
+  });
+};
+
+// Método 2 (alternativo): Si ya hay tablas en Supabase, usar este código:
+/*
+// Obtengo las provincias desde Supabase
+export const getProvinciasSelectPersistencia = async () => {
+  console.log('getProvinciasSelectPersistencia con Supabase');
+  try {
+    const { data, error } = await supabase
+      .from('provincias')
+      .select('*')
+      .order('nombre');
+    
+    if (error) throw error;
+    
+    return data.map(provincia => ({
+      value: provincia.nombre,
+      label: provincia.nombre
+    }));
+  } catch (error) {
+    console.error('Error al obtener provincias:', error);
+    throw error;
+  }
+};
+
+// Obtengo las localidades por provincia
+export const getLocPorProvPersistencia = async (provincia) => {
+  console.log('getLocPorProvPersistencia con Supabase');
+  try {
+    const { data, error } = await supabase
+      .from('localidades')
+      .select('*')
+      .eq('provincia', provincia)
+      .order('nombre');
+    
+    if (error) throw error;
+    
+    return data.map(localidad => ({
+      value: localidad.nombre,
+      label: localidad.nombre
+    }));
+  } catch (error) {
+    console.error('Error al obtener localidades por provincia:', error);
+    throw error;
+  }
+};
+*/
