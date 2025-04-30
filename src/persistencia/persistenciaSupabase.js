@@ -1,5 +1,4 @@
 import { createClient } from '@supabase/supabase-js';
-import { collectionNames } from '../types/collectionNames';
 
 // Estas credenciales deberían estar en un archivo de configuración o variables de entorno
 const supabaseUrl = process.env.REACT_APP_SUPABASE_URL || 'TU_URL_DE_SUPABASE';
@@ -606,7 +605,7 @@ export const guardarUsuarioPersistencia = async (usuario) => {
     // Preparar datos para Supabase
     const userData = {
       email: usuario.data.EmailUsu,
-      first_name: usuario.data.NombreUsu || '',
+      name: usuario.data.NombreUsu || '',
       last_name: usuario.data.ApellidoUsu || '',
       telephone: usuario.data.TelefonoUsu || '',
       address: usuario.data.DireccionUsu || '',
@@ -2008,19 +2007,19 @@ export const loginPersistencia = (emailParametro, passwordParametro) => {
       }
       
       // Obtener los datos del usuario de la tabla de usuarios
-      const { data: usuarioData, error: usuarioError } = await supabase
+      const { data: userData, error: userError } = await supabase
         .from('user')
         .select('*')
         .eq('email', emailParametro)
         .single();
       
-      if (usuarioError) {
-        console.error('Error al obtener datos del usuario:', usuarioError);
+      if (userError) {
+        console.error('Error al obtener datos del usuario:', userError);
         reject({ code: 'Problema al obtener datos del usuario' });
         return;
       }
       
-      if (!usuarioData) {
+      if (!userData) {
         console.error('Usuario no encontrado en la base de datos');
         reject({ code: 'Usuario no encontrado en la base de datos' });
         return;
@@ -2028,8 +2027,18 @@ export const loginPersistencia = (emailParametro, passwordParametro) => {
       
       // Construir el objeto usuario como lo espera la aplicación
       const usuario = {
-        id: emailParametro,
-        data: usuarioData
+        id: emailParametro, // Mantener el email como ID para compatibilidad con el frontend
+        data: {
+          EmailUsu: userData.email,
+          NombreUsu: userData.name || '',
+          ApellidoUsu: userData.last_name || '',
+          TelefonoUsu: userData.tel || '',
+          DireccionUsu: '', // Este campo no existe en la tabla
+          CiudadUsu: userData.city || '',
+          ProvinciaUsu: userData.state || '',
+          Admin: userData.is_admin || false,
+          UrlPhotoUsu: userData.url_photo || ''
+        }
       };
       
       console.log('Login exitoso');
@@ -2044,54 +2053,33 @@ export const loginPersistencia = (emailParametro, passwordParametro) => {
 
 // Registro
 export const registroPersistencia = (registro) => {
-  const { email, password, admin, NombreUsu, ApellidoUsu } = registro;
-  
-  const usuario = {
-    id: email,
-    data: {
-      email: email,
-      first_name: NombreUsu,
-      last_name: ApellidoUsu,
-      is_admin: admin
-    }
-  };
-  
   return new Promise(async (resolve, reject) => {
     try {
-      // 1. Registrar el usuario en Supabase Auth
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: email,
-        password: password,
-        options: {
-          emailRedirectTo: window.location.origin, // URL de redirección tras verificación
-          data: {
-            first_name: NombreUsu,
-            last_name: ApellidoUsu,
-            is_admin: admin
-          }
-        }
+      const response = await fetch('https://tu-dominio.com/api/registro_usuario.php', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(registro)
       });
-      
-      if (authError) {
-        console.error('Error en registro:', authError);
-        reject(authError.message);
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        console.error('Error en el registro:', result);
+        reject(result.error || 'Error al registrar el usuario');
         return;
       }
-      
-      // 2. Guardar los datos del usuario en la tabla 'user'
-      await guardarUsuarioPersistencia(usuario);
-      
+
       console.log('Usuario registrado correctamente');
-      resolve(authData.user);
+      resolve(result.message || 'Registro exitoso');
       
     } catch (error) {
       console.error('Error inesperado en registroPersistencia:', error);
-      reject(error.message || 'Error en el registro');
+      reject(error.message || 'Error inesperado');
     }
   });
 };
-
-////////////////////// MENSAJES ////////////////////////////////////////////
 
 // SEND de un mensaje
 export const sendMessagePersistencia = (message) => {
@@ -2303,14 +2291,28 @@ export const guardarPresupuestoPersistencia = (presupuesto) => {
   return new Promise(async (resolve, reject) => {
     try {
       // 1. Primero guardar el usuario
-      await guardarUsuarioPersistencia(presupuesto.usuario);
+      const usuarioGuardado = await guardarUsuarioPersistencia(presupuesto.usuario);
       
-      // 2. Luego guardar la reparación asociada al usuario
-      presupuesto.reparacion.data.UsuarioRep = presupuesto.usuario.id;
-      await guardarReparacionPersistencia(presupuesto.reparacion);
+      // 2. Luego obtener el ID numérico del usuario (no el email)
+      const { data: userData, error: userError } = await supabase
+        .from('user')
+        .select('id')
+        .eq('email', usuarioGuardado.id)
+        .single();
       
-      // 3. Devolver el presupuesto completo
-      resolve(presupuesto);
+      if (userError || !userData) {
+        throw new Error('Error al obtener el ID del usuario');
+      }
+      
+      // 3. Guardar la reparación con el ID numérico del usuario en owner_id
+      presupuesto.reparacion.data.UsuarioRep = userData.id.toString();
+      const reparacionGuardada = await guardarReparacionPersistencia(presupuesto.reparacion);
+      
+      // 4. Devolver el presupuesto actualizado
+      resolve({
+        usuario: usuarioGuardado,
+        reparacion: reparacionGuardada
+      });
     } catch (error) {
       console.error('Error en guardarPresupuestoPersistencia:', error);
       reject(error);
