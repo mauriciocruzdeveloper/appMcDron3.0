@@ -1,5 +1,8 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
-import { loginPersistencia, registroPersistencia } from "../../persistencia/persistencia"; // Actualizado para usar la importación centralizada
+import { 
+  loginPersistencia,
+  registroUsuarioEndpointPersistencia
+} from "../../persistencia/persistencia"; // Actualizado para usar la importación centralizada
 import { ReparacionType } from "../../types/reparacion";
 import { isFetchingComplete, isFetchingStart } from "./app.slice";
 import { callEndpoint } from "../../utils/utils";
@@ -30,14 +33,17 @@ export const loginAsync = createAsyncThunk(
 // REGISTRO
 export const registroAsync = createAsyncThunk(
     'app/registro',
-    async (registroData: Record<string, any>, { rejectWithValue }) => {
+    async (registro: any, { dispatch }) => {
         try {
-            await registroPersistencia(registroData);
-            return 'Registro exitoso';
-        } catch (error) {
-            return rejectWithValue(error || 'Error de registro');
+            dispatch(isFetchingStart());
+            const response = await registroUsuarioEndpointPersistencia(registro);
+            dispatch(isFetchingComplete());
+            return response;
+        } catch (error: any) {
+            dispatch(isFetchingComplete());
+            throw error;
         }
-    }
+    },
 );
 
 // ENVIA RECIBO
