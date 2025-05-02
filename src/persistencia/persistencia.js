@@ -10,7 +10,7 @@ import * as backend from './persistenciaSupabase';
 
 // AUTENTICACIÓN
 export const loginPersistencia = backend.loginPersistencia;
-export const registroPersistencia = backend.registroPersistencia;
+export const registroUsuarioEndpointPersistencia = backend.registroUsuarioEndpointPersistencia;
 
 // REPARACIONES
 export const getReparacionesPersistencia = backend.getReparacionesPersistencia;

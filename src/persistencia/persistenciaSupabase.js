@@ -2051,36 +2051,6 @@ export const loginPersistencia = (emailParametro, passwordParametro) => {
   });
 };
 
-// Registro
-export const registroPersistencia = (registro) => {
-  return new Promise(async (resolve, reject) => {
-    try {
-      const response = await fetch('https://tu-dominio.com/api/registro_usuario.php', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(registro)
-      });
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        console.error('Error en el registro:', result);
-        reject(result.error || 'Error al registrar el usuario');
-        return;
-      }
-
-      console.log('Usuario registrado correctamente');
-      resolve(result.message || 'Registro exitoso');
-      
-    } catch (error) {
-      console.error('Error inesperado en registroPersistencia:', error);
-      reject(error.message || 'Error inesperado');
-    }
-  });
-};
-
 // SEND de un mensaje
 export const sendMessagePersistencia = (message) => {
   console.log('sendMessagePersistencia()');
@@ -2318,4 +2288,28 @@ export const guardarPresupuestoPersistencia = (presupuesto) => {
       reject(error);
     }
   });
+};
+
+// Función para registrar usuario a través del endpoint API
+export const registroUsuarioEndpointPersistencia = async (registroData) => {
+  try {
+    const response = await fetch(`${process.env.REACT_APP_API_URL}/registro_usuario`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(registroData)
+    });
+    
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || 'Error en el registro');
+    }
+    
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Error en registroUsuarioEndpointPersistencia:', error);
+    throw error;
+  }
 };
