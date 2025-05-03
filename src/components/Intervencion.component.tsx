@@ -41,6 +41,9 @@ export default function IntervencionComponent(): JSX.Element {
   // Para el selector múltiple de repuestos
   const [selectedRepuestos, setSelectedRepuestos] = useState<{value: string, label: string, precio: number}[]>([]);
   
+  // Estado para almacenar los repuestos filtrados por modelo
+  const [repuestosFiltrados, setRepuestosFiltrados] = useState<{value: string, label: string, precio: number}[]>([]);
+  
   useEffect(() => {
     if (!isNew && id) {
       if (intervencionActual) {
@@ -69,6 +72,58 @@ export default function IntervencionComponent(): JSX.Element {
       }
     }
   }, [dispatch, id, isNew, intervencionActual, repuestos]);
+
+  // Filtrar repuestos cuando cambia el modelo de drone seleccionado
+  useEffect(() => {
+    // Si hay un modelo seleccionado, filtrar repuestos compatibles
+    if (intervencion.data.ModeloDroneId) {
+      const compatibles = repuestos.filter(repuesto =>
+        // O repuestos con nombre de modelo que coincida
+        repuesto.data.ModeloDroneRepu === (
+          modelosDrone.find(m => m.id === intervencion.data.ModeloDroneId)?.data.NombreModelo || ''
+        ) ||
+        // O repuestos universales
+        repuesto.data.ModeloDroneRepu === 'Universal'
+      );
+      
+      const options = compatibles.map(repuesto => ({
+        value: repuesto.id,
+        label: `${repuesto.data.NombreRepu} - ${repuesto.data.PrecioRepu?.toLocaleString('es-AR', { style: 'currency', currency: 'ARS' }) || '$0'}`,
+        precio: repuesto.data.PrecioRepu || 0
+      }));
+      
+      setRepuestosFiltrados(options);
+      
+      // Si hay repuestos seleccionados que ya no son compatibles, eliminarlos
+      const repuestosCompatiblesIds = compatibles.map(r => r.id);
+      const repuestosSeleccionadosCompatibles = selectedRepuestos.filter(
+        selected => repuestosCompatiblesIds.includes(selected.value)
+      );
+      
+      if (repuestosSeleccionadosCompatibles.length !== selectedRepuestos.length) {
+        setSelectedRepuestos(repuestosSeleccionadosCompatibles);
+        
+        // Actualizar también los IDs en el objeto de intervención
+        const nuevosIds = repuestosSeleccionadosCompatibles.map(r => r.value);
+        setIntervencion(prev => ({
+          ...prev,
+          data: {
+            ...prev.data,
+            RepuestosIds: nuevosIds
+          }
+        }));
+      }
+    } else {
+      // Si no hay modelo seleccionado, mostrar todos los repuestos
+      const options = repuestos.map(repuesto => ({
+        value: repuesto.id,
+        label: `${repuesto.data.NombreRepu} - ${repuesto.data.PrecioRepu?.toLocaleString('es-AR', { style: 'currency', currency: 'ARS' }) || '$0'}`,
+        precio: repuesto.data.PrecioRepu || 0
+      }));
+      
+      setRepuestosFiltrados(options);
+    }
+  }, [intervencion.data.ModeloDroneId, repuestos, modelosDrone, selectedRepuestos]);
 
   // Actualizar el precio total cuando cambian los valores
   useEffect(() => {
@@ -121,6 +176,8 @@ export default function IntervencionComponent(): JSX.Element {
         [id]: value
       }
     }));
+    
+    // Si estamos cambiando el modelo, los repuestos se actualizarán en el useEffect
   };
 
   const handleRepuestosChange = (selected: any) => {
@@ -275,12 +332,24 @@ export default function IntervencionComponent(): JSX.Element {
             <label className="form-label">Repuestos Necesarios</label>
             <Select
               isMulti
-              options={repuestosOptions}
+              options={repuestosFiltrados} // Usar los repuestos filtrados aquí en lugar de repuestosOptions
               value={selectedRepuestos}
               onChange={handleRepuestosChange}
               placeholder="Seleccione los repuestos..."
-              noOptionsMessage={() => "No se encontraron repuestos"}
+              noOptionsMessage={() => intervencion.data.ModeloDroneId 
+                ? "No hay repuestos compatibles con este modelo" 
+                : "No se encontraron repuestos"}
             />
+            {intervencion.data.ModeloDroneId && repuestosFiltrados.length === 0 && (
+              <div className="alert alert-warning mt-2">
+                No hay repuestos registrados para este modelo de drone.
+              </div>
+            )}
+            {intervencion.data.ModeloDroneId && (
+              <small className="form-text text-muted">
+                Solo se muestran repuestos compatibles con el modelo seleccionado y repuestos universales.
+              </small>
+            )}
           </div>
           
           <div className="mb-3">
