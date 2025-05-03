@@ -108,24 +108,40 @@ export const getIntervencionesPorReparacionPersistencia = async (reparacionId) =
     
     if (error) throw error;
     
-    // Transformamos los datos al formato esperado por el frontend
-    const intervenciones = data.map(item => ({
-      id: item.intervention.id,
-      data: {
-        NombreInt: item.intervention.name,
-        DescripcionInt: item.intervention.description,
-        ModeloDroneId: item.intervention.drone_model_id,
-        PrecioManoObra: item.labor_cost || item.intervention.labor_cost,
-        PrecioTotal: item.total_cost || item.intervention.total_cost,
-        // Otros campos necesarios...
-      },
-      // Guardamos los datos de la relación por si son útiles
-      relationData: {
-        id: item.id,
-        labor_cost: item.labor_cost,
-        parts_cost: item.parts_cost,
-        total_cost: item.total_cost
+    // Para cada intervención, obtenemos los repuestos asociados
+    const intervenciones = await Promise.all(data.map(async (item) => {
+      // Obtenemos los repuestos asociados a esta intervención
+      const { data: partInterventions, error: partsError } = await supabase
+        .from('part_intervention')
+        .select('part_id')
+        .eq('intervention_id', item.intervention.id);
+      
+      if (partsError) {
+        console.error('Error al obtener repuestos de intervención:', partsError);
       }
+      
+      // Extraemos los IDs de los repuestos
+      const repuestosIds = partInterventions ? partInterventions.map(rel => rel.part_id) : [];
+      
+      return {
+        id: item.intervention.id,
+        data: {
+          NombreInt: item.intervention.name,
+          DescripcionInt: item.intervention.description || '',
+          ModeloDroneId: item.intervention.drone_model_id,
+          RepuestosIds: repuestosIds,
+          PrecioManoObra: item.labor_cost || item.intervention.labor_cost || 0,
+          PrecioTotal: item.total_cost || item.intervention.total_cost || 0,
+          DuracionEstimada: item.intervention.estimated_duration || 30
+        },
+        // Guardamos los datos de la relación por si son útiles
+        relationData: {
+          id: item.id,
+          labor_cost: item.labor_cost,
+          parts_cost: item.parts_cost,
+          total_cost: item.total_cost
+        }
+      };
     }));
     
     return intervenciones;
