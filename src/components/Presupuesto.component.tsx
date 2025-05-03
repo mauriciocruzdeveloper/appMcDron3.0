@@ -1,4 +1,5 @@
 import { useEffect, useCallback, useState, useMemo } from "react";
+import { useLocation } from "react-router-dom";
 import TextareaAutosize from "react-textarea-autosize";
 import Select, { InputActionMeta } from 'react-select';
 
@@ -6,7 +7,7 @@ import history from "../history";
 import { useAppSelector } from "../redux-tool-kit/hooks/useAppSelector";
 import { useAppDispatch } from "../redux-tool-kit/hooks/useAppDispatch";
 import { useModal } from "./Modal/useModal";
-import { guardarPresupuestoAsync } from "../redux-tool-kit/reparacion/reparacion.actions";
+import { guardarReciboAsync, guardarTransitoAsync } from "../redux-tool-kit/reparacion/reparacion.actions";
 import { getClienteByEmailAsync } from "../redux-tool-kit/usuario/usuario.actions";
 import { generarAutoDiagnostico, getLocalidadesPorProvincia, getProvinciasSelect } from "../utils/utils";
 import { estados } from "../datos/estados";
@@ -16,6 +17,10 @@ import { estados } from "../datos/estados";
 export default function Presupuesto(): JSX.Element {
     console.log("PRESUPUESTO");
     const dispatch = useAppDispatch();
+    const location = useLocation();
+    const queryParams = new URLSearchParams(location.search);
+    const estadoParam = queryParams.get('estado') || "Recibido";
+    const estadoInfo = estados[estadoParam] || estados["Recibido"];
 
     const {
         openModal,
@@ -101,51 +106,69 @@ export default function Presupuesto(): JSX.Element {
     const confirmaGuardarPresupuesto = async () => {
         const dateNow = Date.now();
         const autoDiagnostico = await dispatch(generarAutoDiagnostico(reparacion));
-        const response = await dispatch(guardarPresupuestoAsync({
+
+        const presupuestoObject = {
             usuario: {
                 ...presupuesto.cliente,
                 id: presupuesto.cliente.id ?? presupuesto.cliente.data.EmailUsu,
-            }, // TODO: Corregir esto de los clientes que son usuarios
-            reparacion: { // TODO: Verificar esto de pasar los datos faltantes al crear la reparación
+            },
+            reparacion: {
                 ...presupuesto.reparacion,
                 id: dateNow.toString(),
                 data: {
                     ...presupuesto.reparacion.data,
-                    EstadoRep: estados["Recibido"].nombre,
-                    PrioridadRep: estados["Recibido"].prioridad,
+                    EstadoRep: estadoInfo.nombre,
+                    PrioridadRep: estadoInfo.prioridad,
                     FeConRep: dateNow,
-                    FeRecRep: dateNow,
+                    FeRecRep: estadoParam === "Recibido" ? dateNow : null, // Solo poner fecha de recepción si está recibido
                     DiagnosticoRep: autoDiagnostico,
                 },
             },
-        }));
-        if (response.meta.requestStatus === 'fulfilled') {
+        };
+
+        let response;
+
+        if (estadoInfo.nombre === "Recibido") {
+            response = await dispatch(guardarReciboAsync(presupuestoObject));
+        } else if (estadoInfo.nombre === "Transito") { 
+            response = await dispatch(guardarTransitoAsync(presupuestoObject));
+        }
+
+        if (response?.meta.requestStatus === 'fulfilled') {
             openModal({
-                mensaje: "Presupuesto enviado!",
+                mensaje: `${estadoInfo.nombre} registrado correctamente!`,
                 tipo: "success",
-                titulo: "Guardar Presupuesto",
+                titulo: `Registrar ${estadoInfo.nombre}`,
             })
             console.log(JSON.stringify(presupuesto));
-            // !isAdmin ? setUsuario(presupuesto.usuario) : null; // TODO: Revisar para qué hice esto
             history.goBack();
         } else {
             openModal({
                 mensaje: "Error al guardar",
                 tipo: "danger",
-                titulo: "Guardar Presupuesto",
+                titulo: `Registrar ${estadoInfo.nombre}`,
             })
         }
     }
 
+    // El botón utilizará un texto basado en el estado
+    const getButtonText = () => {
+        return `Registrar ${estadoInfo.nombre}`;
+    }
+
+    // El título de la card utilizará un texto basado en el estado
+    const getCardTitle = () => {
+        return `REGISTRO DE ${estadoInfo.nombre.toUpperCase()}`;
+    }
+
     const handleGuardarPresupuesto = () => {
         openModal({
-            mensaje: "Desea guardar el presupuesto?",
+            mensaje: `¿Desea registrar este ${estadoInfo.nombre.toLowerCase()}?`,
             tipo: "warning",
-            titulo: "Guardar Presupuesto",
+            titulo: `Registrar ${estadoInfo.nombre}`,
             confirmCallback: confirmaGuardarPresupuesto,
         });
     }
-
 
     const handleOnChangeProvincias = async (e: any) => {
         await dispatch(getLocalidadesPorProvincia(e.value));
@@ -211,19 +234,17 @@ export default function Presupuesto(): JSX.Element {
 
     const { cliente, reparacion } = presupuesto;
 
+    // Color de fondo según el estado
+    const getCardColor = () => {
+        return estadoInfo.color || "bg-bluemcdron";
+    }
+
     return (
-        <div
-            className="p-4"
-        // style={{
-        //     backgroundColor: "#EEEEEE",
-
-        //   }}
-        >
-
-            <div className="card mb-3 bg-bluemcdron">
+        <div className="p-4">
+            <div className={`card mb-3 ${getCardColor()}`}>
                 <div className="card-body">
-                    <h3 className="card-title text-light p-0 m-0">
-                        PEDIDO DE PRESUPUESTO
+                    <h3 className={`card-title ${estadoInfo.color === '#cddc39' ? "text-dark" : "text-light"} p-0 m-0`}>
+                        {getCardTitle()}
                     </h3>
                 </div>
             </div>
@@ -335,12 +356,12 @@ export default function Presupuesto(): JSX.Element {
             <div className="text-center">
                 <button
                     onClick={handleGuardarPresupuesto}
-                    className="w-100 mb-3 btn bg-bluemcdron text-white"
+                    className={`w-100 mb-3 btn`}
+                    style={{ backgroundColor: estadoInfo.color, color: estadoInfo.color === '#cddc39' ? "black" : "white" }}
                 >
-                    Guardar
+                    {getButtonText()}
                 </button>
             </div>
-
         </div>
 
     )
