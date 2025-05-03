@@ -1,6 +1,7 @@
 import React from 'react';
 import history from '../history';
 import { MatchType } from '../types/types';
+import { estados } from '../datos/estados';
 
 interface InicioProps {
   admin: boolean;
@@ -12,32 +13,41 @@ const Inicio = (props: InicioProps) => {
 
   console.log('INICIO');
 
-  return (
+  // Función para generar un botón de estado con su configuración específica
+  const renderEstadoButton = (estadoKey: string, texto: string) => {
+    const estado = estados[estadoKey];
+    if (!estado) return null;
+    
+    return (
+      <button
+        className='mb-3 btn w-100'
+        style={{ 
+          height: '100px', 
+          backgroundColor: estado.color,
+          color: estadoKey === 'Recibido' ? 'white' : 'black' // Texto blanco para Recibido, negro para otros
+        }}
+        onClick={() => history.push(`${match.path}/presupuesto?estado=${estadoKey}`)}
+      >
+        <div className={`text-center`}>{texto}</div>
+      </button>
+    );
+  };
 
-    <div
-      className='p-4'
-    >
+  return (
+    <div className='p-4'>
       <img className='mb-4' src='./img/logo.png' alt='' width='100%' max-width='100px' />
 
       {/* Grupo 1: Recepción - primer proceso del negocio */}
-
-      {/* Separador visual sin cambiar estilos */}
       <div className="mb-4 text-center text-muted">
         <small>Procesos de Negocio</small>
         <hr className="mt-1" />
       </div>
 
-      <button
-        className='mb-3 btn w-100 bg-bluemcdron'
-        style={{ height: '100px' }}
-        onClick={() => history.push(`${match.path}/presupuesto`)}
-      >
-        <div className='text-white text-center'>RECEPCIÓN</div>
-      </button>
+      {/* Ahora usamos la función renderEstadoButton para generar los botones de estado */}
+      {renderEstadoButton('Recibido', 'RECEPCIÓN')}
+      {renderEstadoButton('Transito', 'DRONE EN TRÁNSITO')}
 
       {/* Grupo 2: Gestión y administración */}
-
-      {/* Separador visual sin cambiar estilos */}
       <div className="mb-4 text-center text-muted">
         <small>Gestión y Administración</small>
         <hr className="mt-1" />
@@ -101,8 +111,6 @@ const Inicio = (props: InicioProps) => {
         : null}
 
       {/* Grupo 3: Comunicación */}
-
-      {/* Separador visual sin cambiar estilos */}
       <div className="mb-4 text-center text-muted">
         <small>Comunicación</small>
         <hr className="mt-1" />
@@ -115,7 +123,6 @@ const Inicio = (props: InicioProps) => {
       >
         <div className='text-white text-center'>MENSAJES</div>
       </button>
-
     </div>
   )
 };

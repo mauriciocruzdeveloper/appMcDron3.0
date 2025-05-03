@@ -24,8 +24,8 @@ export const getReparacionesAsync = createAsyncThunk(
     },
 )
 
-// GUARDA Presupuesto
-export const guardarPresupuestoAsync = createAsyncThunk(
+// GUARDA Recibo
+export const guardarReciboAsync = createAsyncThunk(
     'app/guardarPresupuesto',
     async (presupuesto: {
         reparacion: ReparacionType,
@@ -42,6 +42,25 @@ export const guardarPresupuestoAsync = createAsyncThunk(
             return error;
         }
     },
+);
+
+// GUARDA Transito
+export const guardarTransitoAsync = createAsyncThunk(
+  'app/guardarPresupuesto',
+  async (presupuesto: {
+      reparacion: ReparacionType,
+      usuario: Usuario,
+  }, { dispatch }) => {
+      dispatch(isFetchingStart());
+      try {
+          await guardarPresupuestoPersistencia(presupuesto);
+          dispatch(isFetchingComplete());
+          return presupuesto;
+      } catch (error: any) { // TODO: Hacer tipo de dato para el error
+          dispatch(isFetchingComplete());
+          return error;
+      }
+  },
 );
 
 // GUARDA REPARACION
