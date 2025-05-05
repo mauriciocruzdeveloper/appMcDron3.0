@@ -802,6 +802,7 @@ export default function ReparacionComponent(): React.ReactElement | null {
                                     type="file"
                                     onChange={handleFotoChange}
                                     style={{ display: "none" }}
+                                    accept="image/*" // Especifica que solo se aceptan imágenes
                                 />
                             </label>
                         </div>
