@@ -26,6 +26,15 @@ import {
     CACHE_SIZE_UNLIMITED, // constante para caché ilimitada
 } from 'firebase/firestore';
 
+// Importar Firebase Storage
+import { 
+    getStorage, 
+    ref as storageRef, 
+    uploadBytes, 
+    getDownloadURL,
+    deleteObject
+} from 'firebase/storage';
+
 import { triggerNotification } from '../utils/utils';
 
 import { config as firebaseConfig } from '../firebase/configProd'; // Para producción
@@ -45,6 +54,8 @@ const firestore = initializeFirestore(firebaseApp, {
     cacheSizeBytes: CACHE_SIZE_UNLIMITED
 })
 
+// Inicializar Firebase Storage
+const storage = getStorage(firebaseApp);
 
 // Habilita la persistensia sin conexión
 enableIndexedDbPersistence(firestore)
@@ -1213,5 +1224,51 @@ export const getIntervencionesPersistencia = (setIntervencionesToRedux) => {
   } catch (error) {
     console.error("Error en getIntervencionesPersistencia:", error);
     return error;
+  }
+};
+
+// Función para subir archivos a Firebase Storage
+export const subirArchivoPersistencia = async (path, file) => {
+  try {
+    // Crear una referencia al archivo en Firebase Storage
+    const fileRef = storageRef(storage, path);
+    
+    // Subir el archivo
+    const snapshot = await uploadBytes(fileRef, file);
+    
+    // Obtener la URL de descarga del archivo
+    const downloadURL = await getDownloadURL(snapshot.ref);
+    
+    console.log('Archivo subido correctamente:', downloadURL);
+    return downloadURL;
+  } catch (error) {
+    console.error('Error al subir archivo:', error);
+    throw error;
+  }
+};
+
+// Función para eliminar archivos de Firebase Storage
+export const eliminarArchivoPersistencia = async (url) => {
+  try {
+    // Extraer el path del archivo desde la URL
+    // La URL tendrá un formato como: https://firebasestorage.googleapis.com/v0/b/[bucket]/o/[path]?token=...
+    const urlObj = new URL(url);
+    const path = decodeURIComponent(urlObj.pathname.split('/o/')[1]?.split('?')[0]);
+    
+    if (!path) {
+      throw new Error('No se pudo extraer el path del archivo desde la URL');
+    }
+    
+    // Crear una referencia al archivo
+    const fileRef = storageRef(storage, path);
+    
+    // Eliminar el archivo
+    await deleteObject(fileRef);
+    
+    console.log('Archivo eliminado correctamente');
+    return true;
+  } catch (error) {
+    console.error('Error al eliminar archivo:', error);
+    throw error;
   }
 };

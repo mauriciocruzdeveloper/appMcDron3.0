@@ -11,7 +11,7 @@ import { useAppSelector } from "../redux-tool-kit/hooks/useAppSelector";
 import { useAppDispatch } from "../redux-tool-kit/hooks/useAppDispatch";
 import { useModal } from "./Modal/useModal";
 import { eliminarReparacionAsync, guardarReparacionAsync } from "../redux-tool-kit/reparacion/reparacion.actions";
-import { borrarFotoAsync, enviarReciboAsync, subirFotoAsync, subirDocumentoAsync, borrarDocumentoAsync } from "../redux-tool-kit/app/app.actions";
+import { borrarFotoAsync, enviarReciboAsync, borrarDocumentoAsync, subirFotoYActualizarReparacionAsync, subirDocumentoYActualizarReparacionAsync } from "../redux-tool-kit/app/app.actions";
 import { ChangeEvent } from "react";
 import { InputType } from "../types/types";
 import TextareaAutosize from "react-textarea-autosize";
@@ -278,58 +278,89 @@ export default function ReparacionComponent(): React.ReactElement | null {
     const handleFotoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         if (!e.target.files?.length || !reparacion) return;
         const file = e.target.files[0];
-        const response = await dispatch(subirFotoAsync({ reparacionId: reparacion.id, file }));
-        if (response.meta.requestStatus === 'fulfilled') {
-            const urlFoto = response.payload;
-            setReparacion({
-                ...reparacion,
-                data: {
-                    ...reparacion.data,
-                    urlsFotos: [...(reparacion.data.urlsFotos || []), urlFoto]
-                }
-            });
-        } else {
+        
+        try {
+            const response = await dispatch(subirFotoYActualizarReparacionAsync({ 
+                reparacionId: reparacion.id, 
+                file 
+            }));
+            
+            if (response.meta.requestStatus === 'fulfilled') {
+                const nuevaReparacion = response.payload as ReparacionType;
+                setReparacion(nuevaReparacion);
+                setReparacionOriginal(nuevaReparacion);
+            } else {
+                openModal({
+                    mensaje: "Error al subir la foto.",
+                    tipo: "danger",
+                    titulo: "Subir Foto",
+                });
+            }
+        } catch (error) {
             openModal({
                 mensaje: "Error al subir la foto.",
                 tipo: "danger",
                 titulo: "Subir Foto",
-            })
+            });
         }
     };
 
     const handleDocumentoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         if (!e.target.files?.length || !reparacion) return;
         const file = e.target.files[0];
-        const response = await dispatch(subirDocumentoAsync({ reparacionId: reparacion.id, file }));
-        if (response.meta.requestStatus === 'fulfilled') {
-            const urlDoc = response.payload;
-            setReparacion({
-                ...reparacion,
-                data: {
-                    ...reparacion.data,
-                    urlsDocumentos: [...(reparacion.data.urlsDocumentos || []), urlDoc]
-                }
-            });
-        } else {
+        
+        try {
+            const response = await dispatch(subirDocumentoYActualizarReparacionAsync({ 
+                reparacionId: reparacion.id, 
+                file 
+            }));
+            
+            if (response.meta.requestStatus === 'fulfilled') {
+                const nuevaReparacion = response.payload as ReparacionType;
+                setReparacion(nuevaReparacion);
+                setReparacionOriginal(nuevaReparacion);
+            } else {
+                openModal({
+                    mensaje: "Error al subir el documento.",
+                    tipo: "danger",
+                    titulo: "Subir Documento",
+                });
+            }
+        } catch (error) {
             openModal({
                 mensaje: "Error al subir el documento.",
                 tipo: "danger",
                 titulo: "Subir Documento",
-            })
+            });
         }
-    }
+    };
 
     const handleDeleteFoto = async (fotoUrl: string) => {
         if (!reparacion) return;
         const response = await dispatch(borrarFotoAsync({ reparacionId: reparacion.id, fotoUrl }));
         if (response.meta.requestStatus === 'fulfilled') {
-            setReparacion({
+            const nuevaReparacion = {
                 ...reparacion,
                 data: {
                     ...reparacion.data,
                     urlsFotos: reparacion.data.urlsFotos?.filter(url => url !== fotoUrl)
                 }
-            });
+            };
+            
+            // Guardar los cambios en la base de datos
+            const responseGuardar = await dispatch(guardarReparacionAsync(nuevaReparacion));
+            
+            if (responseGuardar.meta.requestStatus === 'fulfilled') {
+                // Actualizar el estado local y el estado original
+                setReparacion(nuevaReparacion);
+                setReparacionOriginal(nuevaReparacion);
+            } else {
+                openModal({
+                    mensaje: "Error al guardar los cambios después de eliminar la foto.",
+                    tipo: "danger",
+                    titulo: "Eliminar Foto",
+                });
+            }
         } else {
             openModal({
                 mensaje: "Error al eliminar la foto.",
@@ -343,13 +374,28 @@ export default function ReparacionComponent(): React.ReactElement | null {
         if (!reparacion) return;
         const response = await dispatch(borrarDocumentoAsync({ reparacionId: reparacion.id, documentoUrl: docUrl }));
         if (response.meta.requestStatus === 'fulfilled') {
-            setReparacion({
+            const nuevaReparacion = {
                 ...reparacion,
                 data: {
                     ...reparacion.data,
                     urlsDocumentos: reparacion.data.urlsDocumentos?.filter(url => url !== docUrl)
                 }
-            });
+            };
+            
+            // Guardar los cambios en la base de datos
+            const responseGuardar = await dispatch(guardarReparacionAsync(nuevaReparacion));
+            
+            if (responseGuardar.meta.requestStatus === 'fulfilled') {
+                // Actualizar el estado local y el estado original
+                setReparacion(nuevaReparacion);
+                setReparacionOriginal(nuevaReparacion);
+            } else {
+                openModal({
+                    mensaje: "Error al guardar los cambios después de eliminar el documento.",
+                    tipo: "danger",
+                    titulo: "Eliminar Documento",
+                });
+            }
         } else {
             openModal({
                 mensaje: "Error al eliminar el documento.",
