@@ -4,7 +4,12 @@ import { ReparacionType } from "../../types/reparacion";
 import { isFetchingComplete, isFetchingStart } from "./app.slice";
 import { callEndpoint } from "../../utils/utils";
 import { HttpMethod } from "../../types/httpMethods";
-import { eliminarDocumentoReparacionPersistencia, eliminarFotoReparacionPersistencia, subirDocumentoReparacionPersistencia, subirFotoReparacionPersistencia } from "../../persistencia/subeFotoFirebase";
+// Importar las funciones de persistencia para subir y eliminar archivos
+import { 
+  subirArchivoPersistencia, 
+  eliminarArchivoPersistencia 
+} from '../../persistencia/persistenciaFirebase';
+import { getReparacionAsync, guardarReparacionAsync } from '../reparacion/reparacion.actions';
 
 // LOGIN
 export const loginAsync = createAsyncThunk(
@@ -70,64 +75,192 @@ export const enviarReciboAsync = createAsyncThunk(
 
 // SUBIR FOTO
 export const subirFotoAsync = createAsyncThunk(
-    'app/subirFoto',
-    async ({ reparacionId, file }: { reparacionId: string; file: File }, { dispatch }) => {
-        try {
-            dispatch(isFetchingStart());
-            const urlFoto = await subirFotoReparacionPersistencia(reparacionId, file);
-            dispatch(isFetchingComplete());
-            return urlFoto;
-        } catch (error: any) { // TODO: Hacer tipo de dato para el error
-            dispatch(isFetchingComplete());
-            return error;
-        }
-    },
+  'app/subirFoto',
+  async ({ reparacionId, file }: { reparacionId: string, file: File }, { dispatch }) => {
+    try {
+      dispatch(isFetchingStart());
+      
+      // Crear un Blob a partir del archivo para evitar problemas de referencia
+      const fileBlob = new Blob([await file.arrayBuffer()], { type: file.type });
+      
+      // Generar un nombre único para el archivo usando timestamp
+      const timestamp = Date.now();
+      const fileName = `${timestamp}_${file.name.replace(/[^a-zA-Z0-9.]/g, '_')}`;
+      const path = `REPARACIONES/${reparacionId}/fotos/${fileName}`;
+      
+      // Subir el Blob en lugar del archivo original
+      const urlFoto = await subirArchivoPersistencia(path, fileBlob);
+      
+      dispatch(isFetchingComplete());
+      return urlFoto;
+    } catch (error: any) {
+      console.error("Error al subir foto:", error);
+      dispatch(isFetchingComplete());
+      throw error;
+    }
+  }
 );
 
 // SUBIR DOCUMENTO
 export const subirDocumentoAsync = createAsyncThunk(
-    'app/subirDocumento',
-    async ({ reparacionId, file }: { reparacionId: string; file: File }, { dispatch }) => {
-        try {
-            dispatch(isFetchingStart());
-            const urlDoc = await subirDocumentoReparacionPersistencia(reparacionId, file);
-            dispatch(isFetchingComplete());
-            return urlDoc;
-        } catch (error: any) { // TODO: Hacer tipo de dato para el error
-            dispatch(isFetchingComplete());
-            return error;
-        }
-    },
+  'app/subirDocumento',
+  async ({ reparacionId, file }: { reparacionId: string, file: File }, { dispatch }) => {
+    try {
+      dispatch(isFetchingStart());
+      
+      // Crear un Blob a partir del archivo para evitar problemas de referencia
+      const fileBlob = new Blob([await file.arrayBuffer()], { type: file.type });
+      
+      // Generar un nombre único para el archivo usando timestamp
+      const timestamp = Date.now();
+      const fileName = `${timestamp}_${file.name.replace(/[^a-zA-Z0-9.]/g, '_')}`;
+      const path = `REPARACIONES/${reparacionId}/documentos/${fileName}`;
+      
+      // Subir el Blob en lugar del archivo original
+      const urlDocumento = await subirArchivoPersistencia(path, fileBlob);
+      
+      dispatch(isFetchingComplete());
+      return urlDocumento;
+    } catch (error: any) {
+      console.error("Error al subir documento:", error);
+      dispatch(isFetchingComplete());
+      throw error;
+    }
+  }
 );
 
 // BORRAR FOTO
 export const borrarFotoAsync = createAsyncThunk(
-    'app/borrarFoto',
-    async ({ reparacionId, fotoUrl }: { reparacionId: string; fotoUrl: string }, { dispatch }) => {
-        try {
-            dispatch(isFetchingStart());
-            await eliminarFotoReparacionPersistencia(reparacionId, fotoUrl);
-            dispatch(isFetchingComplete());
-            return fotoUrl;
-        } catch (error: any) { // TODO: Hacer tipo de dato para el error
-            dispatch(isFetchingComplete());
-            return error;
-        }
-    },
+  'app/borrarFoto',
+  async ({ reparacionId, fotoUrl }: { reparacionId: string, fotoUrl: string }, { dispatch, getState }) => {
+    try {
+      dispatch(isFetchingStart());
+      
+      // Eliminar el archivo de Storage
+      await eliminarArchivoPersistencia(fotoUrl);
+      
+      dispatch(isFetchingComplete());
+      return fotoUrl;
+    } catch (error: any) {
+      console.error("Error al borrar foto:", error);
+      dispatch(isFetchingComplete());
+      throw error;
+    }
+  }
 );
 
 // BORRAR DOCUMENTO
 export const borrarDocumentoAsync = createAsyncThunk(
-    'app/borrarDocumento',
-    async ({ reparacionId, documentoUrl }: { reparacionId: string; documentoUrl: string }, { dispatch }) => {
-        try {
-            dispatch(isFetchingStart());
-            await eliminarDocumentoReparacionPersistencia(reparacionId, documentoUrl);
-            dispatch(isFetchingComplete());
-            return documentoUrl;
-        } catch (error: any) { // TODO: Hacer tipo de dato para el error
-            dispatch(isFetchingComplete());
-            return error;
+  'app/borrarDocumento',
+  async ({ reparacionId, documentoUrl }: { reparacionId: string, documentoUrl: string }, { dispatch }) => {
+    try {
+      dispatch(isFetchingStart());
+      
+      // Eliminar el archivo de Storage
+      await eliminarArchivoPersistencia(documentoUrl);
+      
+      dispatch(isFetchingComplete());
+      return documentoUrl;
+    } catch (error: any) {
+      console.error("Error al borrar documento:", error);
+      dispatch(isFetchingComplete());
+      throw error;
+    }
+  }
+);
+
+// Acción completa para subir una foto y actualizar la reparación
+export const subirFotoYActualizarReparacionAsync = createAsyncThunk(
+  'app/subirFotoYActualizar',
+  async ({ reparacionId, file }: { reparacionId: string, file: File }, { dispatch }) => {
+    try {
+      dispatch(isFetchingStart());
+      
+      // 1. Subir la foto
+      const response = await dispatch(subirFotoAsync({ reparacionId, file }));
+      if (response.meta.requestStatus !== 'fulfilled') {
+        throw new Error("Error al subir la foto");
+      }
+      
+      const urlFoto = response.payload as string;
+      
+      // 2. Obtener la reparación actual
+      const reparacionResponse = await dispatch(getReparacionAsync(reparacionId));
+      if (reparacionResponse.meta.requestStatus !== 'fulfilled') {
+        throw new Error("Error al obtener la reparación");
+      }
+      
+      const reparacion = reparacionResponse.payload as ReparacionType;
+      
+      // 3. Actualizar la reparación con la nueva foto
+      const nuevaReparacion = {
+        ...reparacion,
+        data: {
+          ...reparacion.data,
+          urlsFotos: [...(reparacion.data.urlsFotos || []), urlFoto]
         }
-    },
+      };
+      
+      // 4. Guardar la reparación actualizada
+      const guardarResponse = await dispatch(guardarReparacionAsync(nuevaReparacion));
+      if (guardarResponse.meta.requestStatus !== 'fulfilled') {
+        throw new Error("Error al guardar la reparación");
+      }
+      
+      dispatch(isFetchingComplete());
+      return nuevaReparacion;
+      
+    } catch (error: any) {
+      dispatch(isFetchingComplete());
+      throw error;
+    }
+  }
+);
+
+// Acción completa para subir un documento y actualizar la reparación
+export const subirDocumentoYActualizarReparacionAsync = createAsyncThunk(
+  'app/subirDocumentoYActualizar',
+  async ({ reparacionId, file }: { reparacionId: string, file: File }, { dispatch }) => {
+    try {
+      dispatch(isFetchingStart());
+      
+      // 1. Subir el documento
+      const response = await dispatch(subirDocumentoAsync({ reparacionId, file }));
+      if (response.meta.requestStatus !== 'fulfilled') {
+        throw new Error("Error al subir el documento");
+      }
+      
+      const urlDocumento = response.payload as string;
+      
+      // 2. Obtener la reparación actual
+      const reparacionResponse = await dispatch(getReparacionAsync(reparacionId));
+      if (reparacionResponse.meta.requestStatus !== 'fulfilled') {
+        throw new Error("Error al obtener la reparación");
+      }
+      
+      const reparacion = reparacionResponse.payload as ReparacionType;
+      
+      // 3. Actualizar la reparación con el nuevo documento
+      const nuevaReparacion = {
+        ...reparacion,
+        data: {
+          ...reparacion.data,
+          urlsDocumentos: [...(reparacion.data.urlsDocumentos || []), urlDocumento]
+        }
+      };
+      
+      // 4. Guardar la reparación actualizada
+      const guardarResponse = await dispatch(guardarReparacionAsync(nuevaReparacion));
+      if (guardarResponse.meta.requestStatus !== 'fulfilled') {
+        throw new Error("Error al guardar la reparación");
+      }
+      
+      dispatch(isFetchingComplete());
+      return nuevaReparacion;
+      
+    } catch (error: any) {
+      dispatch(isFetchingComplete());
+      throw error;
+    }
+  }
 );
