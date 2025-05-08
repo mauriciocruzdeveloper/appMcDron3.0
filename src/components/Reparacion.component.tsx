@@ -66,7 +66,7 @@ export default function ReparacionComponent(): React.ReactElement | null {
                 }
             } : prevState);
         }
-    }, [totalIntervenciones, reparacion]);
+    }, [totalIntervenciones]);
 
     if (!reparacion || !usuarioStore) return null;
 
@@ -285,11 +285,7 @@ export default function ReparacionComponent(): React.ReactElement | null {
                 file 
             }));
             
-            if (response.meta.requestStatus === 'fulfilled') {
-                const nuevaReparacion = response.payload as ReparacionType;
-                setReparacion(nuevaReparacion);
-                setReparacionOriginal(nuevaReparacion);
-            } else {
+            if (response.meta.requestStatus !== 'fulfilled') {
                 openModal({
                     mensaje: "Error al subir la foto.",
                     tipo: "danger",
