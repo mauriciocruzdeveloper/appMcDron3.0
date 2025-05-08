@@ -11,6 +11,7 @@ import * as backend from './persistenciaSupabase';
 // AUTENTICACIÓN
 export const loginPersistencia = backend.loginPersistencia;
 export const registroUsuarioEndpointPersistencia = backend.registroUsuarioEndpointPersistencia;
+export const reenviarEmailVerificacionPersistencia = backend.reenviarEmailVerificacionPersistencia;
 
 // REPARACIONES
 export const getReparacionesPersistencia = backend.getReparacionesPersistencia;

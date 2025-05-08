@@ -489,7 +489,7 @@ export const getUsuariosPersistencia = (setUsuariosToRedux) => {
           telephone,
           address,
           city,
-          province,
+          state,
           is_admin
         `)
         .order('first_name');
@@ -502,12 +502,12 @@ export const getUsuariosPersistencia = (setUsuariosToRedux) => {
         data: {
           EmailUsu: item.email,
           NombreUsu: item.first_name || '',
-          ApellidoUsu: item.last_name || '',
-          TelefonoUsu: item.telephone || '',
-          DireccionUsu: item.address || '',
-          CiudadUsu: item.city || '',
-          ProvinciaUsu: item.province || '',
-          Admin: item.is_admin || false
+          ApellidoUsu: item?.last_name || '',
+          TelefonoUsu: item?.telephone || '',
+          DireccionUsu: item?.address || '',
+          CiudadUsu: item?.city || '',
+          ProvinciaUsu: item?.state || '',
+          Admin: item?.is_admin || false
         }
       }));
       
@@ -566,7 +566,7 @@ export const getClientePersistencia = async (id) => {
         TelefonoUsu: data.telephone || '',
         DireccionUsu: data.address || '',
         CiudadUsu: data.city || '',
-        ProvinciaUsu: data.province || '',
+        ProvinciaUsu: data.state || '',
         Admin: data.is_admin || false
       }
     };
@@ -605,7 +605,7 @@ export const getClientePorEmailPersistencia = async (email) => {
         TelefonoUsu: data.telephone || '',
         DireccionUsu: data.address || '',
         CiudadUsu: data.city || '',
-        ProvinciaUsu: data.province || '',
+        ProvinciaUsu: data.state || '',
         Admin: data.is_admin || false
       }
     };
@@ -626,7 +626,7 @@ export const guardarUsuarioPersistencia = async (usuario) => {
       telephone: usuario.data.TelefonoUsu || '',
       address: usuario.data.DireccionUsu || '',
       city: usuario.data.CiudadUsu || '',
-      province: usuario.data.ProvinciaUsu || '',
+      state: usuario.data.ProvinciaUsu || '',
       is_admin: usuario.data.Admin || false
     };
     
@@ -1976,95 +1976,88 @@ export const getIntervencionesPersistencia = (setIntervencionesToRedux) => {
   };
 };
 
-// Login
-export const loginPersistencia = (emailParametro, passwordParametro) => {
-  return new Promise(async (resolve, reject) => {
-    try {
-      console.log('Iniciando login con Supabase:', emailParametro);
-      
-      // Intenta iniciar sesión con Supabase
-      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
-        email: emailParametro,
-        password: passwordParametro,
-      });
-      
-      if (authError) {
-        console.error('Error en la autenticación:', authError);
-        // Mapear errores comunes a un formato compatible con la aplicación existente
-        let errorCode = 'auth/unknown';
-        if (authError.message.includes('Invalid login credentials')) {
-          errorCode = 'auth/wrong-password';
-        } else if (authError.message.includes('User not found')) {
-          errorCode = 'auth/user-not-found';
-        }
-        reject({ code: errorCode });
-        return;
-      }
-      
-      const userAuth = authData.user;
-      
-      // Verificar si el email está verificado
-      if (!userAuth.email_confirmed_at) {
-        console.log('Email no verificado');
-        
-        // Enviar email de verificación
-        const { error: verificationError } = await supabase.auth.resend({
-          type: 'signup',
-          email: emailParametro,
-        });
-        
-        if (verificationError) {
-          console.error('Error al enviar email de verificación:', verificationError);
-          reject({ code: 'No se pudo enviar el email de verificación' });
-        } else {
-          reject({ code: 'Email no verificado. Se envió email de verificación a su casilla de correos' });
-        }
-        return;
-      }
-      
-      // Obtener los datos del usuario de la tabla de usuarios
-      const { data: userData, error: userError } = await supabase
-        .from('user')
-        .select('*')
-        .eq('email', emailParametro)
-        .single();
-      
-      if (userError) {
-        console.error('Error al obtener datos del usuario:', userError);
-        reject({ code: 'Problema al obtener datos del usuario' });
-        return;
-      }
-      
-      if (!userData) {
-        console.error('Usuario no encontrado en la base de datos');
-        reject({ code: 'Usuario no encontrado en la base de datos' });
-        return;
-      }
-      
-      // Construir el objeto usuario como lo espera la aplicación
-      const usuario = {
-        id: emailParametro, // Mantener el email como ID para compatibilidad con el frontend
-        data: {
-          EmailUsu: userData.email,
-          NombreUsu: userData.name || '',
-          ApellidoUsu: userData.last_name || '',
-          TelefonoUsu: userData.tel || '',
-          DireccionUsu: '', // Este campo no existe en la tabla
-          CiudadUsu: userData.city || '',
-          ProvinciaUsu: userData.state || '',
-          Admin: userData.is_admin || false,
-          UrlPhotoUsu: userData.url_photo || ''
-        }
-      };
-      
-      console.log('Login exitoso');
-      resolve(usuario);
-      
-    } catch (error) {
-      console.error('Error inesperado en loginPersistencia:', error);
-      reject({ code: error.message || 'problema en el logueo' });
+// Función para reenviar email de verificación
+export const reenviarEmailVerificacionPersistencia = async (email) => {
+  try {
+    console.log('Reenviando email de verificación a:', email);
+    
+    const { error } = await supabase.auth.resend({
+      type: 'signup',
+      email: email,
+    });
+    
+    if (error) {
+      console.error('Error al enviar email de verificación:', error);
+      throw { code: error.code };
     }
-  });
+    
+    console.log('Email de verificación enviado correctamente');
+    return true;
+  } catch (error) {
+    console.error('Error en reenviarEmailVerificacionPersistencia:', error);
+    throw error;
+  }
+};
+
+// Login
+export const loginPersistencia = async (emailParametro, passwordParametro) => {
+  try {
+    console.log('Iniciando login con Supabase:', emailParametro);
+    
+    // Intenta iniciar sesión con Supabase
+    const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+      email: emailParametro,
+      password: passwordParametro,
+    });
+    
+    // Si el día de mañana supabase cambia el atributo code por otro, lo cambio acá y listo
+    if (authError) {
+      throw { code: authError.code };
+    }
+        
+    // Obtener los datos del usuario de la tabla de usuarios
+    const { data: userData, error: userError } = await supabase
+      .from('user')
+      .select('*')
+      .eq('email', emailParametro)
+      .single();
+    
+    if (userError) {
+      console.error('Error al obtener datos del usuario:', userError);
+      if (userError.code === 'PGRST116') {
+        throw { code: 'user_not_found' };
+      }
+      throw { code: userError.code };
+    }
+    
+    if (!userData) {
+      console.error('Usuario no encontrado en la base de datos');
+      throw { code: 'user_not_found' };
+    }
+    
+    // Construir el objeto usuario como lo espera la aplicación
+    const usuario = {
+      id: emailParametro, // Mantener el email como ID para compatibilidad con el frontend
+      data: {
+        EmailUsu: userData.email,
+        NombreUsu: userData.name || '',
+        ApellidoUsu: userData.last_name || '',
+        TelefonoUsu: userData.tel || '',
+        DireccionUsu: '', // Este campo no existe en la tabla
+        CiudadUsu: userData.city || '',
+        ProvinciaUsu: userData.state || '',
+        Admin: userData.is_admin || false,
+        UrlPhotoUsu: userData.url_photo || ''
+      }
+    };
+    
+    console.log('Login exitoso');
+    return usuario;
+    
+  } catch (error) {
+    console.error('Error en loginPersistencia:', error);
+    throw error;
+  }
 };
 
 // SEND de un mensaje
@@ -2319,7 +2312,8 @@ export const registroUsuarioEndpointPersistencia = async (registroData) => {
     
     if (!response.ok) {
       const errorData = await response.json();
-      throw new Error(errorData.error || 'Error en el registro');
+
+      throw new Error(errorData);
     }
     
     const data = await response.json();
