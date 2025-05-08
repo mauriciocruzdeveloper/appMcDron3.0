@@ -54,7 +54,7 @@ export default function Login(): JSX.Element | null {
       history.push('/');
     } else {
       openModal({
-        mensaje: `Error de login: ${result}`,
+        mensaje: `Error de login: ${result.payload}`,
         titulo: 'Error',
         tipo: 'danger',
       });

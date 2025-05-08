@@ -1,7 +1,8 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
 import { 
   loginPersistencia,
-  registroUsuarioEndpointPersistencia
+  registroUsuarioEndpointPersistencia,
+  reenviarEmailVerificacionPersistencia
 } from "../../persistencia/persistencia"; // Actualizado para usar la importación centralizada
 import { ReparacionType } from "../../types/reparacion";
 import { isFetchingComplete, isFetchingStart } from "./app.slice";
@@ -13,6 +14,7 @@ import {
   eliminarArchivoPersistencia 
 } from '../../persistencia/persistenciaFirebase';
 import { getReparacionAsync, guardarReparacionAsync } from '../reparacion/reparacion.actions';
+import { supabaseAuthErrors } from "../../persistencia/supabaseAuthErrors";
 
 // LOGIN
 export const loginAsync = createAsyncThunk(
@@ -24,8 +26,20 @@ export const loginAsync = createAsyncThunk(
         try {
             const usuario = await loginPersistencia(email, password);
             return usuario;
-        } catch (error: any) { // TODO: Hacer tipo de dato para el error
-            return rejectWithValue(error.code || 'Error de login');
+        } catch (error: any) {            
+            // Verificar si el error es de email no confirmado
+            if (error.code === 'email_not_confirmed') {
+                try {
+                    // Reenviar email de verificación
+                    await reenviarEmailVerificacionPersistencia(email);
+                    return rejectWithValue('Email no verificado. Se ha enviado un nuevo correo de verificación a su dirección de email.');
+                } catch (verificationError: any) {
+                    return rejectWithValue('Error al reenviar email de verificación: ' + (verificationError.message || 'Intente más tarde'));
+                }
+            }
+            
+            const errorMessage = supabaseAuthErrors[error.code] || 'Error desconocido';
+            return rejectWithValue(errorMessage);
         }
     }
 );
