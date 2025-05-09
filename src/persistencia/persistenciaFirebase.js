@@ -179,10 +179,10 @@ export const getReparacionPersistencia = (id) => {
                             id: id,
                             data: {
                                 ...docSnap.data(),
-                                NombreUsu: docSnapCliente.data()?.NombreUsu,
-                                ApellidoUsu: docSnapCliente.data()?.ApellidoUsu,
-                                TelefonoUsu: docSnapCliente.data()?.TelefonoUsu,
-                                EmailUsu: docSnapCliente.data()?.EmailUsu
+                                NombreUsu: docSnapCliente.data()?.NombreUsu ?? '',
+                                ApellidoUsu: docSnapCliente.data()?.ApellidoUsu ?? '',
+                                TelefonoUsu: docSnapCliente.data()?.TelefonoUsu ?? '',
+                                EmailUsu: docSnapCliente.data()?.EmailUsu ?? '',
                             }
                         })
                     })
@@ -191,7 +191,7 @@ export const getReparacionPersistencia = (id) => {
     });
 };
 
-// GUARDAR Reparación
+// GUARDAR Reparación // TODO: Hacer con try catch
 export const guardarReparacionPersistencia = (reparacion) => {
     return new Promise((resolve, reject) => {
         if (!reparacion.id) reparacion.id = reparacion.data?.FeConRep.toString();
