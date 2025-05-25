@@ -7,6 +7,6 @@ export interface ModeloDroneData {
 }
 
 export interface ModeloDrone {
-  id: string;
+  id: number;
   data: ModeloDroneData;
 }

@@ -1,12 +1,15 @@
-// Actualizar la interfaz para la data de un repuesto
+import { ModeloDrone } from "./modeloDrone";
+
+// Interfaz para la data de un repuesto
 export interface RepuestoData {
   NombreRepu: string;
   DescripcionRepu: string;
-  ModeloDroneRepu: string;
+  ModeloDrones: ModeloDrone[]; // Array de objetos ModeloDrone
+  ModelosDroneIds: number[]; // Nuevo array de IDs de modelos
   ProveedorRepu: string;
   PrecioRepu: number;
   StockRepu: number;
-  UnidadesPedidas: number; // Cantidad de unidades que están en proceso de pedido
+  UnidadesPedidas: number;
 }
 
 export interface Repuesto {

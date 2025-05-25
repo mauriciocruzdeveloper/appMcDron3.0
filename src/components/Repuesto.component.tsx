@@ -6,7 +6,8 @@ import { useAppSelector } from '../redux-tool-kit/hooks/useAppSelector';
 import { Repuesto } from '../types/repuesto';
 import { guardarRepuestoAsync, eliminarRepuestoAsync, getRepuestoAsync } from '../redux-tool-kit/repuesto/repuesto.actions';
 import { useModal } from './Modal/useModal';
-import { ModeloDrone } from '../types/modeloDrone';
+import Select from 'react-select'; // Importar Select para selección múltiple
+import { SelectOption } from '../types/selectOption';
 
 interface ParamTypes {
   id: string;
@@ -38,6 +39,10 @@ export default function RepuestoComponent(): JSX.Element {
     state.repuesto.coleccionRepuestos.find(repuesto => repuesto.id === id)
   );
 
+  const [selectedModelos, setSelectedModelos] = useState<SelectOption[]>([]);
+
+  console.log("!!! repuestoActual", repuestoActual);
+
   const modelosDrone = useAppSelector(state => state.modeloDrone.coleccionModelosDrone);
 
   const [repuesto, setRepuesto] = useState<Repuesto>({
@@ -45,7 +50,8 @@ export default function RepuestoComponent(): JSX.Element {
     data: {
       NombreRepu: '',
       DescripcionRepu: '',
-      ModeloDroneRepu: '',
+      ModeloDrones: [],
+      ModelosDroneIds: [], // Nuevo campo para multiple selección
       ProveedorRepu: '',
       PrecioRepu: 0,
       StockRepu: 0,
@@ -53,25 +59,33 @@ export default function RepuestoComponent(): JSX.Element {
     }
   });
 
+  // Para el selector múltiple de modelos de drone
   const [estadoCalculado, setEstadoCalculado] = useState<string>('Agotado');
 
   useEffect(() => {
     if (!isNew && id) {
-      if (repuestoActual) {
-        // Migración de datos: asegurarse de que los campos nuevos existan
-        const repuestoMigrado = {
-          ...repuestoActual,
-          data: {
-            ...repuestoActual.data,
-            UnidadesPedidas: repuestoActual.data.UnidadesPedidas || 0
-          }
-        };
-        setRepuesto(repuestoMigrado);
+      if (!repuestoActual) return;
+      setRepuesto(repuestoActual);
+
+      // Inicializar el selector múltiple con los modelos ya asociados al repuesto
+      if (repuestoActual.data.ModelosDroneIds && repuestoActual.data.ModelosDroneIds.length > 0) {
+        const modelosSeleccionados = modelosDrone
+          .filter(modelo => repuestoActual.data.ModelosDroneIds.includes(Number(modelo.id)))
+          .map(modelo => ({
+            value: modelo.id,
+            label: `${modelo.data.NombreModelo} - ${modelo.data.Fabricante}`
+          }));
+
+        console.log('!!! modelosDrone', modelosDrone);
+        console.log('!!! repuestoActual.data.ModelosDroneIds', repuestoActual.data.ModelosDroneIds);
+        console.log('!!! modelosSeleccionados en useEffect', modelosSeleccionados);
+
+        setSelectedModelos(modelosSeleccionados);
       } else {
-        dispatch(getRepuestoAsync(id));
+        setSelectedModelos([]);
       }
     }
-  }, [dispatch, id, isNew, repuestoActual]);
+  }, [dispatch, id, isNew, repuestoActual, modelosDrone]);
 
   // Actualizar el estado calculado cuando cambien los valores relevantes
   useEffect(() => {
@@ -120,6 +134,21 @@ export default function RepuestoComponent(): JSX.Element {
     }));
   };
 
+  // Nuevo manejador para el selector múltiple de modelos
+  const handleModelosChange = (selected: any) => {
+    setSelectedModelos(selected || []);
+
+    // Actualizar los IDs de modelos en el objeto de repuesto
+    const modelosIds = selected ? selected.map((item: any) => item.value) : [];
+    setRepuesto(prevState => ({
+      ...prevState,
+      data: {
+        ...prevState.data,
+        ModelosDroneIds: modelosIds,
+      }
+    }));
+  };
+
   const handleGuardarRepuesto = async () => {
     openModal({
       mensaje: "¿Desea guardar este repuesto?",
@@ -147,7 +176,7 @@ export default function RepuestoComponent(): JSX.Element {
         }
       } else if (response.meta.requestStatus === 'rejected') {
         // TODO: Corregir el problema de typescript que no infiere que el rejected tiene un error como atributo
-        const resp = response as { error: { message: string }};
+        const resp = response as { error: { message: string } };
         openModal({
           mensaje: "Error al guardar el repuesto: " + resp.error.message,
           tipo: "danger",
@@ -194,6 +223,14 @@ export default function RepuestoComponent(): JSX.Element {
     }
   };
 
+  // Opciones para el selector de modelos de drone
+  const modelosDroneOptions = modelosDrone.map(modelo => ({
+    value: modelo.id,
+    label: `${modelo.data.NombreModelo} - ${modelo.data.Fabricante}`
+  }));
+
+  console.log('!!! selectedModelos', selectedModelos);
+
   return (
     <div className="p-4">
       <div className="card mb-3 bg-bluemcdron">
@@ -232,21 +269,33 @@ export default function RepuestoComponent(): JSX.Element {
           </div>
 
           <div className="mb-3">
-            <label className="form-label">Modelo de Drone Compatible</label>
-            <select
-              className="form-select"
-              id="ModeloDroneRepu"
-              value={repuesto.data.ModeloDroneRepu}
-              onChange={handleSelectChange}
-            >
-              <option value="">Seleccione un modelo...</option>
-              {modelosDrone.map((modelo: ModeloDrone) => (
-                <option key={modelo.id} value={modelo.data.NombreModelo}>
-                  {modelo.data.NombreModelo}
-                </option>
-              ))}
-              <option value="Universal">Universal (compatible con varios modelos)</option>
-            </select>
+            <label className="form-label">Modelos de Drone Compatibles</label>
+            <Select
+              isMulti
+              options={modelosDroneOptions}
+              value={selectedModelos}
+              onChange={handleModelosChange}
+              placeholder="Seleccione los modelos de drone compatibles..."
+              noOptionsMessage={() => "No se encontraron modelos de drone"}
+            />
+            <small className="form-text text-muted">
+              Seleccione todos los modelos de drone para los que este repuesto es compatible.
+              {selectedModelos.length === 0
+                ? " Si no selecciona ninguno, se considerará universal."
+                : ` Actualmente compatible con ${selectedModelos.length} modelo(s).`}
+            </small>
+            {selectedModelos.length > 0 && (
+              <div className="mt-2 p-2 border rounded bg-light">
+                <p className="mb-1 fw-bold">Modelos seleccionados:</p>
+                <ul className="list-unstyled mb-0">
+                  {selectedModelos.map(modelo => (
+                    <li key={modelo.value} className="text-success">
+                      <i className="bi bi-check-circle-fill me-1"></i> {modelo.label}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
           </div>
 
           <div className="mb-3">
