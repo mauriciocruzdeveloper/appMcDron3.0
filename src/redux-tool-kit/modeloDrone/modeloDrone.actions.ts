@@ -14,7 +14,8 @@ export const eliminarModeloDroneAsync = createAsyncThunk(
     async (id: string, { dispatch }) => {
         try {
             dispatch(isFetchingStart());
-            // La verificación de dependencias ahora se hace en la función de persistencia
+            // La verificación de dependencias ahora verifica la tabla intermedia part_drone_model
+            // en lugar de buscar directamente en los repuestos
             const modeloDroneEliminado = await eliminarModeloDronePersistencia(id);
             dispatch(isFetchingComplete());
             return modeloDroneEliminado;
@@ -27,17 +28,19 @@ export const eliminarModeloDroneAsync = createAsyncThunk(
 )
 
 // GUARDAR MODELO DE DRONE
-export const guardarModeloDroneAsync = createAsyncThunk(
+export const guardarModeloDroneAsync = createAsyncThunk<ModeloDrone, ModeloDrone>(
     'app/guardarModeloDrone',
     async (modeloDrone: ModeloDrone, { dispatch }) => {
         try {
             dispatch(isFetchingStart());
-            const modeloDroneGuardado = await guardarModeloDronePersistencia(modeloDrone);
+            const modeloDroneGuardado: ModeloDrone = await guardarModeloDronePersistencia(modeloDrone);
+            console.log("!!! modeloDroneGuardado", modeloDroneGuardado);
             dispatch(isFetchingComplete());
             return modeloDroneGuardado;
         } catch (error: any) { // TODO: Hacer tipo de dato para el error
+            console.error("Error al guardar modelo de drone guardarModeloDroneAsync:", error);
             dispatch(isFetchingComplete());
-            return error;
+            throw error;
         }
     },
 );

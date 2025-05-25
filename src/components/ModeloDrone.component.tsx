@@ -90,17 +90,24 @@ export default function ModeloDroneComponent(): JSX.Element {
         });
         
         // Si estamos creando un nuevo modelo, actualizar la URL con el ID real
-        if (isNew && response.payload?.id) {
-          history.replace(`/inicio/modelos-drone/${response.payload.id}`);
+        if (isNew && (response.payload as ModeloDrone)?.id) {
+          history.replace(`/inicio/modelos-drone/${(response.payload as ModeloDrone).id}`);
         }
-      } else {
+      } else if (response.meta.requestStatus === 'rejected') {
+        // TODO: Corregir el problema de typescript que no infiere que el rejected tiene un error como atributo
+        const resp = response as { error: { message: string }};
         openModal({
-          mensaje: "Error al guardar el modelo de drone.",
+          mensaje: "Error al guardar el modelo de drone: " + resp.error.message,
           tipo: "danger",
           titulo: "Error",
         });
       }
     } catch (error) {
+      openModal({
+        mensaje: "Error al guardar el modelo de drone: " + error,
+        tipo: "danger",
+        titulo: "Error",
+      });
       console.error("Error al guardar el modelo de drone:", error);
     }
   };
