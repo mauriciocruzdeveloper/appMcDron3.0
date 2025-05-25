@@ -5,7 +5,7 @@ export interface RepuestoData {
   NombreRepu: string;
   DescripcionRepu: string;
   ModeloDrones: ModeloDrone[]; // Array de objetos ModeloDrone
-  ModelosDroneIds: number[]; // Nuevo array de IDs de modelos
+  ModelosDroneIds: string[]; // Nuevo array de IDs de modelos
   ProveedorRepu: string;
   PrecioRepu: number;
   StockRepu: number;
