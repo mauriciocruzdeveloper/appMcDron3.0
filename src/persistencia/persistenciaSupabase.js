@@ -918,7 +918,7 @@ export const eliminarRepuestoPersistencia = async (id) => {
     try {
       // 1. Verificar si el repuesto está siendo utilizado en alguna intervención
       const { data: relacionesRepuestoIntervencion, error: errorRelaciones } = await supabase
-        .from('intervention_part')
+        .from('part_intervention')
         .select('*')
         .eq('part_id', id);
 
@@ -1159,15 +1159,15 @@ export const eliminarModeloDronePersistencia = async (id) => {
         return;
       }
 
-      // 3. Verificar si hay repuestos asociados a este modelo
-      const { data: repuestosAsociados, error: errorRepuestos } = await supabase
-        .from('part')
+      // 3. Verificar si hay repuestos asociados a este modelo en la tabla intermedia part_drone_model
+      const { data: relacionesRepuestoModelo, error: errorRelaciones } = await supabase
+        .from('part_drone_model')
         .select('id')
         .eq('drone_model_id', id);
 
-      if (errorRepuestos) throw errorRepuestos;
+      if (errorRelaciones) throw errorRelaciones;
 
-      if (repuestosAsociados && repuestosAsociados.length > 0) {
+      if (relacionesRepuestoModelo && relacionesRepuestoModelo.length > 0) {
         reject({
           code: 'No se puede borrar este modelo de drone. Hay repuestos asociados a este modelo.'
         });
