@@ -35,11 +35,13 @@ export const guardarRepuestoAsync = createAsyncThunk(
         try {
             dispatch(isFetchingStart());
             const repuestoGuardado = await guardarRepuestoPersistencia(repuesto);
+            console.log("!!! repuestoGuardado", repuestoGuardado);
             dispatch(isFetchingComplete());
             return repuestoGuardado;
         } catch (error: any) { // TODO: Hacer tipo de dato para el error
+            console.error("Error al guardar repuesto guardarRepuestoAsync:", error);
             dispatch(isFetchingComplete());
-            return error;
+            throw error;
         }
     },
 );

@@ -98,7 +98,7 @@ export default function RepuestoComponent(): JSX.Element {
   const handleNumberInputChange = (e: ChangeEvent<HTMLInputElement>) => {
     const { id, value } = e.target;
     const numValue = value === '' ? 0 : Number(value);
-    
+
     setRepuesto(prevState => ({
       ...prevState,
       data: {
@@ -133,6 +133,8 @@ export default function RepuestoComponent(): JSX.Element {
     try {
       const response = await dispatch(guardarRepuestoAsync(repuesto));
 
+      console.log("!!! response en confirmaGuardarRepuesto", response);
+
       if (response.meta.requestStatus === 'fulfilled') {
         openModal({
           mensaje: "Repuesto guardado correctamente.",
@@ -151,7 +153,12 @@ export default function RepuestoComponent(): JSX.Element {
         });
       }
     } catch (error) {
-      console.error("Error al guardar el repuesto:", error);
+      openModal({
+        mensaje: "Error al guardar el repuesto.",
+        tipo: "danger",
+        titulo: "Error",
+      });
+      console.error("Error al guardar el repuesto en confirmaGuardarRepuesto:", error);
     }
   };
 
