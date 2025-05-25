@@ -142,19 +142,21 @@ export default function RepuestoComponent(): JSX.Element {
           titulo: "Guardar Repuesto",
         });
 
-        if (isNew && response.payload?.id) {
-          history.replace(`/inicio/repuestos/${response.payload.id}`);
+        if (isNew && (response.payload as Repuesto)?.id) {
+          history.replace(`/inicio/repuestos/${(response.payload as Repuesto).id}`);
         }
-      } else {
+      } else if (response.meta.requestStatus === 'rejected') {
+        // TODO: Corregir el problema de typescript que no infiere que el rejected tiene un error como atributo
+        const resp = response as { error: { message: string }};
         openModal({
-          mensaje: "Error al guardar el repuesto.",
+          mensaje: "Error al guardar el repuesto: " + resp.error.message,
           tipo: "danger",
           titulo: "Error",
         });
       }
     } catch (error) {
       openModal({
-        mensaje: "Error al guardar el repuesto.",
+        mensaje: "Error al guardar el repuesto: " + error,
         tipo: "danger",
         titulo: "Error",
       });
