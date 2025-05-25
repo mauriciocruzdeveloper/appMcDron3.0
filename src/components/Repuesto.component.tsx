@@ -39,6 +39,9 @@ export default function RepuestoComponent(): JSX.Element {
     state.repuesto.coleccionRepuestos.find(repuesto => repuesto.id === id)
   );
 
+  console.log('!!! repuestoActual en RepuestoComponent', repuestoActual);
+  console.log('!!! id en RepuestoComponent', id);
+
   const [selectedModelos, setSelectedModelos] = useState<SelectOption[]>([]);
 
   console.log("!!! repuestoActual", repuestoActual);
@@ -64,14 +67,16 @@ export default function RepuestoComponent(): JSX.Element {
 
   useEffect(() => {
     if (!isNew && id) {
+      console.log('!!! repuesto actual en useEffect', repuestoActual);
       if (!repuestoActual) return;
       setRepuesto(repuestoActual);
+
 
       // Inicializar el selector múltiple con los modelos ya asociados al repuesto
       if (repuestoActual.data.ModelosDroneIds && repuestoActual.data.ModelosDroneIds.length > 0) {
         const modelosSeleccionados = modelosDrone
-          .filter(modelo => repuestoActual.data.ModelosDroneIds.includes(Number(modelo.id)))
-          .map(modelo => ({
+          .filter(modelo => repuestoActual.data.ModelosDroneIds.includes(modelo.id))
+          .map((modelo) => ({
             value: modelo.id,
             label: `${modelo.data.NombreModelo} - ${modelo.data.Fabricante}`
           }));

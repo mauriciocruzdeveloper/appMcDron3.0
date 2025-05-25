@@ -37,7 +37,7 @@ export const guardarDroneAsync = createAsyncThunk(
             return droneGuardado;
         } catch (error: any) { // TODO: Hacer tipo de dato para el error
             dispatch(isFetchingComplete());
-            return error;
+            throw error;
         }
     },
 );
@@ -53,7 +53,7 @@ export const getDroneAsync = createAsyncThunk(
             return drone;
         } catch (error: any) { // TODO: Hacer tipo de dato para el error
             dispatch(isFetchingComplete());
-            return error;
+            throw error;
         }
     },
 );
@@ -69,7 +69,7 @@ export const getDronesPorModeloDroneAsync = createAsyncThunk(
             return drones;
         } catch (error: any) { // TODO: Hacer tipo de dato para el error
             dispatch(isFetchingComplete());
-            return error;
+            throw error;
         }
     },
 );
@@ -85,7 +85,7 @@ export const getDronesPorPropietarioAsync = createAsyncThunk(
             return drones;
         } catch (error: any) { // TODO: Hacer tipo de dato para el error
             dispatch(isFetchingComplete());
-            return error;
+            throw error;
         }
     },
 );

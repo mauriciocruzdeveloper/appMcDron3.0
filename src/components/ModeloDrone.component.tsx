@@ -6,7 +6,6 @@ import { useAppSelector } from '../redux-tool-kit/hooks/useAppSelector';
 import { ModeloDrone } from '../types/modeloDrone';
 import { guardarModeloDroneAsync, eliminarModeloDroneAsync, getModeloDroneAsync } from '../redux-tool-kit/modeloDrone/modeloDrone.actions';
 import { useModal } from './Modal/useModal';
-import { InputType, SelectType } from '../types/types';
 
 interface ParamTypes {
   id: string;

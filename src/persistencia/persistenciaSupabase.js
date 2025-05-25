@@ -121,14 +121,14 @@ export const getIntervencionesPorReparacionPersistencia = async (reparacionId) =
       }
 
       // Extraemos los IDs de los repuestos
-      const repuestosIds = partInterventions ? partInterventions.map(rel => rel.part_id) : [];
+      const repuestosIds = partInterventions ? partInterventions.map(rel => String(rel.part_id)) : [];
 
       return {
-        id: item.intervention.id,
+        id: String(item.intervention.id),
         data: {
           NombreInt: item.intervention.name,
           DescripcionInt: item.intervention.description || '',
-          ModeloDroneId: item.intervention.drone_model_id,
+          ModeloDroneId: item.intervention.drone_model_id ? String(item.intervention.drone_model_id) : '',
           RepuestosIds: repuestosIds,
           PrecioManoObra: item.labor_cost || item.intervention.labor_cost || 0,
           PrecioTotal: item.total_cost || item.intervention.total_cost || 0,
@@ -136,7 +136,7 @@ export const getIntervencionesPorReparacionPersistencia = async (reparacionId) =
         },
         // Guardamos los datos de la relación por si son útiles
         relationData: {
-          id: item.id,
+          id: String(item.id),
           labor_cost: item.labor_cost,
           parts_cost: item.parts_cost,
           total_cost: item.total_cost
@@ -232,7 +232,7 @@ export const getReparacionesPersistencia = (setReparacionesToRedux, usuario) => 
         delivery_tracking,
         photo_urls,
         document_urls,
-        drone:drone_id (id, number_series),
+        drone:drone_id (id),
         owner:owner_id (id, email, first_name, last_name, telephone)
       `);
 
@@ -250,14 +250,14 @@ export const getReparacionesPersistencia = (setReparacionesToRedux, usuario) => 
 
       // Transformar los datos al formato esperado por el frontend
       const reparaciones = data.map(item => ({
-        id: item.id,
+        id: String(item.id),
         data: {
           EstadoRep: item.state,
           PrioridadRep: item.priority,
-          DroneRep: item.drone?.number_series || '',
+          DroneRep: item.drone?.id ? String(item.drone.id) : '',
           NombreUsu: item.owner?.first_name || '',
           ApellidoUsu: item.owner?.last_name || '',
-          UsuarioRep: item.owner_id,
+          UsuarioRep: item.owner_id ? String(item.owner_id) : '',
           DriveRep: item.drive_link || '',
           AnotacionesRep: item.notes || '',
           FeConRep: item.contact_date,
@@ -266,7 +266,6 @@ export const getReparacionesPersistencia = (setReparacionesToRedux, usuario) => 
           DescripcionUsuRep: item.description || '',
           DiagnosticoRep: item.diagnosis || '',
           FeRecRep: item.reception_date,
-          NumeroSerieRep: item.drone?.number_series || '',
           DescripcionTecRep: item.repair_resume || '',
           PresuMoRep: item.price_labor || 0,
           PresuReRep: item.price_parts || 0,
@@ -335,14 +334,14 @@ export const getReparacionPersistencia = async (id) => {
 
     // Transformar al formato esperado por el frontend
     return {
-      id: data.id,
+      id: String(data.id),
       data: {
         EstadoRep: data.state,
         PrioridadRep: data.priority,
-        DroneRep: data.drone?.number_series || '',
+        DroneRep: data.drone.id ? String(data.drone.id) : '',
         NombreUsu: data.owner?.first_name || '',
         ApellidoUsu: data.owner?.last_name || '',
-        UsuarioRep: data.owner_id,
+        UsuarioRep: data.owner_id ? String(data.owner_id) : '',
         DriveRep: data.drive_link || '',
         AnotacionesRep: data.notes || '',
         FeConRep: data.contact_date,
@@ -351,7 +350,6 @@ export const getReparacionPersistencia = async (id) => {
         DescripcionUsuRep: data.description || '',
         DiagnosticoRep: data.diagnosis || '',
         FeRecRep: data.reception_date,
-        NumeroSerieRep: data.drone?.number_series || '',
         DescripcionTecRep: data.repair_resume || '',
         PresuMoRep: data.price_labor || 0,
         PresuReRep: data.price_parts || 0,
@@ -424,7 +422,7 @@ export const guardarReparacionPersistencia = async (reparacion) => {
     }
 
     return {
-      id: result.id,
+      id: String(result.id),
       data: reparacion.data
     };
   } catch (error) {
@@ -473,7 +471,7 @@ export const eliminarReparacionPersistencia = async (id) => {
 };
 
 // GET todos los usuarios con suscripción en tiempo real
-export const getUsuariosPersistencia = (setUsuariosToRedux) => {
+export const getUsuariosPersistencia = async (setUsuariosToRedux) => {
   console.log('getUsuariosPersistencia con Supabase');
 
   // Función para cargar los datos iniciales
@@ -498,7 +496,7 @@ export const getUsuariosPersistencia = (setUsuariosToRedux) => {
 
       // Transformar los datos al formato esperado por el frontend
       const usuarios = data.map(item => ({
-        id: item.id,
+        id: String(item.id),
         data: {
           EmailUsu: item.email,
           NombreUsu: item.first_name || '',
@@ -558,7 +556,7 @@ export const getClientePersistencia = async (id) => {
 
     // Transformar al formato esperado por el frontend
     return {
-      id: data.id,
+      id: String(data.id),
       data: {
         EmailUsu: data.email,
         NombreUsu: data.first_name || '',
@@ -597,7 +595,7 @@ export const getClientePorEmailPersistencia = async (email) => {
 
     // Transformar al formato esperado por el frontend
     return {
-      id: data.id,
+      id: String(data.id),
       data: {
         EmailUsu: data.email,
         NombreUsu: data.first_name || '',
@@ -661,7 +659,7 @@ export const guardarUsuarioPersistencia = async (usuario) => {
     }
 
     return {
-      id: result.id,
+      id: String(result.id),
       data: usuario.data
     };
   } catch (error) {
@@ -693,7 +691,7 @@ export const eliminarUsuarioPersistencia = async (id) => {
       // 2. Verificar si hay drones asociados al usuario como propietario
       const { data: dronesAsociados, error: errorDrones } = await supabase
         .from('drone')
-        .select('id, number_series')
+        .select('id') // Quitado number_series
         .eq('owner_id', id);
 
       if (errorDrones) throw errorDrones;
@@ -701,7 +699,7 @@ export const eliminarUsuarioPersistencia = async (id) => {
       if (dronesAsociados && dronesAsociados.length > 0) {
         reject({
           code: 'No se puede borrar este usuario. Drone relacionado: ' +
-            dronesAsociados.map(drone => drone.number_series || drone.id).toString()
+            dronesAsociados.map(drone => drone.id).toString()
         });
         return;
       }
@@ -750,11 +748,11 @@ export const getRepuestoPersistencia = async (id) => {
     if (relError) throw relError;
 
     // Extraer los IDs de los modelos y sus nombres
-    const modelosDroneIds = partDroneModels.map(rel => rel.drone_model.id);
+    const modelosDroneIds = partDroneModels.map(rel => String(rel.drone_model.id));
     
     // 3. Transformar al formato esperado por el frontend
     return {
-      id: data.id,
+      id: String(data.id),
       data: {
         NombreRepu: data.name,
         DescripcionRepu: data.description || '',
@@ -789,7 +787,7 @@ export const getRepuestosPorModeloPersistencia = async (modeloDroneId) => {
     }
 
     // 2. Extraer los IDs de los repuestos
-    const repuestosIds = relacionesPartDroneModel.map(rel => rel.part_id);
+    const repuestosIds = relacionesPartDroneModel.map(rel => String(rel.part_id));
 
     // 3. Obtener la información completa de los repuestos
     const { data, error } = await supabase
@@ -801,12 +799,12 @@ export const getRepuestosPorModeloPersistencia = async (modeloDroneId) => {
 
     // 4. Transformar al formato esperado por el frontend
     const repuestos = data.map(item => ({
-      id: item.id,
+      id: String(item.id),
       data: {
         NombreRepu: item.name,
         DescripcionRepu: item.description || '',
         ModeloDroneRepu: 'Múltiple', // Ahora un repuesto puede estar asociado a múltiples modelos
-        ModelosDroneIds: [modeloDroneId], // Incluimos el modelo que estamos consultando
+        ModelosDroneIds: [String(modeloDroneId)], // Incluimos el modelo que estamos consultando
         ProveedorRepu: item.provider || '',
         PrecioRepu: item.price || 0,
         StockRepu: item.stock || 0,
@@ -836,7 +834,7 @@ export const getRepuestosPorProveedorPersistencia = async (proveedor) => {
 
     // Transformar al formato esperado por el frontend
     const repuestos = data.map(item => ({
-      id: item.id,
+      id: String(item.id),
       data: {
         NombreRepu: item.name,
         DescripcionRepu: item.description || '',
@@ -927,12 +925,13 @@ export const guardarRepuestoPersistencia = async (repuesto) => {
     
     // 5. Devolver el resultado en formato esperado por el frontend
     return {
-      id: result.id,
+      id: String(result.id),
       data: {
         NombreRepu: result.name,
         DescripcionRepu: result.description || '',
         ModeloDrones: droneModels || [],
-        ModelosDroneIds: repuesto.data.ModelosDroneIds || [],
+        ModelosDroneIds: repuesto.data.ModelosDroneIds ? 
+          repuesto.data.ModelosDroneIds.map(id => String(id)) : [],
         ProveedorRepu: result.provider || '',
         PrecioRepu: result.price || 0,
         StockRepu: result.stock || 0,
@@ -1010,13 +1009,13 @@ export const getRepuestosPersistencia = async (setRepuestosToRedux) => {
         if (relError) throw relError;
 
         // Extraer los IDs de los modelos y determinar ModeloDroneRepu
-        const modelosDroneIds = partDroneModels.map(rel => rel.drone_model.id);
+        const modelosDroneIds = partDroneModels.map(rel => String(rel.drone_model.id));
 
         console.log('partDroneModels:', partDroneModels);
 
         // Añadir a la lista de repuestos
         repuestos.push({
-          id: repuesto.id,
+          id: String(repuesto.id),
           data: {
             NombreRepu: repuesto.name,
             DescripcionRepu: repuesto.description || '',
@@ -1078,7 +1077,7 @@ export const getModeloDronePersistencia = async (id) => {
 
     // Transformar al formato esperado por el frontend
     return {
-      id: data.id,
+      id: String(data.id),
       data: {
         NombreModelo: data.name,
         DescripcionModelo: data.description || '',
@@ -1104,7 +1103,7 @@ export const getModelosDronePorFabricantePersistencia = async (fabricante) => {
 
     // Transformar al formato esperado por el frontend
     const modelosDrone = data.map(item => ({
-      id: item.id,
+      id: String(item.id),
       data: {
         NombreModelo: item.name,
         DescripcionModelo: item.description || '',
@@ -1159,7 +1158,7 @@ export const guardarModeloDronePersistencia = async (modeloDrone) => {
 
     // Transformar el resultado al formato esperado por el frontend
     return {
-      id: result.id,
+      id: String(result.id),
       data: {
         NombreModelo: result.name,
         DescripcionModelo: result.description || '',
@@ -1239,7 +1238,7 @@ export const eliminarModeloDronePersistencia = async (id) => {
 };
 
 // GET todos los ModelosDrone con suscripción en tiempo real
-export const getModelosDronePersistencia = (setModelosDroneToRedux) => {
+export const getModelosDronePersistencia = async (setModelosDroneToRedux) => {
   console.log('getModelosDronePersistencia con Supabase');
 
   // Función para cargar los datos iniciales
@@ -1254,7 +1253,7 @@ export const getModelosDronePersistencia = (setModelosDroneToRedux) => {
 
       // Transformar los datos al formato esperado por el frontend
       const modelosDrone = data.map(item => ({
-        id: item.id,
+        id: String(item.id),
         data: {
           NombreModelo: item.name,
           DescripcionModelo: item.description || '',
@@ -1316,12 +1315,11 @@ export const getDronePersistencia = async (id) => {
 
     // Transformar al formato esperado por el frontend
     return {
-      id: data.id,
+      id: String(data.id),
       data: {
-        NumeroSerie: data.number_series || '',
-        ModeloDroneId: data.drone_model_id || '',
+        ModeloDroneId: data.drone_model_id ? String(data.drone_model_id) : '',
         ModeloDroneRepu: data.drone_model?.name || '',
-        Propietario: data.owner_id || '',
+        Propietario: data.owner_id ? String(data.owner_id) : '',
         Observaciones: data.observations || ''
       }
     };
@@ -1347,12 +1345,11 @@ export const getDronesPorModeloDronePersistencia = async (modeloDroneId) => {
 
     // Transformar al formato esperado por el frontend
     const drones = data.map(item => ({
-      id: item.id,
+      id: String(item.id),
       data: {
-        NumeroSerie: item.number_series || '',
-        ModeloDroneId: item.drone_model_id || '',
+        ModeloDroneId: item.drone_model_id ? String(item.drone_model_id) : '',
         ModeloDroneRepu: item.drone_model?.name || '',
-        Propietario: item.owner_id || '',
+        Propietario: item.owner_id ? String(item.owner_id) : '',
         Observaciones: item.observations || ''
       }
     }));
@@ -1380,12 +1377,11 @@ export const getDronesPorPropietarioPersistencia = async (propietarioId) => {
 
     // Transformar al formato esperado por el frontend
     const drones = data.map(item => ({
-      id: item.id,
+      id: String(item.id),
       data: {
-        NumeroSerie: item.number_series || '',
-        ModeloDroneId: item.drone_model_id || '',
+        ModeloDroneId: item.drone_model_id ? String(item.drone_model_id) : '',
         ModeloDroneRepu: item.drone_model?.name || '',
-        Propietario: item.owner_id || '',
+        Propietario: item.owner_id ? String(item.owner_id) : '',
         Observaciones: item.observations || ''
       }
     }));
@@ -1402,7 +1398,6 @@ export const guardarDronePersistencia = async (drone) => {
   try {
     // Preparar datos para Supabase
     const droneData = {
-      number_series: drone.data.NumeroSerie || '',
       drone_model_id: drone.data.ModeloDroneId || null,
       owner_id: drone.data.Propietario || null,
       observations: drone.data.Observaciones || ''
@@ -1444,12 +1439,11 @@ export const guardarDronePersistencia = async (drone) => {
 
     // Transformar el resultado al formato esperado por el frontend
     return {
-      id: result.id,
+      id: String(result.id),
       data: {
-        NumeroSerie: result.number_series || '',
-        ModeloDroneId: result.drone_model_id || '',
+        ModeloDroneId: result.drone_model_id ? String(result.drone_model_id) : '',
         ModeloDroneRepu: result.drone_model?.name || '',
-        Propietario: result.owner_id || '',
+        Propietario: result.owner_id ? String(result.owner_id) : '',
         Observaciones: result.observations || ''
       }
     };
@@ -1495,7 +1489,7 @@ export const eliminarDronePersistencia = async (id) => {
 };
 
 // GET todos los Drones con suscripción en tiempo real
-export const getDronesPersistencia = (setDronesToRedux) => {
+export const getDronesPersistencia = async (setDronesToRedux) => {
   console.log('getDronesPersistencia con Supabase');
 
   // Función para cargar los datos iniciales
@@ -1508,18 +1502,17 @@ export const getDronesPersistencia = (setDronesToRedux) => {
           drone_model:drone_model_id (*),
           owner:owner_id (*)
         `)
-        .order('number_series');
+        .order('id');
 
       if (error) throw error;
 
       // Transformar los datos al formato esperado por el frontend
       const drones = data.map(item => ({
-        id: item.id,
+        id: String(item.id), // Convertir a String
         data: {
-          NumeroSerie: item.number_series || '',
-          ModeloDroneId: item.drone_model_id || '',
+          ModeloDroneId: item.drone_model_id ? String(item.drone_model_id) : '', // Convertir a String
           ModeloDroneRepu: item.drone_model?.name || '',
-          Propietario: item.owner_id || '',
+          Propietario: item.owner_id ? String(item.owner_id) : '', // Convertir a String
           Observaciones: item.observations || ''
         }
       }));
@@ -1680,20 +1673,15 @@ export const getIntervencionPersistencia = async (id) => {
     if (relError) throw relError;
 
     // Extraer los IDs de los repuestos y calcular los costos
-    const repuestosIds = partInterventions.map(rel => rel.part_id);
-    const partsCost = partInterventions.reduce((sum, rel) => {
-      const quantity = rel.quantity || 1;
-      const price = rel.part?.price || 0;
-      return sum + (quantity * price);
-    }, 0);
-
-    // Transformar al formato esperado por el frontend
+    const repuestosIds = partInterventions.map(rel => String(rel.part_id));
+    
+    // 3. Transformar al formato esperado por el frontend
     return {
-      id: data.id,
+      id: String(data.id),
       data: {
         NombreInt: data.name,
         DescripcionInt: data.description || '',
-        ModeloDroneId: data.drone_model_id,
+        ModeloDroneId: data.drone_model_id ? String(data.drone_model_id) : '',
         RepuestosIds: repuestosIds,
         PrecioManoObra: data.labor_cost || 0,
         PrecioTotal: data.total_cost || 0,
@@ -1735,15 +1723,15 @@ export const getIntervencionesPorModeloDronePersistencia = async (modeloDroneId)
       if (relError) throw relError;
 
       // Extraer los IDs de los repuestos
-      const repuestosIds = partInterventions.map(rel => rel.part_id);
+      const repuestosIds = partInterventions.map(rel => String(rel.part_id));
 
       // Añadir a la lista de intervenciones
       intervenciones.push({
-        id: intervencion.id,
+        id: String(intervencion.id),
         data: {
           NombreInt: intervencion.name,
           DescripcionInt: intervencion.description || '',
-          ModeloDroneId: intervencion.drone_model_id,
+          ModeloDroneId: intervencion.drone_model_id ? String(intervencion.drone_model_id) : '',
           RepuestosIds: repuestosIds,
           PrecioManoObra: intervencion.labor_cost || 0,
           PrecioTotal: intervencion.total_cost || 0,
@@ -1875,12 +1863,13 @@ export const guardarIntervencionPersistencia = async (intervencion) => {
 
     // 4. Devolver el resultado en el formato esperado por el frontend
     return {
-      id: intervencionResult.id,
+      id: String(intervencionResult.id),
       data: {
         NombreInt: intervencionResult.name,
         DescripcionInt: intervencionResult.description || '',
-        ModeloDroneId: intervencionResult.drone_model_id,
-        RepuestosIds: intervencion.data.RepuestosIds || [],
+        ModeloDroneId: intervencionResult.drone_model_id ? String(intervencionResult.drone_model_id) : '',
+        RepuestosIds: intervencion.data.RepuestosIds ? 
+          intervencion.data.RepuestosIds.map(id => String(id)) : [],
         PrecioManoObra: intervencionResult.labor_cost || 0,
         PrecioTotal: intervencionResult.total_cost || 0,
         DuracionEstimada: intervencionResult.estimated_duration || 30
@@ -1937,7 +1926,7 @@ export const eliminarIntervencionPersistencia = async (id) => {
 };
 
 // GET todas las Intervenciones con suscripción en tiempo real
-export const getIntervencionesPersistencia = (setIntervencionesToRedux) => {
+export const getIntervencionesPersistencia = async (setIntervencionesToRedux) => {
   console.log('getIntervencionesPersistencia con Supabase');
 
   // Función para cargar los datos iniciales
@@ -1967,15 +1956,15 @@ export const getIntervencionesPersistencia = (setIntervencionesToRedux) => {
         if (relError) throw relError;
 
         // Extraer los IDs de los repuestos
-        const repuestosIds = partInterventions.map(rel => rel.part_id);
+        const repuestosIds = partInterventions.map(rel => String(rel.part_id));
 
         // Añadir a la lista de intervenciones
         intervenciones.push({
-          id: intervencion.id,
+          id: String(intervencion.id),
           data: {
             NombreInt: intervencion.name,
             DescripcionInt: intervencion.description || '',
-            ModeloDroneId: intervencion.drone_model_id,
+            ModeloDroneId: intervencion.drone_model_id ? String(intervencion.drone_model_id) : '',
             RepuestosIds: repuestosIds,
             PrecioManoObra: intervencion.labor_cost || 0,
             PrecioTotal: intervencion.total_cost || 0,
@@ -2196,7 +2185,7 @@ export const getMessagesPersistencia = (setMessagesToRedux, emailUsu, emailCli) 
 
           // Transformar los datos al formato esperado por el frontend
           const messages = data.map(doc => ({
-            id: doc.id,
+            id: String(doc.id),
             data: {
               date: doc.date,
               content: doc.content,
@@ -2218,7 +2207,7 @@ export const getMessagesPersistencia = (setMessagesToRedux, emailUsu, emailCli) 
 
         // Transformar los datos al formato esperado por el frontend
         const messages = data.map(doc => ({
-          id: doc.id,
+          id: String(doc.id),
           data: {
             date: doc.date,
             content: doc.content,
@@ -2262,7 +2251,7 @@ export const actualizarLeidosPersistencia = (mensajesLeidos) => {
         console.log('Mensaje actualizado como leído');
       }
     });
-  } catch (error) {
+   } catch (error) {
     console.error('Error en actualizarLeidosPersistencia:', error);
   }
 };
