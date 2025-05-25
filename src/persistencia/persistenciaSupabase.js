@@ -16,39 +16,39 @@ export const agregarIntervencionAReparacionPersistencia = async (reparacionId, i
       .select('*')
       .eq('id', reparacionId)
       .single();
-    
+
     if (reparacionError || !reparacion) {
       throw new Error('Reparación no encontrada');
     }
-    
+
     // 2. Verificar que la intervención existe
     const { data: intervencion, error: intervencionError } = await supabase
       .from('intervention')
       .select('*')
       .eq('id', intervencionId)
       .single();
-    
+
     if (intervencionError || !intervencion) {
       throw new Error('Intervención no encontrada');
     }
-    
+
     // 3. Verificar si la relación ya existe para evitar duplicados
     const { data: relacionExistente, error: relacionError } = await supabase
       .from('repair_intervention')
       .select('*')
       .eq('repair_id', reparacionId)
       .eq('intervention_id', intervencionId);
-    
+
     if (relacionExistente && relacionExistente.length > 0) {
       return { success: true, message: 'La intervención ya está asociada a esta reparación' };
     }
-    
+
     // 4. Insertar la nueva relación con los costos de la intervención
     const { data: nuevaRelacion, error: insercionError } = await supabase
       .from('repair_intervention')
       .insert([
-        { 
-          repair_id: reparacionId, 
+        {
+          repair_id: reparacionId,
           intervention_id: intervencionId,
           labor_cost: intervencion.labor_cost || 0,
           parts_cost: intervencion.parts_cost || 0,
@@ -56,39 +56,39 @@ export const agregarIntervencionAReparacionPersistencia = async (reparacionId, i
         }
       ])
       .select();
-    
+
     if (insercionError) {
       throw new Error(`Error al asociar la intervención: ${insercionError.message}`);
     }
-    
+
     // 5. Actualizar el precio total de la reparación sumando todos los costos
     // Primero obtenemos todas las intervenciones de esta reparación
     const { data: todasIntervenciones, error: consultaError } = await supabase
       .from('repair_intervention')
       .select('total_cost')
       .eq('repair_id', reparacionId);
-    
+
     if (!consultaError && todasIntervenciones) {
       // Calculamos el total
       const nuevoTotal = todasIntervenciones.reduce((sum, item) => sum + (item.total_cost || 0), 0);
-      
+
       // Actualizamos la reparación con el nuevo total
       await supabase
         .from('repair')
         .update({ price_total: nuevoTotal })
         .eq('id', reparacionId);
     }
-    
-    return { 
-      success: true, 
+
+    return {
+      success: true,
       data: nuevaRelacion[0],
       message: 'Intervención asociada correctamente a la reparación'
     };
-    
+
   } catch (error) {
     console.error('Error en agregarIntervencionAReparacionPersistencia:', error);
-    return { 
-      success: false, 
+    return {
+      success: false,
       error: error.message || 'Error al asociar la intervención a la reparación'
     };
   }
@@ -105,9 +105,9 @@ export const getIntervencionesPorReparacionPersistencia = async (reparacionId) =
         intervention:intervention_id (*)
       `)
       .eq('repair_id', reparacionId);
-    
+
     if (error) throw error;
-    
+
     // Para cada intervención, obtenemos los repuestos asociados
     const intervenciones = await Promise.all(data.map(async (item) => {
       // Obtenemos los repuestos asociados a esta intervención
@@ -115,14 +115,14 @@ export const getIntervencionesPorReparacionPersistencia = async (reparacionId) =
         .from('part_intervention')
         .select('part_id')
         .eq('intervention_id', item.intervention.id);
-      
+
       if (partsError) {
         console.error('Error al obtener repuestos de intervención:', partsError);
       }
-      
+
       // Extraemos los IDs de los repuestos
       const repuestosIds = partInterventions ? partInterventions.map(rel => rel.part_id) : [];
-      
+
       return {
         id: item.intervention.id,
         data: {
@@ -143,9 +143,9 @@ export const getIntervencionesPorReparacionPersistencia = async (reparacionId) =
         }
       };
     }));
-    
+
     return intervenciones;
-    
+
   } catch (error) {
     console.error('Error en getIntervencionesPorReparacionPersistencia:', error);
     throw error;
@@ -161,45 +161,45 @@ export const eliminarIntervencionDeReparacionPersistencia = async (reparacionId,
       .select('*')
       .eq('repair_id', reparacionId)
       .eq('intervention_id', intervencionId);
-    
+
     if (consultaError || !relacion || relacion.length === 0) {
       throw new Error('Relación no encontrada');
     }
-    
+
     // 2. Eliminar la relación
     const { error: eliminacionError } = await supabase
       .from('repair_intervention')
       .delete()
       .eq('id', relacion[0].id);
-    
+
     if (eliminacionError) {
       throw new Error(`Error al eliminar la relación: ${eliminacionError.message}`);
     }
-    
+
     // 3. Recalcular el precio total de la reparación
     const { data: todasIntervenciones, error: recalculoError } = await supabase
       .from('repair_intervention')
       .select('total_cost')
       .eq('repair_id', reparacionId);
-    
+
     if (!recalculoError) {
       const nuevoTotal = todasIntervenciones.reduce((sum, item) => sum + (item.total_cost || 0), 0);
-      
+
       await supabase
         .from('repair')
         .update({ price_total: nuevoTotal })
         .eq('id', reparacionId);
     }
-    
-    return { 
-      success: true, 
+
+    return {
+      success: true,
       message: 'Intervención eliminada correctamente de la reparación'
     };
-    
+
   } catch (error) {
     console.error('Error en eliminarIntervencionDeReparacionPersistencia:', error);
-    return { 
-      success: false, 
+    return {
+      success: false,
       error: error.message || 'Error al eliminar la intervención de la reparación'
     };
   }
@@ -235,19 +235,19 @@ export const getReparacionesPersistencia = (setReparacionesToRedux, usuario) => 
         drone:drone_id (id, number_series),
         owner:owner_id (id, email, first_name, last_name, telephone)
       `);
-      
+
       // Si el usuario no es administrador, filtrar por owner_id
       if (!usuario?.data?.Admin) {
         query = query.eq('owner_id', usuario.id);
       }
-      
+
       // Ordenar por prioridad
       query = query.order('priority', { ascending: true });
-      
+
       const { data, error } = await query;
-      
+
       if (error) throw error;
-      
+
       // Transformar los datos al formato esperado por el frontend
       const reparaciones = data.map(item => ({
         id: String(item.id),
@@ -283,31 +283,31 @@ export const getReparacionesPersistencia = (setReparacionesToRedux, usuario) => 
           IntervencionesIds: []  // Obtendremos estos de otra consulta
         }
       }));
-      
+
       // Actualizar el estado en Redux
       setReparacionesToRedux(reparaciones);
     } catch (error) {
       console.error("Error al cargar reparaciones:", error);
     }
   };
-  
+
   // Cargar datos iniciales
   cargarReparaciones();
-  
+
   // Configurar la suscripción en tiempo real
   const channel = supabase
     .channel('reparaciones-changes')
-    .on('postgres_changes', { 
-      event: '*', 
-      schema: 'public', 
-      table: 'repair' 
+    .on('postgres_changes', {
+      event: '*',
+      schema: 'public',
+      table: 'repair'
     }, (payload) => {
       console.log('Cambio detectado en reparaciones:', payload);
       // Cuando hay cambios, recargamos todos los datos
       cargarReparaciones();
     })
     .subscribe();
-  
+
   // Devolver función para cancelar la suscripción
   return () => {
     supabase.removeChannel(channel);
@@ -326,13 +326,13 @@ export const getReparacionPersistencia = async (id) => {
       `)
       .eq('id', id)
       .single();
-    
+
     if (error) throw error;
-    
+
     if (!data) {
       throw new Error('Reparación no encontrada');
     }
-    
+
     // Transformar al formato esperado por el frontend
     return {
       id: String(data.id),
@@ -399,9 +399,9 @@ export const guardarReparacionPersistencia = async (reparacion) => {
       photo_urls: reparacion.data.urlsFotos,
       document_urls: reparacion.data.urlsDocumentos
     };
-    
+
     let result;
-    
+
     if (reparacion.id) {
       // Actualización
       const { data, error } = await supabase
@@ -409,7 +409,7 @@ export const guardarReparacionPersistencia = async (reparacion) => {
         .update(reparacionData)
         .eq('id', reparacion.id)
         .select();
-      
+
       if (error) throw error;
       result = data[0];
     } else {
@@ -418,11 +418,11 @@ export const guardarReparacionPersistencia = async (reparacion) => {
         .from('repair')
         .insert(reparacionData)
         .select();
-      
+
       if (error) throw error;
       result = data[0];
     }
-    
+
     return {
       id: String(result.id),
       data: reparacion.data
@@ -442,27 +442,27 @@ export const eliminarReparacionPersistencia = async (id) => {
         .from('repair_intervention')
         .select('id')
         .eq('repair_id', id);
-      
+
       if (errorRelaciones) throw errorRelaciones;
-      
+
       // 2. Si existen relaciones, las eliminamos primero
       if (relacionesIntervenciones && relacionesIntervenciones.length > 0) {
         const { error: errorBorradoRelaciones } = await supabase
           .from('repair_intervention')
           .delete()
           .eq('repair_id', id);
-        
+
         if (errorBorradoRelaciones) throw errorBorradoRelaciones;
       }
-      
+
       // 3. Ahora eliminamos la reparación
       const { error: errorBorrado } = await supabase
         .from('repair')
         .delete()
         .eq('id', id);
-      
+
       if (errorBorrado) throw errorBorrado;
-      
+
       console.log('Reparación eliminada correctamente');
       resolve(id);
     } catch (error) {
@@ -475,7 +475,7 @@ export const eliminarReparacionPersistencia = async (id) => {
 // GET todos los usuarios con suscripción en tiempo real
 export const getUsuariosPersistencia = (setUsuariosToRedux) => {
   console.log('getUsuariosPersistencia con Supabase');
-  
+
   // Función para cargar los datos iniciales
   const cargarUsuarios = async () => {
     try {
@@ -493,9 +493,9 @@ export const getUsuariosPersistencia = (setUsuariosToRedux) => {
           is_admin
         `)
         .order('first_name');
-      
+
       if (error) throw error;
-      
+
       // Transformar los datos al formato esperado por el frontend
       const usuarios = data.map(item => ({
         id: String(item.id),
@@ -510,31 +510,31 @@ export const getUsuariosPersistencia = (setUsuariosToRedux) => {
           Admin: item?.is_admin || false
         }
       }));
-      
+
       // Actualizar el estado en Redux
       setUsuariosToRedux(usuarios);
     } catch (error) {
       console.error("Error al cargar usuarios:", error);
     }
   };
-  
+
   // Cargar datos iniciales
   cargarUsuarios();
-  
+
   // Configurar la suscripción en tiempo real
   const channel = supabase
     .channel('usuarios-changes')
-    .on('postgres_changes', { 
-      event: '*', 
-      schema: 'public', 
-      table: 'user' 
+    .on('postgres_changes', {
+      event: '*',
+      schema: 'public',
+      table: 'user'
     }, (payload) => {
       console.log('Cambio detectado en usuarios:', payload);
       // Cuando hay cambios, recargamos todos los datos
       cargarUsuarios();
     })
     .subscribe();
-  
+
   // Devolver función para cancelar la suscripción
   return () => {
     supabase.removeChannel(channel);
@@ -549,13 +549,13 @@ export const getClientePersistencia = async (id) => {
       .select('*')
       .eq('id', id)
       .single();
-    
+
     if (error) throw error;
-    
+
     if (!data) {
       throw new Error('Usuario no encontrado');
     }
-    
+
     // Transformar al formato esperado por el frontend
     return {
       id: String(data.id),
@@ -584,7 +584,7 @@ export const getClientePorEmailPersistencia = async (email) => {
       .select('*')
       .eq('email', email)
       .single();
-    
+
     if (error) {
       // Si es un error de "no data found", retornamos null
       if (error.code === 'PGRST116') {
@@ -592,9 +592,9 @@ export const getClientePorEmailPersistencia = async (email) => {
       }
       throw error;
     }
-    
+
     if (!data) return null;
-    
+
     // Transformar al formato esperado por el frontend
     return {
       id: String(data.id),
@@ -629,9 +629,9 @@ export const guardarUsuarioPersistencia = async (usuario) => {
       state: usuario.data.ProvinciaUsu || '',
       is_admin: usuario.data.Admin || false
     };
-    
+
     let result;
-    
+
     if (usuario.id) {
       // Actualización
       const { data, error } = await supabase
@@ -639,10 +639,10 @@ export const guardarUsuarioPersistencia = async (usuario) => {
         .update(userData)
         .eq('id', usuario.id)
         .select();
-      
+
       if (error) throw error;
       result = data[0];
-      
+
       // En lugar de actualizar los datos en las reparaciones, confiar en las relaciones
       // y joins para obtener la información actualizada del usuario
     } else {
@@ -655,11 +655,11 @@ export const guardarUsuarioPersistencia = async (usuario) => {
           created_at: new Date()
         })
         .select();
-      
+
       if (error) throw error;
       result = data[0];
     }
-    
+
     return {
       id: String(result.id),
       data: usuario.data
@@ -679,41 +679,41 @@ export const eliminarUsuarioPersistencia = async (id) => {
         .from('repair')
         .select('id')
         .eq('owner_id', id);
-      
+
       if (errorReparaciones) throw errorReparaciones;
-      
+
       if (reparacionesAsociadas && reparacionesAsociadas.length > 0) {
         reject({
-          code: 'No se puede borrar este usuario. Reparación relacionada: ' + 
-                reparacionesAsociadas.map(rep => rep.id).toString()
+          code: 'No se puede borrar este usuario. Reparación relacionada: ' +
+            reparacionesAsociadas.map(rep => rep.id).toString()
         });
         return;
       }
-      
+
       // 2. Verificar si hay drones asociados al usuario como propietario
       const { data: dronesAsociados, error: errorDrones } = await supabase
         .from('drone')
         .select('id, number_series')
         .eq('owner_id', id);
-      
+
       if (errorDrones) throw errorDrones;
-      
+
       if (dronesAsociados && dronesAsociados.length > 0) {
         reject({
-          code: 'No se puede borrar este usuario. Drone relacionado: ' + 
-                dronesAsociados.map(drone => drone.number_series || drone.id).toString()
+          code: 'No se puede borrar este usuario. Drone relacionado: ' +
+            dronesAsociados.map(drone => drone.number_series || drone.id).toString()
         });
         return;
       }
-      
+
       // 3. Si no hay dependencias, procedemos a eliminar
       const { error: errorEliminacion } = await supabase
         .from('user')
         .delete()
         .eq('id', id);
-      
+
       if (errorEliminacion) throw errorEliminacion;
-      
+
       console.log('Usuario eliminado correctamente');
       resolve(id);
     } catch (error) {
@@ -734,13 +734,13 @@ export const getRepuestoPersistencia = async (id) => {
       `)
       .eq('id', id)
       .single();
-    
+
     if (error) throw error;
-    
+
     if (!data) {
       throw new Error('Repuesto no encontrado');
     }
-    
+
     // Transformar al formato esperado por el frontend
     return {
       id: String(data.id),
@@ -771,9 +771,9 @@ export const getRepuestosPorModeloPersistencia = async (modeloDroneId) => {
         drone_model:drone_model_id (*)
       `)
       .eq('drone_model_id', modeloDroneId);
-    
+
     if (error) throw error;
-    
+
     // Transformar al formato esperado por el frontend
     const repuestos = data.map(item => ({
       id: String(item.id),
@@ -788,7 +788,7 @@ export const getRepuestosPorModeloPersistencia = async (modeloDroneId) => {
         UnidadesPedidas: item.backorder || 0
       }
     }));
-    
+
     return repuestos;
   } catch (error) {
     console.error("Error al obtener repuestos por modelo:", error);
@@ -806,9 +806,9 @@ export const getRepuestosPorProveedorPersistencia = async (proveedor) => {
         drone_model:drone_model_id (id, name)
       `)
       .eq('provider', proveedor);
-    
+
     if (error) throw error;
-    
+
     // Transformar al formato esperado por el frontend
     const repuestos = data.map(item => ({
       id: String(item.id),
@@ -822,7 +822,7 @@ export const getRepuestosPorProveedorPersistencia = async (proveedor) => {
         UnidadesPedidas: item.backorder || 0
       }
     }));
-    
+
     return repuestos;
   } catch (error) {
     console.error("Error al obtener repuestos por proveedor:", error);
@@ -835,7 +835,7 @@ export const guardarRepuestoPersistencia = async (repuesto) => {
   try {
     // 1. Determinar el ID del modelo de drone
     let drone_model_id = null;
-    
+
     // Si ya tenemos el ID directamente, lo usamos
     if (repuesto.data.ModeloDroneId) {
       drone_model_id = repuesto.data.ModeloDroneId;
@@ -847,12 +847,12 @@ export const guardarRepuestoPersistencia = async (repuesto) => {
         .select('id')
         .eq('name', repuesto.data.ModeloDroneRepu)
         .maybeSingle();
-      
+
       if (!errorModelo && modeloDrone) {
         drone_model_id = modeloDrone.id;
       }
     }
-    
+
     // 2. Preparar datos para Supabase
     const repuestoData = {
       name: repuesto.data.NombreRepu,
@@ -863,9 +863,9 @@ export const guardarRepuestoPersistencia = async (repuesto) => {
       backorder: repuesto.data.UnidadesPedidas || 0,
       drone_model_id: drone_model_id
     };
-    
+
     let result;
-    
+
     if (repuesto.id) {
       // Actualización
       const { data, error } = await supabase
@@ -876,7 +876,7 @@ export const guardarRepuestoPersistencia = async (repuesto) => {
           *,
           drone_model:drone_model_id (id, name)
         `);
-      
+
       if (error) throw error;
       result = data[0];
     } else {
@@ -888,11 +888,11 @@ export const guardarRepuestoPersistencia = async (repuesto) => {
           *,
           drone_model:drone_model_id (id, name)
         `);
-      
+
       if (error) throw error;
       result = data[0];
     }
-    
+
     // 3. Devolver el resultado en formato esperado por el frontend
     return {
       id: String(result.id),
@@ -921,24 +921,24 @@ export const eliminarRepuestoPersistencia = async (id) => {
         .from('intervention_part')
         .select('*')
         .eq('part_id', id);
-      
+
       if (errorRelaciones) throw errorRelaciones;
-      
+
       if (relacionesRepuestoIntervencion && relacionesRepuestoIntervencion.length > 0) {
         reject({
           code: "No se puede eliminar este repuesto porque está siendo utilizado en una o más intervenciones."
         });
         return;
       }
-      
+
       // 2. Si no hay dependencias, procedemos a eliminar
       const { error: errorEliminacion } = await supabase
         .from('part')
         .delete()
         .eq('id', id);
-      
+
       if (errorEliminacion) throw errorEliminacion;
-      
+
       resolve(id);
     } catch (error) {
       console.error('Error al eliminar repuesto:', error);
@@ -948,9 +948,9 @@ export const eliminarRepuestoPersistencia = async (id) => {
 };
 
 // GET todos los Repuestos con suscripción en tiempo real
-export const getRepuestosPersistencia = (setRepuestosToRedux) => {
+export const getRepuestosPersistencia = async (setRepuestosToRedux) => {
   console.log('getRepuestosPersistencia con Supabase');
-  
+
   // Función para cargar los datos iniciales
   const cargarRepuestos = async () => {
     try {
@@ -961,9 +961,12 @@ export const getRepuestosPersistencia = (setRepuestosToRedux) => {
           drone_model:drone_model_id (*)
         `)
         .order('name');
-      
+
+      console.log('Datos de repuestos:', data);
+      console.log('Error de repuestos:', error);
+
       if (error) throw error;
-      
+
       // Transformar los datos al formato esperado por el frontend
       const repuestos = data.map(item => ({
         id: String(item.id),
@@ -978,31 +981,32 @@ export const getRepuestosPersistencia = (setRepuestosToRedux) => {
           UnidadesPedidas: item.backorder || 0
         }
       }));
-      
+
       // Actualizar el estado en Redux
       setRepuestosToRedux(repuestos);
     } catch (error) {
       console.error("Error al cargar repuestos:", error);
+      throw error;
     }
   };
-  
+
   // Cargar datos iniciales
   cargarRepuestos();
-  
+
   // Configurar la suscripción en tiempo real
   const channel = supabase
     .channel('repuestos-changes')
-    .on('postgres_changes', { 
-      event: '*', 
-      schema: 'public', 
-      table: 'part' 
+    .on('postgres_changes', {
+      event: '*',
+      schema: 'public',
+      table: 'part'
     }, (payload) => {
       console.log('Cambio detectado en repuestos:', payload);
       // Cuando hay cambios, recargamos todos los datos
       cargarRepuestos();
     })
     .subscribe();
-  
+
   // Devolver función para cancelar la suscripción
   return () => {
     supabase.removeChannel(channel);
@@ -1017,13 +1021,13 @@ export const getModeloDronePersistencia = async (id) => {
       .select('*')
       .eq('id', id)
       .single();
-    
+
     if (error) throw error;
-    
+
     if (!data) {
       throw new Error('Modelo de drone no encontrado');
     }
-    
+
     // Transformar al formato esperado por el frontend
     return {
       id: String(data.id),
@@ -1047,9 +1051,9 @@ export const getModelosDronePorFabricantePersistencia = async (fabricante) => {
       .from('drone_model')
       .select('*')
       .ilike('manufacturer', `%${fabricante}%`);
-    
+
     if (error) throw error;
-    
+
     // Transformar al formato esperado por el frontend
     const modelosDrone = data.map(item => ({
       id: String(item.id),
@@ -1060,7 +1064,7 @@ export const getModelosDronePorFabricantePersistencia = async (fabricante) => {
         PrecioReferencia: item.price_ref || 0
       }
     }));
-    
+
     return modelosDrone;
   } catch (error) {
     console.error("Error al obtener modelos de drone por fabricante:", error);
@@ -1078,9 +1082,9 @@ export const guardarModeloDronePersistencia = async (modeloDrone) => {
       manufacturer: modeloDrone.data.Fabricante || '',
       price_ref: modeloDrone.data.PrecioReferencia || 0
     };
-    
+
     let result;
-    
+
     if (modeloDrone.id) {
       // Actualización
       const { data, error } = await supabase
@@ -1088,7 +1092,7 @@ export const guardarModeloDronePersistencia = async (modeloDrone) => {
         .update(modeloDroneData)
         .eq('id', modeloDrone.id)
         .select();
-      
+
       if (error) throw error;
       result = data[0];
     } else {
@@ -1100,11 +1104,11 @@ export const guardarModeloDronePersistencia = async (modeloDrone) => {
           created_at: new Date()
         })
         .select();
-      
+
       if (error) throw error;
       result = data[0];
     }
-    
+
     // Transformar el resultado al formato esperado por el frontend
     return {
       id: String(result.id),
@@ -1130,54 +1134,54 @@ export const eliminarModeloDronePersistencia = async (id) => {
         .from('drone')
         .select('id')
         .eq('drone_model_id', id);
-      
+
       if (errorDrones) throw errorDrones;
-      
+
       if (dronesAsociados && dronesAsociados.length > 0) {
         reject({
           code: 'No se puede borrar este modelo de drone. Hay drones asociados a este modelo.'
         });
         return;
       }
-      
+
       // 2. Verificar si hay intervenciones asociadas a este modelo
       const { data: intervencionesAsociadas, error: errorIntervenciones } = await supabase
         .from('intervention')
         .select('id')
         .eq('drone_model_id', id);
-      
+
       if (errorIntervenciones) throw errorIntervenciones;
-      
+
       if (intervencionesAsociadas && intervencionesAsociadas.length > 0) {
         reject({
           code: 'No se puede borrar este modelo de drone. Hay intervenciones asociadas a este modelo.'
         });
         return;
       }
-      
+
       // 3. Verificar si hay repuestos asociados a este modelo
       const { data: repuestosAsociados, error: errorRepuestos } = await supabase
         .from('part')
         .select('id')
         .eq('drone_model_id', id);
-      
+
       if (errorRepuestos) throw errorRepuestos;
-      
+
       if (repuestosAsociados && repuestosAsociados.length > 0) {
         reject({
           code: 'No se puede borrar este modelo de drone. Hay repuestos asociados a este modelo.'
         });
         return;
       }
-      
+
       // 4. Si no hay dependencias, procedemos a eliminar
       const { error: errorEliminacion } = await supabase
         .from('drone_model')
         .delete()
         .eq('id', id);
-      
+
       if (errorEliminacion) throw errorEliminacion;
-      
+
       resolve(id);
     } catch (error) {
       console.error('Error al eliminar modelo de drone:', error);
@@ -1189,7 +1193,7 @@ export const eliminarModeloDronePersistencia = async (id) => {
 // GET todos los ModelosDrone con suscripción en tiempo real
 export const getModelosDronePersistencia = (setModelosDroneToRedux) => {
   console.log('getModelosDronePersistencia con Supabase');
-  
+
   // Función para cargar los datos iniciales
   const cargarModelosDrone = async () => {
     try {
@@ -1197,9 +1201,9 @@ export const getModelosDronePersistencia = (setModelosDroneToRedux) => {
         .from('drone_model')
         .select('*')
         .order('name');
-      
+
       if (error) throw error;
-      
+
       // Transformar los datos al formato esperado por el frontend
       const modelosDrone = data.map(item => ({
         id: String(item.id),
@@ -1210,31 +1214,31 @@ export const getModelosDronePersistencia = (setModelosDroneToRedux) => {
           PrecioReferencia: item.price_ref || 0
         }
       }));
-      
+
       // Actualizar el estado en Redux
       setModelosDroneToRedux(modelosDrone);
     } catch (error) {
       console.error("Error al cargar modelos de drone:", error);
     }
   };
-  
+
   // Cargar datos iniciales
   cargarModelosDrone();
-  
+
   // Configurar la suscripción en tiempo real
   const channel = supabase
     .channel('modelos-drone-changes')
-    .on('postgres_changes', { 
-      event: '*', 
-      schema: 'public', 
-      table: 'drone_model' 
+    .on('postgres_changes', {
+      event: '*',
+      schema: 'public',
+      table: 'drone_model'
     }, (payload) => {
       console.log('Cambio detectado en modelos de drone:', payload);
       // Cuando hay cambios, recargamos todos los datos
       cargarModelosDrone();
     })
     .subscribe();
-  
+
   // Devolver función para cancelar la suscripción
   return () => {
     supabase.removeChannel(channel);
@@ -1255,13 +1259,13 @@ export const getDronePersistencia = async (id) => {
       `)
       .eq('id', id)
       .single();
-    
+
     if (error) throw error;
-    
+
     if (!data) {
       throw new Error('Drone no encontrado');
     }
-    
+
     // Transformar al formato esperado por el frontend
     return {
       id: String(data.id),
@@ -1290,9 +1294,9 @@ export const getDronesPorModeloDronePersistencia = async (modeloDroneId) => {
         owner:owner_id (*)
       `)
       .eq('drone_model_id', modeloDroneId);
-    
+
     if (error) throw error;
-    
+
     // Transformar al formato esperado por el frontend
     const drones = data.map(item => ({
       id: String(item.id),
@@ -1304,7 +1308,7 @@ export const getDronesPorModeloDronePersistencia = async (modeloDroneId) => {
         Observaciones: item.observations || ''
       }
     }));
-    
+
     return drones;
   } catch (error) {
     console.error("Error al obtener drones por modelo:", error);
@@ -1323,9 +1327,9 @@ export const getDronesPorPropietarioPersistencia = async (propietarioId) => {
         owner:owner_id (*)
       `)
       .eq('owner_id', propietarioId);
-    
+
     if (error) throw error;
-    
+
     // Transformar al formato esperado por el frontend
     const drones = data.map(item => ({
       id: String(item.id),
@@ -1337,7 +1341,7 @@ export const getDronesPorPropietarioPersistencia = async (propietarioId) => {
         Observaciones: item.observations || ''
       }
     }));
-    
+
     return drones;
   } catch (error) {
     console.error("Error al obtener drones por propietario:", error);
@@ -1355,9 +1359,9 @@ export const guardarDronePersistencia = async (drone) => {
       owner_id: drone.data.Propietario || null,
       observations: drone.data.Observaciones || ''
     };
-    
+
     let result;
-    
+
     if (drone.id) {
       // Actualización
       const { data, error } = await supabase
@@ -1369,7 +1373,7 @@ export const guardarDronePersistencia = async (drone) => {
           drone_model:drone_model_id (*),
           owner:owner_id (*)
         `);
-      
+
       if (error) throw error;
       result = data[0];
     } else {
@@ -1385,11 +1389,11 @@ export const guardarDronePersistencia = async (drone) => {
           drone_model:drone_model_id (*),
           owner:owner_id (*)
         `);
-      
+
       if (error) throw error;
       result = data[0];
     }
-    
+
     // Transformar el resultado al formato esperado por el frontend
     return {
       id: String(result.id),
@@ -1416,24 +1420,24 @@ export const eliminarDronePersistencia = async (id) => {
         .from('repair')
         .select('id')
         .eq('drone_id', id);
-      
+
       if (errorReparaciones) throw errorReparaciones;
-      
+
       if (reparacionesAsociadas && reparacionesAsociadas.length > 0) {
         reject({
           code: 'No se puede borrar este drone. Hay reparaciones asociadas a este drone.'
         });
         return;
       }
-      
+
       // 2. Si no hay dependencias, procedemos a eliminar
       const { error: errorEliminacion } = await supabase
         .from('drone')
         .delete()
         .eq('id', id);
-      
+
       if (errorEliminacion) throw errorEliminacion;
-      
+
       resolve(id);
     } catch (error) {
       console.error('Error al eliminar drone:', error);
@@ -1445,7 +1449,7 @@ export const eliminarDronePersistencia = async (id) => {
 // GET todos los Drones con suscripción en tiempo real
 export const getDronesPersistencia = (setDronesToRedux) => {
   console.log('getDronesPersistencia con Supabase');
-  
+
   // Función para cargar los datos iniciales
   const cargarDrones = async () => {
     try {
@@ -1457,9 +1461,9 @@ export const getDronesPersistencia = (setDronesToRedux) => {
           owner:owner_id (*)
         `)
         .order('number_series');
-      
+
       if (error) throw error;
-      
+
       // Transformar los datos al formato esperado por el frontend
       const drones = data.map(item => ({
         id: String(item.id),
@@ -1471,31 +1475,31 @@ export const getDronesPersistencia = (setDronesToRedux) => {
           Observaciones: item.observations || ''
         }
       }));
-      
+
       // Actualizar el estado en Redux
       setDronesToRedux(drones);
     } catch (error) {
       console.error("Error al cargar drones:", error);
     }
   };
-  
+
   // Cargar datos iniciales
   cargarDrones();
-  
+
   // Configurar la suscripción en tiempo real
   const channel = supabase
     .channel('drones-changes')
-    .on('postgres_changes', { 
-      event: '*', 
-      schema: 'public', 
-      table: 'drone' 
+    .on('postgres_changes', {
+      event: '*',
+      schema: 'public',
+      table: 'drone'
     }, (payload) => {
       console.log('Cambio detectado en drones:', payload);
       // Cuando hay cambios, recargamos todos los datos
       cargarDrones();
     })
     .subscribe();
-  
+
   // Devolver función para cancelar la suscripción
   return () => {
     supabase.removeChannel(channel);
@@ -1609,13 +1613,13 @@ export const getIntervencionPersistencia = async (id) => {
       `)
       .eq('id', id)
       .single();
-    
+
     if (error) throw error;
-    
+
     if (!data) {
       throw new Error('Intervención no encontrada');
     }
-    
+
     // 2. Obtener los repuestos asociados a través de la tabla part_intervention
     const { data: partInterventions, error: relError } = await supabase
       .from('part_intervention')
@@ -1624,9 +1628,9 @@ export const getIntervencionPersistencia = async (id) => {
         part:part_id (*)
       `)
       .eq('intervention_id', id);
-    
+
     if (relError) throw relError;
-    
+
     // Extraer los IDs de los repuestos y calcular los costos
     const repuestosIds = partInterventions.map(rel => rel.part_id);
     const partsCost = partInterventions.reduce((sum, rel) => {
@@ -1634,7 +1638,7 @@ export const getIntervencionPersistencia = async (id) => {
       const price = rel.part?.price || 0;
       return sum + (quantity * price);
     }, 0);
-    
+
     // Transformar al formato esperado por el frontend
     return {
       id: String(data.id),
@@ -1667,24 +1671,24 @@ export const getIntervencionesPorModeloDronePersistencia = async (modeloDroneId)
         drone_model:drone_model_id (*)
       `)
       .eq('drone_model_id', modeloDroneId);
-    
+
     if (error) throw error;
-    
+
     // 2. Para cada intervención, obtener sus repuestos asociados
     const intervenciones = [];
-    
+
     for (const intervencion of data) {
       // Obtener los repuestos asociados
       const { data: partInterventions, error: relError } = await supabase
         .from('part_intervention')
         .select('part_id, quantity')
         .eq('intervention_id', intervencion.id);
-      
+
       if (relError) throw relError;
-      
+
       // Extraer los IDs de los repuestos
       const repuestosIds = partInterventions.map(rel => rel.part_id);
-      
+
       // Añadir a la lista de intervenciones
       intervenciones.push({
         id: String(intervencion.id),
@@ -1699,7 +1703,7 @@ export const getIntervencionesPorModeloDronePersistencia = async (modeloDroneId)
         }
       });
     }
-    
+
     return intervenciones;
   } catch (error) {
     console.error("Error al obtener intervenciones por modelo:", error);
@@ -1712,7 +1716,7 @@ export const guardarIntervencionPersistencia = async (intervencion) => {
   try {
     // Iniciar una transacción para asegurar la integridad de los datos
     // (Simulamos transacción con múltiples operaciones secuenciales)
-    
+
     // 1. Preparar datos para la tabla intervention
     const intervencionData = {
       name: intervencion.data.NombreInt,
@@ -1722,9 +1726,9 @@ export const guardarIntervencionPersistencia = async (intervencion) => {
       total_cost: intervencion.data.PrecioTotal || 0,
       estimated_duration: intervencion.data.DuracionEstimada || 30
     };
-    
+
     let intervencionResult;
-    
+
     // 2. Insertar o actualizar en la tabla intervention
     if (intervencion.id) {
       // Actualización
@@ -1733,7 +1737,7 @@ export const guardarIntervencionPersistencia = async (intervencion) => {
         .update(intervencionData)
         .eq('id', intervencion.id)
         .select();
-      
+
       if (error) throw error;
       intervencionResult = data[0];
     } else {
@@ -1745,23 +1749,23 @@ export const guardarIntervencionPersistencia = async (intervencion) => {
           created_at: new Date().toISOString()
         })
         .select();
-      
+
       if (error) throw error;
       intervencionResult = data[0];
     }
-    
+
     const intervencionId = intervencionResult.id;
-    
+
     // 3. Manejar la relación con los repuestos
-    
+
     // 3.1 Eliminar todas las relaciones existentes para esta intervención
     const { error: deleteError } = await supabase
       .from('part_intervention')
       .delete()
       .eq('intervention_id', intervencionId);
-    
+
     if (deleteError) throw deleteError;
-    
+
     // 3.2 Crear las nuevas relaciones
     if (intervencion.data.RepuestosIds && intervencion.data.RepuestosIds.length > 0) {
       // Obtener información de los repuestos para calcular costos
@@ -1769,14 +1773,14 @@ export const guardarIntervencionPersistencia = async (intervencion) => {
         .from('part')
         .select('id, price')
         .in('id', intervencion.data.RepuestosIds);
-      
+
       if (repuestosError) throw repuestosError;
-      
+
       // Crear las relaciones parte-intervención
       const partInterventionData = intervencion.data.RepuestosIds.map(repuestoId => {
         // Buscar el precio del repuesto
         const repuesto = repuestos.find(r => r.id === repuestoId);
-        
+
         return {
           intervention_id: intervencionId,
           part_id: repuestoId,
@@ -1784,15 +1788,15 @@ export const guardarIntervencionPersistencia = async (intervencion) => {
           created_at: new Date().toISOString()
         };
       });
-      
+
       if (partInterventionData.length > 0) {
         const { error: insertError } = await supabase
           .from('part_intervention')
           .insert(partInterventionData);
-        
+
         if (insertError) throw insertError;
       }
-      
+
       // Calcular el costo total de las partes
       const partsCost = repuestos.reduce((sum, repuesto) => {
         // Si el repuesto está en la lista de RepuestosIds
@@ -1801,26 +1805,26 @@ export const guardarIntervencionPersistencia = async (intervencion) => {
         }
         return sum;
       }, 0);
-      
+
       // Actualizar el costo total en la intervención
       const laborCost = intervencionData.labor_cost || 0;
       const totalCost = laborCost + partsCost;
-      
+
       const { error: updateError } = await supabase
         .from('intervention')
-        .update({ 
+        .update({
           parts_cost: partsCost,
           total_cost: totalCost
         })
         .eq('id', intervencionId);
-      
+
       if (updateError) throw updateError;
-      
+
       // Actualizar el resultado con los nuevos costos calculados
       intervencionResult.parts_cost = partsCost;
       intervencionResult.total_cost = totalCost;
     }
-    
+
     // 4. Devolver el resultado en el formato esperado por el frontend
     return {
       id: String(intervencionResult.id),
@@ -1849,32 +1853,32 @@ export const eliminarIntervencionPersistencia = async (id) => {
         .from('repair_intervention')
         .select('repair_id')
         .eq('intervention_id', id);
-      
+
       if (errorRelaciones) throw errorRelaciones;
-      
+
       if (relacionesEnReparaciones && relacionesEnReparaciones.length > 0) {
         reject({
           code: "No se puede eliminar esta intervención porque está siendo utilizada en una o más reparaciones."
         });
         return;
       }
-      
+
       // 2. Eliminar primero las relaciones con repuestos
       const { error: errorRelacionesRepuestos } = await supabase
         .from('part_intervention')
         .delete()
         .eq('intervention_id', id);
-      
+
       if (errorRelacionesRepuestos) throw errorRelacionesRepuestos;
-      
+
       // 3. Luego eliminar la intervención
       const { error: errorEliminacion } = await supabase
         .from('intervention')
         .delete()
         .eq('id', id);
-      
+
       if (errorEliminacion) throw errorEliminacion;
-      
+
       console.log('Intervención eliminada correctamente');
       resolve(id);
     } catch (error) {
@@ -1887,7 +1891,7 @@ export const eliminarIntervencionPersistencia = async (id) => {
 // GET todas las Intervenciones con suscripción en tiempo real
 export const getIntervencionesPersistencia = (setIntervencionesToRedux) => {
   console.log('getIntervencionesPersistencia con Supabase');
-  
+
   // Función para cargar los datos iniciales
   const cargarIntervenciones = async () => {
     try {
@@ -1899,24 +1903,24 @@ export const getIntervencionesPersistencia = (setIntervencionesToRedux) => {
           drone_model:drone_model_id (*)
         `)
         .order('name');
-      
+
       if (error) throw error;
-      
+
       // 2. Para cada intervención, obtener sus repuestos asociados de la tabla part_intervention
       const intervenciones = [];
-      
+
       for (const intervencion of data) {
         // Obtener los repuestos asociados
         const { data: partInterventions, error: relError } = await supabase
           .from('part_intervention')
           .select('part_id')
           .eq('intervention_id', intervencion.id);
-        
+
         if (relError) throw relError;
-        
+
         // Extraer los IDs de los repuestos
         const repuestosIds = partInterventions.map(rel => rel.part_id);
-        
+
         // Añadir a la lista de intervenciones
         intervenciones.push({
           id: String(intervencion.id),
@@ -1931,44 +1935,44 @@ export const getIntervencionesPersistencia = (setIntervencionesToRedux) => {
           }
         });
       }
-      
+
       // Actualizar el estado en Redux
       setIntervencionesToRedux(intervenciones);
     } catch (error) {
       console.error("Error al cargar intervenciones:", error);
     }
   };
-  
+
   // Cargar datos iniciales
   cargarIntervenciones();
-  
+
   // Configurar las suscripciones en tiempo real para ambas tablas
   const channel1 = supabase
     .channel('intervenciones-changes')
-    .on('postgres_changes', { 
-      event: '*', 
-      schema: 'public', 
-      table: 'intervention' 
+    .on('postgres_changes', {
+      event: '*',
+      schema: 'public',
+      table: 'intervention'
     }, (payload) => {
       console.log('Cambio detectado en intervenciones:', payload);
       // Cuando hay cambios, recargamos todos los datos
       cargarIntervenciones();
     })
     .subscribe();
-  
+
   const channel2 = supabase
     .channel('part-intervention-changes')
-    .on('postgres_changes', { 
-      event: '*', 
-      schema: 'public', 
-      table: 'part_intervention' 
+    .on('postgres_changes', {
+      event: '*',
+      schema: 'public',
+      table: 'part_intervention'
     }, (payload) => {
       console.log('Cambio detectado en relaciones de intervenciones y repuestos:', payload);
       // Cuando hay cambios, recargamos todos los datos
       cargarIntervenciones();
     })
     .subscribe();
-  
+
   // Devolver función para cancelar las suscripciones
   return () => {
     supabase.removeChannel(channel1);
@@ -1980,17 +1984,17 @@ export const getIntervencionesPersistencia = (setIntervencionesToRedux) => {
 export const reenviarEmailVerificacionPersistencia = async (email) => {
   try {
     console.log('Reenviando email de verificación a:', email);
-    
+
     const { error } = await supabase.auth.resend({
       type: 'signup',
       email: email,
     });
-    
+
     if (error) {
       console.error('Error al enviar email de verificación:', error);
       throw { code: error.code };
     }
-    
+
     console.log('Email de verificación enviado correctamente');
     return true;
   } catch (error) {
@@ -2003,25 +2007,25 @@ export const reenviarEmailVerificacionPersistencia = async (email) => {
 export const loginPersistencia = async (emailParametro, passwordParametro) => {
   try {
     console.log('Iniciando login con Supabase:', emailParametro);
-    
+
     // Intenta iniciar sesión con Supabase
     const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
       email: emailParametro,
       password: passwordParametro,
     });
-    
+
     // Si el día de mañana supabase cambia el atributo code por otro, lo cambio acá y listo
     if (authError) {
       throw { code: authError.code };
     }
-        
+
     // Obtener los datos del usuario de la tabla de usuarios
     const { data: userData, error: userError } = await supabase
       .from('user')
       .select('*')
       .eq('email', emailParametro)
       .single();
-    
+
     if (userError) {
       console.error('Error al obtener datos del usuario:', userError);
       if (userError.code === 'PGRST116') {
@@ -2029,12 +2033,12 @@ export const loginPersistencia = async (emailParametro, passwordParametro) => {
       }
       throw { code: userError.code };
     }
-    
+
     if (!userData) {
       console.error('Usuario no encontrado en la base de datos');
       throw { code: 'user_not_found' };
     }
-    
+
     // Construir el objeto usuario como lo espera la aplicación
     const usuario = {
       id: emailParametro, // Mantener el email como ID para compatibilidad con el frontend
@@ -2050,10 +2054,10 @@ export const loginPersistencia = async (emailParametro, passwordParametro) => {
         UrlPhotoUsu: userData.url_photo || ''
       }
     };
-    
+
     console.log('Login exitoso');
     return usuario;
-    
+
   } catch (error) {
     console.error('Error en loginPersistencia:', error);
     throw error;
@@ -2074,7 +2078,7 @@ export const sendMessagePersistencia = (message) => {
         senderName: message.data.senderName,
         isRead: false
       };
-      
+
       // Preparar datos para el mensaje del destinatario
       const dataTo = {
         date: message.data.date,
@@ -2084,7 +2088,7 @@ export const sendMessagePersistencia = (message) => {
         senderName: message.data.senderName,
         isRead: false
       };
-      
+
       // Insertar mensaje en la tabla de mensajes del remitente
       const { error: errorFrom } = await supabase
         .from('messages')
@@ -2093,9 +2097,9 @@ export const sendMessagePersistencia = (message) => {
           user_id: message.data.from,
           created_at: new Date().toISOString()
         });
-      
+
       if (errorFrom) throw errorFrom;
-      
+
       // Insertar mensaje en la tabla de mensajes del destinatario
       const { error: errorTo } = await supabase
         .from('messages')
@@ -2104,9 +2108,9 @@ export const sendMessagePersistencia = (message) => {
           user_id: message.data.to,
           created_at: new Date().toISOString()
         });
-      
+
       if (errorTo) throw errorTo;
-      
+
       resolve();
     } catch (error) {
       console.error('Error al enviar mensaje:', error);
@@ -2127,21 +2131,21 @@ export const getMessagesPersistencia = (setMessagesToRedux, emailUsu, emailCli) 
         .eq('user_id', emailUsu)
         .eq('emailCli', emailCli)
         .order('date', { ascending: true });
-      
+
       // Configurar suscripción en tiempo real
       const channel = supabase
         .channel('messages-changes')
-        .on('postgres_changes', { 
-          event: '*', 
-          schema: 'public', 
+        .on('postgres_changes', {
+          event: '*',
+          schema: 'public',
           table: 'messages',
           filter: `user_id=eq.${emailUsu} AND emailCli=eq.${emailCli}`
         }, async () => {
           // Cuando hay cambios, ejecutar la consulta nuevamente
           const { data, error } = await consulta;
-          
+
           if (error) throw error;
-          
+
           // Transformar los datos al formato esperado por el frontend
           const messages = data.map(doc => ({
             id: doc.id,
@@ -2155,15 +2159,15 @@ export const getMessagesPersistencia = (setMessagesToRedux, emailUsu, emailCli) 
               emailUsu: emailUsu // Para saber a qué usuario pertenece este mensaje
             }
           }));
-          
+
           setMessagesToRedux(messages);
         })
         .subscribe();
-      
+
       // Ejecutar la consulta inicial para cargar los datos
       consulta.then(({ data, error }) => {
         if (error) throw error;
-        
+
         // Transformar los datos al formato esperado por el frontend
         const messages = data.map(doc => ({
           id: doc.id,
@@ -2177,10 +2181,10 @@ export const getMessagesPersistencia = (setMessagesToRedux, emailUsu, emailCli) 
             emailUsu: emailUsu // Para saber a qué usuario pertenece este mensaje
           }
         }));
-        
+
         setMessagesToRedux(messages);
       });
-      
+
       // Devolver función para cancelar la suscripción
       resolve(() => {
         supabase.removeChannel(channel);
@@ -2197,13 +2201,13 @@ export const actualizarLeidosPersistencia = (mensajesLeidos) => {
   try {
     mensajesLeidos.forEach(async mensaje => {
       console.log('actualiza leidos, mensaje: ' + JSON.stringify(mensaje));
-      
+
       const { error } = await supabase
         .from('messages')
         .update({ isRead: true })
         .eq('id', mensaje.id)
         .eq('user_id', mensaje.data.emailUsu);
-      
+
       if (error) {
         console.error('Error al actualizar mensaje como leído:', error);
       } else {
@@ -2218,20 +2222,20 @@ export const actualizarLeidosPersistencia = (mensajesLeidos) => {
 // Configurar notificaciones para mensajes nuevos
 export const notificacionesPorMensajesPersistencia = (emailUsu) => {
   console.log('notificacionesPorMensajesPersistencia:', emailUsu);
-  
+
   try {
     // Configuramos una suscripción para detectar mensajes no leídos enviados por otros usuarios
     const channel = supabase
       .channel('messages-notifications')
-      .on('postgres_changes', { 
-        event: 'INSERT', 
-        schema: 'public', 
+      .on('postgres_changes', {
+        event: 'INSERT',
+        schema: 'public',
         table: 'messages',
         filter: `user_id=eq.${emailUsu} AND sender=neq.${emailUsu} AND isRead=eq.false`
       }, (payload) => {
         // Cuando llega un mensaje nuevo, generamos la notificación
         const mensajeNuevo = payload.new;
-        
+
         if (mensajeNuevo && mensajeNuevo.sender !== emailUsu) {
           const notification = {
             title: 'Nuevo Mensaje de ' + mensajeNuevo.senderName,
@@ -2239,7 +2243,7 @@ export const notificacionesPorMensajesPersistencia = (emailUsu) => {
             foreground: true,
             vibrate: true
           };
-          
+
           // Importar la función desde utils
           import('../utils/utils').then(utils => {
             utils.triggerNotification(notification);
@@ -2247,7 +2251,7 @@ export const notificacionesPorMensajesPersistencia = (emailUsu) => {
         }
       })
       .subscribe();
-    
+
     // Esta función no devuelve nada, pero podríamos devolver la función para cancelar la suscripción
     return () => {
       supabase.removeChannel(channel);
@@ -2266,27 +2270,27 @@ export const guardarPresupuestoPersistencia = (presupuesto) => {
   presupuesto.reparacion.data.ApellidoUsu = presupuesto.usuario.data?.ApellidoUsu || '';
   presupuesto.reparacion.data.EmailUsu = presupuesto.usuario.data?.EmailUsu || '';
   presupuesto.reparacion.data.TelefonoUsu = presupuesto.usuario.data?.TelefonoUsu || '';
-  
+
   return new Promise(async (resolve, reject) => {
     try {
       // 1. Primero guardar el usuario
       const usuarioGuardado = await guardarUsuarioPersistencia(presupuesto.usuario);
-      
+
       // 2. Luego obtener el ID numérico del usuario (no el email)
       const { data: userData, error: userError } = await supabase
         .from('user')
         .select('id')
         .eq('email', usuarioGuardado.id)
         .single();
-      
+
       if (userError || !userData) {
         throw new Error('Error al obtener el ID del usuario');
       }
-      
+
       // 3. Guardar la reparación con el ID numérico del usuario en owner_id
       presupuesto.reparacion.data.UsuarioRep = userData.id.toString();
       const reparacionGuardada = await guardarReparacionPersistencia(presupuesto.reparacion);
-      
+
       // 4. Devolver el presupuesto actualizado
       resolve({
         usuario: usuarioGuardado,
@@ -2309,13 +2313,13 @@ export const registroUsuarioEndpointPersistencia = async (registroData) => {
       },
       body: JSON.stringify(registroData)
     });
-    
+
     if (!response.ok) {
       const errorData = await response.json();
 
       throw new Error(errorData);
     }
-    
+
     const data = await response.json();
     return data;
   } catch (error) {

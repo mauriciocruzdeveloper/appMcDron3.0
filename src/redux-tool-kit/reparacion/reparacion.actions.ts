@@ -67,7 +67,7 @@ export const guardarTransitoAsync = createAsyncThunk(
           return presupuesto;
       } catch (error: any) { // TODO: Hacer tipo de dato para el error
           dispatch(isFetchingComplete());
-          return error;
+          throw error;
       }
   },
 );
@@ -83,7 +83,7 @@ export const guardarReparacionAsync = createAsyncThunk(
             return reparacionGuardada;
         } catch (error: any) { // TODO: Hacer tipo de dato para el error
             dispatch(isFetchingComplete());
-            return error;
+            throw error;
         }
     },
 );
@@ -116,7 +116,7 @@ export const getReparacionAsync = createAsyncThunk(
             return reparacion;
         } catch (error: any) { // TODO: Hacer tipo de dato para el error
             dispatch(isFetchingComplete());
-            return error;
+            throw error;
         }
     },
 );

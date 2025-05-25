@@ -8,7 +8,6 @@ import {
 } from "../../persistencia/persistencia"; // Actualizado para usar la importación centralizada
 import { isFetchingComplete, isFetchingStart } from "../app/app.slice";
 import { Repuesto } from "../../types/repuesto";
-import { RootState } from '../store';
 
 // ELIMINAR REPUESTO
 export const eliminarRepuestoAsync = createAsyncThunk(
@@ -29,12 +28,12 @@ export const eliminarRepuestoAsync = createAsyncThunk(
 )
 
 // GUARDAR REPUESTO
-export const guardarRepuestoAsync = createAsyncThunk(
+export const guardarRepuestoAsync = createAsyncThunk<Repuesto, Repuesto>(
     'app/guardarRepuesto',
     async (repuesto: Repuesto, { dispatch }) => {
         try {
             dispatch(isFetchingStart());
-            const repuestoGuardado = await guardarRepuestoPersistencia(repuesto);
+            const repuestoGuardado: Repuesto = await guardarRepuestoPersistencia(repuesto);
             console.log("!!! repuestoGuardado", repuestoGuardado);
             dispatch(isFetchingComplete());
             return repuestoGuardado;
