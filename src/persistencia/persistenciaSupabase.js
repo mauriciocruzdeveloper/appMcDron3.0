@@ -250,14 +250,14 @@ export const getReparacionesPersistencia = (setReparacionesToRedux, usuario) => 
 
       // Transformar los datos al formato esperado por el frontend
       const reparaciones = data.map(item => ({
-        id: String(item.id),
+        id: item.id,
         data: {
           EstadoRep: item.state,
           PrioridadRep: item.priority,
           DroneRep: item.drone?.number_series || '',
           NombreUsu: item.owner?.first_name || '',
           ApellidoUsu: item.owner?.last_name || '',
-          UsuarioRep: String(item.owner_id),
+          UsuarioRep: item.owner_id,
           DriveRep: item.drive_link || '',
           AnotacionesRep: item.notes || '',
           FeConRep: item.contact_date,
@@ -335,14 +335,14 @@ export const getReparacionPersistencia = async (id) => {
 
     // Transformar al formato esperado por el frontend
     return {
-      id: String(data.id),
+      id: data.id,
       data: {
         EstadoRep: data.state,
         PrioridadRep: data.priority,
         DroneRep: data.drone?.number_series || '',
         NombreUsu: data.owner?.first_name || '',
         ApellidoUsu: data.owner?.last_name || '',
-        UsuarioRep: String(data.owner_id),
+        UsuarioRep: data.owner_id,
         DriveRep: data.drive_link || '',
         AnotacionesRep: data.notes || '',
         FeConRep: data.contact_date,
@@ -424,7 +424,7 @@ export const guardarReparacionPersistencia = async (reparacion) => {
     }
 
     return {
-      id: String(result.id),
+      id: result.id,
       data: reparacion.data
     };
   } catch (error) {
@@ -498,7 +498,7 @@ export const getUsuariosPersistencia = (setUsuariosToRedux) => {
 
       // Transformar los datos al formato esperado por el frontend
       const usuarios = data.map(item => ({
-        id: String(item.id),
+        id: item.id,
         data: {
           EmailUsu: item.email,
           NombreUsu: item.first_name || '',
@@ -558,7 +558,7 @@ export const getClientePersistencia = async (id) => {
 
     // Transformar al formato esperado por el frontend
     return {
-      id: String(data.id),
+      id: data.id,
       data: {
         EmailUsu: data.email,
         NombreUsu: data.first_name || '',
@@ -597,7 +597,7 @@ export const getClientePorEmailPersistencia = async (email) => {
 
     // Transformar al formato esperado por el frontend
     return {
-      id: String(data.id),
+      id: data.id,
       data: {
         EmailUsu: data.email,
         NombreUsu: data.first_name || '',
@@ -661,7 +661,7 @@ export const guardarUsuarioPersistencia = async (usuario) => {
     }
 
     return {
-      id: String(result.id),
+      id: result.id,
       data: usuario.data
     };
   } catch (error) {
@@ -726,12 +726,10 @@ export const eliminarUsuarioPersistencia = async (id) => {
 // GET Repuesto por id
 export const getRepuestoPersistencia = async (id) => {
   try {
+    // 1. Obtener el repuesto principal
     const { data, error } = await supabase
       .from('part')
-      .select(`
-        *,
-        drone_model:drone_model_id (*)
-      `)
+      .select('*')
       .eq('id', id)
       .single();
 
@@ -741,14 +739,27 @@ export const getRepuestoPersistencia = async (id) => {
       throw new Error('Repuesto no encontrado');
     }
 
-    // Transformar al formato esperado por el frontend
+    // 2. Obtener los modelos de drone relacionados
+    const { data: partDroneModels, error: relError } = await supabase
+      .from('part_drone_model')
+      .select(`
+        drone_model:drone_model_id (*)
+      `)
+      .eq('part_id', id);
+
+    if (relError) throw relError;
+
+    // Extraer los IDs de los modelos y sus nombres
+    const modelosDroneIds = partDroneModels.map(rel => rel.drone_model.id);
+    
+    // 3. Transformar al formato esperado por el frontend
     return {
-      id: String(data.id),
+      id: data.id,
       data: {
         NombreRepu: data.name,
         DescripcionRepu: data.description || '',
-        ModeloDroneRepu: data.drone_model?.name || '',
-        ModeloDroneId: data.drone_model_id,  // Añadido para mantener la referencia directa al ID
+        ModeloDrones: partDroneModels || [],
+        ModelosDroneIds: modelosDroneIds,
         ProveedorRepu: data.provider || '',
         PrecioRepu: data.price || 0,
         StockRepu: data.stock || 0,
@@ -764,24 +775,38 @@ export const getRepuestoPersistencia = async (id) => {
 // GET Repuestos por modelo de drone
 export const getRepuestosPorModeloPersistencia = async (modeloDroneId) => {
   try {
+    // 1. Primero obtenemos los IDs de los repuestos asociados a este modelo desde la tabla intermedia
+    const { data: relacionesPartDroneModel, error: errorRelaciones } = await supabase
+      .from('part_drone_model')
+      .select('part_id')
+      .eq('drone_model_id', modeloDroneId);
+
+    if (errorRelaciones) throw errorRelaciones;
+
+    // Si no hay repuestos asociados, devolver un array vacío
+    if (!relacionesPartDroneModel || relacionesPartDroneModel.length === 0) {
+      return [];
+    }
+
+    // 2. Extraer los IDs de los repuestos
+    const repuestosIds = relacionesPartDroneModel.map(rel => rel.part_id);
+
+    // 3. Obtener la información completa de los repuestos
     const { data, error } = await supabase
       .from('part')
-      .select(`
-        *,
-        drone_model:drone_model_id (*)
-      `)
-      .eq('drone_model_id', modeloDroneId);
+      .select('*')
+      .in('id', repuestosIds);
 
     if (error) throw error;
 
-    // Transformar al formato esperado por el frontend
+    // 4. Transformar al formato esperado por el frontend
     const repuestos = data.map(item => ({
-      id: String(item.id),
+      id: item.id,
       data: {
         NombreRepu: item.name,
         DescripcionRepu: item.description || '',
-        ModeloDroneRepu: item.drone_model?.name || '',
-        ModeloDroneId: item.drone_model_id,  // Añadido para mantener la referencia directa
+        ModeloDroneRepu: 'Múltiple', // Ahora un repuesto puede estar asociado a múltiples modelos
+        ModelosDroneIds: [modeloDroneId], // Incluimos el modelo que estamos consultando
         ProveedorRepu: item.provider || '',
         PrecioRepu: item.price || 0,
         StockRepu: item.stock || 0,
@@ -811,7 +836,7 @@ export const getRepuestosPorProveedorPersistencia = async (proveedor) => {
 
     // Transformar al formato esperado por el frontend
     const repuestos = data.map(item => ({
-      id: String(item.id),
+      id: item.id,
       data: {
         NombreRepu: item.name,
         DescripcionRepu: item.description || '',
@@ -833,27 +858,7 @@ export const getRepuestosPorProveedorPersistencia = async (proveedor) => {
 // GUARDAR Repuesto - Mejorado para trabajar con IDs o nombres de modelo
 export const guardarRepuestoPersistencia = async (repuesto) => {
   try {
-    // 1. Determinar el ID del modelo de drone
-    let drone_model_id = null;
-
-    // Si ya tenemos el ID directamente, lo usamos
-    if (repuesto.data.ModeloDroneId) {
-      drone_model_id = repuesto.data.ModeloDroneId;
-    }
-    // Si no, pero tenemos el nombre, buscamos el ID
-    else if (repuesto.data.ModeloDroneRepu && repuesto.data.ModeloDroneRepu !== 'Universal') {
-      const { data: modeloDrone, error: errorModelo } = await supabase
-        .from('drone_model')
-        .select('id')
-        .eq('name', repuesto.data.ModeloDroneRepu)
-        .maybeSingle();
-
-      if (!errorModelo && modeloDrone) {
-        drone_model_id = modeloDrone.id;
-      }
-    }
-
-    // 2. Preparar datos para Supabase
+    // 1. Preparar datos para Supabase
     const repuestoData = {
       name: repuesto.data.NombreRepu,
       description: repuesto.data.DescripcionRepu || '',
@@ -861,21 +866,18 @@ export const guardarRepuestoPersistencia = async (repuesto) => {
       price: repuesto.data.PrecioRepu || 0,
       stock: repuesto.data.StockRepu || 0,
       backorder: repuesto.data.UnidadesPedidas || 0,
-      drone_model_id: drone_model_id
     };
 
     let result;
 
+    // 2. Insertar o actualizar el repuesto base
     if (repuesto.id) {
       // Actualización
       const { data, error } = await supabase
         .from('part')
         .update(repuestoData)
         .eq('id', repuesto.id)
-        .select(`
-          *,
-          drone_model:drone_model_id (id, name)
-        `);
+        .select();
 
       if (error) throw error;
       result = data[0];
@@ -884,22 +886,53 @@ export const guardarRepuestoPersistencia = async (repuesto) => {
       const { data, error } = await supabase
         .from('part')
         .insert(repuestoData)
-        .select(`
-          *,
-          drone_model:drone_model_id (id, name)
-        `);
+        .select();
 
       if (error) throw error;
       result = data[0];
     }
 
-    // 3. Devolver el resultado en formato esperado por el frontend
+    // 3. Gestionar las relaciones con los modelos de drone
+    
+    // 3.1. Eliminar todas las relaciones existentes para este repuesto
+    const { error: deleteError } = await supabase
+      .from('part_drone_model')
+      .delete()
+      .eq('part_id', result.id);
+
+    if (deleteError) throw deleteError;
+    
+    // 3.2. Si hay modelos seleccionados, crear las nuevas relaciones
+    if (repuesto.data.ModelosDroneIds && repuesto.data.ModelosDroneIds.length > 0) {
+      const partDroneModelData = repuesto.data.ModelosDroneIds.map(modelId => ({
+        part_id: result.id,
+        drone_model_id: modelId,
+        created_at: new Date().toISOString()
+      }));
+
+      const { error: insertError } = await supabase
+        .from('part_drone_model')
+        .insert(partDroneModelData);
+
+      if (insertError) throw insertError;
+    }
+
+    // 4. Obtener los modelos asociados para el retorno
+    const { data: droneModels, error: modelsError } = await supabase
+      .from('part_drone_model')
+      .select(`
+        drone_model:drone_model_id (*)
+      `)
+      .eq('part_id', result.id);
+    
+    // 5. Devolver el resultado en formato esperado por el frontend
     return {
-      id: String(result.id),
+      id: result.id,
       data: {
         NombreRepu: result.name,
         DescripcionRepu: result.description || '',
-        ModeloDroneRepu: result.drone_model?.name || '',
+        ModeloDrones: droneModels || [],
+        ModelosDroneIds: repuesto.data.ModelosDroneIds || [],
         ProveedorRepu: result.provider || '',
         PrecioRepu: result.price || 0,
         StockRepu: result.stock || 0,
@@ -954,33 +987,48 @@ export const getRepuestosPersistencia = async (setRepuestosToRedux) => {
   // Función para cargar los datos iniciales
   const cargarRepuestos = async () => {
     try {
+      // 1. Obtener todos los repuestos
       const { data, error } = await supabase
         .from('part')
-        .select(`
-          *,
-          drone_model:drone_model_id (*)
-        `)
+        .select('*')
         .order('name');
-
-      console.log('Datos de repuestos:', data);
-      console.log('Error de repuestos:', error);
 
       if (error) throw error;
 
-      // Transformar los datos al formato esperado por el frontend
-      const repuestos = data.map(item => ({
-        id: String(item.id),
-        data: {
-          NombreRepu: item.name,
-          DescripcionRepu: item.description || '',
-          ModeloDroneRepu: item.drone_model?.name || '',
-          ModeloDroneId: item.drone_model_id,  // Añadido para mantener la referencia directa
-          ProveedorRepu: item.provider || '',
-          PrecioRepu: item.price || 0,
-          StockRepu: item.stock || 0,
-          UnidadesPedidas: item.backorder || 0
-        }
-      }));
+      // 2. Para cada repuesto, obtener sus modelos de drone asociados
+      const repuestos = [];
+
+      for (const repuesto of data) {
+        // Obtener los modelos de drone asociados
+        const { data: partDroneModels, error: relError } = await supabase
+          .from('part_drone_model')
+          .select(`
+            drone_model:drone_model_id (*)
+          `)
+          .eq('part_id', repuesto.id);
+
+        if (relError) throw relError;
+
+        // Extraer los IDs de los modelos y determinar ModeloDroneRepu
+        const modelosDroneIds = partDroneModels.map(rel => rel.drone_model.id);
+
+        console.log('partDroneModels:', partDroneModels);
+
+        // Añadir a la lista de repuestos
+        repuestos.push({
+          id: repuesto.id,
+          data: {
+            NombreRepu: repuesto.name,
+            DescripcionRepu: repuesto.description || '',
+            ModeloDrones: partDroneModels || [],
+            ModelosDroneIds: modelosDroneIds,
+            ProveedorRepu: repuesto.provider || '',
+            PrecioRepu: repuesto.price || 0,
+            StockRepu: repuesto.stock || 0,
+            UnidadesPedidas: repuesto.backorder || 0
+          }
+        });
+      }
 
       // Actualizar el estado en Redux
       setRepuestosToRedux(repuestos);
@@ -1030,7 +1078,7 @@ export const getModeloDronePersistencia = async (id) => {
 
     // Transformar al formato esperado por el frontend
     return {
-      id: String(data.id),
+      id: data.id,
       data: {
         NombreModelo: data.name,
         DescripcionModelo: data.description || '',
@@ -1056,7 +1104,7 @@ export const getModelosDronePorFabricantePersistencia = async (fabricante) => {
 
     // Transformar al formato esperado por el frontend
     const modelosDrone = data.map(item => ({
-      id: String(item.id),
+      id: item.id,
       data: {
         NombreModelo: item.name,
         DescripcionModelo: item.description || '',
@@ -1111,7 +1159,7 @@ export const guardarModeloDronePersistencia = async (modeloDrone) => {
 
     // Transformar el resultado al formato esperado por el frontend
     return {
-      id: String(result.id),
+      id: result.id,
       data: {
         NombreModelo: result.name,
         DescripcionModelo: result.description || '',
@@ -1206,7 +1254,7 @@ export const getModelosDronePersistencia = (setModelosDroneToRedux) => {
 
       // Transformar los datos al formato esperado por el frontend
       const modelosDrone = data.map(item => ({
-        id: String(item.id),
+        id: item.id,
         data: {
           NombreModelo: item.name,
           DescripcionModelo: item.description || '',
@@ -1268,7 +1316,7 @@ export const getDronePersistencia = async (id) => {
 
     // Transformar al formato esperado por el frontend
     return {
-      id: String(data.id),
+      id: data.id,
       data: {
         NumeroSerie: data.number_series || '',
         ModeloDroneId: data.drone_model_id || '',
@@ -1299,7 +1347,7 @@ export const getDronesPorModeloDronePersistencia = async (modeloDroneId) => {
 
     // Transformar al formato esperado por el frontend
     const drones = data.map(item => ({
-      id: String(item.id),
+      id: item.id,
       data: {
         NumeroSerie: item.number_series || '',
         ModeloDroneId: item.drone_model_id || '',
@@ -1332,7 +1380,7 @@ export const getDronesPorPropietarioPersistencia = async (propietarioId) => {
 
     // Transformar al formato esperado por el frontend
     const drones = data.map(item => ({
-      id: String(item.id),
+      id: item.id,
       data: {
         NumeroSerie: item.number_series || '',
         ModeloDroneId: item.drone_model_id || '',
@@ -1396,7 +1444,7 @@ export const guardarDronePersistencia = async (drone) => {
 
     // Transformar el resultado al formato esperado por el frontend
     return {
-      id: String(result.id),
+      id: result.id,
       data: {
         NumeroSerie: result.number_series || '',
         ModeloDroneId: result.drone_model_id || '',
@@ -1466,7 +1514,7 @@ export const getDronesPersistencia = (setDronesToRedux) => {
 
       // Transformar los datos al formato esperado por el frontend
       const drones = data.map(item => ({
-        id: String(item.id),
+        id: item.id,
         data: {
           NumeroSerie: item.number_series || '',
           ModeloDroneId: item.drone_model_id || '',
@@ -1641,7 +1689,7 @@ export const getIntervencionPersistencia = async (id) => {
 
     // Transformar al formato esperado por el frontend
     return {
-      id: String(data.id),
+      id: data.id,
       data: {
         NombreInt: data.name,
         DescripcionInt: data.description || '',
@@ -1691,7 +1739,7 @@ export const getIntervencionesPorModeloDronePersistencia = async (modeloDroneId)
 
       // Añadir a la lista de intervenciones
       intervenciones.push({
-        id: String(intervencion.id),
+        id: intervencion.id,
         data: {
           NombreInt: intervencion.name,
           DescripcionInt: intervencion.description || '',
@@ -1827,7 +1875,7 @@ export const guardarIntervencionPersistencia = async (intervencion) => {
 
     // 4. Devolver el resultado en el formato esperado por el frontend
     return {
-      id: String(intervencionResult.id),
+      id: intervencionResult.id,
       data: {
         NombreInt: intervencionResult.name,
         DescripcionInt: intervencionResult.description || '',
@@ -1923,7 +1971,7 @@ export const getIntervencionesPersistencia = (setIntervencionesToRedux) => {
 
         // Añadir a la lista de intervenciones
         intervenciones.push({
-          id: String(intervencion.id),
+          id: intervencion.id,
           data: {
             NombreInt: intervencion.name,
             DescripcionInt: intervencion.description || '',
