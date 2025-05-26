@@ -39,7 +39,7 @@ export const guardarIntervencionAsync = createAsyncThunk(
       return intervencionGuardada;
     } catch (error: any) { // TODO: Hacer tipo de dato para el error
       dispatch(isFetchingComplete());
-      return error;
+      throw error;
     }
   },
 );
@@ -55,7 +55,7 @@ export const getIntervencionAsync = createAsyncThunk(
       return intervencion;
     } catch (error: any) { // TODO: Hacer tipo de dato para el error
       dispatch(isFetchingComplete());
-      return error;
+      throw error;
     }
   },
 );
@@ -71,7 +71,7 @@ export const getIntervencionesPorModeloDroneAsync = createAsyncThunk(
       return intervenciones;
     } catch (error: any) { // TODO: Hacer tipo de dato para el error
       dispatch(isFetchingComplete());
-      return error;
+      throw error;
     }
   },
 );
