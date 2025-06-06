@@ -78,8 +78,16 @@ export default function ListaReparaciones(): JSX.Element {
         </div>
       </div>
 
-      <div className="mb-2 text-muted">
-        {reparacionesList.length} {reparacionesList.length === 1 ? 'reparación' : 'reparaciones'}
+      <div className="d-flex justify-content-between align-items-center mb-3">
+        <div className="mb-2 text-muted">
+          {reparacionesList.length} {reparacionesList.length === 1 ? 'reparación' : 'reparaciones'}
+        </div>
+        {/* <button
+          className="btn w-auto bg-bluemcdron text-white"
+          onClick={() => history.push('/inicio/reparaciones/new')}
+        >
+          <i className="bi bi-plus-circle me-1"></i> Nueva Reparación
+        </button> */}
       </div>
 
       {reparacionesList.length === 0 ? (
