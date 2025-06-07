@@ -40,6 +40,9 @@ export const guardarReciboAsync = createAsyncThunk(
         reparacion: ReparacionType,
         usuario: Usuario,
     }, { dispatch }) => {
+
+      console.log('!!! guardarReciboAsync', presupuesto);
+
         dispatch(isFetchingStart());
         try {
             await guardarPresupuestoPersistencia(presupuesto);
@@ -48,7 +51,7 @@ export const guardarReciboAsync = createAsyncThunk(
             return presupuesto;
         } catch (error: any) { // TODO: Hacer tipo de dato para el error
             dispatch(isFetchingComplete());
-            return error;
+            throw error;
         }
     },
 );

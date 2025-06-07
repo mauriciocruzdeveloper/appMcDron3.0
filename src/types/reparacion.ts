@@ -2,6 +2,7 @@
 export interface DataReparacion {
     EstadoRep: string;
     PrioridadRep: number;
+    DroneId: string;
     DroneRep: string;
     NombreUsu: string;
     ApellidoUsu: string;

@@ -216,6 +216,7 @@ export const getReparacionesPersistencia = (setReparacionesToRedux, usuario) => 
         state,
         priority,
         drone_id,
+        drone_name,
         owner_id,
         drive_link,
         notes,
@@ -254,7 +255,8 @@ export const getReparacionesPersistencia = (setReparacionesToRedux, usuario) => 
         data: {
           EstadoRep: item.state,
           PrioridadRep: item.priority,
-          DroneRep: item.drone?.id ? String(item.drone.id) : '',
+          DroneId: item.drone?.id ? String(item.drone.id) : '',
+          DroneRep: item.drone_name || '',
           NombreUsu: item.owner?.first_name || '',
           ApellidoUsu: item.owner?.last_name || '',
           UsuarioRep: item.owner_id ? String(item.owner_id) : '',
@@ -380,6 +382,7 @@ export const guardarReparacionPersistencia = async (reparacion) => {
       state: reparacion.data.EstadoRep,
       priority: reparacion.data.PrioridadRep,
       drone_id: null, // Se obtendría del drone con número de serie DroneRep
+      drone_name: reparacion.data.DroneRep || '',
       owner_id: reparacion.data.UsuarioRep,
       drive_link: reparacion.data.DriveRep,
       notes: reparacion.data.AnotacionesRep,
@@ -400,7 +403,9 @@ export const guardarReparacionPersistencia = async (reparacion) => {
 
     let result;
 
-    if (reparacion.id) {
+    console.log('!!! reparacion en guardarReparacionPersistencia:', reparacion);
+
+    if (reparacion.id !== 'new') {
       // Actualización
       const { data, error } = await supabase
         .from('repair')
@@ -409,6 +414,7 @@ export const guardarReparacionPersistencia = async (reparacion) => {
         .select();
 
       if (error) throw error;
+      console.log('!!! data en update guardarReparacionPersistencia:', data);
       result = data[0];
     } else {
       // Inserción
@@ -418,7 +424,12 @@ export const guardarReparacionPersistencia = async (reparacion) => {
         .select();
 
       if (error) throw error;
+      console.log('!!! data en insert guardarReparacionPersistencia:', data);
       result = data[0];
+    }
+
+    if (!result) {
+      throw new Error('No se pudo guardar la reparación');
     }
 
     return {
@@ -576,12 +587,15 @@ export const getClientePersistencia = async (id) => {
 
 // GET Cliente por email
 export const getClientePorEmailPersistencia = async (email) => {
+  console.log('!!! email en getClientePorEmailPersistencia')
   try {
     const { data, error } = await supabase
       .from('user')
       .select('*')
       .eq('email', email)
       .single();
+
+    console.log('!!! data:', data);
 
     if (error) {
       // Si es un error de "no data found", retornamos null
@@ -619,7 +633,7 @@ export const guardarUsuarioPersistencia = async (usuario) => {
     // Preparar datos para Supabase
     const userData = {
       email: usuario.data.EmailUsu,
-      name: usuario.data.NombreUsu || '',
+      first_name: usuario.data.NombreUsu || '',
       last_name: usuario.data.ApellidoUsu || '',
       telephone: usuario.data.TelefonoUsu || '',
       address: usuario.data.DireccionUsu || '',
@@ -630,7 +644,7 @@ export const guardarUsuarioPersistencia = async (usuario) => {
 
     let result;
 
-    if (usuario.id) {
+    if (usuario.id !== 'new') {
       // Actualización
       const { data, error } = await supabase
         .from('user')
@@ -2300,7 +2314,7 @@ export const notificacionesPorMensajesPersistencia = (emailUsu) => {
 
 ///////////// PRESUPUESTO ///////////////////////////////////////////////////
 
-export const guardarPresupuestoPersistencia = (presupuesto) => {
+export const guardarPresupuestoPersistencia = async (presupuesto) => {
   // En Supabase también agregamos información del usuario a la reparación 
   // para mantener consistencia con la implementación original
   presupuesto.reparacion.data.NombreUsu = presupuesto.usuario.data?.NombreUsu || '';
@@ -2308,36 +2322,23 @@ export const guardarPresupuestoPersistencia = (presupuesto) => {
   presupuesto.reparacion.data.EmailUsu = presupuesto.usuario.data?.EmailUsu || '';
   presupuesto.reparacion.data.TelefonoUsu = presupuesto.usuario.data?.TelefonoUsu || '';
 
-  return new Promise(async (resolve, reject) => {
-    try {
-      // 1. Primero guardar el usuario
-      const usuarioGuardado = await guardarUsuarioPersistencia(presupuesto.usuario);
+  try {
+    // 1. Primero guardar el usuario
+    const usuarioGuardado = await guardarUsuarioPersistencia(presupuesto.usuario);
 
-      // 2. Luego obtener el ID numérico del usuario (no el email)
-      const { data: userData, error: userError } = await supabase
-        .from('user')
-        .select('id')
-        .eq('email', usuarioGuardado.id)
-        .single();
+    // 2. Guardar la reparación con el ID numérico del usuario en owner_id
+    presupuesto.reparacion.data.UsuarioRep = usuarioGuardado.id.toString();
+    const reparacionGuardada = await guardarReparacionPersistencia(presupuesto.reparacion);
 
-      if (userError || !userData) {
-        throw new Error('Error al obtener el ID del usuario');
-      }
-
-      // 3. Guardar la reparación con el ID numérico del usuario en owner_id
-      presupuesto.reparacion.data.UsuarioRep = userData.id.toString();
-      const reparacionGuardada = await guardarReparacionPersistencia(presupuesto.reparacion);
-
-      // 4. Devolver el presupuesto actualizado
-      resolve({
-        usuario: usuarioGuardado,
-        reparacion: reparacionGuardada
-      });
-    } catch (error) {
-      console.error('Error en guardarPresupuestoPersistencia:', error);
-      reject(error);
-    }
-  });
+    // 3. Devolver el presupuesto actualizado
+    return {
+      usuario: usuarioGuardado,
+      reparacion: reparacionGuardada
+    };
+  } catch (error) {
+    console.error('Error en guardarPresupuestoPersistencia:', error);
+    throw error;
+  }
 };
 
 // Función para registrar usuario a través del endpoint API
