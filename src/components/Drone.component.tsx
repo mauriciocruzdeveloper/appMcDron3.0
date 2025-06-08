@@ -26,9 +26,6 @@ export default function DroneComponent(): JSX.Element {
   const usuarios = useAppSelector(state => state.usuario.coleccionUsuarios);
   const usuariosSelect = useAppSelector(state => state.usuario.usuariosSelect);
 
-  console.log('!!! usuariosSelect', usuariosSelect);
-  console.log('!!! usuarios', usuarios);
-
   const [drone, setDrone] = useState<Drone>({
     id: '',
     data: {
@@ -38,11 +35,7 @@ export default function DroneComponent(): JSX.Element {
     }
   });
 
-  console.log('!!! drone', drone);
-
   const [propietarioValue, setPropietarioValue] = useState<{value: string, label: string} | null>(null);
-
-  console.log('!!! propietarioValue', propietarioValue);
 
   useEffect(() => {
     if (!isNew && id) {

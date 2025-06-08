@@ -39,12 +39,7 @@ export default function RepuestoComponent(): JSX.Element {
     state.repuesto.coleccionRepuestos.find(repuesto => repuesto.id === id)
   );
 
-  console.log('!!! repuestoActual en RepuestoComponent', repuestoActual);
-  console.log('!!! id en RepuestoComponent', id);
-
   const [selectedModelos, setSelectedModelos] = useState<SelectOption[]>([]);
-
-  console.log("!!! repuestoActual", repuestoActual);
 
   const modelosDrone = useAppSelector(state => state.modeloDrone.coleccionModelosDrone);
 
@@ -67,7 +62,6 @@ export default function RepuestoComponent(): JSX.Element {
 
   useEffect(() => {
     if (!isNew && id) {
-      console.log('!!! repuesto actual en useEffect', repuestoActual);
       if (!repuestoActual) return;
       setRepuesto(repuestoActual);
 
@@ -80,10 +74,6 @@ export default function RepuestoComponent(): JSX.Element {
             value: modelo.id,
             label: `${modelo.data.NombreModelo} - ${modelo.data.Fabricante}`
           }));
-
-        console.log('!!! modelosDrone', modelosDrone);
-        console.log('!!! repuestoActual.data.ModelosDroneIds', repuestoActual.data.ModelosDroneIds);
-        console.log('!!! modelosSeleccionados en useEffect', modelosSeleccionados);
 
         setSelectedModelos(modelosSeleccionados);
       } else {
@@ -167,8 +157,6 @@ export default function RepuestoComponent(): JSX.Element {
     try {
       const response = await dispatch(guardarRepuestoAsync(repuesto));
 
-      console.log("!!! response en confirmaGuardarRepuesto", response);
-
       if (response.meta.requestStatus === 'fulfilled') {
         openModal({
           mensaje: "Repuesto guardado correctamente.",
@@ -233,8 +221,6 @@ export default function RepuestoComponent(): JSX.Element {
     value: modelo.id,
     label: `${modelo.data.NombreModelo} - ${modelo.data.Fabricante}`
   }));
-
-  console.log('!!! selectedModelos', selectedModelos);
 
   return (
     <div className="p-4">

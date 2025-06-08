@@ -39,6 +39,7 @@ export default function ReparacionComponent(): React.ReactElement | null {
         data: {
             EstadoRep: "Consulta",
             PrioridadRep: 1,
+            DroneId: "",
             DroneRep: "",
             NombreUsu: "",
             ApellidoUsu: "",
@@ -448,8 +449,8 @@ export default function ReparacionComponent(): React.ReactElement | null {
     };
 
     const handleGoToUser = () => {
-        if (!usuarioStore || !usuarioStore.data.EmailUsu) return;
-        history.push(`/inicio/usuarios/${usuarioStore.data.EmailUsu}`);
+        if (!usuarioStore?.id) return;
+        history.push(`/inicio/usuarios/${usuarioStore.id}`);
     }
 
     // Formatear precio para mostrar
