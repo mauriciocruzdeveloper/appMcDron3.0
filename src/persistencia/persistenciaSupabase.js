@@ -340,7 +340,8 @@ export const getReparacionPersistencia = async (id) => {
       data: {
         EstadoRep: data.state,
         PrioridadRep: data.priority,
-        DroneRep: data.drone.id ? String(data.drone.id) : '',
+        DroneId: data.drone?.id ? String(data.drone.id) : '',
+        DroneRep: data.drone_name || '',
         NombreUsu: data.owner?.first_name || '',
         ApellidoUsu: data.owner?.last_name || '',
         UsuarioRep: data.owner_id ? String(data.owner_id) : '',
@@ -403,8 +404,6 @@ export const guardarReparacionPersistencia = async (reparacion) => {
 
     let result;
 
-    console.log('!!! reparacion en guardarReparacionPersistencia:', reparacion);
-
     if (reparacion.id !== 'new') {
       // Actualización
       const { data, error } = await supabase
@@ -414,7 +413,6 @@ export const guardarReparacionPersistencia = async (reparacion) => {
         .select();
 
       if (error) throw error;
-      console.log('!!! data en update guardarReparacionPersistencia:', data);
       result = data[0];
     } else {
       // Inserción
@@ -424,7 +422,6 @@ export const guardarReparacionPersistencia = async (reparacion) => {
         .select();
 
       if (error) throw error;
-      console.log('!!! data en insert guardarReparacionPersistencia:', data);
       result = data[0];
     }
 
@@ -587,15 +584,12 @@ export const getClientePersistencia = async (id) => {
 
 // GET Cliente por email
 export const getClientePorEmailPersistencia = async (email) => {
-  console.log('!!! email en getClientePorEmailPersistencia')
   try {
     const { data, error } = await supabase
       .from('user')
       .select('*')
       .eq('email', email)
       .single();
-
-    console.log('!!! data:', data);
 
     if (error) {
       // Si es un error de "no data found", retornamos null
@@ -2362,6 +2356,48 @@ export const registroUsuarioEndpointPersistencia = async (registroData) => {
     return data;
   } catch (error) {
     console.error('Error en registroUsuarioEndpointPersistencia:', error);
+    throw error;
+  }
+};
+
+// Función para subir archivos a Supabase Storage
+export const subirArchivoPersistencia = async (path, file) => {
+  try {
+    // path: ruta completa dentro del bucket, por ejemplo: 'REPARACIONES/123/fotos/archivo.jpg'
+    // file: Blob o File
+    const bucket = 'archivos'; // Cambia por el nombre de tu bucket en Supabase
+    const { data, error } = await supabase.storage.from(bucket).upload(path, file, {
+      upsert: true // Permite sobrescribir si ya existe
+    });
+    if (error) throw error;
+
+    // Obtener la URL pública del archivo subido
+    // TODO: Ver cómo hacer para que sea privado el bucket
+    const { data: publicUrlData } = supabase.storage.from(bucket).getPublicUrl(path);
+    if (!publicUrlData || !publicUrlData.publicUrl) {
+      throw new Error('No se pudo obtener la URL pública del archivo');
+    }
+    return publicUrlData.publicUrl;
+  } catch (error) {
+    console.error('Error al subir archivo a Supabase:', error);
+    throw error;
+  }
+};
+
+// Función para eliminar archivos de Supabase Storage
+export const eliminarArchivoPersistencia = async (url) => {
+  try {
+    // Extraer el bucket y el path del archivo desde la URL
+    // Ejemplo de URL: https://xxxx.supabase.co/storage/v1/object/public/archivos/REPARACIONES/123/fotos/archivo.jpg
+    const matches = url.match(/\/object\/public\/([^/]+)\/(.+)$/);
+    if (!matches) throw new Error('No se pudo extraer el path del archivo desde la URL');
+    const bucket = matches[1];
+    const path = matches[2];
+    const { error } = await supabase.storage.from(bucket).remove([path]);
+    if (error) throw error;
+    return true;
+  } catch (error) {
+    console.error('Error al eliminar archivo en Supabase:', error);
     throw error;
   }
 };

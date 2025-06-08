@@ -65,7 +65,6 @@ export const getClienteByEmailAsync = createAsyncThunk(
         try {
             dispatch(isFetchingStart());
             const cliente = await getClientePorEmailPersistencia(id); // TODO: tengo que llamar por id, no email.
-            console.log('!!! cliente', cliente);
             dispatch(isFetchingComplete());
             return cliente;
         } catch (error: any) { // TODO: Hacer tipo de dato para el error

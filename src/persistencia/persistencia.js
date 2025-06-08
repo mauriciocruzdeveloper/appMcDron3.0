@@ -71,3 +71,7 @@ export const getIntervencionesPorModeloDronePersistencia = backend.getIntervenci
 export const guardarIntervencionPersistencia = backend.guardarIntervencionPersistencia;
 export const eliminarIntervencionPersistencia = backend.eliminarIntervencionPersistencia;
 export const getIntervencionesPersistencia = backend.getIntervencionesPersistencia;
+
+// ARCHIVOS
+export const subirArchivoPersistencia = backend.subirArchivoPersistencia;
+export const eliminarArchivoPersistencia = backend.eliminarArchivoPersistencia;

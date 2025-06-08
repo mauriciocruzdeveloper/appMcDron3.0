@@ -34,7 +34,6 @@ export const guardarModeloDroneAsync = createAsyncThunk<ModeloDrone, ModeloDrone
         try {
             dispatch(isFetchingStart());
             const modeloDroneGuardado: ModeloDrone = await guardarModeloDronePersistencia(modeloDrone);
-            console.log("!!! modeloDroneGuardado", modeloDroneGuardado);
             dispatch(isFetchingComplete());
             return modeloDroneGuardado;
         } catch (error: any) { // TODO: Hacer tipo de dato para el error

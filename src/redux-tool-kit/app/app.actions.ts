@@ -1,18 +1,15 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
-import { 
+import {
   loginPersistencia,
   registroUsuarioEndpointPersistencia,
-  reenviarEmailVerificacionPersistencia
+  reenviarEmailVerificacionPersistencia,
+  subirArchivoPersistencia,
+  eliminarArchivoPersistencia
 } from "../../persistencia/persistencia"; // Actualizado para usar la importación centralizada
 import { ReparacionType } from "../../types/reparacion";
 import { isFetchingComplete, isFetchingStart } from "./app.slice";
 import { callEndpoint } from "../../utils/utils";
 import { HttpMethod } from "../../types/httpMethods";
-// Importar las funciones de persistencia para subir y eliminar archivos
-import { 
-  subirArchivoPersistencia, 
-  eliminarArchivoPersistencia 
-} from '../../persistencia/persistenciaFirebase';
 import { getReparacionAsync, guardarReparacionAsync } from '../reparacion/reparacion.actions';
 import { supabaseAuthErrors } from "../../persistencia/supabaseAuthErrors";
 
