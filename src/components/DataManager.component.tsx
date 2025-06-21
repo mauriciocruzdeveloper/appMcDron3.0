@@ -43,6 +43,27 @@ export function DataManagerComponent({ children }: DataManagerProps): React.Reac
     const [unsubscribeIntervenciones, setUnsubscribeIntervenciones] = useState<Unsubscribe>();
 
     useEffect(() => {
+        const handleVisibilityChange = () => {
+            if (document.visibilityState === "visible") {
+                // Reconectar y sincronizar datos
+                getUsuarios();
+                getReparaciones();
+                getMensajes();
+                getRepuestos();
+                getModelosDrone();
+                getDrones();
+                getIntervenciones();
+            }
+        };
+
+        document.addEventListener("visibilitychange", handleVisibilityChange);
+
+        return () => {
+            document.removeEventListener("visibilitychange", handleVisibilityChange);
+        };
+    }, []);
+
+    useEffect(() => {
         getUsuarios();
         return () => {
             unsubscribeUsuarios?.();
