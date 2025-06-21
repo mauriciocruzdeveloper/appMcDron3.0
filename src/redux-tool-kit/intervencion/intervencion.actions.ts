@@ -34,6 +34,7 @@ export const guardarIntervencionAsync = createAsyncThunk(
   async (intervencion: Intervencion, { dispatch }) => {
     try {
       dispatch(isFetchingStart());
+      console.log('!!! intervención en intervencion.actions.ts !!!', intervencion);
       const intervencionGuardada = await guardarIntervencionPersistencia(intervencion);
       dispatch(isFetchingComplete());
       return intervencionGuardada;
