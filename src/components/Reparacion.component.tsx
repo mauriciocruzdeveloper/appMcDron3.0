@@ -84,6 +84,9 @@ export default function ReparacionComponent(): React.ReactElement | null {
     const totalIntervenciones = intervencionesAplicadas.reduce((total, intervencion) =>
         total + intervencion.data.PrecioTotal, 0);
 
+    console.log('!!! totalIntervenciones !!!', totalIntervenciones);
+    console.log('!!! intervencionesAplicadas', intervencionesAplicadas);
+
     const [reparacionOriginal, setReparacionOriginal] = useState<ReparacionType | undefined>(isNew ? reparacionVacia : reparacionStore);
     const [reparacion, setReparacion] = useState<ReparacionType | undefined>(isNew ? reparacionVacia : reparacionStore);
     const [fotoSeleccionada, setFotoSeleccionada] = useState<string | null>(null);

@@ -123,6 +123,8 @@ export const getIntervencionesPorReparacionPersistencia = async (reparacionId) =
       // Extraemos los IDs de los repuestos
       const repuestosIds = partInterventions ? partInterventions.map(rel => String(rel.part_id)) : [];
 
+      console.log('!!! item en getIntervencionesPorReparacionPersistencia:', item);
+
       return {
         id: String(item.intervention.id),
         data: {
@@ -131,7 +133,8 @@ export const getIntervencionesPorReparacionPersistencia = async (reparacionId) =
           ModeloDroneId: item.intervention.drone_model_id ? String(item.intervention.drone_model_id) : '',
           RepuestosIds: repuestosIds,
           PrecioManoObra: item.labor_cost || item.intervention.labor_cost || 0,
-          PrecioTotal: item.total_cost || item.intervention.total_cost || 0,
+          // PrecioTotal: item.total_cost || item.intervention.total_cost || 0, // TODO: Verificar que en la relación no está el precio del costo de repuestos. REPARAR!!!
+          PrecioTotal: item.intervention.total_cost || 0,
           DuracionEstimada: item.intervention.estimated_duration || 30
         },
         // Guardamos los datos de la relación por si son útiles
@@ -1684,6 +1687,9 @@ export const getIntervencionPersistencia = async (id) => {
     const repuestosIds = partInterventions.map(rel => String(rel.part_id));
     
     // 3. Transformar al formato esperado por el frontend
+
+    console.log('!!! data de intervencion en persistencia', data);
+
     return {
       id: String(data.id),
       data: {
@@ -1760,7 +1766,7 @@ export const guardarIntervencionPersistencia = async (intervencion) => {
   try {
     // Iniciar una transacción para asegurar la integridad de los datos
     // (Simulamos transacción con múltiples operaciones secuenciales)
-
+    console.log('!!! intervención en persistenciaSupabase', intervencion);
     // 1. Preparar datos para la tabla intervention
     const intervencionData = {
       name: intervencion.data.NombreInt,
@@ -1841,32 +1847,32 @@ export const guardarIntervencionPersistencia = async (intervencion) => {
         if (insertError) throw insertError;
       }
 
-      // Calcular el costo total de las partes
-      const partsCost = repuestos.reduce((sum, repuesto) => {
-        // Si el repuesto está en la lista de RepuestosIds
-        if (intervencion.data.RepuestosIds.includes(repuesto.id)) {
-          return sum + (repuesto.price || 0);
-        }
-        return sum;
-      }, 0);
+      // // Calcular el costo total de las partes
+      // const partsCost = repuestos.reduce((sum, repuesto) => {
+      //   // Si el repuesto está en la lista de RepuestosIds
+      //   if (intervencion.data.RepuestosIds.includes(repuesto.id)) {
+      //     return sum + (repuesto.price || 0);
+      //   }
+      //   return sum;
+      // }, 0);
 
-      // Actualizar el costo total en la intervención
-      const laborCost = intervencionData.labor_cost || 0;
-      const totalCost = laborCost + partsCost;
+      // // Actualizar el costo total en la intervención
+      // const laborCost = intervencionData.labor_cost || 0;
+      // const totalCost = laborCost + partsCost;
 
-      const { error: updateError } = await supabase
-        .from('intervention')
-        .update({
-          parts_cost: partsCost,
-          total_cost: totalCost
-        })
-        .eq('id', intervencionId);
+      // const { error: updateError } = await supabase
+      //   .from('intervention')
+      //   .update({
+      //     parts_cost: partsCost,
+      //     total_cost: totalCost
+      //   })
+      //   .eq('id', intervencionId);
 
-      if (updateError) throw updateError;
+      // if (updateError) throw updateError;
 
-      // Actualizar el resultado con los nuevos costos calculados
-      intervencionResult.parts_cost = partsCost;
-      intervencionResult.total_cost = totalCost;
+      // // Actualizar el resultado con los nuevos costos calculados
+      // intervencionResult.parts_cost = partsCost;
+      // intervencionResult.total_cost = totalCost;
     }
 
     // 4. Devolver el resultado en el formato esperado por el frontend
