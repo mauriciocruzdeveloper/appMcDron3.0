@@ -75,3 +75,6 @@ export const getIntervencionesPersistencia = backend.getIntervencionesPersistenc
 // ARCHIVOS
 export const subirArchivoPersistencia = backend.subirArchivoPersistencia;
 export const eliminarArchivoPersistencia = backend.eliminarArchivoPersistencia;
+
+// WEBSOCKETS
+export const verificarConexionWebSocket = backend.verificarConexionWebSocket;

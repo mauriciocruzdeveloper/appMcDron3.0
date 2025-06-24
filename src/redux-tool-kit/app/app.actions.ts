@@ -4,7 +4,8 @@ import {
   registroUsuarioEndpointPersistencia,
   reenviarEmailVerificacionPersistencia,
   subirArchivoPersistencia,
-  eliminarArchivoPersistencia
+  eliminarArchivoPersistencia,
+  verificarConexionWebSocket
 } from "../../persistencia/persistencia"; // Actualizado para usar la importación centralizada
 import { ReparacionType } from "../../types/reparacion";
 import { isFetchingComplete, isFetchingStart } from "./app.slice";
@@ -278,6 +279,20 @@ export const subirDocumentoYActualizarReparacionAsync = createAsyncThunk(
     } catch (error: any) {
       dispatch(isFetchingComplete());
       throw error;
+    }
+  }
+);
+
+// VERIFICAR CONEXIÓN WEBSOCKET
+export const verificarConexionWebSocketAsync = createAsyncThunk(
+  'app/verificarConexionWebSocket',
+  async (_, { rejectWithValue }) => {
+    try {
+      const conectado = await verificarConexionWebSocket();
+      return conectado;
+    } catch (error) {
+      console.error('Error al verificar conexión al websocket:', error);
+      return rejectWithValue('Error al verificar conexión al websocket');
     }
   }
 );

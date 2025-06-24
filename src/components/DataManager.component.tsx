@@ -24,6 +24,7 @@ import { Drone } from "../types/drone";
 import { setDrones } from "../redux-tool-kit/drone/drone.slice";
 import { Intervencion } from "../types/intervencion";
 import { setIntervenciones } from "../redux-tool-kit/intervencion/intervencion.slice";
+import { verificarConexionWebSocketAsync } from "../redux-tool-kit/app/app.actions";
 
 export interface DataManagerProps {
     children: React.ReactNode;
@@ -43,18 +44,27 @@ export function DataManagerComponent({ children }: DataManagerProps): React.Reac
     const [unsubscribeIntervenciones, setUnsubscribeIntervenciones] = useState<Unsubscribe>();
 
     useEffect(() => {
-        const handleVisibilityChange = () => {
-            if (document.visibilityState === "visible") {
-                // Reconectar y sincronizar datos
-                getUsuarios();
-                getReparaciones();
-                getMensajes();
-                getRepuestos();
-                getModelosDrone();
-                getDrones();
-                getIntervenciones();
+        const handleVisibilityChange = async () => {
+            try {
+                const conectado = await dispatch(verificarConexionWebSocketAsync()).unwrap();
+                if (conectado) {
+                    console.log("Conexión al websocket activa");
+                    getUsuarios();
+                    getReparaciones();
+                    getMensajes();
+                    getRepuestos();
+                    getModelosDrone();
+                    getDrones();
+                    getIntervenciones();
+                } else {
+                    console.log("No hay conexión al websocket");
+                }
+            } catch (error) {
+                console.error("Error al verificar conexión al websocket:", error);
             }
         };
+
+        handleVisibilityChange();
 
         document.addEventListener("visibilitychange", handleVisibilityChange);
 
