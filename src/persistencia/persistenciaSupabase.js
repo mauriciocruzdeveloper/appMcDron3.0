@@ -2407,3 +2407,14 @@ export const eliminarArchivoPersistencia = async (url) => {
     throw error;
   }
 };
+
+// Verificar conexión WebSocket
+export const verificarConexionWebSocket = async () => {
+  try {
+    const channel = supabase.channel('test-channel');
+    return channel.isSubscribed();
+  } catch (error) {
+    console.error('Error al verificar conexión al websocket:', error);
+    return false;
+  }
+};
