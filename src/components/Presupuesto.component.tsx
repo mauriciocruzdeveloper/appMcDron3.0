@@ -8,7 +8,7 @@ import { useAppSelector } from "../redux-tool-kit/hooks/useAppSelector";
 import { useAppDispatch } from "../redux-tool-kit/hooks/useAppDispatch";
 import { useModal } from "./Modal/useModal";
 import { guardarReciboAsync, guardarTransitoAsync } from "../redux-tool-kit/reparacion/reparacion.actions";
-import { getClienteAsync, getClienteByEmailAsync } from "../redux-tool-kit/usuario/usuario.actions";
+import { getClienteAsync } from "../redux-tool-kit/usuario/usuario.actions";
 import { generarAutoDiagnostico, getLocalidadesPorProvincia, getProvinciasSelect } from "../utils/utils";
 import { estados } from "../datos/estados";
 
