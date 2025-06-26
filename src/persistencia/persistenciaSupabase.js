@@ -760,14 +760,13 @@ export const getRepuestoPersistencia = async (id) => {
 
     // Extraer los IDs de los modelos y sus nombres
     const modelosDroneIds = partDroneModels.map(rel => String(rel.drone_model.id));
-    
+
     // 3. Transformar al formato esperado por el frontend
     return {
       id: String(data.id),
       data: {
         NombreRepu: data.name,
         DescripcionRepu: data.description || '',
-        ModeloDrones: partDroneModels || [],
         ModelosDroneIds: modelosDroneIds,
         ProveedorRepu: data.provider || '',
         PrecioRepu: data.price || 0,
@@ -902,7 +901,7 @@ export const guardarRepuestoPersistencia = async (repuesto) => {
     }
 
     // 3. Gestionar las relaciones con los modelos de drone
-    
+
     // 3.1. Eliminar todas las relaciones existentes para este repuesto
     const { error: deleteError } = await supabase
       .from('part_drone_model')
@@ -910,7 +909,7 @@ export const guardarRepuestoPersistencia = async (repuesto) => {
       .eq('part_id', result.id);
 
     if (deleteError) throw deleteError;
-    
+
     // 3.2. Si hay modelos seleccionados, crear las nuevas relaciones
     if (repuesto.data.ModelosDroneIds && repuesto.data.ModelosDroneIds.length > 0) {
       const partDroneModelData = repuesto.data.ModelosDroneIds.map(modelId => ({
@@ -926,22 +925,13 @@ export const guardarRepuestoPersistencia = async (repuesto) => {
       if (insertError) throw insertError;
     }
 
-    // 4. Obtener los modelos asociados para el retorno
-    const { data: droneModels, error: modelsError } = await supabase
-      .from('part_drone_model')
-      .select(`
-        drone_model:drone_model_id (*)
-      `)
-      .eq('part_id', result.id);
-    
-    // 5. Devolver el resultado en formato esperado por el frontend
+    // 4. Devolver el resultado en formato esperado por el frontend
     return {
       id: String(result.id),
       data: {
         NombreRepu: result.name,
         DescripcionRepu: result.description || '',
-        ModeloDrones: droneModels || [],
-        ModelosDroneIds: repuesto.data.ModelosDroneIds ? 
+        ModelosDroneIds: repuesto.data.ModelosDroneIds ?
           repuesto.data.ModelosDroneIds.map(id => String(id)) : [],
         ProveedorRepu: result.provider || '',
         PrecioRepu: result.price || 0,
@@ -975,12 +965,27 @@ export const eliminarRepuestoPersistencia = async (id) => {
       }
 
       // 2. Si no hay dependencias, procedemos a eliminar
+      // 2.1. Eliminar las relaciones en la tabla part_drone_model
+      const { error: errorEliminarRelaciones } = await supabase
+        .from('part_drone_model')
+        .delete()
+        .eq('part_id', id);
+
+      if (errorEliminarRelaciones) {
+        console.error('Error al eliminar relaciones en part_drone_model:', errorEliminarRelaciones);
+        throw errorEliminarRelaciones;
+      }
+
+      // 2.2. Eliminar el repuesto en la tabla part
       const { error: errorEliminacion } = await supabase
         .from('part')
         .delete()
         .eq('id', id);
 
-      if (errorEliminacion) throw errorEliminacion;
+      if (errorEliminacion) {
+        console.error('Error al eliminar el repuesto en part:', errorEliminacion);
+        throw errorEliminacion;
+      }
 
       resolve(id);
     } catch (error) {
@@ -1000,47 +1005,29 @@ export const getRepuestosPersistencia = async (setRepuestosToRedux) => {
       // 1. Obtener todos los repuestos
       const { data, error } = await supabase
         .from('part')
-        .select('*')
+        .select(`
+          *,
+          part_drone_model (
+            drone_model:drone_model_id (*)
+          )
+        `)
         .order('name');
 
       if (error) throw error;
 
-      // 2. Para cada repuesto, obtener sus modelos de drone asociados
-      const repuestos = [];
+      const repuestos = data.map(repuesto => ({
+        id: String(repuesto.id),
+        data: {
+          NombreRepu: repuesto.name,
+          DescripcionRepu: repuesto.description || '',
+          ModelosDroneIds: repuesto.part_drone_model.map(rel => String(rel.drone_model.id)),
+          ProveedorRepu: repuesto.provider || '',
+          PrecioRepu: repuesto.price || 0,
+          StockRepu: repuesto.stock || 0,
+          UnidadesPedidas: repuesto.backorder || 0
+        }
+      }));
 
-      for (const repuesto of data) {
-        // Obtener los modelos de drone asociados
-        const { data: partDroneModels, error: relError } = await supabase
-          .from('part_drone_model')
-          .select(`
-            drone_model:drone_model_id (*)
-          `)
-          .eq('part_id', repuesto.id);
-
-        if (relError) throw relError;
-
-        // Extraer los IDs de los modelos y determinar ModeloDroneRepu
-        const modelosDroneIds = partDroneModels.map(rel => String(rel.drone_model.id));
-
-        console.log('partDroneModels:', partDroneModels);
-
-        // Añadir a la lista de repuestos
-        repuestos.push({
-          id: String(repuesto.id),
-          data: {
-            NombreRepu: repuesto.name,
-            DescripcionRepu: repuesto.description || '',
-            ModeloDrones: partDroneModels || [],
-            ModelosDroneIds: modelosDroneIds,
-            ProveedorRepu: repuesto.provider || '',
-            PrecioRepu: repuesto.price || 0,
-            StockRepu: repuesto.stock || 0,
-            UnidadesPedidas: repuesto.backorder || 0
-          }
-        });
-      }
-
-      // Actualizar el estado en Redux
       setRepuestosToRedux(repuestos);
     } catch (error) {
       console.error("Error al cargar repuestos:", error);
@@ -1685,7 +1672,7 @@ export const getIntervencionPersistencia = async (id) => {
 
     // Extraer los IDs de los repuestos y calcular los costos
     const repuestosIds = partInterventions.map(rel => String(rel.part_id));
-    
+
     // 3. Transformar al formato esperado por el frontend
 
     console.log('!!! data de intervencion en persistencia', data);
@@ -1882,7 +1869,7 @@ export const guardarIntervencionPersistencia = async (intervencion) => {
         NombreInt: intervencionResult.name,
         DescripcionInt: intervencionResult.description || '',
         ModeloDroneId: intervencionResult.drone_model_id ? String(intervencionResult.drone_model_id) : '',
-        RepuestosIds: intervencion.data.RepuestosIds ? 
+        RepuestosIds: intervencion.data.RepuestosIds ?
           intervencion.data.RepuestosIds.map(id => String(id)) : [],
         PrecioManoObra: intervencionResult.labor_cost || 0,
         PrecioTotal: intervencionResult.total_cost || 0,
@@ -1951,43 +1938,28 @@ export const getIntervencionesPersistencia = async (setIntervencionesToRedux) =>
         .from('intervention')
         .select(`
           *,
-          drone_model:drone_model_id (*)
+          drone_model:drone_model_id (*),
+          part_intervention (
+            part:part_id (*)
+          )
         `)
         .order('name');
 
       if (error) throw error;
 
-      // 2. Para cada intervención, obtener sus repuestos asociados de la tabla part_intervention
-      const intervenciones = [];
+      const intervenciones = data.map(intervencion => ({
+        id: String(intervencion.id),
+        data: {
+          NombreInt: intervencion.name,
+          DescripcionInt: intervencion.description || '',
+          ModeloDroneId: intervencion.drone_model_id ? String(intervencion.drone_model_id) : '',
+          RepuestosIds: intervencion.part_intervention.map(rel => String(rel.part.id)),
+          PrecioManoObra: intervencion.labor_cost || 0,
+          PrecioTotal: intervencion.total_cost || 0,
+          DuracionEstimada: intervencion.estimated_duration || 30
+        }
+      }));
 
-      for (const intervencion of data) {
-        // Obtener los repuestos asociados
-        const { data: partInterventions, error: relError } = await supabase
-          .from('part_intervention')
-          .select('part_id')
-          .eq('intervention_id', intervencion.id);
-
-        if (relError) throw relError;
-
-        // Extraer los IDs de los repuestos
-        const repuestosIds = partInterventions.map(rel => String(rel.part_id));
-
-        // Añadir a la lista de intervenciones
-        intervenciones.push({
-          id: String(intervencion.id),
-          data: {
-            NombreInt: intervencion.name,
-            DescripcionInt: intervencion.description || '',
-            ModeloDroneId: intervencion.drone_model_id ? String(intervencion.drone_model_id) : '',
-            RepuestosIds: repuestosIds,
-            PrecioManoObra: intervencion.labor_cost || 0,
-            PrecioTotal: intervencion.total_cost || 0,
-            DuracionEstimada: intervencion.estimated_duration || 30
-          }
-        });
-      }
-
-      // Actualizar el estado en Redux
       setIntervencionesToRedux(intervenciones);
     } catch (error) {
       console.error("Error al cargar intervenciones:", error);
@@ -2130,7 +2102,7 @@ export const sendMessagePersistencia = (message) => {
         isRead: false
       };
 
-      // Preparar datos para el mensaje del destinatario
+      // Preparar datos para el mensaje del
       const dataTo = {
         date: message.data.date,
         content: message.data.content,
@@ -2192,7 +2164,7 @@ export const getMessagesPersistencia = (setMessagesToRedux, emailUsu, emailCli) 
           table: 'messages',
           filter: `user_id=eq.${emailUsu} AND emailCli=eq.${emailCli}`
         }, async () => {
-          // Cuando hay cambios, ejecutar la consulta nuevamente
+          // Cuando llega un mensaje nuevo, ejecutamos la consulta nuevamente
           const { data, error } = await consulta;
 
           if (error) throw error;
@@ -2265,7 +2237,7 @@ export const actualizarLeidosPersistencia = (mensajesLeidos) => {
         console.log('Mensaje actualizado como leído');
       }
     });
-   } catch (error) {
+  } catch (error) {
     console.error('Error en actualizarLeidosPersistencia:', error);
   }
 };
@@ -2278,6 +2250,7 @@ export const notificacionesPorMensajesPersistencia = (emailUsu) => {
     // Configuramos una suscripción para detectar mensajes no leídos enviados por otros usuarios
     const channel = supabase
       .channel('messages-notifications')
+     
       .on('postgres_changes', {
         event: 'INSERT',
         schema: 'public',
