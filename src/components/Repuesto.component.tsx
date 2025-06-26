@@ -48,8 +48,7 @@ export default function RepuestoComponent(): JSX.Element {
     data: {
       NombreRepu: '',
       DescripcionRepu: '',
-      ModeloDrones: [],
-      ModelosDroneIds: [], // Nuevo campo para multiple selección
+      ModelosDroneIds: [],
       ProveedorRepu: '',
       PrecioRepu: 0,
       StockRepu: 0,
