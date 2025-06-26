@@ -4,6 +4,7 @@ import { useAppSelector } from '../redux-tool-kit/hooks/useAppSelector';
 import { Repuesto } from '../types/repuesto';
 import { useAppDispatch } from '../redux-tool-kit/hooks/useAppDispatch';
 import { setFilter } from '../redux-tool-kit/repuesto/repuesto.slice';
+import { ModeloDrone } from '../types/modeloDrone';
 
 // Mock de repuestos para mostrar como ejemplo
 const repuestosMock: Repuesto[] = [
@@ -12,8 +13,8 @@ const repuestosMock: Repuesto[] = [
         data: {
             NombreRepu: 'Hélices de carbono 8"',
             DescripcionRepu: 'Hélices de carbono de 8 pulgadas para drones de carrera',
-            ModeloDroneRepu: 'CF8045',
             ProveedorRepu: 'DronePartes',
+            ModelosDroneIds: ['modelo-1', 'modelo-2'], // Simulando que es compatible con varios modelos
             PrecioRepu: 15000,
             StockRepu: 5,
             UnidadesPedidas: 1, // Simulando que hay unidades pedidas
@@ -24,8 +25,8 @@ const repuestosMock: Repuesto[] = [
         data: {
             NombreRepu: 'Batería LiPo 5000mAh',
             DescripcionRepu: 'Batería de polímero de litio de 5000mAh 4S para drones',
-            ModeloDroneRepu: 'LP5000-4S',
             ProveedorRepu: 'PowerDrones',
+            ModelosDroneIds: ['modelo-1'], // Simulando que es compatible con un modelo específico
             PrecioRepu: 38000,
             UnidadesPedidas: 0, // Simulando que no hay unidades pedidas
             StockRepu: 10,
@@ -36,8 +37,8 @@ const repuestosMock: Repuesto[] = [
         data: {
             NombreRepu: 'Controlador de vuelo F7',
             DescripcionRepu: 'Controlador de vuelo F7 con giroscopio y acelerómetro',
-            ModeloDroneRepu: 'F722-SE',
             ProveedorRepu: 'ControlTech',
+            ModelosDroneIds: ['modelo-1', 'modelo-2'], // Simulando que es compatible con varios modelos
             PrecioRepu: 25600,
             StockRepu: 0,
             UnidadesPedidas: 2, // Simulando que hay unidades pedidas
@@ -55,6 +56,7 @@ export default function ListaRepuestos(): JSX.Element {
     const dispatch = useAppDispatch();
     const coleccionRepuestos = useAppSelector((state) => state.repuesto.coleccionRepuestos);
     const filter = useAppSelector((state) => state.repuesto.filter);
+    const modelosDrone = useAppSelector((state) => state.modeloDrone.coleccionModelosDrone); // Obtener los modelos de drones desde el estado
 
     const [repuestosList, setRepuestosList] = useState<Repuesto[]>([]);
     const [mostrandoMock, setMostrandoMock] = useState<boolean>(false);
@@ -67,7 +69,6 @@ export default function ListaRepuestos(): JSX.Element {
                     incluirPorSearch =
                         repuesto.data?.NombreRepu?.toLowerCase().includes(filter.toLowerCase()) ||
                         repuesto.data?.DescripcionRepu?.toLowerCase().includes(filter.toLowerCase()) ||
-                        repuesto.data?.ModeloDroneRepu?.toLowerCase().includes(filter.toLowerCase()) ||
                         repuesto.data?.ProveedorRepu?.toLowerCase().includes(filter.toLowerCase());
                 }
                 return incluirPorSearch;
@@ -153,9 +154,6 @@ export default function ListaRepuestos(): JSX.Element {
                                     <span className='badge bg-bluemcdron'>{formatPrice(repuesto.data.PrecioRepu)}</span>
                                 </div>
                                 <div>
-                                    <small className='text-muted'>{repuesto.data.ModeloDroneRepu}</small>
-                                </div>
-                                <div>
                                     <small className='text-muted'>{repuesto.data.ProveedorRepu}</small>
                                 </div>
                                 <div>
@@ -171,6 +169,20 @@ export default function ListaRepuestos(): JSX.Element {
                                 {repuesto.data.DescripcionRepu && (
                                     <div className="mt-1">
                                         <small className="text-muted">{repuesto.data.DescripcionRepu}</small>
+                                    </div>
+                                )}
+                                {repuesto.data.ModelosDroneIds.length > 0 && (
+                                    <div className="mt-1">
+                                        <small className="text-muted">
+                                            Modelos de drones: {
+                                                repuesto.data.ModelosDroneIds
+                                                    .map(id => {
+                                                        const modelo = modelosDrone.find((modelo: ModeloDrone) => modelo.id === id);
+                                                        return modelo ? modelo.data.NombreModelo : id;
+                                                    })
+                                                    .join(', ')
+                                            }
+                                        </small>
                                     </div>
                                 )}
                                 {mostrandoMock && repuesto.id.startsWith('mock') && (

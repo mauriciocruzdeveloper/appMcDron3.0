@@ -1,10 +1,7 @@
-import { ModeloDrone } from "./modeloDrone";
-
 // Interfaz para la data de un repuesto
 export interface RepuestoData {
   NombreRepu: string;
   DescripcionRepu: string;
-  ModeloDrones: ModeloDrone[]; // Array de objetos ModeloDrone
   ModelosDroneIds: string[]; // Nuevo array de IDs de modelos
   ProveedorRepu: string;
   PrecioRepu: number;
