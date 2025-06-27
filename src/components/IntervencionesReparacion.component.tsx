@@ -131,8 +131,6 @@ export default function IntervencionesReparacion({ reparacionId, readOnly = fals
       : 'Repuesto no encontrado';
   };
 
-  console.log('!!! intervenciones:', intervenciones);
-
   return (
     <div className="mb-3">
       {!readOnly && (

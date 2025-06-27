@@ -14,6 +14,7 @@ import {
 import { AppState, isFetchingComplete, isFetchingStart } from "../app/app.slice";
 import { Usuario } from "../../types/usuario";
 import { enviarReciboAsync } from "../app/app.actions";
+import { generarAutoDiagnostico } from "../../utils/utils";
 
 // OBTENER REPARACIONES
 export const getReparacionesAsync = createAsyncThunk(
@@ -79,11 +80,23 @@ export const guardarReparacionAsync = createAsyncThunk(
     async (reparacion: ReparacionType, { dispatch }) => {
         try {
             dispatch(isFetchingStart());
-            const reparacionGuardada = await guardarReparacionPersistencia(reparacion);
+            let diagnostico = '';
+            if (reparacion.data.EstadoRep === 'Revisado' && !reparacion.data.DiagnosticoRep) {
+              diagnostico = await dispatch(generarAutoDiagnostico(reparacion));
+            }
+            const newReparacion = {
+                ...reparacion,
+                data: {
+                    ...reparacion.data,
+                    DiagnosticoRep: diagnostico || reparacion.data.DiagnosticoRep,
+                },
+            }
+            const reparacionGuardada = await guardarReparacionPersistencia(newReparacion);
             dispatch(isFetchingComplete());
             return reparacionGuardada;
         } catch (error: unknown) { // TODO: Hacer tipo de dato para el error
             dispatch(isFetchingComplete());
+            console.error(error);
             throw error;
         }
     },

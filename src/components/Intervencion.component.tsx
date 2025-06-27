@@ -126,12 +126,8 @@ export default function IntervencionComponent(): JSX.Element {
   // Actualizar el precio total cuando cambian los valores
   useEffect(() => {
     // Calcular el precio total sumando mano de obra + repuestos
-    console.log('!!! selectedRepuestos:', selectedRepuestos);
-    console.log('!!! Precio Mano de Obra:', intervencion.data.PrecioManoObra);
     const precioRepuestos = selectedRepuestos.reduce((total, rep) => total + rep.precio, 0);
     const precioTotal = intervencion.data.PrecioManoObra + precioRepuestos;
-    console.log('!!! Precio Repuestos:', precioRepuestos);
-    console.log('!!! Precio Total:', precioTotal);
     
     setIntervencion(prev => ({
       ...prev,
@@ -207,7 +203,6 @@ export default function IntervencionComponent(): JSX.Element {
 
   const confirmaGuardarIntervencion = async () => {
     try {
-      console.log('!!! intervencion antes de guardar:', intervencion);
       const response = await dispatch(guardarIntervencionAsync(intervencion));
       
       if (response.meta.requestStatus === 'fulfilled') {
