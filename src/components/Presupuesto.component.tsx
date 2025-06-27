@@ -108,8 +108,7 @@ export default function Presupuesto(): JSX.Element {
     //////////////////////////////////////////////////////////////
     const confirmaGuardarPresupuesto = async () => {
         const dateNow = Date.now();
-        const autoDiagnostico = await dispatch(generarAutoDiagnostico(reparacion));
-
+        
         const presupuestoObject = {
             usuario: {
                 ...presupuesto.cliente,
@@ -123,7 +122,6 @@ export default function Presupuesto(): JSX.Element {
                     PrioridadRep: estadoInfo.prioridad,
                     FeConRep: dateNow,
                     FeRecRep: estadoParam === "Recibido" ? dateNow : null, // Solo poner fecha de recepción si está recibido
-                    DiagnosticoRep: autoDiagnostico,
                 },
             },
         };

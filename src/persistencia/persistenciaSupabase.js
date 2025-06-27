@@ -123,8 +123,6 @@ export const getIntervencionesPorReparacionPersistencia = async (reparacionId) =
       // Extraemos los IDs de los repuestos
       const repuestosIds = partInterventions ? partInterventions.map(rel => String(rel.part_id)) : [];
 
-      console.log('!!! item en getIntervencionesPorReparacionPersistencia:', item);
-
       return {
         id: String(item.intervention.id),
         data: {
@@ -465,6 +463,36 @@ export const eliminarReparacionPersistencia = async (id) => {
       }
 
       // 3. Ahora eliminamos la reparación
+      // 3.1 Eliminar fotos y documentos relacionados
+      const { data: reparacion, error: errorReparacion } = await supabase
+        .from('repair')
+        .select('photo_urls, document_urls')
+        .eq('id', id)
+        .single();
+
+      if (errorReparacion) throw errorReparacion;
+
+      if (reparacion.photo_urls) {
+        for (const url of reparacion.photo_urls) {
+          try {
+            await eliminarArchivoPersistencia(url);
+          } catch (error) {
+            console.error(`Error al eliminar foto: ${url}`, error);
+          }
+        }
+      }
+
+      if (reparacion.document_urls) {
+        for (const url of reparacion.document_urls) {
+          try {
+            await eliminarArchivoPersistencia(url);
+          } catch (error) {
+            console.error(`Error al eliminar documento: ${url}`, error);
+          }
+        }
+      }
+
+      // 3.2 Ahora eliminamos la reparación
       const { error: errorBorrado } = await supabase
         .from('repair')
         .delete()
@@ -1675,8 +1703,6 @@ export const getIntervencionPersistencia = async (id) => {
 
     // 3. Transformar al formato esperado por el frontend
 
-    console.log('!!! data de intervencion en persistencia', data);
-
     return {
       id: String(data.id),
       data: {
@@ -1753,7 +1779,6 @@ export const guardarIntervencionPersistencia = async (intervencion) => {
   try {
     // Iniciar una transacción para asegurar la integridad de los datos
     // (Simulamos transacción con múltiples operaciones secuenciales)
-    console.log('!!! intervención en persistenciaSupabase', intervencion);
     // 1. Preparar datos para la tabla intervention
     const intervencionData = {
       name: intervencion.data.NombreInt,
