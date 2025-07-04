@@ -19,7 +19,7 @@ export default function ListaReparaciones(): JSX.Element {
   useEffect(() => {
     if (reparaciones.length) {
       const reparacionesFiltered = reparaciones.filter(reparacion => {
-        const noPrioritarios = ["Entregado", "Liquidación", "Trabado"];
+        const noPrioritarios = ["Entregado", "Liquidación", "Trabado", "Respondido"];
         const estadosNoIncluidos = filter.estadosPrioritarios ? noPrioritarios : [''];
         const incluirPorEstado = !estadosNoIncluidos.includes(reparacion.data.EstadoRep) && !filter.search;
         let incluirPorSearch = false;
