@@ -664,7 +664,8 @@ export const guardarUsuarioPersistencia = async (usuario) => {
       address: usuario.data.DireccionUsu || '',
       city: usuario.data.CiudadUsu || '',
       state: usuario.data.ProvinciaUsu || '',
-      is_admin: usuario.data.Admin || false
+      is_admin: usuario.data.Admin || false,
+      nick: usuario.data.EmailUsu,
     };
 
     let result;
