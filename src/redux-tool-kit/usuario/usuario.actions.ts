@@ -4,7 +4,7 @@ import {
     getClientePersistencia,
     getClientePorEmailPersistencia,
     guardarUsuarioPersistencia,
-} from "../../persistencia/persistenciaFirebase";
+} from "../../persistencia/persistencia"; // Actualizado para usar la importación centralizada
 import { isFetchingComplete, isFetchingStart } from "../app/app.slice";
 import { Usuario } from "../../types/usuario";
 
@@ -64,7 +64,7 @@ export const getClienteByEmailAsync = createAsyncThunk(
     async (id: string, { dispatch }) => {
         try {
             dispatch(isFetchingStart());
-            const cliente = await getClientePorEmailPersistencia(id);
+            const cliente = await getClientePorEmailPersistencia(id); // TODO: tengo que llamar por id, no email.
             dispatch(isFetchingComplete());
             return cliente;
         } catch (error: any) { // TODO: Hacer tipo de dato para el error

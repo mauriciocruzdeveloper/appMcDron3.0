@@ -1,10 +1,20 @@
 import { createAsyncThunk, Unsubscribe } from "@reduxjs/toolkit";
 import { ReparacionType } from "../../types/reparacion";
 import { setReparaciones, setIntervencionesDeReparacionActual } from "./reparacion.slice";
-import { eliminarReparacionPersistencia, getReparacionesPersistencia, getReparacionPersistencia, guardarPresupuestoPersistencia, guardarReparacionPersistencia, getIntervencionesPorReparacionPersistencia, agregarIntervencionAReparacionPersistencia, eliminarIntervencionDeReparacionPersistencia } from "../../persistencia/persistenciaFirebase";
+import { 
+  eliminarReparacionPersistencia, 
+  getReparacionesPersistencia, 
+  getReparacionPersistencia, 
+  guardarPresupuestoPersistencia,
+  guardarReparacionPersistencia, 
+  getIntervencionesPorReparacionPersistencia, 
+  agregarIntervencionAReparacionPersistencia, 
+  eliminarIntervencionDeReparacionPersistencia 
+} from "../../persistencia/persistencia";
 import { AppState, isFetchingComplete, isFetchingStart } from "../app/app.slice";
 import { Usuario } from "../../types/usuario";
 import { enviarReciboAsync } from "../app/app.actions";
+import { generarAutoDiagnostico } from "../../utils/utils";
 
 // OBTENER REPARACIONES
 export const getReparacionesAsync = createAsyncThunk(
@@ -18,7 +28,7 @@ export const getReparacionesAsync = createAsyncThunk(
         const usuario = state.app.usuario;
         const unsubscribe = getReparacionesPersistencia(callbackReparaciones, usuario);
         return unsubscribe as Unsubscribe;
-        } catch (error: any) { // TODO: Hacer tipo de dato para el error
+        } catch (error: unknown) { // TODO: Hacer tipo de dato para el error
         return;
         }
     },
@@ -31,15 +41,16 @@ export const guardarReciboAsync = createAsyncThunk(
         reparacion: ReparacionType,
         usuario: Usuario,
     }, { dispatch }) => {
+
         dispatch(isFetchingStart());
         try {
             await guardarPresupuestoPersistencia(presupuesto);
             await dispatch(enviarReciboAsync(presupuesto.reparacion));
             dispatch(isFetchingComplete());
             return presupuesto;
-        } catch (error: any) { // TODO: Hacer tipo de dato para el error
+        } catch (error: unknown) { // TODO: Hacer tipo de dato para el error
             dispatch(isFetchingComplete());
-            return error;
+            throw error;
         }
     },
 );
@@ -56,9 +67,9 @@ export const guardarTransitoAsync = createAsyncThunk(
           await guardarPresupuestoPersistencia(presupuesto);
           dispatch(isFetchingComplete());
           return presupuesto;
-      } catch (error: any) { // TODO: Hacer tipo de dato para el error
+      } catch (error: unknown) { // TODO: Hacer tipo de dato para el error
           dispatch(isFetchingComplete());
-          return error;
+          throw error;
       }
   },
 );
@@ -69,12 +80,24 @@ export const guardarReparacionAsync = createAsyncThunk(
     async (reparacion: ReparacionType, { dispatch }) => {
         try {
             dispatch(isFetchingStart());
-            const reparacionGuardada = await guardarReparacionPersistencia(reparacion);
+            let diagnostico = '';
+            if (reparacion.data.EstadoRep === 'Revisado' && !reparacion.data.DiagnosticoRep) {
+              diagnostico = await dispatch(generarAutoDiagnostico(reparacion));
+            }
+            const newReparacion = {
+                ...reparacion,
+                data: {
+                    ...reparacion.data,
+                    DiagnosticoRep: diagnostico || reparacion.data.DiagnosticoRep,
+                },
+            }
+            const reparacionGuardada = await guardarReparacionPersistencia(newReparacion);
             dispatch(isFetchingComplete());
             return reparacionGuardada;
-        } catch (error: any) { // TODO: Hacer tipo de dato para el error
+        } catch (error: unknown) { // TODO: Hacer tipo de dato para el error
             dispatch(isFetchingComplete());
-            return error;
+            console.error(error);
+            throw error;
         }
     },
 );
@@ -88,7 +111,7 @@ export const eliminarReparacionAsync = createAsyncThunk(
             const reparacionEliminada = await eliminarReparacionPersistencia(id);
             dispatch(isFetchingComplete());
             return reparacionEliminada;
-        } catch (error: any) { // TODO: Hacer tipo de dato para el error
+        } catch (error: unknown) { // TODO: Hacer tipo de dato para el error
             console.error(error);
             dispatch(isFetchingComplete());
             throw error;
@@ -105,9 +128,9 @@ export const getReparacionAsync = createAsyncThunk(
             const reparacion = await getReparacionPersistencia(id);
             dispatch(isFetchingComplete());
             return reparacion;
-        } catch (error: any) { // TODO: Hacer tipo de dato para el error
+        } catch (error: unknown) { // TODO: Hacer tipo de dato para el error
             dispatch(isFetchingComplete());
-            return error;
+            throw error;
         }
     },
 );
@@ -122,7 +145,7 @@ export const getIntervencionesPorReparacionAsync = createAsyncThunk(
       dispatch(setIntervencionesDeReparacionActual(intervenciones));
       dispatch(isFetchingComplete());
       return intervenciones;
-    } catch (error: any) { // TODO: Hacer tipo de dato para el error
+    } catch (error: unknown) { // TODO: Hacer tipo de dato para el error
       dispatch(isFetchingComplete());
       throw error;
     }
@@ -140,7 +163,7 @@ export const agregarIntervencionAReparacionAsync = createAsyncThunk(
       await dispatch(getIntervencionesPorReparacionAsync(reparacionId));
       dispatch(isFetchingComplete());
       return true;
-    } catch (error: any) { // TODO: Hacer tipo de dato para el error
+    } catch (error: unknown) { // TODO: Hacer tipo de dato para el error
       dispatch(isFetchingComplete());
       throw error;
     }
@@ -158,7 +181,7 @@ export const eliminarIntervencionDeReparacionAsync = createAsyncThunk(
       await dispatch(getIntervencionesPorReparacionAsync(reparacionId));
       dispatch(isFetchingComplete());
       return true;
-    } catch (error: any) { // TODO: Hacer tipo de dato para el error
+    } catch (error: unknown) { // TODO: Hacer tipo de dato para el error
       dispatch(isFetchingComplete());
       throw error;
     }
