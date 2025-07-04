@@ -29,7 +29,6 @@ export default function DroneComponent(): JSX.Element {
   const [drone, setDrone] = useState<Drone>({
     id: '',
     data: {
-      NumeroSerie: '',
       ModeloDroneId: '',
       Propietario: '',
       Observaciones: ''
@@ -44,11 +43,10 @@ export default function DroneComponent(): JSX.Element {
         setDrone(droneActual);
         // Si el propietario existe, configuramos el valor para el selector
         if (droneActual.data.Propietario) {
-          const propietario = usuarios.find(u => u.id === droneActual.data.Propietario || 
-                                          u.data.EmailUsu === droneActual.data.Propietario);
+          // Buscar el usuario por id (no por email)
+          const propietario = usuarios.find(u => u.id === droneActual.data.Propietario);
           if (propietario) {
-            const email = propietario.data.EmailUsu || propietario.id;
-            setPropietarioValue({ value: email, label: email });
+            setPropietarioValue({ value: propietario.id, label: propietario.data.EmailUsu });
           }
         }
       } else {
@@ -70,6 +68,7 @@ export default function DroneComponent(): JSX.Element {
   const handleUsuarioChange = (selectedOption: any) => {
     if (selectedOption) {
       setPropietarioValue(selectedOption);
+      // Guardar el id del propietario, no el email
       changeInput('Propietario', selectedOption.value);
     } else {
       setPropietarioValue(null);
@@ -98,17 +97,24 @@ export default function DroneComponent(): JSX.Element {
         });
         
         // Si estamos creando un nuevo drone, actualizar la URL con el ID real
-        if (isNew && response.payload?.id) {
-          history.replace(`/inicio/drones/${response.payload.id}`);
+        if (isNew && (response.payload as Drone)?.id) { // TODO: Corregir este problema de tipo, acá y en las otras entidades
+          history.replace(`/inicio/drones/${(response.payload as Drone).id}`);
         }
-      } else {
+      } else if (response.meta.requestStatus === 'rejected') {
+        // Mostrar mensaje de error específico si está disponible
+        const resp = response as { error: { message: string }};
         openModal({
-          mensaje: "Error al guardar el drone.",
+          mensaje: "Error al guardar el drone: " + (resp.error?.message || "Error desconocido."),
           tipo: "danger",
           titulo: "Error",
         });
       }
     } catch (error) {
+      openModal({
+        mensaje: "Error al guardar el drone: " + error,
+        tipo: "danger",
+        titulo: "Error",
+      });
       console.error("Error al guardar el drone:", error);
     }
   };
@@ -156,17 +162,6 @@ export default function DroneComponent(): JSX.Element {
       <div className="card mb-3">
         <div className="card-body">
           <h5 className="card-title bluemcdron">DATOS DEL DRONE</h5>
-          
-          <div className="mb-3">
-            <label className="form-label">Número de Serie</label>
-            <input
-              type="text"
-              className="form-control"
-              value={drone.data.NumeroSerie}
-              onChange={(e) => changeInput('NumeroSerie', e.target.value)}
-              required
-            />
-          </div>
           
           <div className="mb-3">
             <label className="form-label">Modelo de Drone</label>

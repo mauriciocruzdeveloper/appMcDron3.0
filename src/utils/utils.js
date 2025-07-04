@@ -1,18 +1,18 @@
 /* eslint-disable @typescript-eslint/explicit-module-boundary-types */
-import {
-    notificacionesPorMensajesPersistencia,
-    actualizarLeidosPersistencia,
-    getLocPorProvPersistencia,
-    getProvinciasSelectPersistencia
-} from '../persistencia/persistenciaFirebase';
 import { HttpMethod } from '../types/httpMethods';
 
 import { isFetchingComplete, isFetchingStart } from "../redux-tool-kit/app/app.slice";
 import { setLocalidadesSelect, setProvinciasSelect } from "../redux-tool-kit/usuario/usuario.slice";
-// } from "../../persistencia/persistenciaJava";
-// } from "../../persistencia/persistenciaNode";
+import {
+    actualizarLeidosPersistencia,
+    notificacionesPorMensajesPersistencia,
+    getLocPorProvPersistencia,
+    getProvinciasSelectPersistencia,
+} from '../persistencia/persistencia';
 
 export const convertTimestampCORTO = (timestamp) => {
+    if (!timestamp || isNaN(timestamp)) return '';
+    
     let d = new Date(parseInt(timestamp) * 1), // Convert the passed timestamp to milliseconds
         yyyy = d.getFullYear(),
         mm = ('0' + (d.getMonth() + 1)).slice(-2),  // Months are zero based. Add leading 0.

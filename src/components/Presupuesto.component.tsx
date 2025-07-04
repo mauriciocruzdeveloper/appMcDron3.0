@@ -8,7 +8,7 @@ import { useAppSelector } from "../redux-tool-kit/hooks/useAppSelector";
 import { useAppDispatch } from "../redux-tool-kit/hooks/useAppDispatch";
 import { useModal } from "./Modal/useModal";
 import { guardarReciboAsync, guardarTransitoAsync } from "../redux-tool-kit/reparacion/reparacion.actions";
-import { getClienteByEmailAsync } from "../redux-tool-kit/usuario/usuario.actions";
+import { getClienteAsync } from "../redux-tool-kit/usuario/usuario.actions";
 import { generarAutoDiagnostico, getLocalidadesPorProvincia, getProvinciasSelect } from "../utils/utils";
 import { estados } from "../datos/estados";
 
@@ -34,17 +34,20 @@ export default function Presupuesto(): JSX.Element {
 
     const [presupuesto, setPresupuesto] = useState<{
         cliente: {
-            id?: string,
+            id: string,
             data: any,
         },
         reparacion: {
+            id: string,
             data: any,
         },
     }>({
         cliente: {
+            id: "new",
             data: {}
         },
         reparacion: {
+            id: "new",
             data: {}
         }
     });
@@ -105,8 +108,7 @@ export default function Presupuesto(): JSX.Element {
     //////////////////////////////////////////////////////////////
     const confirmaGuardarPresupuesto = async () => {
         const dateNow = Date.now();
-        const autoDiagnostico = await dispatch(generarAutoDiagnostico(reparacion));
-
+        
         const presupuestoObject = {
             usuario: {
                 ...presupuesto.cliente,
@@ -114,14 +116,12 @@ export default function Presupuesto(): JSX.Element {
             },
             reparacion: {
                 ...presupuesto.reparacion,
-                id: dateNow.toString(),
                 data: {
                     ...presupuesto.reparacion.data,
                     EstadoRep: estadoInfo.nombre,
                     PrioridadRep: estadoInfo.prioridad,
                     FeConRep: dateNow,
                     FeRecRep: estadoParam === "Recibido" ? dateNow : null, // Solo poner fecha de recepción si está recibido
-                    DiagnosticoRep: autoDiagnostico,
                 },
             },
         };
@@ -203,7 +203,7 @@ export default function Presupuesto(): JSX.Element {
     // un usuario/cliente de la lista que previamente se cargó en el Select
     const handleOnChangeUsuarios = async (e: any) => {
         if (e) {
-            const response = await dispatch(getClienteByEmailAsync(e.value));
+            const response = await dispatch(getClienteAsync(e.value));
 
             if (response.meta.requestStatus === 'rejected') {
                 openModal({

@@ -1,5 +1,5 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
-import { sendMessagePersistencia } from "../../persistencia/persistenciaFirebase";
+import { sendMessagePersistencia } from "../../persistencia/persistencia"; // Actualizado para usar la importación centralizada
 import { isFetchingComplete, isFetchingStart } from "../app/app.slice";
 // import { setMessages } from "./mensaje.slice";
 

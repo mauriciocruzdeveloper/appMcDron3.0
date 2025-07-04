@@ -31,11 +31,50 @@ export default function ReparacionComponent(): React.ReactElement | null {
 
     const isAdmin = useAppSelector(state => state.app.usuario?.data.Admin) ?? false;
     const { id } = useParams<ParamTypes>();
+    const isNew = id === "new";
+
+    // Estado inicial para alta
+    const reparacionVacia: ReparacionType = {
+        id: "",
+        data: {
+            EstadoRep: "Consulta",
+            PrioridadRep: 1,
+            DroneId: "",
+            DroneRep: "",
+            NombreUsu: "",
+            ApellidoUsu: "",
+            UsuarioRep: "",
+            DriveRep: "",
+            AnotacionesRep: "",
+            FeConRep: Date.now(),
+            EmailUsu: "",
+            TelefonoUsu: "",
+            DescripcionUsuRep: "",
+            DiagnosticoRep: "",
+            FeRecRep: 0,
+            NumeroSerieRep: "",
+            DescripcionTecRep: "",
+            PresuMoRep: 0,
+            PresuReRep: 0,
+            PresuFiRep: 0,
+            PresuDiRep: 0,
+            TxtRepuestosRep: "",
+            InformeRep: "",
+            FeFinRep: 0,
+            FeEntRep: 0,
+            TxtEntregaRep: "",
+            SeguimientoEntregaRep: "",
+            urlsFotos: [],
+            urlsDocumentos: [],
+            IntervencionesIds: []
+        }
+    };
+
     const reparacionStore = useAppSelector(
         state => state.reparacion.coleccionReparaciones.find(reparacion => String(reparacion.id) === id)
     );
     const usuarioStore = useAppSelector(
-        state => state.usuario.coleccionUsuarios.find(usuario => usuario.id === reparacionStore?.data.UsuarioRep)
+        state => state.usuario.coleccionUsuarios.find(usuario => usuario.id === (isNew ? "" : reparacionStore?.data.UsuarioRep))
     );
 
     // Obtener las intervenciones aplicadas a esta reparación
@@ -45,16 +84,20 @@ export default function ReparacionComponent(): React.ReactElement | null {
     const totalIntervenciones = intervencionesAplicadas.reduce((total, intervencion) =>
         total + intervencion.data.PrecioTotal, 0);
 
-    const [reparacionOriginal, setReparacionOriginal] = useState<ReparacionType>();
-    const [reparacion, setReparacion] = useState<ReparacionType | undefined>(reparacionStore);
+    const [reparacionOriginal, setReparacionOriginal] = useState<ReparacionType | undefined>(isNew ? reparacionVacia : reparacionStore);
+    const [reparacion, setReparacion] = useState<ReparacionType | undefined>(isNew ? reparacionVacia : reparacionStore);
     const [fotoSeleccionada, setFotoSeleccionada] = useState<string | null>(null);
 
     useEffect(() => {
-        if (reparacionStore) {
+        if (!isNew && reparacionStore) {
             setReparacion(reparacionStore);
             setReparacionOriginal(reparacionStore);
         }
-    }, [reparacionStore, id]);
+        if (isNew) {
+            setReparacion(reparacionVacia);
+            setReparacionOriginal(reparacionVacia);
+        }
+    }, [reparacionStore, id, isNew]);
 
     useEffect(() => {
         if (reparacion && totalIntervenciones && !reparacion.data.PresuFiRep) {
@@ -68,7 +111,7 @@ export default function ReparacionComponent(): React.ReactElement | null {
         }
     }, [totalIntervenciones]);
 
-    if (!reparacion || !usuarioStore) return null;
+    if (!reparacion) return null;
 
     const changeInputRep = (field: string, value: string) => {
         setReparacion(prevReparacion => prevReparacion ? {
@@ -402,7 +445,8 @@ export default function ReparacionComponent(): React.ReactElement | null {
     };
 
     const handleGoToUser = () => {
-        history.push(`/inicio/usuarios/${usuarioStore.data.EmailUsu}`)
+        if (!usuarioStore?.id) return;
+        history.push(`/inicio/usuarios/${usuarioStore.id}`);
     }
 
     // Formatear precio para mostrar

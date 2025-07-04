@@ -10,27 +10,24 @@ const dronesMock: Drone[] = [
     {
         id: 'mock-1',
         data: {
-            NumeroSerie: 'SN123456789',
             ModeloDroneId: 'mock-1', // ID de un Mavic 3
-            Propietario: 'Juan Pérez',
+            Propietario: 'mock-user-1', // Usar un id ficticio
             Observaciones: 'Utilizado principalmente para fotografía'
         }
     },
     {
         id: 'mock-2',
         data: {
-            NumeroSerie: 'SN987654321',
             ModeloDroneId: 'mock-2', // ID de un Mini 3 Pro
-            Propietario: 'María López',
+            Propietario: 'mock-user-2',
             Observaciones: 'Usado para grabación de eventos'
         }
     },
     {
         id: 'mock-3',
         data: {
-            NumeroSerie: 'SN456789123',
             ModeloDroneId: 'mock-3', // ID de un Phantom 4 Pro
-            Propietario: 'Carlos Rodríguez',
+            Propietario: 'mock-user-3',
             Observaciones: 'Problema con la batería, cambio programado'
         }
     }
@@ -41,6 +38,7 @@ export default function ListaDrones(): JSX.Element {
     const coleccionDrones = useAppSelector((state) => state.drone.coleccionDrones);
     const filter = useAppSelector((state) => state.drone.filter);
     const modelosDrone = useAppSelector((state) => state.modeloDrone.coleccionModelosDrone);
+    const usuarios = useAppSelector((state) => state.usuario.coleccionUsuarios); // Obtener la colección de usuarios
 
     const [dronesList, setDronesList] = useState<Drone[]>([]);
     const [mostrandoMock, setMostrandoMock] = useState<boolean>(false);
@@ -51,7 +49,6 @@ export default function ListaDrones(): JSX.Element {
                 let incluirPorSearch = true;
                 if (filter) {
                     incluirPorSearch =
-                        drone.data?.NumeroSerie?.toLowerCase().includes(filter.toLowerCase()) ||
                         drone.data?.Propietario?.toLowerCase().includes(filter.toLowerCase()) ||
                         (drone.data?.Observaciones?.toLowerCase().includes(filter.toLowerCase()) || false);
                 }
@@ -136,11 +133,19 @@ export default function ListaDrones(): JSX.Element {
                     >
                         <div className='card-body p-3'>
                             <div className='d-flex w-100 justify-content-between'>
-                                <h5 className='mb-1'>{drone.data.NumeroSerie}</h5>
-                                <span className='badge bg-bluemcdron'>{getModeloDroneName(drone.data.ModeloDroneId)}</span>
+                                <h5 className='mb-1'>{getModeloDroneName(drone.data.ModeloDroneId)}</h5>
+                                {/* Badge de modelo eliminado, ya se muestra como título */}
                             </div>
                             <div>
-                                <small className='text-muted'>{drone.data.Propietario}</small>
+                                {/* Mostrar nombre y apellido del propietario si existe */}
+                                <small className='text-muted'>
+                                  {(() => {
+                                    // Nos aseguramos que el id del usuario sea string
+                                    const propietarioId = drone.data.Propietario;
+                                    const usuario = usuarios.find(u => u.id === propietarioId);
+                                    return usuario ? `${usuario.data.NombreUsu} ${usuario.data.ApellidoUsu}` : propietarioId;
+                                  })()}
+                                </small>
                             </div>
                             {drone.data.Observaciones && (
                                 <div>

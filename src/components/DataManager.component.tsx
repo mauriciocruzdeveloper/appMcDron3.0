@@ -1,13 +1,13 @@
 import { useEffect, useState } from "react";
-import { 
-    getMessagesPersistencia, 
-    getReparacionesPersistencia, 
-    getRepuestosPersistencia, 
+import {
+    getMessagesPersistencia,
+    getReparacionesPersistencia,
+    getRepuestosPersistencia,
     getUsuariosPersistencia,
     getModelosDronePersistencia,
     getDronesPersistencia,
     getIntervencionesPersistencia
-} from "../persistencia/persistenciaFirebase";
+} from "../persistencia/persistencia"; // Actualizado para usar la importación centralizada
 import { useAppDispatch } from "../redux-tool-kit/hooks/useAppDispatch";
 import { setReparaciones } from "../redux-tool-kit/reparacion/reparacion.slice";
 import { ReparacionType } from "../types/reparacion";
@@ -24,6 +24,7 @@ import { Drone } from "../types/drone";
 import { setDrones } from "../redux-tool-kit/drone/drone.slice";
 import { Intervencion } from "../types/intervencion";
 import { setIntervenciones } from "../redux-tool-kit/intervencion/intervencion.slice";
+import { verificarConexionWebSocketAsync } from "../redux-tool-kit/app/app.actions";
 
 export interface DataManagerProps {
     children: React.ReactNode;
@@ -41,6 +42,36 @@ export function DataManagerComponent({ children }: DataManagerProps): React.Reac
     const [unsubscribeModelosDrone, setUnsubscribeModelosDrone] = useState<Unsubscribe>();
     const [unsubscribeDrones, setUnsubscribeDrones] = useState<Unsubscribe>();
     const [unsubscribeIntervenciones, setUnsubscribeIntervenciones] = useState<Unsubscribe>();
+
+    useEffect(() => {
+        const handleVisibilityChange = async () => {
+            try {
+                const conectado = await dispatch(verificarConexionWebSocketAsync()).unwrap();
+                if (conectado) {
+                    console.log("Conexión al websocket activa");
+                    getUsuarios();
+                    getReparaciones();
+                    getMensajes();
+                    getRepuestos();
+                    getModelosDrone();
+                    getDrones();
+                    getIntervenciones();
+                } else {
+                    console.log("No hay conexión al websocket");
+                }
+            } catch (error) {
+                console.error("Error al verificar conexión al websocket:", error);
+            }
+        };
+
+        handleVisibilityChange();
+
+        document.addEventListener("visibilitychange", handleVisibilityChange);
+
+        return () => {
+            document.removeEventListener("visibilitychange", handleVisibilityChange);
+        };
+    }, []);
 
     useEffect(() => {
         getUsuarios();
@@ -113,10 +144,9 @@ export function DataManagerComponent({ children }: DataManagerProps): React.Reac
                 (usuarios: Usuario[]) => {
                     dispatch(setUsuarios(usuarios));
                     const usuariosSelect = usuarios.map(usuario => {
-                        const dato = usuario.data.EmailUsu ? usuario.data.EmailUsu : usuario.id;
                         return {
-                            value: dato,
-                            label: dato,
+                            value: usuario.id,
+                            label: usuario.data.EmailUsu,
                         }
                     });
                     dispatch(setUsuarios(usuarios));
@@ -133,7 +163,8 @@ export function DataManagerComponent({ children }: DataManagerProps): React.Reac
     const getMensajes = async () => {
         try {
             const unsubscribe = await getMessagesPersistencia(
-                (mensajes: any) => {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                (mensajes: any) => { // TODO: Poner el tipo correcto
                     dispatch(setMessages(mensajes));
                 },
                 emailUsuMessage,
@@ -148,9 +179,9 @@ export function DataManagerComponent({ children }: DataManagerProps): React.Reac
 
     const getRepuestos = async () => {
         try {
-                        const unsubscribe = await getRepuestosPersistencia(
+            const unsubscribe = await getRepuestosPersistencia(
                 (repuestos: Repuesto[]) => {
-                                        dispatch(setRepuestos(repuestos));
+                    dispatch(setRepuestos(repuestos));
                 },
             );
 
@@ -159,7 +190,7 @@ export function DataManagerComponent({ children }: DataManagerProps): React.Reac
             console.error("Error al obtener repuestos:", error);
         }
     };
-    
+
     const getModelosDrone = async () => {
         try {
             const unsubscribe = await getModelosDronePersistencia(
@@ -173,7 +204,7 @@ export function DataManagerComponent({ children }: DataManagerProps): React.Reac
             console.error("Error al obtener modelos de drones:", error);
         }
     };
-    
+
     const getDrones = async () => {
         try {
             const unsubscribe = await getDronesPersistencia(

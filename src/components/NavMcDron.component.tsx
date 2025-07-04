@@ -1,11 +1,11 @@
 import React from 'react';
 import { Navbar } from 'react-bootstrap';
 import { ArrowLeftShort } from 'react-bootstrap-icons';
-import { notificacionesPorMensajesPersistencia } from '../persistencia/persistenciaFirebase';
 import history from "../history";
 import { logout } from "../redux-tool-kit/app/app.slice";
 import { useAppSelector } from "../redux-tool-kit/hooks/useAppSelector";
 import { useModal } from './Modal/useModal';
+import { notificacionesPorMensajesPersistencia } from '../persistencia/persistencia';
 
 
 export default function NavMcDron (): JSX.Element {

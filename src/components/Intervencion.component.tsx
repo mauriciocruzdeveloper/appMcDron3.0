@@ -78,12 +78,10 @@ export default function IntervencionComponent(): JSX.Element {
     // Si hay un modelo seleccionado, filtrar repuestos compatibles
     if (intervencion.data.ModeloDroneId) {
       const compatibles = repuestos.filter(repuesto =>
-        // O repuestos con nombre de modelo que coincida
-        repuesto.data.ModeloDroneRepu === (
-          modelosDrone.find(m => m.id === intervencion.data.ModeloDroneId)?.data.NombreModelo || ''
-        ) ||
-        // O repuestos universales
-        repuesto.data.ModeloDroneRepu === 'Universal'
+        // El repuesto es compatible si el modelo está en ModelosDroneIds
+        repuesto.data.ModelosDroneIds.includes(intervencion.data.ModeloDroneId as string)
+        // O si es universal (puedes definir la lógica, aquí: si ModelosDroneIds está vacío)
+        || repuesto.data.ModelosDroneIds.length === 0
       );
       
       const options = compatibles.map(repuesto => ({
@@ -213,19 +211,25 @@ export default function IntervencionComponent(): JSX.Element {
           tipo: "success",
           titulo: "Guardar Intervención",
         });
-        
         // Si estamos creando una nueva intervención, actualizar la URL con el ID real
-        if (isNew && response.payload?.id) {
-          history.replace(`/inicio/intervenciones/${response.payload.id}`);
+        if (isNew && (response.payload as Intervencion)?.id) {
+          history.replace(`/inicio/intervenciones/${(response.payload as Intervencion).id}`);
         }
-      } else {
+      } else if (response.meta.requestStatus === 'rejected') {
+        // Mostrar mensaje de error específico si está disponible
+        const resp = response as { error: { message: string } };
         openModal({
-          mensaje: "Error al guardar la intervención.",
+          mensaje: "Error al guardar la intervención: " + (resp.error?.message || "Error desconocido."),
           tipo: "danger",
           titulo: "Error",
         });
       }
     } catch (error) {
+      openModal({
+        mensaje: "Error al guardar la intervención: " + error,
+        tipo: "danger",
+        titulo: "Error",
+      });
       console.error("Error al guardar la intervención:", error);
     }
   };

@@ -5,10 +5,9 @@ import {
     getRepuestosPorModeloPersistencia,
     guardarRepuestoPersistencia,
     getRepuestosPorProveedorPersistencia,
-} from "../../persistencia/persistenciaFirebase";
+} from "../../persistencia/persistencia"; // Actualizado para usar la importación centralizada
 import { isFetchingComplete, isFetchingStart } from "../app/app.slice";
 import { Repuesto } from "../../types/repuesto";
-import { RootState } from '../store';
 
 // ELIMINAR REPUESTO
 export const eliminarRepuestoAsync = createAsyncThunk(
@@ -20,7 +19,7 @@ export const eliminarRepuestoAsync = createAsyncThunk(
             const repuestoEliminado = await eliminarRepuestoPersistencia(id);
             dispatch(isFetchingComplete());
             return repuestoEliminado;
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error("Error al eliminar repuesto:", error);
             dispatch(isFetchingComplete());
             throw error; // Propagamos el error para que se maneje correctamente como "rejected"
@@ -37,9 +36,10 @@ export const guardarRepuestoAsync = createAsyncThunk(
             const repuestoGuardado = await guardarRepuestoPersistencia(repuesto);
             dispatch(isFetchingComplete());
             return repuestoGuardado;
-        } catch (error: any) { // TODO: Hacer tipo de dato para el error
+        } catch (error: unknown) { // TODO: Hacer tipo de dato para el error
+            console.error("Error al guardar repuesto guardarRepuestoAsync:", error);
             dispatch(isFetchingComplete());
-            return error;
+            throw error;
         }
     },
 );
@@ -53,7 +53,7 @@ export const getRepuestoAsync = createAsyncThunk(
             const repuesto = await getRepuestoPersistencia(id);
             dispatch(isFetchingComplete());
             return repuesto;
-        } catch (error: any) { // TODO: Hacer tipo de dato para el error
+        } catch (error: unknown) { // TODO: Hacer tipo de dato para el error
             dispatch(isFetchingComplete());
             return error;
         }
@@ -69,7 +69,7 @@ export const getRepuestosPorModeloAsync = createAsyncThunk(
             const repuestos = await getRepuestosPorModeloPersistencia(modelo);
             dispatch(isFetchingComplete());
             return repuestos;
-        } catch (error: any) { // TODO: Hacer tipo de dato para el error
+        } catch (error: unknown) { // TODO: Hacer tipo de dato para el error
             dispatch(isFetchingComplete());
             return error;
         }
@@ -85,7 +85,7 @@ export const getRepuestosPorProveedorAsync = createAsyncThunk(
             const repuestos = await getRepuestosPorProveedorPersistencia(proveedor);
             dispatch(isFetchingComplete());
             return repuestos;
-        } catch (error: any) { // TODO: Hacer tipo de dato para el error
+        } catch (error: unknown) { // TODO: Hacer tipo de dato para el error
             dispatch(isFetchingComplete());
             return error;
         }

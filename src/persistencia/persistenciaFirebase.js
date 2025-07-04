@@ -10,7 +10,6 @@ import {
 import {
     onSnapshot,
     where,
-    limit,
     collection,
     doc,
     setDoc,
@@ -584,6 +583,7 @@ export const actualizarLeidosPersistencia = (mensajesLeidos) => {
 };
 
 // Esta función probablemente no debería estar acá ////////////////////////
+// TODO: Esta función tendría que estar en otro lado y mirar el estado de redux, que se va actualizando a medida que cambian los mensajes. Ver bien!!!
 export const notificacionesPorMensajesPersistencia = (emailUsu) => {
 
     // PLUGIN cordova-plugin-firestore (no funciona el plugin) //////////////////////////////////////////
