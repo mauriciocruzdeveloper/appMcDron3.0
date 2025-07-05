@@ -6,6 +6,7 @@ import { logout } from "../redux-tool-kit/app/app.slice";
 import { useAppSelector } from "../redux-tool-kit/hooks/useAppSelector";
 import { useModal } from './Modal/useModal';
 import { notificacionesPorMensajesPersistencia } from '../persistencia/persistencia';
+import '../styles/navbar.css'; // Importa el archivo CSS
 
 
 export default function NavMcDron (): JSX.Element {
@@ -39,7 +40,7 @@ export default function NavMcDron (): JSX.Element {
     }
 
     return (
-        <Navbar sticky="top" className="bg-bluemcdron d-flex justify-content-between px-2">
+        <Navbar sticky="top" className="navbar-shadow bg-bluemcdron d-flex justify-content-between px-2">
             <ArrowLeftShort
                 width="50"
                 height="50"

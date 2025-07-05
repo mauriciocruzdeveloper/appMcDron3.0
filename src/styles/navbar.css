@@ -1,0 +1,5 @@
+/* Estilos personalizados para el Navbar */
+.navbar-shadow {
+    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.5); /* Sombra suave */
+    z-index: 1000; /* Asegura que el navbar esté por encima de otros elementos */
+}
