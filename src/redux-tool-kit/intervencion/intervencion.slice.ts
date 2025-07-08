@@ -1,5 +1,6 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { Intervencion } from '../../types/intervencion';
+import { guardarIntervencionAsync, eliminarIntervencionAsync } from './intervencion.actions';
 
 interface IntervencionState {
   coleccionIntervenciones: Intervencion[];
@@ -31,6 +32,21 @@ export const intervencionSlice = createSlice({
     setIsFetchingIntervencion: (state, action: PayloadAction<boolean>) => {
       state.isFetchingIntervencion = action.payload;
     }
+  },
+  extraReducers: (builder) => {
+    builder.addCase(guardarIntervencionAsync.fulfilled, (state, action) => {
+      const index = state.coleccionIntervenciones.findIndex(intervencion => intervencion.id === action.payload.id);
+      if (index !== -1) {
+        state.coleccionIntervenciones[index] = action.payload;
+      } else {
+        state.coleccionIntervenciones.push(action.payload);
+      }
+    });
+    builder.addCase(eliminarIntervencionAsync.fulfilled, (state, action) => {
+      state.coleccionIntervenciones = state.coleccionIntervenciones.filter(
+        intervencion => intervencion.id !== action.payload
+      );
+    });
   }
 });
 

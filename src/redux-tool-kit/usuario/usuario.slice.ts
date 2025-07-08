@@ -1,6 +1,7 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { Usuario } from '../../types/usuario';
 import { SelectOption } from '../../types/selectOption';
+import { guardarUsuarioAsync, eliminarUsuarioAsync } from './usuario.actions';
 
 // Tipos para el estado inicial
 interface UsuarioState {
@@ -42,6 +43,21 @@ const usuarioSlice = createSlice({
         setFilter: (state, action: PayloadAction<string>) => {
             state.filter = action.payload;
         },
+    },
+    extraReducers: (builder) => {
+        builder.addCase(guardarUsuarioAsync.fulfilled, (state, action) => {
+            const index = state.coleccionUsuarios.findIndex(usuario => usuario.id === action.payload.id);
+            if (index !== -1) {
+                state.coleccionUsuarios[index] = action.payload;
+            } else {
+                state.coleccionUsuarios.push(action.payload);
+            }
+        });
+        builder.addCase(eliminarUsuarioAsync.fulfilled, (state, action) => {
+            state.coleccionUsuarios = state.coleccionUsuarios.filter(
+                usuario => usuario.id !== action.payload
+            );
+        });
     },
 });
 
