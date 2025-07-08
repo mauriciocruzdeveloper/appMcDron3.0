@@ -1,4 +1,4 @@
-import { createClient } from '@supabase/supabase-js';
+import { createClient, REALTIME_CHANNEL_STATES } from '@supabase/supabase-js';
 
 // Estas credenciales deberían estar en un archivo de configuración o variables de entorno
 const supabaseUrl = process.env.REACT_APP_SUPABASE_URL || 'TU_URL_DE_SUPABASE';
@@ -1068,7 +1068,7 @@ export const getRepuestosPersistencia = async (setRepuestosToRedux) => {
   cargarRepuestos();
 
   // Configurar la suscripción en tiempo real
-  const channel = supabase
+  const channelRepuestos = supabase
     .channel('repuestos-changes')
     .on('postgres_changes', {
       event: '*',
@@ -1080,10 +1080,24 @@ export const getRepuestosPersistencia = async (setRepuestosToRedux) => {
       cargarRepuestos();
     })
     .subscribe();
+  
+  const channelRepuestosModelos = supabase
+    .channel('repuestos-modelos-changes')
+    .on('postgres_changes', {
+      event: '*',
+      schema: 'public',
+      table: 'part_drone_model'
+    }, (payload) => {
+      console.log('Cambio detectado en relaciones repuestos-modelos:', payload);
+      // Cuando hay cambios, recargamos todos los datos
+      cargarRepuestos();
+    })
+    .subscribe();
 
   // Devolver función para cancelar la suscripción
   return () => {
-    supabase.removeChannel(channel);
+    supabase.removeChannel(channelRepuestos);
+    supabase.removeChannel(channelRepuestosModelos);
   };
 };
 
@@ -2407,13 +2421,142 @@ export const eliminarArchivoPersistencia = async (url) => {
   }
 };
 
-// Verificar conexión WebSocket
+// Verificar conexión WebSocket y estado de canales activos
 export const verificarConexionWebSocket = async () => {
   try {
-    const channel = supabase.channel('test-channel');
-    return channel.isSubscribed();
+    // Lista de canales que deberían estar activos en la aplicación
+    const canalesToVerificar = [
+      'reparaciones-changes',
+      'usuarios-changes',
+      'repuestos-changes',
+      'repuestos-modelos-changes',
+      'modelos-drone-changes',
+      'drones-changes',
+      'intervenciones-changes',
+      'part-intervention-changes'
+    ];
+
+    console.log('=== VERIFICACIÓN DE CANALES WEBSOCKET ===');
+    
+    // Verificar el estado general de Realtime
+    const realtimeState = supabase.realtime?.connection?.state;
+    console.log('Estado de conexión Realtime:', realtimeState);
+    
+    // Obtener todos los canales activos
+    const canalesActivos = supabase.realtime?.channels || {};
+    const nombresCanalesActivos = Object.keys(canalesActivos);
+    
+    console.log('Canales totales registrados:', nombresCanalesActivos.length);
+    console.log('Nombres de canales:', nombresCanalesActivos);
+    
+    // Verificar cada canal específico
+    let canalesConectados = 0;
+    const estadoCanales = {};
+    
+    canalesToVerificar.forEach(nombreCanal => {
+      const canal = canalesActivos[nombreCanal];
+      if (canal) {
+        const estado = canal.state;
+        estadoCanales[nombreCanal] = estado;
+        console.log(`Canal "${nombreCanal}": ${estado}`);
+        
+        if (estado === REALTIME_CHANNEL_STATES.joined) {
+          canalesConectados++;
+        }
+      } else {
+        estadoCanales[nombreCanal] = 'NO_ENCONTRADO';
+        console.log(`Canal "${nombreCanal}": NO ENCONTRADO`);
+      }
+    });
+    
+    const porcentajeConectados = (canalesConectados / canalesToVerificar.length) * 100;
+    
+    console.log(`Canales conectados: ${canalesConectados}/${canalesToVerificar.length} (${porcentajeConectados.toFixed(1)}%)`);
+    console.log('==========================================');
+    
+    // Retornar información detallada
+    return {
+      realtimeConectado: realtimeState === 'open',
+      canalesEsperados: canalesToVerificar.length,
+      canalesConectados: canalesConectados,
+      porcentajeConectados: porcentajeConectados,
+      estadoCanales: estadoCanales,
+      todoOk: realtimeState === 'open' && canalesConectados === canalesToVerificar.length
+    };
+    
   } catch (error) {
     console.error('Error al verificar conexión al websocket:', error);
-    return false;
+    return {
+      realtimeConectado: false,
+      canalesEsperados: 0,
+      canalesConectados: 0,
+      porcentajeConectados: 0,
+      estadoCanales: {},
+      todoOk: false,
+      error: error.message
+    };
+  }
+};
+
+// Obtener estadísticas detalladas de todos los canales
+export const obtenerEstadisticasCanales = () => {
+  try {
+    const canales = supabase.realtime?.channels || {};
+    const estadisticas = {
+      totalCanales: Object.keys(canales).length,
+      canalesPorEstado: {},
+      detalleCanales: []
+    };
+
+    Object.entries(canales).forEach(([nombre, canal]) => {
+      const estado = canal.state;
+      
+      // Contar por estado
+      if (!estadisticas.canalesPorEstado[estado]) {
+        estadisticas.canalesPorEstado[estado] = 0;
+      }
+      estadisticas.canalesPorEstado[estado]++;
+      
+      // Detalle de cada canal
+      estadisticas.detalleCanales.push({
+        nombre,
+        estado,
+        conectado: estado === REALTIME_CHANNEL_STATES.joined,
+        eventos: canal.bindings ? Object.keys(canal.bindings).length : 0
+      });
+    });
+
+    return estadisticas;
+  } catch (error) {
+    console.error('Error al obtener estadísticas de canales:', error);
+    return null;
+  }
+};
+
+// Función para reconectar canales cerrados
+export const reconectarCanalesCerrados = async () => {
+  try {
+    const canales = supabase.realtime?.channels || {};
+    const canalesReconectados = [];
+    
+    Object.entries(canales).forEach(([nombre, canal]) => {
+      if (canal.state === REALTIME_CHANNEL_STATES.closed || 
+          canal.state === REALTIME_CHANNEL_STATES.errored) {
+        
+        console.log(`Intentando reconectar canal: ${nombre}`);
+        canal.subscribe();
+        canalesReconectados.push(nombre);
+      }
+    });
+    
+    console.log(`Intentando reconectar ${canalesReconectados.length} canales:`, canalesReconectados);
+    
+    // Esperar un momento y verificar el resultado
+    await new Promise(resolve => setTimeout(resolve, 2000));
+    
+    return canalesReconectados;
+  } catch (error) {
+    console.error('Error al reconectar canales:', error);
+    return [];
   }
 };
