@@ -1,5 +1,6 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { Drone } from '../../types/drone';
+import { guardarDroneAsync, eliminarDroneAsync } from './drone.actions';
 
 interface DroneState {
   coleccionDrones: Drone[];
@@ -31,6 +32,21 @@ export const droneSlice = createSlice({
     setIsFetchingDrone: (state, action: PayloadAction<boolean>) => {
       state.isFetchingDrone = action.payload;
     }
+  },
+  extraReducers: (builder) => {
+    builder.addCase(guardarDroneAsync.fulfilled, (state, action) => {
+      const index = state.coleccionDrones.findIndex(drone => drone.id === action.payload.id);
+      if (index !== -1) {
+        state.coleccionDrones[index] = action.payload;
+      } else {
+        state.coleccionDrones.push(action.payload);
+      }
+    });
+    builder.addCase(eliminarDroneAsync.fulfilled, (state, action) => {
+      state.coleccionDrones = state.coleccionDrones.filter(
+        drone => drone.id !== action.payload
+      );
+    });
   }
 });
 

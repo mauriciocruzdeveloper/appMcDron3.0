@@ -1,6 +1,7 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { SelectOption } from '../../types/selectOption';
 import { Repuesto } from '../../types/repuesto';
+import { guardarRepuestoAsync, eliminarRepuestoAsync } from './repuesto.actions';
 
 // Tipos para el estado inicial
 interface RepuestoState {
@@ -28,6 +29,14 @@ const repuestoSlice = createSlice({
         setRepuestos: (state, action: PayloadAction<Repuesto[]>) => {
             state.coleccionRepuestos = action.payload;
         },
+        setRepuesto: (state, action: PayloadAction<Repuesto>) => {
+            const index = state.coleccionRepuestos.findIndex(repuesto => repuesto.id === action.payload.id);
+            if (index !== -1) {
+                state.coleccionRepuestos[index] = action.payload;
+            } else {
+                state.coleccionRepuestos.push(action.payload);
+            }
+        },
         setModelosDroneSelect: (state, action: PayloadAction<SelectOption[]>) => {
             state.modelosDroneSelect = action.payload;
         },
@@ -38,12 +47,28 @@ const repuestoSlice = createSlice({
             state.filter = action.payload;
         },
     },
+    extraReducers: (builder) => {
+        builder.addCase(guardarRepuestoAsync.fulfilled, (state, action) => {
+            const index = state.coleccionRepuestos.findIndex(repuesto => repuesto.id === action.payload.id);
+            if (index !== -1) {
+                state.coleccionRepuestos[index] = action.payload;
+            } else {
+                state.coleccionRepuestos.push(action.payload);
+            }
+        });
+        builder.addCase(eliminarRepuestoAsync.fulfilled, (state, action) => {
+            state.coleccionRepuestos = state.coleccionRepuestos.filter(
+                repuesto => repuesto.id !== action.payload
+            );
+        });
+    },
 });
 
 // Exportar acciones síncronas
 export const {
     setFilter,
     setRepuestos,
+    setRepuesto,
     setModelosDroneSelect,
     setProveedoresSelect,
 } = repuestoSlice.actions;
