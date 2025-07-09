@@ -60,18 +60,28 @@ export default function ListaRepuestos(): JSX.Element {
 
     const [repuestosList, setRepuestosList] = useState<Repuesto[]>([]);
     const [mostrandoMock, setMostrandoMock] = useState<boolean>(false);
+    const [filtroModeloDrone, setFiltroModeloDrone] = useState<string>('');
 
     useEffect(() => {
         if (coleccionRepuestos.length) {
             const repuestos = coleccionRepuestos.filter(repuesto => {
                 let incluirPorSearch = true;
+                let incluirPorModelo = true;
+                
+                // Filtro por texto
                 if (filter) {
                     incluirPorSearch =
                         repuesto.data?.NombreRepu?.toLowerCase().includes(filter.toLowerCase()) ||
                         repuesto.data?.DescripcionRepu?.toLowerCase().includes(filter.toLowerCase()) ||
                         repuesto.data?.ProveedorRepu?.toLowerCase().includes(filter.toLowerCase());
                 }
-                return incluirPorSearch;
+                
+                // Filtro por modelo de drone
+                if (filtroModeloDrone) {
+                    incluirPorModelo = repuesto.data.ModelosDroneIds?.includes(filtroModeloDrone) || false;
+                }
+                
+                return incluirPorSearch && incluirPorModelo;
             });
             setRepuestosList(repuestos);
             setMostrandoMock(false);
@@ -80,10 +90,14 @@ export default function ListaRepuestos(): JSX.Element {
             setRepuestosList(repuestosMock);
             setMostrandoMock(true);
         }
-    }, [coleccionRepuestos, filter]);
+    }, [coleccionRepuestos, filter, filtroModeloDrone]);
 
     const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         dispatch(setFilter(e.target.value));
+    }
+
+    const handleModeloChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+        setFiltroModeloDrone(e.target.value);
     }
 
     const formatPrice = (precio: number): string => {
@@ -104,14 +118,34 @@ export default function ListaRepuestos(): JSX.Element {
             
             <div className='card mb-3'>
                 <div className='card-body'>
-                    <div className='form-group'>
-                        <input
-                            type='text'
-                            className='form-control'
-                            placeholder='Buscar repuestos...'
-                            value={filter}
-                            onChange={handleSearchChange}
-                        />
+                    <div className='row'>
+                        <div className='col-md-8'>
+                            <div className='form-group'>
+                                <input
+                                    type='text'
+                                    className='form-control'
+                                    placeholder='Buscar repuestos...'
+                                    value={filter}
+                                    onChange={handleSearchChange}
+                                />
+                            </div>
+                        </div>
+                        <div className='col-md-4'>
+                            <div className='form-group'>
+                                <select
+                                    className='form-select'
+                                    value={filtroModeloDrone}
+                                    onChange={handleModeloChange}
+                                >
+                                    <option value=''>Todos los modelos</option>
+                                    {modelosDrone.map((modelo: ModeloDrone) => (
+                                        <option key={modelo.id} value={modelo.id}>
+                                            {modelo.data.NombreModelo}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
