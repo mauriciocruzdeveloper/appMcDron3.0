@@ -162,8 +162,9 @@ export default function ListaRepuestos(): JSX.Element {
                                             estado === 'En Pedido' ? 'text-warning' : ''
                                         }`}>
                                         {estado}
+                                        {estado === 'Disponible' && ` ${repuesto.data.StockRepu}`}
                                         {estado === 'En Pedido' && repuesto.data.UnidadesPedidas && 
-                                          ` (${repuesto.data.UnidadesPedidas} unid.)`}
+                                          ` ${repuesto.data.UnidadesPedidas}`}
                                     </small>
                                 </div>
                                 {repuesto.data.DescripcionRepu && (
