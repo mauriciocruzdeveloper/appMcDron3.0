@@ -73,7 +73,7 @@ export const estados: Estados = {
   },
   Cobrado: {
     nombre: "Cobrado",
-    prioridad: 1,
+    prioridad: 4,
     accion: "Enviar",
     color: "#673ab7",
     etapa: 11,
