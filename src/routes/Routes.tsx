@@ -1,4 +1,4 @@
-import { Route, Switch, Redirect } from "react-router-dom";
+import { Route, Routes as RouterRoutes, Navigate } from "react-router-dom";
 import Login from '../components/Login.container';
 import Registro from '../components/Registro.container';
 import InicioRoutes from "./Inicio.routes";
@@ -10,23 +10,23 @@ export default function Routes(): JSX.Element {
     const isAdmin = useAppSelector(state => state.app.usuario?.data.Admin);
 
     return (<>
-        <Switch>
-            <Route exact path="/" render={() => <Redirect to="/inicio" />} />
+        <RouterRoutes>
+            <Route path="/" element={<Navigate to="/inicio" replace />} />
 
-            {/* <Route path="/noautorizado" render = { () => <Modal mensaje={"Acceso no autorizado"} /> } />
-            <Route path="/errorlogin" render = { () => <Modal mensaje={"Login incorrecto"} /> } />
-            <Route path="/ocurrioproblema" render = { () => <Modal mensaje={"Ocurrió un problema"} /> } /> */}
+            {/* <Route path="/noautorizado" element={<Modal mensaje={"Acceso no autorizado"} />} />
+            <Route path="/errorlogin" element={<Modal mensaje={"Login incorrecto"} />} />
+            <Route path="/ocurrioproblema" element={<Modal mensaje={"Ocurrió un problema"} />} /> */}
 
-            <Route path="/login" render={() => <Login />} />
+            <Route path="/login" element={<Login />} />
 
-            <Route path="/inicio" render={props => <InicioRoutes {...props} isLoggedIn={isLoggedIn} admin={isAdmin} />} />
+            <Route path="/inicio/*" element={<InicioRoutes isLoggedIn={isLoggedIn} admin={isAdmin} />} />
 
-            <Route path="/registro" render={
+            <Route path="/registro" element={
                 isLoggedIn
-                    ? props => <InicioRoutes {...props} isLoggedIn={isLoggedIn} admin={isAdmin} />
-                    : () => <Registro />
+                    ? <InicioRoutes isLoggedIn={isLoggedIn} admin={isAdmin} />
+                    : <Registro />
             } />
 
-        </Switch>
+        </RouterRoutes>
     </>)
 }

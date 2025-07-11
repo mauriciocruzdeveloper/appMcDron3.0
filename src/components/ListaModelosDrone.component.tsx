@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import history from '../history';
+import { useHistory } from '../hooks/useHistory';
 import { useAppSelector } from '../redux-tool-kit/hooks/useAppSelector';
 import { ModeloDrone } from '../types/modeloDrone';
 import { useAppDispatch } from '../redux-tool-kit/hooks/useAppDispatch';
@@ -38,6 +38,7 @@ const modelosDroneMock: ModeloDrone[] = [
 
 export default function ListaModelosDrone(): JSX.Element {
     const dispatch = useAppDispatch();
+    const history = useHistory();
     const coleccionModelosDrone = useAppSelector((state) => state.modeloDrone.coleccionModelosDrone);
     const filter = useAppSelector((state) => state.modeloDrone.filter);
 
