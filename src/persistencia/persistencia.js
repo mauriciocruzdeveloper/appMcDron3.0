@@ -6,7 +6,7 @@
 
 // CONFIGURA EL BACKEND AQUÍ - Comenta la línea que no necesites
 // import * as backend from './persistenciaFirebase';
-import * as backend from './persistenciaSupabase';
+import * as backend from './persistenciaSupabase/index.js';
 
 // AUTENTICACIÓN
 export const loginPersistencia = backend.loginPersistencia;
