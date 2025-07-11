@@ -340,7 +340,6 @@ export const getRepuestosPersistencia = async (setRepuestosToRedux) => {
       cargarRepuestos();
     })
     .subscribe((status, err) => {
-      console.log('Estado de suscripción repuestos-modelos-changes:', status);
       if (err) {
         console.error('Error en suscripción repuestos-modelos-changes:', err);
       }
