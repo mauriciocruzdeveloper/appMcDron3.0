@@ -57,7 +57,6 @@ export const sendMessagePersistencia = (message) => {
 
 // GET todos los mensajes entre dos usuarios
 export const getMessagesPersistencia = (setMessagesToRedux, emailUsu, emailCli) => {
-  console.log('getMessagesPersistencia: ' + emailUsu + ' ' + emailCli);
   return new Promise((resolve, reject) => {
     try {
       // Consultar mensajes para el usuario actual donde el cliente sea el especificado
