@@ -285,8 +285,6 @@ export const eliminarIntervencionPersistencia = async (id) => {
 
 // GET todas las Intervenciones con suscripción en tiempo real
 export const getIntervencionesPersistencia = async (setIntervencionesToRedux) => {
-  console.log('getIntervencionesPersistencia con Supabase');
-
   // Función para cargar los datos iniciales
   const cargarIntervenciones = async () => {
     try {

@@ -179,8 +179,6 @@ export const eliminarModeloDronePersistencia = async (id) => {
 
 // GET todos los ModelosDrone con suscripción en tiempo real
 export const getModelosDronePersistencia = async (setModelosDroneToRedux) => {
-  console.log('getModelosDronePersistencia con Supabase');
-
   // Función para cargar los datos iniciales
   const cargarModelosDrone = async () => {
     try {
@@ -430,8 +428,6 @@ export const eliminarDronePersistencia = async (id) => {
 
 // GET todos los Drones con suscripción en tiempo real
 export const getDronesPersistencia = async (setDronesToRedux) => {
-  console.log('getDronesPersistencia con Supabase');
-
   // Función para cargar los datos iniciales
   const cargarDrones = async () => {
     try {

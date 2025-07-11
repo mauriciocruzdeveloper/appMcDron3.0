@@ -26,8 +26,6 @@ export const reenviarEmailVerificacionPersistencia = async (email) => {
 // Login
 export const loginPersistencia = async (emailParametro, passwordParametro) => {
   try {
-    console.log('Iniciando login con Supabase:', emailParametro);
-
     // Intenta iniciar sesión con Supabase
     const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
       email: emailParametro,

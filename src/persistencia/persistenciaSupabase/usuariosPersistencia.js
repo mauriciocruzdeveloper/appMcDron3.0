@@ -2,8 +2,6 @@ import { supabase } from './supabaseClient.js';
 
 // GET todos los usuarios con suscripción en tiempo real
 export const getUsuariosPersistencia = async (setUsuariosToRedux) => {
-  console.log('getUsuariosPersistencia con Supabase');
-
   // Función para cargar los datos iniciales
   const cargarUsuarios = async () => {
     try {
