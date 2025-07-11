@@ -182,7 +182,7 @@ export const notificacionesPorMensajesPersistencia = (emailUsu) => {
           };
 
           // Importar la función desde utils
-          import('../utils/utils').then(utils => {
+          import('../../utils/utils').then(utils => {
             utils.triggerNotification(notification);
           });
         }
