@@ -265,8 +265,6 @@ export const eliminarRepuestoPersistencia = async (id) => {
 
 // GET todos los Repuestos con suscripción en tiempo real
 export const getRepuestosPersistencia = async (setRepuestosToRedux) => {
-  console.log('getRepuestosPersistencia con Supabase');
-
   // Función para cargar los datos iniciales
   const cargarRepuestos = async () => {
     try {
@@ -318,7 +316,17 @@ export const getRepuestosPersistencia = async (setRepuestosToRedux) => {
       // Cuando hay cambios, recargamos todos los datos
       cargarRepuestos();
     })
-    .subscribe();
+    .subscribe((status, err) => {
+      if (err) {
+        console.error('Error en suscripción repuestos-changes:', err);
+      }
+      if (status === 'CHANNEL_ERROR') {
+        console.error('Error del canal repuestos-changes. Posibles causas:');
+        console.error('- RLS (Row Level Security) no configurado correctamente');
+        console.error('- Realtime no habilitado para la tabla "part"');
+        console.error('- Permisos insuficientes en la tabla');
+      }
+    });
 
   const channelRepuestosModelos = supabase
     .channel('repuestos-modelos-changes')
@@ -331,7 +339,18 @@ export const getRepuestosPersistencia = async (setRepuestosToRedux) => {
       // Cuando hay cambios, recargamos todos los datos
       cargarRepuestos();
     })
-    .subscribe();
+    .subscribe((status, err) => {
+      console.log('Estado de suscripción repuestos-modelos-changes:', status);
+      if (err) {
+        console.error('Error en suscripción repuestos-modelos-changes:', err);
+      }
+      if (status === 'CHANNEL_ERROR') {
+        console.error('Error del canal repuestos-modelos-changes. Posibles causas:');
+        console.error('- RLS (Row Level Security) no configurado correctamente');
+        console.error('- Realtime no habilitado para la tabla "part_drone_model"');
+        console.error('- Permisos insuficientes en la tabla');
+      }
+    });
 
   // Devolver función para cancelar la suscripción
   return () => {

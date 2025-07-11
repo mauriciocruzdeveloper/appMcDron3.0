@@ -4,7 +4,6 @@ import { localidades } from '../../datos/localidades.json';
 
 // Obtengo las provincias desde un archivo propio
 export const getProvinciasSelectPersistencia = () => {
-  console.log('getProvinciasSelectPersistencia con Supabase');
   return new Promise((resolve, reject) => {
     try {
       resolve(provincias.map(provincia => {
@@ -22,7 +21,6 @@ export const getProvinciasSelectPersistencia = () => {
 
 // Obtengo las localidades por provincia
 export const getLocPorProvPersistencia = (provincia) => {
-  console.log('getLocPorProvPersistencia con Supabase');
   return new Promise((resolve, reject) => {
     try {
       const localidadesFiltradas = localidades.filter(localidad => (
