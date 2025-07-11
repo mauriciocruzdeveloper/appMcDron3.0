@@ -1,6 +1,6 @@
 // Método 1: Mantener los mismos datos locales como en Firebase
-import { provincias } from '../datos/provincias.json';
-import { localidades } from '../datos/localidades.json';
+import { provincias } from '../../datos/provincias.json';
+import { localidades } from '../../datos/localidades.json';
 
 // Obtengo las provincias desde un archivo propio
 export const getProvinciasSelectPersistencia = () => {
