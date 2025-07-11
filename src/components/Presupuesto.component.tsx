@@ -3,7 +3,7 @@ import { useLocation } from "react-router-dom";
 import TextareaAutosize from "react-textarea-autosize";
 import Select, { InputActionMeta } from 'react-select';
 
-import history from "../history";
+import { useHistory } from "../hooks/useHistory";
 import { useAppSelector } from "../redux-tool-kit/hooks/useAppSelector";
 import { useAppDispatch } from "../redux-tool-kit/hooks/useAppDispatch";
 import { useModal } from "./Modal/useModal";
@@ -17,6 +17,7 @@ import { estados } from "../datos/estados";
 export default function Presupuesto(): JSX.Element {
     console.log("PRESUPUESTO");
     const dispatch = useAppDispatch();
+    const history = useHistory();
     const location = useLocation();
     const queryParams = new URLSearchParams(location.search);
     const estadoParam = queryParams.get('estado') || "Recibido";

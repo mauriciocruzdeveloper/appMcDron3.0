@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import history from '../history';
+import { useHistory } from '../hooks/useHistory';
 import { useAppSelector } from '../redux-tool-kit/hooks/useAppSelector';
 import { Repuesto } from '../types/repuesto';
 import { useAppDispatch } from '../redux-tool-kit/hooks/useAppDispatch';
@@ -54,6 +54,7 @@ export const calcularEstadoRepuesto = (stock: number, unidadesPedidas: number): 
 
 export default function ListaRepuestos(): JSX.Element {
     const dispatch = useAppDispatch();
+    const history = useHistory();
     const coleccionRepuestos = useAppSelector((state) => state.repuesto.coleccionRepuestos);
     const filter = useAppSelector((state) => state.repuesto.filter);
     const modelosDrone = useAppSelector((state) => state.modeloDrone.coleccionModelosDrone); // Obtener los modelos de drones desde el estado

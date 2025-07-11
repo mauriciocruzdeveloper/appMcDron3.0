@@ -4,7 +4,3 @@ export interface SelectType {
     value: string;
     label: string;
 }
-
-export type MatchType = any & {
-    path: string;
-}

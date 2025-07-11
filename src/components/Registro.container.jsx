@@ -1,5 +1,5 @@
 import { useState } from "react";
-import history from "../history";
+import { useHistory } from "../hooks/useHistory";
 import RegistroPresentational from "./Registro.presentational";
 import { registroAsync } from "../redux-tool-kit/app/app.actions";
 import { useAppDispatch } from "../redux-tool-kit/hooks/useAppDispatch";
@@ -9,6 +9,7 @@ export default function Registro() {
   console.log("REGISTRO container");
 
   const dispatch = useAppDispatch();
+  const history = useHistory();
 
   const {
     openModal,

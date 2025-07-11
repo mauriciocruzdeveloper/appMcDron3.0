@@ -1,15 +1,17 @@
 import React from 'react';
-import history from '../history';
-import { MatchType } from '../types/types';
+import { useLocation } from 'react-router-dom';
+import { useHistory } from '../hooks/useHistory';
 import { estados } from '../datos/estados';
 
 interface InicioProps {
   admin: boolean;
-  match: MatchType;
 }
 
-const Inicio = (props: InicioProps) => {
-  const { admin, match } = props;
+const Inicio = (props: InicioProps): React.ReactElement => {
+  const { admin } = props;
+  const history = useHistory();
+  const location = useLocation();
+  const match = { path: location.pathname }; // Simular match.path para compatibilidad
 
   console.log('INICIO');
 

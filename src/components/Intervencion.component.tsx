@@ -1,6 +1,6 @@
 import React, { useEffect, useState, ChangeEvent } from 'react';
 import { useParams } from 'react-router-dom';
-import history from '../history';
+import { useHistory } from '../hooks/useHistory';
 import { useAppDispatch } from '../redux-tool-kit/hooks/useAppDispatch';
 import { useAppSelector } from '../redux-tool-kit/hooks/useAppSelector';
 import { Intervencion } from '../types/intervencion';
@@ -8,12 +8,13 @@ import { guardarIntervencionAsync, eliminarIntervencionAsync, getIntervencionAsy
 import { useModal } from './Modal/useModal';
 import Select from 'react-select';
 
-interface ParamTypes {
+interface ParamTypes extends Record<string, string | undefined> {
   id: string;
 }
 
 export default function IntervencionComponent(): JSX.Element {
   const dispatch = useAppDispatch();
+  const history = useHistory();
   const { openModal } = useModal();
   const { id } = useParams<ParamTypes>();
   

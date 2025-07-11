@@ -1,7 +1,7 @@
 import React from 'react';
 import { Navbar } from 'react-bootstrap';
 import { ArrowLeftShort } from 'react-bootstrap-icons';
-import history from "../history";
+import { useHistory } from '../hooks/useHistory';
 import { logout } from "../redux-tool-kit/app/app.slice";
 import { useAppSelector } from "../redux-tool-kit/hooks/useAppSelector";
 import { useModal } from './Modal/useModal';
@@ -13,6 +13,7 @@ export default function NavMcDron (): JSX.Element {
     console.log("NavMcDron");
 
     const usuario = useAppSelector(state => state.app.usuario);
+    const history = useHistory();
 
     const {
         openModal,
