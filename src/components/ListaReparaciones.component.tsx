@@ -31,6 +31,14 @@ export default function ListaReparaciones(): JSX.Element {
         }
         return incluirPorSearch || incluirPorEstado;
       });
+
+      // Ordenar por prioridad de estado
+      reparacionesFiltered.sort((a, b) => {
+        const prioridadA = estados[a.data.EstadoRep]?.prioridad || 0;
+        const prioridadB = estados[b.data.EstadoRep]?.prioridad || 0;
+        return prioridadA - prioridadB;
+      });
+
       setReparacionesList(reparacionesFiltered);
     }
   }, [reparaciones, filter.estadosPrioritarios, filter.search]);
