@@ -12,7 +12,7 @@ import { isFetchingComplete, isFetchingStart } from "./app.slice";
 import { callEndpoint } from "../../utils/utils";
 import { HttpMethod } from "../../types/httpMethods";
 import { getReparacionAsync, guardarReparacionAsync } from '../reparacion/reparacion.actions';
-import { supabaseAuthErrors } from "../../persistencia/supabaseAuthErrors";
+import { supabaseAuthErrors } from "../../persistencia/persistenciaSupabase/supabaseAuthErrors";
 
 // LOGIN
 export const loginAsync = createAsyncThunk(
