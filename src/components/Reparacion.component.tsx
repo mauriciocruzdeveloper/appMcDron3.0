@@ -1,6 +1,6 @@
 /* eslint-disable react/jsx-no-target-blank */
 import React, { useEffect, useState } from "react";
-import history from "../history";
+import { useHistory } from "../hooks/useHistory";
 import { useParams } from "react-router-dom";
 import { enviarSms, generarAutoDiagnostico } from "../utils/utils";
 import { estados } from '../datos/estados';
@@ -19,7 +19,7 @@ import { convertTimestampCORTO } from "../utils/utils";
 import "bootstrap-icons/font/bootstrap-icons.css";
 import IntervencionesReparacion from './IntervencionesReparacion.component';
 
-interface ParamTypes {
+interface ParamTypes extends Record<string, string | undefined> {
     id: string;
 }
 
@@ -27,6 +27,7 @@ export default function ReparacionComponent(): React.ReactElement | null {
     console.log("REPARACION component");
 
     const dispatch = useAppDispatch();
+    const history = useHistory();
     const { openModal } = useModal();
 
     const isAdmin = useAppSelector(state => state.app.usuario?.data.Admin) ?? false;

@@ -1,6 +1,6 @@
 import React from "react";
 import { useEffect, useState } from "react";
-import history from "../history";
+import { useHistory } from "../hooks/useHistory";
 import { estados } from '../datos/estados';
 // Estas son las importaciones de react-floating-action-button
 // lightColors y darkColors pueden estar buenos... hay que probarlos
@@ -11,6 +11,7 @@ import { useAppDispatch } from "../redux-tool-kit/hooks/useAppDispatch";
 
 export default function ListaReparaciones(): JSX.Element {
   const dispatch = useAppDispatch();
+  const history = useHistory();
   const reparaciones = useAppSelector(state => state.reparacion.coleccionReparaciones);
   const filter = useAppSelector(state => state.reparacion.filter);
 

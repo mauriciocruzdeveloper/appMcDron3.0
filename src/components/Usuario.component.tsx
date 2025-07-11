@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { SingleValue } from 'react-select';
-import history from "../history";
+import { useHistory } from "../hooks/useHistory";
 import { enviarEmail, enviarSms, getLocalidadesPorProvincia, getProvinciasSelect } from "../utils/utils";
 import Select from 'react-select';
 import { ChangeEvent } from 'react';
@@ -12,7 +12,7 @@ import { useAppDispatch } from "../redux-tool-kit/hooks/useAppDispatch";
 import { useModal } from "./Modal/useModal";
 import { eliminarUsuarioAsync, guardarUsuarioAsync } from "../redux-tool-kit/usuario/usuario.actions";
 
-interface ParamTypes {
+interface ParamTypes extends Record<string, string | undefined> {
     id: string;
 }
 
@@ -20,6 +20,7 @@ export default function UsuarioComponent(): React.ReactElement | null {
     console.log("USUARIO component");
 
     const dispatch = useAppDispatch();
+    const history = useHistory();
     const { openModal } = useModal();
 
     const provinciasSelect = useAppSelector(state => state.usuario.provinciasSelect);
