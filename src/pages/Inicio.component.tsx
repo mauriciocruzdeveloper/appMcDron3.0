@@ -1,5 +1,5 @@
 import React from 'react';
-import { useHistory } from 'react-router-dom';
+import { useHistory } from '../hooks/useHistory';
 
 const Inicio = () => {
     const history = useHistory();

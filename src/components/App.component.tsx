@@ -1,6 +1,5 @@
 import React from 'react';
-import { Router } from 'react-router-dom';
-import history from '../history';
+import { HashRouter } from 'react-router-dom';
 import Routes from '../routes/Routes';
 import { ModalComponent } from './Modal/modal.component';
 import { ModalProvider } from './Modal/modal.provider';
@@ -21,9 +20,9 @@ export default function App(): JSX.Element {
     >
         <ModalProvider>
           <ModalComponent />
-          <Router history={history} >
+          <HashRouter>
             <Routes />
-          </Router>
+          </HashRouter>
           <footer className='page-footer fixed-bottom text-center'>
             {isFetching ?
               <div className='float-right'>

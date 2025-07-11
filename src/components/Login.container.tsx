@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { useState } from 'react';
-import history from '../history';
+import { useHistory } from '../hooks/useHistory';
 import LoginPresentational from './Login.presentational'; // componente 'no inteligente' de presentación
 import { useAppDispatch } from '../redux-tool-kit/hooks/useAppDispatch';
 import { loginAsync } from '../redux-tool-kit/app/app.actions';
@@ -19,6 +19,7 @@ const INIT_LOGIN_DATA: LoginData = {
 
 export default function Login(): JSX.Element | null {
   const dispatch = useAppDispatch();
+  const history = useHistory();
   const {
     openModal,
   } = useModal();

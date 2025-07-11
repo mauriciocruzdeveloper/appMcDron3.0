@@ -1,6 +1,6 @@
 import React from 'react';
 import { useEffect, useState } from 'react';
-import history from '../history';
+import { useHistory } from '../hooks/useHistory';
 import { useAppSelector } from '../redux-tool-kit/hooks/useAppSelector';
 import { Usuario } from '../types/usuario';
 import { useAppDispatch } from '../redux-tool-kit/hooks/useAppDispatch';
@@ -8,6 +8,7 @@ import { setFilter } from '../redux-tool-kit/usuario/usuario.slice';
 
 export default function ListaUsuarios(): JSX.Element {
   const dispatch = useAppDispatch();
+  const history = useHistory();
   const coleccionUsuarios = useAppSelector((state) => state.usuario.coleccionUsuarios);
   const filter = useAppSelector((state) => state.usuario.filter);
 

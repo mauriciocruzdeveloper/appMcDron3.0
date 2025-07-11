@@ -1,15 +1,15 @@
 import React, { useEffect, useState, ChangeEvent } from 'react';
 import { useParams } from 'react-router-dom';
-import history from "../history";
+import { useHistory } from "../hooks/useHistory";
 import { useAppDispatch } from '../redux-tool-kit/hooks/useAppDispatch';
 import { useAppSelector } from '../redux-tool-kit/hooks/useAppSelector';
 import { Repuesto } from '../types/repuesto';
-import { guardarRepuestoAsync, eliminarRepuestoAsync, getRepuestoAsync } from '../redux-tool-kit/repuesto/repuesto.actions';
+import { guardarRepuestoAsync, eliminarRepuestoAsync } from '../redux-tool-kit/repuesto/repuesto.actions';
 import { useModal } from './Modal/useModal';
 import Select from 'react-select'; // Importar Select para selección múltiple
 import { SelectOption } from '../types/selectOption';
 
-interface ParamTypes {
+interface ParamTypes extends Record<string, string | undefined> {
   id: string;
 }
 
@@ -31,6 +31,7 @@ const getEstadoColor = (estado: string): string => {
 
 export default function RepuestoComponent(): JSX.Element {
   const dispatch = useAppDispatch();
+  const history = useHistory();
   const { openModal } = useModal();
   const { id } = useParams<ParamTypes>();
 

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import history from '../history';
+import { useHistory } from '../hooks/useHistory';
 import { useAppSelector } from '../redux-tool-kit/hooks/useAppSelector';
 import { Intervencion } from '../types/intervencion';
 import { useAppDispatch } from '../redux-tool-kit/hooks/useAppDispatch';
@@ -46,6 +46,7 @@ const intervencionesMock: Intervencion[] = [
 
 export default function ListaIntervenciones(): JSX.Element {
   const dispatch = useAppDispatch();
+  const history = useHistory();
   const coleccionIntervenciones = useAppSelector((state) => state.intervencion.coleccionIntervenciones);
   const filter = useAppSelector((state) => state.intervencion.filter);
   const modelosDrone = useAppSelector((state) => state.modeloDrone.coleccionModelosDrone);
