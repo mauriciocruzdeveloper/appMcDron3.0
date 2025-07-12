@@ -4,6 +4,7 @@ import { useAppSelector } from '../redux-tool-kit/hooks/useAppSelector';
 import { Intervencion } from '../types/intervencion';
 import { useAppDispatch } from '../redux-tool-kit/hooks/useAppDispatch';
 import { setFilter } from '../redux-tool-kit/intervencion/intervencion.slice';
+import { selectModelosDroneArray } from '../redux-tool-kit/modeloDrone/modeloDrone.selectors';
 
 // Mock de intervenciones para mostrar como ejemplo (modificado)
 const intervencionesMock: Intervencion[] = [
@@ -49,7 +50,7 @@ export default function ListaIntervenciones(): JSX.Element {
   const history = useHistory();
   const coleccionIntervenciones = useAppSelector((state) => state.intervencion.coleccionIntervenciones);
   const filter = useAppSelector((state) => state.intervencion.filter);
-  const modelosDrone = useAppSelector((state) => state.modeloDrone.coleccionModelosDrone);
+  const modelosDrone = useAppSelector(selectModelosDroneArray);
 
   const [intervencionesList, setIntervencionesList] = useState<Intervencion[]>([]);
   const [mostrandoMock, setMostrandoMock] = useState<boolean>(false);

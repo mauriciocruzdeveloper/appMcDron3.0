@@ -7,6 +7,7 @@ import { Drone } from '../types/drone';
 import { guardarDroneAsync, eliminarDroneAsync, getDroneAsync } from '../redux-tool-kit/drone/drone.actions';
 import { useModal } from './Modal/useModal';
 import Select from 'react-select';
+import { selectModelosDroneArray } from '../redux-tool-kit/modeloDrone/modeloDrone.selectors';
 
 interface ParamTypes extends Record<string, string | undefined> {
   id: string;
@@ -23,7 +24,7 @@ export default function DroneComponent(): JSX.Element {
     state.drone.coleccionDrones.find(drone => drone.id === id)
   );
   
-  const modelosDrone = useAppSelector(state => state.modeloDrone.coleccionModelosDrone);
+  const modelosDrone = useAppSelector(selectModelosDroneArray);
   const usuarios = useAppSelector(state => state.usuario.coleccionUsuarios);
   const usuariosSelect = useAppSelector(state => state.usuario.usuariosSelect);
 

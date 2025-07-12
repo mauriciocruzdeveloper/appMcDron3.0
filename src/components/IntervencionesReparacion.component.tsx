@@ -6,6 +6,8 @@ import { Intervencion } from '../types/intervencion';
 import { useModal } from './Modal/useModal';
 import Select from 'react-select';
 import { setIntervencionesDeReparacionActual } from '../redux-tool-kit/reparacion/reparacion.slice';
+import { selectColeccionModelosDrone } from '../redux-tool-kit/modeloDrone/modeloDrone.selectors';
+import { selectColeccionRepuestos } from '../redux-tool-kit/repuesto/repuesto.selectors';
 
 interface IntervencionesReparacionProps {
   reparacionId: string;
@@ -18,8 +20,8 @@ export default function IntervencionesReparacion({ reparacionId, readOnly = fals
 
   const intervenciones = useAppSelector(state => state.reparacion.intervencionesDeReparacionActual);
   const todasLasIntervenciones = useAppSelector(state => state.intervencion.coleccionIntervenciones);
-  const modelosDrone = useAppSelector(state => state.modeloDrone.coleccionModelosDrone);
-  const repuestosInventario = useAppSelector(state => state.repuesto.coleccionRepuestos);
+  const modelosDrone = useAppSelector(selectColeccionModelosDrone);
+  const repuestosInventario = useAppSelector(selectColeccionRepuestos);
 
   const [intervencionSeleccionada, setIntervencionSeleccionada] = useState<string | null>(null);
   const [totalManoObra, setTotalManoObra] = useState<number>(0);
@@ -78,9 +80,9 @@ export default function IntervencionesReparacion({ reparacionId, readOnly = fals
         tipo: "success",
         titulo: "Agregar Intervención",
       });
-    } catch (error: any) { // TODO: Hacer tipo de dato para el error
+    } catch (error: unknown) { // TODO: Hacer tipo de dato para el error
       openModal({
-        mensaje: error?.code || "Error al agregar la intervención.",
+        mensaje: (error as { code?: string })?.code || "Error al agregar la intervención.",
         tipo: "danger",
         titulo: "Error",
       });
@@ -104,9 +106,9 @@ export default function IntervencionesReparacion({ reparacionId, readOnly = fals
             tipo: "success",
             titulo: "Eliminar Intervención",
           });
-        } catch (error: any) { // TODO: Hacer tipo de dato para el error
+        } catch (error: unknown) { // TODO: Hacer tipo de dato para el error
           openModal({
-            mensaje: error?.code || "Error al eliminar la intervención.",
+            mensaje: (error as { code?: string })?.code || "Error al eliminar la intervención.",
             tipo: "danger",
             titulo: "Error",
           });
@@ -120,12 +122,12 @@ export default function IntervencionesReparacion({ reparacionId, readOnly = fals
   };
 
   const getModeloDroneName = (modeloId: string): string => {
-    const modelo = modelosDrone.find(m => m.id === modeloId);
+    const modelo = modelosDrone[modeloId];
     return modelo ? modelo.data.NombreModelo : modeloId;
   };
 
   const getRepuestoInfo = (repuestoId: string) => {
-    const repuesto = repuestosInventario.find(r => r.id === repuestoId);
+    const repuesto = repuestosInventario[repuestoId];
     return repuesto
       ? `${repuesto.data.NombreRepu} (${formatPrice(repuesto.data.PrecioRepu)})`
       : 'Repuesto no encontrado';
