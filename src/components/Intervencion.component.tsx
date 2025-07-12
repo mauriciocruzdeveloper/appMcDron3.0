@@ -7,6 +7,8 @@ import { Intervencion } from '../types/intervencion';
 import { guardarIntervencionAsync, eliminarIntervencionAsync, getIntervencionAsync } from '../redux-tool-kit/intervencion/intervencion.actions';
 import { useModal } from './Modal/useModal';
 import Select from 'react-select';
+import { selectModelosDroneArray } from '../redux-tool-kit/modeloDrone/modeloDrone.selectors';
+import { selectColeccionRepuestos, selectRepuestosArray } from '../redux-tool-kit/repuesto/repuesto.selectors';
 
 interface ParamTypes extends Record<string, string | undefined> {
   id: string;
@@ -23,8 +25,9 @@ export default function IntervencionComponent(): JSX.Element {
     state.intervencion.coleccionIntervenciones.find(intervencion => intervencion.id === id)
   );
   
-  const modelosDrone = useAppSelector(state => state.modeloDrone.coleccionModelosDrone);
-  const repuestos = useAppSelector(state => state.repuesto.coleccionRepuestos);
+  const modelosDroneArray = useAppSelector(selectModelosDroneArray);
+  const repuestos = useAppSelector(selectColeccionRepuestos);
+  const repuestosArray = useAppSelector(selectRepuestosArray);
   
   const [intervencion, setIntervencion] = useState<Intervencion>({
     id: '',
@@ -54,7 +57,7 @@ export default function IntervencionComponent(): JSX.Element {
         if (intervencionActual.data.RepuestosIds?.length) {
           const repuestosSeleccionados = intervencionActual.data.RepuestosIds
             .map(repId => {
-              const rep = repuestos.find(r => r.id === repId);
+              const rep = repuestos[repId]; // Acceso directo al diccionario
               if (rep) {
                 return {
                   value: rep.id,
@@ -66,7 +69,7 @@ export default function IntervencionComponent(): JSX.Element {
             })
             .filter(Boolean);
           
-          setSelectedRepuestos(repuestosSeleccionados as any);
+          setSelectedRepuestos(repuestosSeleccionados as {value: string, label: string, precio: number}[]);
         }
       } else {
         dispatch(getIntervencionAsync(id));
@@ -78,7 +81,7 @@ export default function IntervencionComponent(): JSX.Element {
   useEffect(() => {
     // Si hay un modelo seleccionado, filtrar repuestos compatibles
     if (intervencion.data.ModeloDroneId) {
-      const compatibles = repuestos.filter(repuesto =>
+      const compatibles = repuestosArray.filter(repuesto =>
         // El repuesto es compatible si el modelo está en ModelosDroneIds
         repuesto.data.ModelosDroneIds.includes(intervencion.data.ModeloDroneId as string)
         // O si es universal (puedes definir la lógica, aquí: si ModelosDroneIds está vacío)
@@ -114,7 +117,7 @@ export default function IntervencionComponent(): JSX.Element {
       }
     } else {
       // Si no hay modelo seleccionado, mostrar todos los repuestos
-      const options = repuestos.map(repuesto => ({
+      const options = repuestosArray.map(repuesto => ({
         value: repuesto.id,
         label: `${repuesto.data.NombreRepu} - ${repuesto.data.PrecioRepu?.toLocaleString('es-AR', { style: 'currency', currency: 'ARS' }) || '$0'}`,
         precio: repuesto.data.PrecioRepu || 0
@@ -122,7 +125,7 @@ export default function IntervencionComponent(): JSX.Element {
       
       setRepuestosFiltrados(options);
     }
-  }, [intervencion.data.ModeloDroneId, repuestos, modelosDrone, selectedRepuestos]);
+  }, [intervencion.data.ModeloDroneId, repuestosArray, selectedRepuestos]);
 
   // Actualizar el precio total cuando cambian los valores
   useEffect(() => {
@@ -179,11 +182,12 @@ export default function IntervencionComponent(): JSX.Element {
     // Si estamos cambiando el modelo, los repuestos se actualizarán en el useEffect
   };
 
-  const handleRepuestosChange = (selected: any) => {
-    setSelectedRepuestos(selected || []);
+  const handleRepuestosChange = (selected: readonly {value: string, label: string, precio: number}[] | null) => {
+    const selectedArray = selected ? [...selected] : [];
+    setSelectedRepuestos(selectedArray);
     
     // Actualizar los IDs de repuestos en el objeto de intervención
-    const repuestosIds = selected ? selected.map((item: any) => item.value) : [];
+    const repuestosIds = selectedArray.map(item => item.value);
     setIntervencion(prevState => ({
       ...prevState,
       data: {
@@ -246,7 +250,7 @@ export default function IntervencionComponent(): JSX.Element {
 
   const confirmaEliminarIntervencion = async () => {
     try {
-      const response = await dispatch(eliminarIntervencionAsync(intervencion.id)).unwrap();
+      await dispatch(eliminarIntervencionAsync(intervencion.id)).unwrap();
       
       openModal({
         mensaje: "Intervención eliminada correctamente.",
@@ -254,24 +258,17 @@ export default function IntervencionComponent(): JSX.Element {
         titulo: "Eliminar Intervención",
       });
       history.goBack();
-    } catch (error: any) { // TODO: Hacer tipo de dato para el error
+    } catch (error: unknown) { // TODO: Hacer tipo de dato para el error
       console.error("Error al eliminar la intervención:", error);
       
       openModal({
-        mensaje: error?.code || "Error al eliminar la intervención.",
+        mensaje: (error as { code?: string })?.code || "Error al eliminar la intervención.",
         tipo: "danger",
         titulo: "Error",
       });
     }
   };
   
-  // Opciones para el selector de repuestos
-  const repuestosOptions = repuestos.map(repuesto => ({
-    value: repuesto.id,
-    label: `${repuesto.data.NombreRepu} - ${repuesto.data.PrecioRepu?.toLocaleString('es-AR', { style: 'currency', currency: 'ARS' }) || '$0'}`,
-    precio: repuesto.data.PrecioRepu || 0
-  }));
-
   const formatPrice = (precio: number): string => {
     return precio.toLocaleString('es-AR', { style: 'currency', currency: 'ARS' });
   };
@@ -322,7 +319,7 @@ export default function IntervencionComponent(): JSX.Element {
               onChange={handleSelectChange}
             >
               <option value="">General (compatible con cualquier modelo)</option>
-              {modelosDrone.map((modelo) => (
+              {modelosDroneArray.map((modelo) => (
                 <option key={modelo.id} value={modelo.id}>
                   {modelo.data.NombreModelo} - {modelo.data.Fabricante}
                 </option>

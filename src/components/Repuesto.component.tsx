@@ -8,6 +8,8 @@ import { guardarRepuestoAsync, eliminarRepuestoAsync } from '../redux-tool-kit/r
 import { useModal } from './Modal/useModal';
 import Select from 'react-select'; // Importar Select para selección múltiple
 import { SelectOption } from '../types/selectOption';
+import { selectModelosDroneArray } from '../redux-tool-kit/modeloDrone/modeloDrone.selectors';
+import { selectRepuestoPorId } from '../redux-tool-kit/repuesto/repuesto.selectors';
 
 interface ParamTypes extends Record<string, string | undefined> {
   id: string;
@@ -36,13 +38,13 @@ export default function RepuestoComponent(): JSX.Element {
   const { id } = useParams<ParamTypes>();
 
   const isNew = id === 'new';
-  const repuestoActual = useAppSelector(state =>
-    state.repuesto.coleccionRepuestos.find(repuesto => repuesto.id === id)
+  const repuestoActual = useAppSelector((state) => 
+    isNew || !id ? null : selectRepuestoPorId(state, id)
   );
 
   const [selectedModelos, setSelectedModelos] = useState<SelectOption[]>([]);
 
-  const modelosDrone = useAppSelector(state => state.modeloDrone.coleccionModelosDrone);
+  const modelosDrone = useAppSelector(selectModelosDroneArray);
 
   const [repuesto, setRepuesto] = useState<Repuesto>({
     id: '',

@@ -4,6 +4,7 @@ import { useAppSelector } from '../redux-tool-kit/hooks/useAppSelector';
 import { Drone } from '../types/drone';
 import { useAppDispatch } from '../redux-tool-kit/hooks/useAppDispatch';
 import { setFilter } from '../redux-tool-kit/drone/drone.slice';
+import { selectModelosDroneArray } from '../redux-tool-kit/modeloDrone/modeloDrone.selectors';
 
 // Mock de drones para mostrar como ejemplo
 const dronesMock: Drone[] = [
@@ -38,7 +39,7 @@ export default function ListaDrones(): JSX.Element {
     const history = useHistory();
     const coleccionDrones = useAppSelector((state) => state.drone.coleccionDrones);
     const filter = useAppSelector((state) => state.drone.filter);
-    const modelosDrone = useAppSelector((state) => state.modeloDrone.coleccionModelosDrone);
+    const modelosDrone = useAppSelector(selectModelosDroneArray);
     const usuarios = useAppSelector((state) => state.usuario.coleccionUsuarios); // Obtener la colección de usuarios
 
     const [dronesList, setDronesList] = useState<Drone[]>([]);

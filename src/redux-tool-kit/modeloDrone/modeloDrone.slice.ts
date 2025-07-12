@@ -1,35 +1,42 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { ModeloDrone } from '../../types/modeloDrone';
+import { ModeloDrone, ModelosDrone } from '../../types/modeloDrone';
 import { guardarModeloDroneAsync, eliminarModeloDroneAsync } from './modeloDrone.actions';
 
+// Tipos para el estado inicial
 interface ModeloDroneState {
-  coleccionModelosDrone: ModeloDrone[];
-  selectedModeloDrone: ModeloDrone | null;
   filter: string;
+  coleccionModelosDrone: ModelosDrone;
+  selectedModeloDrone: ModeloDrone | null;
   isFetchingModeloDrone: boolean;
 }
 
+// Estado inicial
 const initialState: ModeloDroneState = {
-  coleccionModelosDrone: [],
-  selectedModeloDrone: null,
   filter: '',
+  coleccionModelosDrone: {},
+  selectedModeloDrone: null,
   isFetchingModeloDrone: false
 };
 
+// ---------------------------------------------------------
+// SLICE PRINCIPAL
+// ---------------------------------------------------------
 export const modeloDroneSlice = createSlice({
   name: 'modeloDrone',
   initialState,
   reducers: {
     setModelosDrone: (state, action: PayloadAction<ModeloDrone[]>) => {
-      state.coleccionModelosDrone = action.payload;
+      // Convertir el array de modelos de drone a un objeto con ID como clave
+      const modelosObj: ModelosDrone = {};
+      action.payload.forEach(modelo => {
+        modelosObj[modelo.id] = modelo;
+      });
+      state.coleccionModelosDrone = modelosObj;
     },
     setModeloDrone: (state, action: PayloadAction<ModeloDrone>) => {
-      const index = state.coleccionModelosDrone.findIndex(modelo => modelo.id === action.payload.id);
-      if (index !== -1) {
-        state.coleccionModelosDrone[index] = action.payload;
-      } else {
-        state.coleccionModelosDrone.push(action.payload);
-      }
+      // Actualizar o añadir un modelo de drone específico
+      const modelo = action.payload;
+      state.coleccionModelosDrone[modelo.id] = modelo;
     },
     setSelectedModeloDrone: (state, action: PayloadAction<ModeloDrone | null>) => {
       state.selectedModeloDrone = action.payload;
@@ -43,20 +50,16 @@ export const modeloDroneSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder.addCase(guardarModeloDroneAsync.fulfilled, (state, action) => {
-      const index = state.coleccionModelosDrone.findIndex(modeloDrone => modeloDrone.id === action.payload.id);
-      if (index !== -1) {
-        state.coleccionModelosDrone[index] = action.payload;
-      } else {
-        state.coleccionModelosDrone.push(action.payload);
-      }
+      const modelo = action.payload;
+      // Actualizar o añadir el modelo de drone en la colección
+      state.coleccionModelosDrone[modelo.id] = modelo;
     });
     builder.addCase(eliminarModeloDroneAsync.fulfilled, (state, action) => {
-      state.coleccionModelosDrone = state.coleccionModelosDrone.filter(
-        modeloDrone => modeloDrone.id !== action.payload
-      );
+      const modeloId = action.payload;
+      // Eliminar el modelo de drone de la colección
+      delete state.coleccionModelosDrone[modeloId];
     });
   }
-
 });
 
 export const {
