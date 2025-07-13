@@ -8,6 +8,7 @@ import { guardarDroneAsync, eliminarDroneAsync, getDroneAsync } from '../redux-t
 import { useModal } from './Modal/useModal';
 import Select from 'react-select';
 import { selectModelosDroneArray } from '../redux-tool-kit/modeloDrone/modeloDrone.selectors';
+import { selectUsuarioPorId } from '../redux-tool-kit/usuario/usuario.selectors';
 
 interface ParamTypes extends Record<string, string | undefined> {
   id: string;
@@ -25,8 +26,10 @@ export default function DroneComponent(): JSX.Element {
   );
   
   const modelosDrone = useAppSelector(selectModelosDroneArray);
-  const usuarios = useAppSelector(state => state.usuario.coleccionUsuarios);
   const usuariosSelect = useAppSelector(state => state.usuario.usuariosSelect);
+  const propietarioActual = useAppSelector(state => 
+    droneActual?.data.Propietario ? selectUsuarioPorId(state, droneActual.data.Propietario) : null
+  );
 
   const [drone, setDrone] = useState<Drone>({
     id: '',
@@ -44,18 +47,14 @@ export default function DroneComponent(): JSX.Element {
       if (droneActual) {
         setDrone(droneActual);
         // Si el propietario existe, configuramos el valor para el selector
-        if (droneActual.data.Propietario) {
-          // Buscar el usuario por id (no por email)
-          const propietario = usuarios.find(u => u.id === droneActual.data.Propietario);
-          if (propietario) {
-            setPropietarioValue({ value: propietario.id, label: propietario.data.EmailUsu });
-          }
+        if (droneActual.data.Propietario && propietarioActual) {
+          setPropietarioValue({ value: propietarioActual.id, label: propietarioActual.data.EmailUsu });
         }
       } else {
         dispatch(getDroneAsync(id));
       }
     }
-  }, [dispatch, id, isNew, droneActual, usuarios]);
+  }, [dispatch, id, isNew, droneActual, propietarioActual]);
 
   const changeInput = (field: string, value: any) => {
     setDrone(prevState => ({

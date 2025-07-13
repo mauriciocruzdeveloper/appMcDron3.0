@@ -1,21 +1,21 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { Usuario } from '../../types/usuario';
+import { Usuario, Usuarios } from '../../types/usuario';
 import { SelectOption } from '../../types/selectOption';
 import { guardarUsuarioAsync, eliminarUsuarioAsync } from './usuario.actions';
 
 // Tipos para el estado inicial
 interface UsuarioState {
     filter: string;
-    coleccionUsuarios: Usuario[];
-    provinciasSelect: any[];
-    localidadesSelect: any[];
+    coleccionUsuarios: Usuarios;
+    provinciasSelect: SelectOption[];
+    localidadesSelect: SelectOption[];
     usuariosSelect: SelectOption[];
 }
 
 // Estado inicial
 const initialState: UsuarioState = {
     filter: '',
-    coleccionUsuarios: [],
+    coleccionUsuarios: {},
     provinciasSelect: [],
     localidadesSelect: [],
     usuariosSelect: [],
@@ -28,13 +28,23 @@ const usuarioSlice = createSlice({
     name: 'usuario',
     initialState,
     reducers: {
-        setUsuarios: (state, action: PayloadAction<any[]>) => {
-            state.coleccionUsuarios = action.payload;
+        setUsuarios: (state, action: PayloadAction<Usuario[]>) => {
+            // Convertir el array de usuarios a un objeto con ID como clave
+            const usuariosObj: Usuarios = {};
+            action.payload.forEach(usuario => {
+                usuariosObj[usuario.id] = usuario;
+            });
+            state.coleccionUsuarios = usuariosObj;
         },
-        setProvinciasSelect: (state, action: PayloadAction<any[]>) => {
+        setUsuario: (state, action: PayloadAction<Usuario>) => {
+            // Actualizar o añadir un usuario específico
+            const usuario = action.payload;
+            state.coleccionUsuarios[usuario.id] = usuario;
+        },
+        setProvinciasSelect: (state, action: PayloadAction<SelectOption[]>) => {
             state.provinciasSelect = action.payload;
         },
-        setLocalidadesSelect: (state, action: PayloadAction<any[]>) => {
+        setLocalidadesSelect: (state, action: PayloadAction<SelectOption[]>) => {
             state.localidadesSelect = action.payload;
         },
         setUsuariosSelect: (state, action: PayloadAction<SelectOption[]>) => {
@@ -46,17 +56,14 @@ const usuarioSlice = createSlice({
     },
     extraReducers: (builder) => {
         builder.addCase(guardarUsuarioAsync.fulfilled, (state, action) => {
-            const index = state.coleccionUsuarios.findIndex(usuario => usuario.id === action.payload.id);
-            if (index !== -1) {
-                state.coleccionUsuarios[index] = action.payload;
-            } else {
-                state.coleccionUsuarios.push(action.payload);
-            }
+            const usuario = action.payload;
+            // Actualizar o añadir el usuario en la colección
+            state.coleccionUsuarios[usuario.id] = usuario;
         });
         builder.addCase(eliminarUsuarioAsync.fulfilled, (state, action) => {
-            state.coleccionUsuarios = state.coleccionUsuarios.filter(
-                usuario => usuario.id !== action.payload
-            );
+            const usuarioId = action.payload;
+            // Eliminar el usuario de la colección
+            delete state.coleccionUsuarios[usuarioId];
         });
     },
 });
@@ -65,6 +72,7 @@ const usuarioSlice = createSlice({
 export const {
     setFilter,
     setUsuarios,
+    setUsuario,
     setProvinciasSelect,
     setLocalidadesSelect,
     setUsuariosSelect,

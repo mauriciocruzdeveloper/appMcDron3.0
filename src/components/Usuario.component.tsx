@@ -11,6 +11,7 @@ import { useAppSelector } from "../redux-tool-kit/hooks/useAppSelector";
 import { useAppDispatch } from "../redux-tool-kit/hooks/useAppDispatch";
 import { useModal } from "./Modal/useModal";
 import { eliminarUsuarioAsync, guardarUsuarioAsync } from "../redux-tool-kit/usuario/usuario.actions";
+import { selectUsuarioPorId } from "../redux-tool-kit/usuario/usuario.selectors";
 
 interface ParamTypes extends Record<string, string | undefined> {
     id: string;
@@ -23,11 +24,12 @@ export default function UsuarioComponent(): React.ReactElement | null {
     const history = useHistory();
     const { openModal } = useModal();
 
+    const { id } = useParams<ParamTypes>();
+    
     const provinciasSelect = useAppSelector(state => state.usuario.provinciasSelect);
     const localidadesSelect = useAppSelector(state => state.usuario.localidadesSelect);
-    const coleccionUsuarios = useAppSelector(state => state.usuario.coleccionUsuarios);
+    const usuarioStore = useAppSelector(state => selectUsuarioPorId(state, id || ""));
 
-    const { id } = useParams<ParamTypes>();
     const [usuario, setUsuario] = useState<Usuario>();
 
     useEffect(() => {
@@ -41,15 +43,14 @@ export default function UsuarioComponent(): React.ReactElement | null {
                 }
             }
             
-            // Buscamos el usuario independientemente del resultado de cargar provincias
-            const usuarioEncontrado = coleccionUsuarios.find(usuario => usuario.id === id);
-            if (usuarioEncontrado) {
-                setUsuario(usuarioEncontrado);
+            // Buscamos el usuario por ID directamente usando el selector
+            if (usuarioStore) {
+                setUsuario(usuarioStore);
                 
                 // Si el usuario tiene provincia, cargamos sus localidades
-                if (usuarioEncontrado.data?.ProvinciaUsu) {
+                if (usuarioStore.data?.ProvinciaUsu) {
                     try {
-                        await dispatch(getLocalidadesPorProvincia(usuarioEncontrado.data.ProvinciaUsu));
+                        await dispatch(getLocalidadesPorProvincia(usuarioStore.data.ProvinciaUsu));
                     } catch (error) {
                         console.error("Error al cargar localidades:", error);
                     }
@@ -58,7 +59,7 @@ export default function UsuarioComponent(): React.ReactElement | null {
         };
 
         inicializaFormulario();
-    }, [dispatch, id, coleccionUsuarios, provinciasSelect]);
+    }, [dispatch, id, usuarioStore, provinciasSelect]);
 
     if (!usuario) return null;
 
@@ -106,7 +107,7 @@ export default function UsuarioComponent(): React.ReactElement | null {
     const confirmEliminarUsuario = async () => {
         if (!usuario) return;
         try {
-            const response = await dispatch(eliminarUsuarioAsync(usuario.id)).unwrap();
+            await dispatch(eliminarUsuarioAsync(usuario.id)).unwrap();
             
             openModal({
                 mensaje: "Usuario eliminado correctamente.",
@@ -114,11 +115,15 @@ export default function UsuarioComponent(): React.ReactElement | null {
                 titulo: "Eliminar Usuario",
             });
             history.goBack();
-        } catch (error: any) { // TODO: Hacer tipo de dato para el error
+        } catch (error: unknown) {
             console.error("Error al eliminar el usuario:", error);
             
+            const errorMessage = error && typeof error === 'object' && 'code' in error 
+                ? (error as { code: string }).code 
+                : "Error al eliminar el usuario.";
+            
             openModal({
-                mensaje: error?.code || "Error al eliminar el usuario.",
+                mensaje: errorMessage,
                 tipo: "danger",
                 titulo: "Error",
             });
