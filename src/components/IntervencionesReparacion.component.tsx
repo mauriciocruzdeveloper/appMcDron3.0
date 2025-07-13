@@ -8,6 +8,7 @@ import Select from 'react-select';
 import { setIntervencionesDeReparacionActual } from '../redux-tool-kit/reparacion/reparacion.slice';
 import { selectColeccionModelosDrone } from '../redux-tool-kit/modeloDrone/modeloDrone.selectors';
 import { selectColeccionRepuestos } from '../redux-tool-kit/repuesto/repuesto.selectors';
+import { selectColeccionIntervenciones } from '../redux-tool-kit/intervencion/intervencion.selectors';
 
 interface IntervencionesReparacionProps {
   reparacionId: string;
@@ -19,7 +20,7 @@ export default function IntervencionesReparacion({ reparacionId, readOnly = fals
   const { openModal } = useModal();
 
   const intervenciones = useAppSelector(state => state.reparacion.intervencionesDeReparacionActual);
-  const todasLasIntervenciones = useAppSelector(state => state.intervencion.coleccionIntervenciones);
+  const todasLasIntervenciones = useAppSelector(selectColeccionIntervenciones);
   const modelosDrone = useAppSelector(selectColeccionModelosDrone);
   const repuestosInventario = useAppSelector(selectColeccionRepuestos);
 
@@ -29,7 +30,7 @@ export default function IntervencionesReparacion({ reparacionId, readOnly = fals
   const [totalGeneral, setTotalGeneral] = useState<number>(0);
 
   // Opciones para el selector de intervenciones
-  const opcionesIntervenciones = todasLasIntervenciones
+  const opcionesIntervenciones = Object.values(todasLasIntervenciones)
     .filter(intervencion => !intervenciones.some(i => i.id === intervencion.id)) // Filtrar las ya asociadas
     .map(intervencion => ({
       value: intervencion.id,
