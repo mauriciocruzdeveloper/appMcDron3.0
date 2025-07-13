@@ -1,11 +1,16 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { useHistory } from '../hooks/useHistory';
 import { useAppSelector } from '../redux-tool-kit/hooks/useAppSelector';
 import { Drone } from '../types/drone';
 import { useAppDispatch } from '../redux-tool-kit/hooks/useAppDispatch';
-import { setFilter } from '../redux-tool-kit/drone/drone.slice';
 import { selectModelosDroneArray } from '../redux-tool-kit/modeloDrone/modeloDrone.selectors';
 import { selectColeccionUsuarios } from '../redux-tool-kit/usuario/usuario.selectors';
+import { 
+  selectDronesFiltrados,
+  selectDroneFilter,
+  setFilter,
+  selectHasDrones
+} from '../redux-tool-kit/drone';
 
 // Mock de drones para mostrar como ejemplo
 const dronesMock: Drone[] = [
@@ -38,42 +43,22 @@ const dronesMock: Drone[] = [
 export default function ListaDrones(): JSX.Element {
     const dispatch = useAppDispatch();
     const history = useHistory();
-    const coleccionDrones = useAppSelector((state) => state.drone.coleccionDrones);
-    const filter = useAppSelector((state) => state.drone.filter);
+    
+    // ✅ Usar selectores optimizados en lugar de acceso directo al estado
+    const dronesFilteredFromStore = useAppSelector(selectDronesFiltrados);
+    const filter = useAppSelector(selectDroneFilter);
+    const hasDrones = useAppSelector(selectHasDrones);
+    
     const modelosDrone = useAppSelector(selectModelosDroneArray);
     const usuarios = useAppSelector(selectColeccionUsuarios);
 
-    const [dronesList, setDronesList] = useState<Drone[]>([]);
-    const [mostrandoMock, setMostrandoMock] = useState<boolean>(false);
-
-    useEffect(() => {
-        if (coleccionDrones.length) {
-            const drones = coleccionDrones.filter(drone => {
-                let incluirPorSearch = true;
-                if (filter) {
-                    incluirPorSearch =
-                        drone.data?.Propietario?.toLowerCase().includes(filter.toLowerCase()) ||
-                        (drone.data?.Observaciones?.toLowerCase().includes(filter.toLowerCase()) || false);
-                }
-                return incluirPorSearch;
-            });
-            setDronesList(drones);
-            setMostrandoMock(false);
-        } else {
-            // Usar los datos mock cuando no hay datos reales
-            setDronesList(dronesMock);
-            setMostrandoMock(true);
-        }
-    }, [coleccionDrones, filter]);
+    // ✅ Determinar qué drones mostrar: datos reales o mock
+    const dronesList = hasDrones ? dronesFilteredFromStore : dronesMock;
+    const mostrandoMock = !hasDrones;
 
     const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         dispatch(setFilter(e.target.value));
     }
-
-    const formatDate = (date: Date): string => {
-        if (!date) return '';
-        return new Date(date).toLocaleDateString('es-AR');
-    };
 
     // Nueva función para obtener el nombre del modelo de drone
     const getModeloDroneName = (modeloDroneId: string): string => {
@@ -82,7 +67,7 @@ export default function ListaDrones(): JSX.Element {
         if (modeloDroneId === 'mock-2') return 'Mini 3 Pro';
         if (modeloDroneId === 'mock-3') return 'Phantom 4 Pro V2.0';
         
-        // Para datos reales, buscamos el modelo por ID
+        // ✅ Para datos reales, buscamos el modelo por ID usando acceso O(1)
         const modelo = modelosDrone.find(modelo => modelo.id === modeloDroneId);
         return modelo ? modelo.data.NombreModelo : modeloDroneId;
     };
@@ -140,7 +125,7 @@ export default function ListaDrones(): JSX.Element {
                                 {/* Badge de modelo eliminado, ya se muestra como título */}
                             </div>
                             <div>
-                                {/* Mostrar nombre y apellido del propietario si existe */}
+                                {/* ✅ Mostrar nombre y apellido del propietario usando acceso O(1) por diccionario */}
                                 <small className='text-muted'>
                                   {(() => {
                                     // Nos aseguramos que el id del usuario sea string
