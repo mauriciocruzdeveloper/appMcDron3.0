@@ -36,3 +36,8 @@ export interface ReparacionType {
   id: string;
   data: DataReparacion;
 }
+
+// Tipo para colección de reparaciones como diccionario (optimización O(1))
+export interface Reparaciones {
+  [id: string]: ReparacionType;
+}
