@@ -5,6 +5,7 @@ import { Intervencion } from '../types/intervencion';
 import { useAppDispatch } from '../redux-tool-kit/hooks/useAppDispatch';
 import { setFilter } from '../redux-tool-kit/intervencion/intervencion.slice';
 import { selectModelosDroneArray } from '../redux-tool-kit/modeloDrone/modeloDrone.selectors';
+import { selectIntervencionesArray, selectTieneIntervenciones } from '../redux-tool-kit/intervencion/intervencion.selectors';
 
 // Mock de intervenciones para mostrar como ejemplo (modificado)
 const intervencionesMock: Intervencion[] = [
@@ -48,32 +49,26 @@ const intervencionesMock: Intervencion[] = [
 export default function ListaIntervenciones(): JSX.Element {
   const dispatch = useAppDispatch();
   const history = useHistory();
-  const coleccionIntervenciones = useAppSelector((state) => state.intervencion.coleccionIntervenciones);
+  const intervenciones = useAppSelector(selectIntervencionesArray);
+  const tieneIntervenciones = useAppSelector(selectTieneIntervenciones);
   const filter = useAppSelector((state) => state.intervencion.filter);
   const modelosDrone = useAppSelector(selectModelosDroneArray);
 
-  const [intervencionesList, setIntervencionesList] = useState<Intervencion[]>([]);
   const [mostrandoMock, setMostrandoMock] = useState<boolean>(false);
 
+  // Lista final de intervenciones a mostrar
+  const intervencionesList = tieneIntervenciones 
+    ? intervenciones.filter(intervencion => {
+        if (!filter) return true;
+        return intervencion.data?.NombreInt?.toLowerCase().includes(filter.toLowerCase()) ||
+               intervencion.data?.DescripcionInt?.toLowerCase().includes(filter.toLowerCase());
+      })
+    : intervencionesMock;
+
+  // Actualizar el estado de mostrar mock
   useEffect(() => {
-    if (coleccionIntervenciones.length) {
-      const intervenciones = coleccionIntervenciones.filter(intervencion => {
-        let incluirPorSearch = true;
-        if (filter) {
-          incluirPorSearch =
-            intervencion.data?.NombreInt?.toLowerCase().includes(filter.toLowerCase()) ||
-            intervencion.data?.DescripcionInt?.toLowerCase().includes(filter.toLowerCase());
-        }
-        return incluirPorSearch;
-      });
-      setIntervencionesList(intervenciones);
-      setMostrandoMock(false);
-    } else {
-      // Usar los datos mock cuando no hay datos reales
-      setIntervencionesList(intervencionesMock);
-      setMostrandoMock(true);
-    }
-  }, [coleccionIntervenciones, filter]);
+    setMostrandoMock(!tieneIntervenciones);
+  }, [tieneIntervenciones]);
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     dispatch(setFilter(e.target.value));

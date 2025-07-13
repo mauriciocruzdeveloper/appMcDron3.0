@@ -12,3 +12,6 @@ export interface Intervencion {
   id: string;
   data: IntervencionData;
 }
+
+// Tipo para la colección de intervenciones como diccionario
+export type Intervenciones = { [id: string]: Intervencion };

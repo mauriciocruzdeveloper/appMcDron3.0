@@ -9,6 +9,7 @@ import { useModal } from './Modal/useModal';
 import Select from 'react-select';
 import { selectModelosDroneArray } from '../redux-tool-kit/modeloDrone/modeloDrone.selectors';
 import { selectColeccionRepuestos, selectRepuestosArray } from '../redux-tool-kit/repuesto/repuesto.selectors';
+import { selectIntervencionPorId } from '../redux-tool-kit/intervencion/intervencion.selectors';
 
 interface ParamTypes extends Record<string, string | undefined> {
   id: string;
@@ -22,7 +23,7 @@ export default function IntervencionComponent(): JSX.Element {
   
   const isNew = id === 'new';
   const intervencionActual = useAppSelector(state => 
-    state.intervencion.coleccionIntervenciones.find(intervencion => intervencion.id === id)
+    selectIntervencionPorId(state, id || '')
   );
   
   const modelosDroneArray = useAppSelector(selectModelosDroneArray);
