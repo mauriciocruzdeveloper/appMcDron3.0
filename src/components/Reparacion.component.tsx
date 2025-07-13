@@ -19,6 +19,10 @@ import { convertTimestampCORTO } from "../utils/utils";
 import "bootstrap-icons/font/bootstrap-icons.css";
 import IntervencionesReparacion from './IntervencionesReparacion.component';
 import { selectUsuarioPorId } from "../redux-tool-kit/usuario/usuario.selectors";
+import { 
+  selectReparacionById,
+  selectIntervencionesDeReparacionActual 
+} from "../redux-tool-kit/reparacion";
 
 interface ParamTypes extends Record<string, string | undefined> {
     id: string;
@@ -72,15 +76,13 @@ export default function ReparacionComponent(): React.ReactElement | null {
         }
     };
 
-    const reparacionStore = useAppSelector(
-        state => state.reparacion.coleccionReparaciones.find(reparacion => String(reparacion.id) === id)
-    );
+    const reparacionStore = useAppSelector(selectReparacionById(id || ""));
     const usuarioStore = useAppSelector(
         state => selectUsuarioPorId(state, isNew ? "" : reparacionStore?.data.UsuarioRep || "")
     );
 
-    // Obtener las intervenciones aplicadas a esta reparación
-    const intervencionesAplicadas = useAppSelector(state => state.reparacion.intervencionesDeReparacionActual);
+    // Obtener las intervenciones aplicadas a esta reparación usando el selector optimizado
+    const intervencionesAplicadas = useAppSelector(selectIntervencionesDeReparacionActual);
 
     // Calcular el total de las intervenciones
     const totalIntervenciones = intervencionesAplicadas.reduce((total, intervencion) =>

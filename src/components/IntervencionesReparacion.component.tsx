@@ -9,6 +9,7 @@ import { setIntervencionesDeReparacionActual } from '../redux-tool-kit/reparacio
 import { selectColeccionModelosDrone } from '../redux-tool-kit/modeloDrone/modeloDrone.selectors';
 import { selectColeccionRepuestos } from '../redux-tool-kit/repuesto/repuesto.selectors';
 import { selectColeccionIntervenciones } from '../redux-tool-kit/intervencion/intervencion.selectors';
+import { selectIntervencionesDeReparacionActual } from '../redux-tool-kit/reparacion';
 
 interface IntervencionesReparacionProps {
   reparacionId: string;
@@ -19,7 +20,8 @@ export default function IntervencionesReparacion({ reparacionId, readOnly = fals
   const dispatch = useAppDispatch();
   const { openModal } = useModal();
 
-  const intervenciones = useAppSelector(state => state.reparacion.intervencionesDeReparacionActual);
+  // Usar selectores optimizados
+  const intervenciones = useAppSelector(selectIntervencionesDeReparacionActual);
   const todasLasIntervenciones = useAppSelector(selectColeccionIntervenciones);
   const modelosDrone = useAppSelector(selectColeccionModelosDrone);
   const repuestosInventario = useAppSelector(selectColeccionRepuestos);
@@ -29,7 +31,7 @@ export default function IntervencionesReparacion({ reparacionId, readOnly = fals
   const [totalRepuestos, setTotalRepuestos] = useState<number>(0);
   const [totalGeneral, setTotalGeneral] = useState<number>(0);
 
-  // Opciones para el selector de intervenciones
+  // Opciones para el selector de intervenciones - optimizado para diccionario
   const opcionesIntervenciones = Object.values(todasLasIntervenciones)
     .filter(intervencion => !intervenciones.some(i => i.id === intervencion.id)) // Filtrar las ya asociadas
     .map(intervencion => ({
