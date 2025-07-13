@@ -18,6 +18,7 @@ import TextareaAutosize from "react-textarea-autosize";
 import { convertTimestampCORTO } from "../utils/utils";
 import "bootstrap-icons/font/bootstrap-icons.css";
 import IntervencionesReparacion from './IntervencionesReparacion.component';
+import { selectUsuarioPorId } from "../redux-tool-kit/usuario/usuario.selectors";
 
 interface ParamTypes extends Record<string, string | undefined> {
     id: string;
@@ -75,7 +76,7 @@ export default function ReparacionComponent(): React.ReactElement | null {
         state => state.reparacion.coleccionReparaciones.find(reparacion => String(reparacion.id) === id)
     );
     const usuarioStore = useAppSelector(
-        state => state.usuario.coleccionUsuarios.find(usuario => usuario.id === (isNew ? "" : reparacionStore?.data.UsuarioRep))
+        state => selectUsuarioPorId(state, isNew ? "" : reparacionStore?.data.UsuarioRep || "")
     );
 
     // Obtener las intervenciones aplicadas a esta reparación

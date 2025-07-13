@@ -1,34 +1,15 @@
 import React from 'react';
-import { useEffect, useState } from 'react';
 import { useHistory } from '../hooks/useHistory';
 import { useAppSelector } from '../redux-tool-kit/hooks/useAppSelector';
-import { Usuario } from '../types/usuario';
 import { useAppDispatch } from '../redux-tool-kit/hooks/useAppDispatch';
 import { setFilter } from '../redux-tool-kit/usuario/usuario.slice';
+import { selectUsuariosFiltradosPorEstado } from '../redux-tool-kit/usuario/usuario.selectors';
 
 export default function ListaUsuarios(): JSX.Element {
   const dispatch = useAppDispatch();
   const history = useHistory();
-  const coleccionUsuarios = useAppSelector((state) => state.usuario.coleccionUsuarios);
+  const usuariosList = useAppSelector(selectUsuariosFiltradosPorEstado);
   const filter = useAppSelector((state) => state.usuario.filter);
-
-  const [usuariosList, setUsuariosList] = useState<Usuario[]>([]);
-
-  useEffect(() => {
-    if (coleccionUsuarios.length) {
-      const usuarios = coleccionUsuarios.filter(usuario => {
-        let incluirPorSearch = true;
-        if (filter) {
-          incluirPorSearch = usuario.data.NombreUsu?.toLowerCase().includes(filter.toLowerCase())
-            || usuario.data.ApellidoUsu?.toLowerCase().includes(filter.toLowerCase())
-            || usuario.data.EmailUsu?.toLowerCase().includes(filter.toLowerCase())
-            || usuario.data.TelefonoUsu?.toLowerCase().includes(filter.toLowerCase());
-        }
-        return incluirPorSearch;
-      });
-      setUsuariosList(usuarios);
-    }
-  }, [coleccionUsuarios, filter]);
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     dispatch(setFilter(e.target.value));

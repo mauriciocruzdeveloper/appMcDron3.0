@@ -12,3 +12,8 @@ export interface Usuario {
       UrlFotoUsu: string     // url_photo en Supabase
     };
 }
+
+// Tipo para la colección de usuarios como diccionario
+export interface Usuarios {
+  [key: string]: Usuario;
+}

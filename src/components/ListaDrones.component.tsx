@@ -5,6 +5,7 @@ import { Drone } from '../types/drone';
 import { useAppDispatch } from '../redux-tool-kit/hooks/useAppDispatch';
 import { setFilter } from '../redux-tool-kit/drone/drone.slice';
 import { selectModelosDroneArray } from '../redux-tool-kit/modeloDrone/modeloDrone.selectors';
+import { selectColeccionUsuarios } from '../redux-tool-kit/usuario/usuario.selectors';
 
 // Mock de drones para mostrar como ejemplo
 const dronesMock: Drone[] = [
@@ -40,7 +41,7 @@ export default function ListaDrones(): JSX.Element {
     const coleccionDrones = useAppSelector((state) => state.drone.coleccionDrones);
     const filter = useAppSelector((state) => state.drone.filter);
     const modelosDrone = useAppSelector(selectModelosDroneArray);
-    const usuarios = useAppSelector((state) => state.usuario.coleccionUsuarios); // Obtener la colección de usuarios
+    const usuarios = useAppSelector(selectColeccionUsuarios);
 
     const [dronesList, setDronesList] = useState<Drone[]>([]);
     const [mostrandoMock, setMostrandoMock] = useState<boolean>(false);
@@ -144,7 +145,7 @@ export default function ListaDrones(): JSX.Element {
                                   {(() => {
                                     // Nos aseguramos que el id del usuario sea string
                                     const propietarioId = drone.data.Propietario;
-                                    const usuario = usuarios.find(u => u.id === propietarioId);
+                                    const usuario = usuarios[propietarioId];
                                     return usuario ? `${usuario.data.NombreUsu} ${usuario.data.ApellidoUsu}` : propietarioId;
                                   })()}
                                 </small>
