@@ -785,6 +785,16 @@ export default function ReparacionComponent(): React.ReactElement | null {
                 </div>
             </div>
 
+            <div className="card mb-3">
+                <div className="card-body">
+                    <h5 className="card-title bluemcdron">INTERVENCIONES - TRABAJOS REALIZADOS</h5>
+                    <IntervencionesReparacion
+                        reparacionId={reparacion.id}
+                        readOnly={!isAdmin}
+                    />
+                </div>
+            </div>
+
             {isAdmin ? // Sólo para administrador
                 <div className="card mb-3">
                     <div className="card-body">
@@ -868,16 +878,6 @@ export default function ReparacionComponent(): React.ReactElement | null {
                             disabled={!isAdmin}
                         />
                     </div>
-                </div>
-            </div>
-
-            <div className="card mb-3">
-                <div className="card-body">
-                    <h5 className="card-title bluemcdron">INTERVENCIONES - TRABAJOS REALIZADOS</h5>
-                    <IntervencionesReparacion
-                        reparacionId={reparacion.id}
-                        readOnly={!isAdmin}
-                    />
                 </div>
             </div>
 
