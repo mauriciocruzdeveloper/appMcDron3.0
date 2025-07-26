@@ -64,10 +64,10 @@ export const selectUsuariosFiltradosPorEstado = createSelector(
     if (!filtro) return usuarios;
     
     return usuarios.filter(usuario =>
-      usuario.data.NombreUsu.toLowerCase().includes(filtro.toLowerCase()) ||
-      usuario.data.ApellidoUsu.toLowerCase().includes(filtro.toLowerCase()) ||
-      usuario.data.EmailUsu.toLowerCase().includes(filtro.toLowerCase()) ||
-      usuario.data.Nick.toLowerCase().includes(filtro.toLowerCase())
+      (usuario.data.NombreUsu || '').toLowerCase().includes(filtro.toLowerCase()) ||
+      (usuario.data.ApellidoUsu || '').toLowerCase().includes(filtro.toLowerCase()) ||
+      (usuario.data.EmailUsu || '').toLowerCase().includes(filtro.toLowerCase()) ||
+      (usuario.data.Nick || '').toLowerCase().includes(filtro.toLowerCase())
     );
   }
 );
@@ -80,11 +80,11 @@ export const selectUsuariosFiltradosPorEstado = createSelector(
 export const selectUsuariosOrdenados = createSelector(
   [selectUsuariosArray],
   (usuarios) => 
-    [...usuarios].sort((a, b) => 
-      `${a.data.NombreUsu} ${a.data.ApellidoUsu}`.localeCompare(
-        `${b.data.NombreUsu} ${b.data.ApellidoUsu}`
-      )
-    )
+    [...usuarios].sort((a, b) => {
+      const nombreA = `${a.data.NombreUsu || ''} ${a.data.ApellidoUsu || ''}`.trim();
+      const nombreB = `${b.data.NombreUsu || ''} ${b.data.ApellidoUsu || ''}`.trim();
+      return nombreA.localeCompare(nombreB);
+    })
 );
 
 // Selector para verificar si hay usuarios cargados
@@ -99,7 +99,7 @@ export const selectUsuariosSelectOptions = createSelector(
   (usuarios) => 
     usuarios.map(usuario => ({
       value: usuario.id,
-      label: `${usuario.data.NombreUsu} ${usuario.data.ApellidoUsu} (${usuario.data.Nick})`
+      label: `${usuario.data.NombreUsu || ''} ${usuario.data.ApellidoUsu || ''} (${usuario.data.Nick || 'Sin nick'})`.trim()
     }))
 );
 
@@ -110,11 +110,11 @@ export const selectUsuariosPorBusqueda = createSelector(
     if (!busqueda) return usuarios;
     
     return usuarios.filter(usuario =>
-      usuario.data.NombreUsu.toLowerCase().includes(busqueda.toLowerCase()) ||
-      usuario.data.ApellidoUsu.toLowerCase().includes(busqueda.toLowerCase()) ||
-      usuario.data.EmailUsu.toLowerCase().includes(busqueda.toLowerCase()) ||
-      usuario.data.Nick.toLowerCase().includes(busqueda.toLowerCase()) ||
-      usuario.data.TelefonoUsu.includes(busqueda)
+      (usuario.data.NombreUsu || '').toLowerCase().includes(busqueda.toLowerCase()) ||
+      (usuario.data.ApellidoUsu || '').toLowerCase().includes(busqueda.toLowerCase()) ||
+      (usuario.data.EmailUsu || '').toLowerCase().includes(busqueda.toLowerCase()) ||
+      (usuario.data.Nick || '').toLowerCase().includes(busqueda.toLowerCase()) ||
+      (usuario.data.TelefonoUsu || '').includes(busqueda)
     );
   }
 );
@@ -126,12 +126,12 @@ export const selectUsuariosFiltrados = createSelector(
     if (!filtro) return usuarios;
     
     return usuarios.filter(usuario =>
-      usuario.data.NombreUsu.toLowerCase().includes(filtro.toLowerCase()) ||
-      usuario.data.ApellidoUsu.toLowerCase().includes(filtro.toLowerCase()) ||
-      usuario.data.EmailUsu.toLowerCase().includes(filtro.toLowerCase()) ||
-      usuario.data.Nick.toLowerCase().includes(filtro.toLowerCase()) ||
-      usuario.data.ProvinciaUsu.toLowerCase().includes(filtro.toLowerCase()) ||
-      usuario.data.CiudadUsu.toLowerCase().includes(filtro.toLowerCase())
+      (usuario.data.NombreUsu || '').toLowerCase().includes(filtro.toLowerCase()) ||
+      (usuario.data.ApellidoUsu || '').toLowerCase().includes(filtro.toLowerCase()) ||
+      (usuario.data.EmailUsu || '').toLowerCase().includes(filtro.toLowerCase()) ||
+      (usuario.data.Nick || '').toLowerCase().includes(filtro.toLowerCase()) ||
+      (usuario.data.ProvinciaUsu || '').toLowerCase().includes(filtro.toLowerCase()) ||
+      (usuario.data.CiudadUsu || '').toLowerCase().includes(filtro.toLowerCase())
     );
   }
 );
@@ -157,7 +157,7 @@ export const selectUsuariosPorProvincia = createSelector(
     if (!provincia) return usuarios;
     
     return usuarios.filter(usuario => 
-      usuario.data.ProvinciaUsu.toLowerCase() === provincia.toLowerCase()
+      (usuario.data.ProvinciaUsu || '').toLowerCase() === provincia.toLowerCase()
     );
   }
 );
@@ -183,7 +183,7 @@ export const selectUsuariosPorCiudad = createSelector(
     if (!ciudad) return usuarios;
     
     return usuarios.filter(usuario => 
-      usuario.data.CiudadUsu.toLowerCase() === ciudad.toLowerCase()
+      (usuario.data.CiudadUsu || '').toLowerCase() === ciudad.toLowerCase()
     );
   }
 );
@@ -241,7 +241,7 @@ export const selectUsuarioPorEmailExacto = createSelector(
   [selectUsuariosArray, (state: RootState, email: string) => email],
   (usuarios, email) => 
     usuarios.find(usuario => 
-      usuario.data.EmailUsu.toLowerCase() === email.toLowerCase()
+      (usuario.data.EmailUsu || '').toLowerCase() === email.toLowerCase()
     )
 );
 
@@ -250,7 +250,7 @@ export const selectUsuarioPorNickExacto = createSelector(
   [selectUsuariosArray, (state: RootState, nick: string) => nick],
   (usuarios, nick) => 
     usuarios.find(usuario => 
-      usuario.data.Nick.toLowerCase() === nick.toLowerCase()
+      (usuario.data.Nick || '').toLowerCase() === nick.toLowerCase()
     )
 );
 
@@ -287,6 +287,6 @@ export const selectUsuariosOrdenadosPorEmail = createSelector(
   [selectUsuariosArray],
   (usuarios) => 
     [...usuarios].sort((a, b) => 
-      a.data.EmailUsu.localeCompare(b.data.EmailUsu)
+      (a.data.EmailUsu || '').localeCompare(b.data.EmailUsu || '')
     )
 );
