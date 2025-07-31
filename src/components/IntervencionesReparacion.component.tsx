@@ -6,6 +6,10 @@ import { Intervencion } from '../types/intervencion';
 import { useModal } from './Modal/useModal';
 import Select from 'react-select';
 import { setIntervencionesDeReparacionActual } from '../redux-tool-kit/reparacion/reparacion.slice';
+import { selectColeccionModelosDrone } from '../redux-tool-kit/modeloDrone/modeloDrone.selectors';
+import { selectColeccionRepuestos } from '../redux-tool-kit/repuesto/repuesto.selectors';
+import { selectColeccionIntervenciones } from '../redux-tool-kit/intervencion/intervencion.selectors';
+import { selectIntervencionesDeReparacionActual } from '../redux-tool-kit/reparacion';
 
 interface IntervencionesReparacionProps {
   reparacionId: string;
@@ -16,18 +20,19 @@ export default function IntervencionesReparacion({ reparacionId, readOnly = fals
   const dispatch = useAppDispatch();
   const { openModal } = useModal();
 
-  const intervenciones = useAppSelector(state => state.reparacion.intervencionesDeReparacionActual);
-  const todasLasIntervenciones = useAppSelector(state => state.intervencion.coleccionIntervenciones);
-  const modelosDrone = useAppSelector(state => state.modeloDrone.coleccionModelosDrone);
-  const repuestosInventario = useAppSelector(state => state.repuesto.coleccionRepuestos);
+  // Usar selectores optimizados
+  const intervenciones = useAppSelector(selectIntervencionesDeReparacionActual);
+  const todasLasIntervenciones = useAppSelector(selectColeccionIntervenciones);
+  const modelosDrone = useAppSelector(selectColeccionModelosDrone);
+  const repuestosInventario = useAppSelector(selectColeccionRepuestos);
 
   const [intervencionSeleccionada, setIntervencionSeleccionada] = useState<string | null>(null);
   const [totalManoObra, setTotalManoObra] = useState<number>(0);
   const [totalRepuestos, setTotalRepuestos] = useState<number>(0);
   const [totalGeneral, setTotalGeneral] = useState<number>(0);
 
-  // Opciones para el selector de intervenciones
-  const opcionesIntervenciones = todasLasIntervenciones
+  // Opciones para el selector de intervenciones - optimizado para diccionario
+  const opcionesIntervenciones = Object.values(todasLasIntervenciones)
     .filter(intervencion => !intervenciones.some(i => i.id === intervencion.id)) // Filtrar las ya asociadas
     .map(intervencion => ({
       value: intervencion.id,
@@ -78,9 +83,9 @@ export default function IntervencionesReparacion({ reparacionId, readOnly = fals
         tipo: "success",
         titulo: "Agregar Intervención",
       });
-    } catch (error: any) { // TODO: Hacer tipo de dato para el error
+    } catch (error: unknown) { // TODO: Hacer tipo de dato para el error
       openModal({
-        mensaje: error?.code || "Error al agregar la intervención.",
+        mensaje: (error as { code?: string })?.code || "Error al agregar la intervención.",
         tipo: "danger",
         titulo: "Error",
       });
@@ -104,9 +109,9 @@ export default function IntervencionesReparacion({ reparacionId, readOnly = fals
             tipo: "success",
             titulo: "Eliminar Intervención",
           });
-        } catch (error: any) { // TODO: Hacer tipo de dato para el error
+        } catch (error: unknown) { // TODO: Hacer tipo de dato para el error
           openModal({
-            mensaje: error?.code || "Error al eliminar la intervención.",
+            mensaje: (error as { code?: string })?.code || "Error al eliminar la intervención.",
             tipo: "danger",
             titulo: "Error",
           });
@@ -120,12 +125,12 @@ export default function IntervencionesReparacion({ reparacionId, readOnly = fals
   };
 
   const getModeloDroneName = (modeloId: string): string => {
-    const modelo = modelosDrone.find(m => m.id === modeloId);
+    const modelo = modelosDrone[modeloId];
     return modelo ? modelo.data.NombreModelo : modeloId;
   };
 
   const getRepuestoInfo = (repuestoId: string) => {
-    const repuesto = repuestosInventario.find(r => r.id === repuestoId);
+    const repuesto = repuestosInventario[repuestoId];
     return repuesto
       ? `${repuesto.data.NombreRepu} (${formatPrice(repuesto.data.PrecioRepu)})`
       : 'Repuesto no encontrado';

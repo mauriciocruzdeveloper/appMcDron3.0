@@ -1,12 +1,12 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { SelectOption } from '../../types/selectOption';
-import { Repuesto } from '../../types/repuesto';
+import { Repuesto, Repuestos } from '../../types/repuesto';
 import { guardarRepuestoAsync, eliminarRepuestoAsync } from './repuesto.actions';
 
 // Tipos para el estado inicial
 interface RepuestoState {
     filter: string;
-    coleccionRepuestos: Repuesto[];
+    coleccionRepuestos: Repuestos;
     modelosDroneSelect: SelectOption[];
     proveedoresSelect: SelectOption[];
 }
@@ -14,7 +14,7 @@ interface RepuestoState {
 // Estado inicial
 const initialState: RepuestoState = {
     filter: '',
-    coleccionRepuestos: [],
+    coleccionRepuestos: {},
     modelosDroneSelect: [],
     proveedoresSelect: [],
 };
@@ -27,15 +27,17 @@ const repuestoSlice = createSlice({
     initialState,
     reducers: {
         setRepuestos: (state, action: PayloadAction<Repuesto[]>) => {
-            state.coleccionRepuestos = action.payload;
+            // Convertir el array de repuestos a un objeto con ID como clave
+            const repuestosObj: Repuestos = {};
+            action.payload.forEach(repuesto => {
+                repuestosObj[repuesto.id] = repuesto;
+            });
+            state.coleccionRepuestos = repuestosObj;
         },
         setRepuesto: (state, action: PayloadAction<Repuesto>) => {
-            const index = state.coleccionRepuestos.findIndex(repuesto => repuesto.id === action.payload.id);
-            if (index !== -1) {
-                state.coleccionRepuestos[index] = action.payload;
-            } else {
-                state.coleccionRepuestos.push(action.payload);
-            }
+            // Actualizar o añadir un repuesto específico
+            const repuesto = action.payload;
+            state.coleccionRepuestos[repuesto.id] = repuesto;
         },
         setModelosDroneSelect: (state, action: PayloadAction<SelectOption[]>) => {
             state.modelosDroneSelect = action.payload;
@@ -49,17 +51,14 @@ const repuestoSlice = createSlice({
     },
     extraReducers: (builder) => {
         builder.addCase(guardarRepuestoAsync.fulfilled, (state, action) => {
-            const index = state.coleccionRepuestos.findIndex(repuesto => repuesto.id === action.payload.id);
-            if (index !== -1) {
-                state.coleccionRepuestos[index] = action.payload;
-            } else {
-                state.coleccionRepuestos.push(action.payload);
-            }
+            const repuesto = action.payload;
+            // Actualizar o añadir el repuesto en la colección
+            state.coleccionRepuestos[repuesto.id] = repuesto;
         });
         builder.addCase(eliminarRepuestoAsync.fulfilled, (state, action) => {
-            state.coleccionRepuestos = state.coleccionRepuestos.filter(
-                repuesto => repuesto.id !== action.payload
-            );
+            const repuestoId = action.payload;
+            // Eliminar el repuesto de la colección
+            delete state.coleccionRepuestos[repuestoId];
         });
     },
 });

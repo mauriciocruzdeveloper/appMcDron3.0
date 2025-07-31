@@ -101,9 +101,12 @@ export const subirFotoAsync = createAsyncThunk(
       // Crear un Blob a partir del archivo para evitar problemas de referencia
       const fileBlob = new Blob([await file.arrayBuffer()], { type: file.type });
       
-      // Generar un nombre único para el archivo usando timestamp
+      // Generar un nombre único para el archivo usando timestamp y manteniendo la extensión
+      const extIndex = file.name.lastIndexOf('.');
+      const baseName = extIndex !== -1 ? file.name.substring(0, extIndex) : file.name;
+      const ext = extIndex !== -1 ? file.name.substring(extIndex) : '';
       const timestamp = Date.now();
-      const fileName = `${timestamp}_${file.name.replace(/[^a-zA-Z0-9.]/g, '_')}`;
+      const fileName = `${baseName.replace(/[^a-zA-Z0-9]/g, '_')}_${timestamp}${ext}`;
       const path = `REPARACIONES/${reparacionId}/fotos/${fileName}`;
       
       // Subir el Blob en lugar del archivo original
@@ -129,13 +132,16 @@ export const subirDocumentoAsync = createAsyncThunk(
       // Crear un Blob a partir del archivo para evitar problemas de referencia
       const fileBlob = new Blob([await file.arrayBuffer()], { type: file.type });
       
-      // Generar un nombre único para el archivo usando timestamp
-      const timestamp = Date.now();
-      const fileName = `${timestamp}_${file.name.replace(/[^a-zA-Z0-9.]/g, '_')}`;
-      const path = `REPARACIONES/${reparacionId}/documentos/${fileName}`;
+      // Generar un nombre único para el archivo usando timestamp y manteniendo la extensión
+      const extIndexDoc = file.name.lastIndexOf('.');
+      const baseNameDoc = extIndexDoc !== -1 ? file.name.substring(0, extIndexDoc) : file.name;
+      const extDoc = extIndexDoc !== -1 ? file.name.substring(extIndexDoc) : '';
+      const timestampDoc = Date.now();
+      const fileNameDoc = `${baseNameDoc.replace(/[^a-zA-Z0-9]/g, '_')}_${timestampDoc}${extDoc}`;
+      const pathDoc = `REPARACIONES/${reparacionId}/documentos/${fileNameDoc}`;
       
       // Subir el Blob en lugar del archivo original
-      const urlDocumento = await subirArchivoPersistencia(path, fileBlob);
+      const urlDocumento = await subirArchivoPersistencia(pathDoc, fileBlob);
       
       dispatch(isFetchingComplete());
       return urlDocumento;
@@ -190,27 +196,19 @@ export const borrarDocumentoAsync = createAsyncThunk(
 // Acción completa para subir una foto y actualizar la reparación
 export const subirFotoYActualizarReparacionAsync = createAsyncThunk(
   'app/subirFotoYActualizar',
-  async ({ reparacionId, file }: { reparacionId: string, file: File }, { dispatch }) => {
+  async ({ reparacion, file }: { reparacion: ReparacionType, file: File }, { dispatch }) => {
     try {
       dispatch(isFetchingStart());
       
       // 1. Subir la foto
-      const response = await dispatch(subirFotoAsync({ reparacionId, file }));
+      const response = await dispatch(subirFotoAsync({ reparacionId: reparacion.id, file }));
       if (response.meta.requestStatus !== 'fulfilled') {
         throw new Error("Error al subir la foto");
       }
       
       const urlFoto = response.payload as string;
-      
-      // 2. Obtener la reparación actual
-      const reparacionResponse = await dispatch(getReparacionAsync(reparacionId));
-      if (reparacionResponse.meta.requestStatus !== 'fulfilled') {
-        throw new Error("Error al obtener la reparación");
-      }
-      
-      const reparacion = reparacionResponse.payload as ReparacionType;
-      
-      // 3. Actualizar la reparación con la nueva foto
+            
+      // 2. Actualizar la reparación con la nueva foto
       const nuevaReparacion = {
         ...reparacion,
         data: {
@@ -219,7 +217,7 @@ export const subirFotoYActualizarReparacionAsync = createAsyncThunk(
         }
       };
       
-      // 4. Guardar la reparación actualizada
+      // 3. Guardar la reparación actualizada
       const guardarResponse = await dispatch(guardarReparacionAsync(nuevaReparacion));
       if (guardarResponse.meta.requestStatus !== 'fulfilled') {
         throw new Error("Error al guardar la reparación");
@@ -238,27 +236,19 @@ export const subirFotoYActualizarReparacionAsync = createAsyncThunk(
 // Acción completa para subir un documento y actualizar la reparación
 export const subirDocumentoYActualizarReparacionAsync = createAsyncThunk(
   'app/subirDocumentoYActualizar',
-  async ({ reparacionId, file }: { reparacionId: string, file: File }, { dispatch }) => {
+  async ({ reparacion, file }: { reparacion: ReparacionType, file: File }, { dispatch }) => {
     try {
       dispatch(isFetchingStart());
       
       // 1. Subir el documento
-      const response = await dispatch(subirDocumentoAsync({ reparacionId, file }));
+      const response = await dispatch(subirDocumentoAsync({ reparacionId: reparacion.id, file }));
       if (response.meta.requestStatus !== 'fulfilled') {
         throw new Error("Error al subir el documento");
       }
       
       const urlDocumento = response.payload as string;
-      
-      // 2. Obtener la reparación actual
-      const reparacionResponse = await dispatch(getReparacionAsync(reparacionId));
-      if (reparacionResponse.meta.requestStatus !== 'fulfilled') {
-        throw new Error("Error al obtener la reparación");
-      }
-      
-      const reparacion = reparacionResponse.payload as ReparacionType;
-      
-      // 3. Actualizar la reparación con el nuevo documento
+
+      // 2. Actualizar la reparación con el nuevo documento
       const nuevaReparacion = {
         ...reparacion,
         data: {
@@ -267,7 +257,7 @@ export const subirDocumentoYActualizarReparacionAsync = createAsyncThunk(
         }
       };
       
-      // 4. Guardar la reparación actualizada
+      // 3. Guardar la reparación actualizada
       const guardarResponse = await dispatch(guardarReparacionAsync(nuevaReparacion));
       if (guardarResponse.meta.requestStatus !== 'fulfilled') {
         throw new Error("Error al guardar la reparación");

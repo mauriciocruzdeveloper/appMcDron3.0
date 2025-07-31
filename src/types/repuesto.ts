@@ -13,3 +13,7 @@ export interface Repuesto {
   id: string;
   data: RepuestoData;
 }
+
+export interface Repuestos {
+  [key: string]: Repuesto;
+}

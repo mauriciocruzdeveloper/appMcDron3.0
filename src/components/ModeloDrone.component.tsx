@@ -6,6 +6,7 @@ import { useAppSelector } from '../redux-tool-kit/hooks/useAppSelector';
 import { ModeloDrone } from '../types/modeloDrone';
 import { guardarModeloDroneAsync, eliminarModeloDroneAsync, getModeloDroneAsync } from '../redux-tool-kit/modeloDrone/modeloDrone.actions';
 import { useModal } from './Modal/useModal';
+import { selectModeloDronePorId } from '../redux-tool-kit/modeloDrone/modeloDrone.selectors';
 
 interface ParamTypes extends Record<string, string | undefined> {
   id: string;
@@ -18,8 +19,8 @@ export default function ModeloDroneComponent(): JSX.Element {
   const { id } = useParams<ParamTypes>();
   
   const isNew = id === 'new';
-  const modeloDroneActual = useAppSelector(state => 
-    state.modeloDrone.coleccionModelosDrone.find(modelo => modelo.id === id)
+  const modeloDroneActual = useAppSelector((state) => 
+    isNew || !id ? null : selectModeloDronePorId(state, id)
   );
 
   // Estado para el modelo de drone

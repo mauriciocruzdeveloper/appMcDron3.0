@@ -1,10 +1,17 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { useHistory } from '../hooks/useHistory';
 import { useAppSelector } from '../redux-tool-kit/hooks/useAppSelector';
 import { Repuesto } from '../types/repuesto';
 import { useAppDispatch } from '../redux-tool-kit/hooks/useAppDispatch';
 import { setFilter } from '../redux-tool-kit/repuesto/repuesto.slice';
 import { ModeloDrone } from '../types/modeloDrone';
+import { 
+  selectRepuestosFiltrados, 
+  selectRepuestoFilter, 
+  selectTieneRepuestos,
+  selectEstadisticasRepuestos 
+} from '../redux-tool-kit/repuesto/repuesto.selectors';
+import { selectModelosDroneArray } from '../redux-tool-kit/modeloDrone/modeloDrone.selectors';
 
 // Mock de repuestos para mostrar como ejemplo
 const repuestosMock: Repuesto[] = [
@@ -55,43 +62,23 @@ export const calcularEstadoRepuesto = (stock: number, unidadesPedidas: number): 
 export default function ListaRepuestos(): JSX.Element {
     const dispatch = useAppDispatch();
     const history = useHistory();
-    const coleccionRepuestos = useAppSelector((state) => state.repuesto.coleccionRepuestos);
-    const filter = useAppSelector((state) => state.repuesto.filter);
-    const modelosDrone = useAppSelector((state) => state.modeloDrone.coleccionModelosDrone); // Obtener los modelos de drones desde el estado
+    
+    // Usar selectores para obtener datos del estado
+    const filter = useAppSelector(selectRepuestoFilter);
+    const tieneRepuestos = useAppSelector(selectTieneRepuestos);
+    const estadisticas = useAppSelector(selectEstadisticasRepuestos);
+    const modelosDrone = useAppSelector(selectModelosDroneArray);
 
-    const [repuestosList, setRepuestosList] = useState<Repuesto[]>([]);
-    const [mostrandoMock, setMostrandoMock] = useState<boolean>(false);
     const [filtroModeloDrone, setFiltroModeloDrone] = useState<string>('');
 
-    useEffect(() => {
-        if (coleccionRepuestos.length) {
-            const repuestos = coleccionRepuestos.filter(repuesto => {
-                let incluirPorSearch = true;
-                let incluirPorModelo = true;
-                
-                // Filtro por texto
-                if (filter) {
-                    incluirPorSearch =
-                        repuesto.data?.NombreRepu?.toLowerCase().includes(filter.toLowerCase()) ||
-                        repuesto.data?.DescripcionRepu?.toLowerCase().includes(filter.toLowerCase()) ||
-                        repuesto.data?.ProveedorRepu?.toLowerCase().includes(filter.toLowerCase());
-                }
-                
-                // Filtro por modelo de drone
-                if (filtroModeloDrone) {
-                    incluirPorModelo = repuesto.data.ModelosDroneIds?.includes(filtroModeloDrone) || false;
-                }
-                
-                return incluirPorSearch && incluirPorModelo;
-            });
-            setRepuestosList(repuestos);
-            setMostrandoMock(false);
-        } else {
-            // Usar los datos mock cuando no hay datos reales
-            setRepuestosList(repuestosMock);
-            setMostrandoMock(true);
-        }
-    }, [coleccionRepuestos, filter, filtroModeloDrone]);
+    // Usar selector para obtener repuestos filtrados
+    const repuestosFiltrados = useAppSelector((state) => 
+        selectRepuestosFiltrados(state, filtroModeloDrone)
+    );
+
+    // Estado para mostrar mock cuando no hay datos
+    const mostrandoMock = !tieneRepuestos;
+    const repuestosList = mostrandoMock ? repuestosMock : repuestosFiltrados;
 
     const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         dispatch(setFilter(e.target.value));
@@ -153,10 +140,35 @@ export default function ListaRepuestos(): JSX.Element {
 
             <div className="d-flex justify-content-between align-items-center mb-3">
                 <div className="text-muted">
-                    {mostrandoMock ?
-                        <span>Mostrando {repuestosList.length} repuestos de ejemplo <span className="badge bg-warning text-dark">DATOS DE EJEMPLO</span></span> :
-                        <span>{repuestosList.length} {repuestosList.length === 1 ? 'repuesto' : 'repuestos'}</span>
-                    }
+                    {mostrandoMock ? (
+                        <span>Mostrando {repuestosList.length} repuestos de ejemplo 
+                            <span className="badge bg-warning text-dark ms-1">DATOS DE EJEMPLO</span>
+                        </span>
+                    ) : (
+                        <div>
+                            <span>{repuestosList.length} {repuestosList.length === 1 ? 'repuesto' : 'repuestos'}</span>
+                            {estadisticas.total > 0 && (
+                                <div className="mt-1">
+                                    <small className="text-success">
+                                        <i className="bi bi-check-circle me-1"></i>
+                                        {estadisticas.disponibles} disponibles
+                                    </small>
+                                    {estadisticas.enPedido > 0 && (
+                                        <small className="text-warning ms-2">
+                                            <i className="bi bi-clock me-1"></i>
+                                            {estadisticas.enPedido} en pedido
+                                        </small>
+                                    )}
+                                    {estadisticas.agotados > 0 && (
+                                        <small className="text-danger ms-2">
+                                            <i className="bi bi-x-circle me-1"></i>
+                                            {estadisticas.agotados} agotados
+                                        </small>
+                                    )}
+                                </div>
+                            )}
+                        </div>
+                    )}
                 </div>
                 
                 <button
