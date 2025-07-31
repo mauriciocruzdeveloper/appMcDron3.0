@@ -182,9 +182,6 @@ export const guardarUsuarioPersistencia = async (usuario) => {
           created_at: new Date()
         })
         .select();
-      
-      console.log('!!! data', data);
-      console.log('!!! error', error);
 
       if (error) throw error;
       result = data[0];
