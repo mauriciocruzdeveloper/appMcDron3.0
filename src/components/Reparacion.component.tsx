@@ -328,7 +328,7 @@ export default function ReparacionComponent(): React.ReactElement | null {
         
         try {
             const response = await dispatch(subirFotoYActualizarReparacionAsync({ 
-                reparacionId: reparacion.id, 
+                reparacion, 
                 file 
             }));
             
@@ -346,6 +346,9 @@ export default function ReparacionComponent(): React.ReactElement | null {
                 titulo: "Subir Foto",
             });
         }
+
+        setFotoSeleccionada(null); // Resetear el input de archivo
+        e.target.value = ''; // Limpiar el input para permitir subir el mismo archivo nuevamente
     };
 
     const handleDocumentoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -354,7 +357,7 @@ export default function ReparacionComponent(): React.ReactElement | null {
         
         try {
             const response = await dispatch(subirDocumentoYActualizarReparacionAsync({ 
-                reparacionId: reparacion.id, 
+                reparacion, 
                 file 
             }));
             

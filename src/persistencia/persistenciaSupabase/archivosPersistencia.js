@@ -6,7 +6,7 @@ export const subirArchivoPersistencia = async (path, file) => {
     // path: ruta completa dentro del bucket, por ejemplo: 'REPARACIONES/123/fotos/archivo.jpg'
     // file: Blob o File
     const bucket = 'archivos'; // Cambia por el nombre de tu bucket en Supabase
-    const { data, error } = await supabase.storage.from(bucket).upload(path, file, {
+    const { error } = await supabase.storage.from(bucket).upload(path, file, {
       upsert: true // Permite sobrescribir si ya existe
     });
     if (error) throw error;
