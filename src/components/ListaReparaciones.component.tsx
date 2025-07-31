@@ -1,48 +1,23 @@
 import React from "react";
-import { useEffect, useState } from "react";
 import { useHistory } from "../hooks/useHistory";
 import { estados } from '../datos/estados';
 // Estas son las importaciones de react-floating-action-button
 // lightColors y darkColors pueden estar buenos... hay que probarlos
-import { ReparacionType } from "../types/reparacion";
 import { useAppSelector } from "../redux-tool-kit/hooks/useAppSelector";
-import { setFilter } from "../redux-tool-kit/reparacion/reparacion.slice";
 import { useAppDispatch } from "../redux-tool-kit/hooks/useAppDispatch";
+import { 
+  selectReparacionesFitradasYOrdenadas,
+  selectReparacionFilter,
+  setFilter 
+} from "../redux-tool-kit/reparacion";
 
 export default function ListaReparaciones(): JSX.Element {
   const dispatch = useAppDispatch();
   const history = useHistory();
-  const reparaciones = useAppSelector(state => state.reparacion.coleccionReparaciones);
-  const filter = useAppSelector(state => state.reparacion.filter);
-
-  const [reparacionesList, setReparacionesList] = useState<ReparacionType[]>([]);
-
-  useEffect(() => {
-    if (reparaciones.length) {
-      const reparacionesFiltered = reparaciones.filter(reparacion => {
-        const noPrioritarios = ["Entregado", "Liquidación", "Trabado", "Respondido"];
-        const estadosNoIncluidos = filter.estadosPrioritarios ? noPrioritarios : [''];
-        const incluirPorEstado = !estadosNoIncluidos.includes(reparacion.data.EstadoRep) && !filter.search;
-        let incluirPorSearch = false;
-        if (filter.search) {
-          incluirPorSearch = reparacion.data.DroneRep.toLowerCase().includes(filter.search.toLowerCase())
-            || reparacion.data.NombreUsu?.toLowerCase().includes(filter.search.toLowerCase())
-            || reparacion.data.UsuarioRep?.toLowerCase().includes(filter.search.toLowerCase())
-            || reparacion.data.EmailUsu?.toLowerCase().includes(filter.search.toLowerCase());
-        }
-        return incluirPorSearch || incluirPorEstado;
-      });
-
-      // Ordenar por prioridad de estado
-      reparacionesFiltered.sort((a, b) => {
-        const prioridadA = estados[a.data.EstadoRep]?.prioridad || 0;
-        const prioridadB = estados[b.data.EstadoRep]?.prioridad || 0;
-        return prioridadA - prioridadB;
-      });
-
-      setReparacionesList(reparacionesFiltered);
-    }
-  }, [reparaciones, filter.estadosPrioritarios, filter.search]);
+  
+  // Usar selector optimizado que ya incluye filtrado y ordenamiento
+  const reparacionesList = useAppSelector(selectReparacionesFitradasYOrdenadas);
+  const filter = useAppSelector(selectReparacionFilter);
 
   const handleOnChange = () => {
     dispatch(setFilter({

@@ -18,6 +18,11 @@ import TextareaAutosize from "react-textarea-autosize";
 import { convertTimestampCORTO } from "../utils/utils";
 import "bootstrap-icons/font/bootstrap-icons.css";
 import IntervencionesReparacion from './IntervencionesReparacion.component';
+import { selectUsuarioPorId } from "../redux-tool-kit/usuario/usuario.selectors";
+import { 
+  selectReparacionById,
+  selectIntervencionesDeReparacionActual 
+} from "../redux-tool-kit/reparacion";
 
 interface ParamTypes extends Record<string, string | undefined> {
     id: string;
@@ -71,15 +76,13 @@ export default function ReparacionComponent(): React.ReactElement | null {
         }
     };
 
-    const reparacionStore = useAppSelector(
-        state => state.reparacion.coleccionReparaciones.find(reparacion => String(reparacion.id) === id)
-    );
+    const reparacionStore = useAppSelector(selectReparacionById(id || ""));
     const usuarioStore = useAppSelector(
-        state => state.usuario.coleccionUsuarios.find(usuario => usuario.id === (isNew ? "" : reparacionStore?.data.UsuarioRep))
+        state => selectUsuarioPorId(state, isNew ? "" : reparacionStore?.data.UsuarioRep || "")
     );
 
-    // Obtener las intervenciones aplicadas a esta reparación
-    const intervencionesAplicadas = useAppSelector(state => state.reparacion.intervencionesDeReparacionActual);
+    // Obtener las intervenciones aplicadas a esta reparación usando el selector optimizado
+    const intervencionesAplicadas = useAppSelector(selectIntervencionesDeReparacionActual);
 
     // Calcular el total de las intervenciones
     const totalIntervenciones = intervencionesAplicadas.reduce((total, intervencion) =>
@@ -325,7 +328,7 @@ export default function ReparacionComponent(): React.ReactElement | null {
         
         try {
             const response = await dispatch(subirFotoYActualizarReparacionAsync({ 
-                reparacionId: reparacion.id, 
+                reparacion, 
                 file 
             }));
             
@@ -343,6 +346,9 @@ export default function ReparacionComponent(): React.ReactElement | null {
                 titulo: "Subir Foto",
             });
         }
+
+        setFotoSeleccionada(null); // Resetear el input de archivo
+        e.target.value = ''; // Limpiar el input para permitir subir el mismo archivo nuevamente
     };
 
     const handleDocumentoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -351,7 +357,7 @@ export default function ReparacionComponent(): React.ReactElement | null {
         
         try {
             const response = await dispatch(subirDocumentoYActualizarReparacionAsync({ 
-                reparacionId: reparacion.id, 
+                reparacion, 
                 file 
             }));
             
@@ -782,6 +788,16 @@ export default function ReparacionComponent(): React.ReactElement | null {
                 </div>
             </div>
 
+            <div className="card mb-3">
+                <div className="card-body">
+                    <h5 className="card-title bluemcdron">INTERVENCIONES - TRABAJOS REALIZADOS</h5>
+                    <IntervencionesReparacion
+                        reparacionId={reparacion.id}
+                        readOnly={!isAdmin}
+                    />
+                </div>
+            </div>
+
             {isAdmin ? // Sólo para administrador
                 <div className="card mb-3">
                     <div className="card-body">
@@ -870,16 +886,6 @@ export default function ReparacionComponent(): React.ReactElement | null {
 
             <div className="card mb-3">
                 <div className="card-body">
-                    <h5 className="card-title bluemcdron">INTERVENCIONES - TRABAJOS REALIZADOS</h5>
-                    <IntervencionesReparacion
-                        reparacionId={reparacion.id}
-                        readOnly={!isAdmin}
-                    />
-                </div>
-            </div>
-
-            <div className="card mb-3">
-                <div className="card-body">
                     <div className="d-flex w-100 justify-content-between align-items-center">
                         <h5 className="card-title bluemcdron">FOTOS</h5>
                         <div className="d-flex justify-content-start mb-2">
@@ -946,7 +952,8 @@ export default function ReparacionComponent(): React.ReactElement | null {
                                 top: 0, left: 0,
                                 width: "100%", height: "100%",
                                 backgroundColor: "rgba(0,0,0,0.7)",
-                                display: "flex", alignItems: "center", justifyContent: "center"
+                                display: "flex", alignItems: "center", justifyContent: "center",
+                                zIndex: 1000,
                             }}
                         >
                             <div style={{ position: "relative" }}>

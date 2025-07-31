@@ -9,3 +9,8 @@ export interface Drone {
   id: string;
   data: DroneData;
 }
+
+// Tipo para colección de drones como diccionario (optimización O(1))
+export interface Drones {
+  [id: string]: Drone;
+}

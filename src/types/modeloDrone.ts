@@ -10,3 +10,8 @@ export interface ModeloDrone {
   id: string;
   data: ModeloDroneData;
 }
+
+// Tipo para la colección de modelos de drone como diccionario
+export interface ModelosDrone {
+  [key: string]: ModeloDrone;
+}

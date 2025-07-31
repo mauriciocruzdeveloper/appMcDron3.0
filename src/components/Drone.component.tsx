@@ -7,6 +7,9 @@ import { Drone } from '../types/drone';
 import { guardarDroneAsync, eliminarDroneAsync, getDroneAsync } from '../redux-tool-kit/drone/drone.actions';
 import { useModal } from './Modal/useModal';
 import Select from 'react-select';
+import { selectModelosDroneArray } from '../redux-tool-kit/modeloDrone/modeloDrone.selectors';
+import { selectUsuarioPorId } from '../redux-tool-kit/usuario/usuario.selectors';
+import { selectDroneById } from '../redux-tool-kit/drone';
 
 interface ParamTypes extends Record<string, string | undefined> {
   id: string;
@@ -19,13 +22,14 @@ export default function DroneComponent(): JSX.Element {
   const { id } = useParams<ParamTypes>();
   
   const isNew = id === 'new';
-  const droneActual = useAppSelector(state => 
-    state.drone.coleccionDrones.find(drone => drone.id === id)
-  );
+  // Usar selector optimizado O(1) en lugar de .find() O(n)
+  const droneActual = useAppSelector(selectDroneById(id || ''));
   
-  const modelosDrone = useAppSelector(state => state.modeloDrone.coleccionModelosDrone);
-  const usuarios = useAppSelector(state => state.usuario.coleccionUsuarios);
+  const modelosDrone = useAppSelector(selectModelosDroneArray);
   const usuariosSelect = useAppSelector(state => state.usuario.usuariosSelect);
+  const propietarioActual = useAppSelector(state => 
+    droneActual?.data.Propietario ? selectUsuarioPorId(state, droneActual.data.Propietario) : null
+  );
 
   const [drone, setDrone] = useState<Drone>({
     id: '',
@@ -43,20 +47,16 @@ export default function DroneComponent(): JSX.Element {
       if (droneActual) {
         setDrone(droneActual);
         // Si el propietario existe, configuramos el valor para el selector
-        if (droneActual.data.Propietario) {
-          // Buscar el usuario por id (no por email)
-          const propietario = usuarios.find(u => u.id === droneActual.data.Propietario);
-          if (propietario) {
-            setPropietarioValue({ value: propietario.id, label: propietario.data.EmailUsu });
-          }
+        if (droneActual.data.Propietario && propietarioActual) {
+          setPropietarioValue({ value: propietarioActual.id, label: propietarioActual.data.EmailUsu });
         }
       } else {
         dispatch(getDroneAsync(id));
       }
     }
-  }, [dispatch, id, isNew, droneActual, usuarios]);
+  }, [dispatch, id, isNew, droneActual, propietarioActual]);
 
-  const changeInput = (field: string, value: any) => {
+  const changeInput = (field: string, value: string) => {
     setDrone(prevState => ({
       ...prevState,
       data: {
@@ -66,7 +66,7 @@ export default function DroneComponent(): JSX.Element {
     }));
   };
 
-  const handleUsuarioChange = (selectedOption: any) => {
+  const handleUsuarioChange = (selectedOption: { value: string; label: string } | null) => {
     if (selectedOption) {
       setPropietarioValue(selectedOption);
       // Guardar el id del propietario, no el email
@@ -131,7 +131,7 @@ export default function DroneComponent(): JSX.Element {
 
   const confirmaEliminarDrone = async () => {
     try {
-      const response = await dispatch(eliminarDroneAsync(drone.id)).unwrap();
+      await dispatch(eliminarDroneAsync(drone.id)).unwrap();
       
       openModal({
         mensaje: "Drone eliminado correctamente.",
@@ -139,11 +139,12 @@ export default function DroneComponent(): JSX.Element {
         titulo: "Eliminar Drone",
       });
       history.goBack();
-    } catch (error: any) { // TODO: Hacer tipo de dato para el error
+    } catch (error: unknown) {
       console.error("Error al eliminar el drone:", error);
       
+      const errorMessage = error instanceof Error ? error.message : "Error al eliminar el drone.";
       openModal({
-        mensaje: error?.code || "Error al eliminar el drone.",
+        mensaje: errorMessage,
         tipo: "danger",
         titulo: "Error",
       });

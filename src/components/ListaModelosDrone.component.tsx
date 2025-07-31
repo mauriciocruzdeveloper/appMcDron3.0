@@ -4,6 +4,11 @@ import { useAppSelector } from '../redux-tool-kit/hooks/useAppSelector';
 import { ModeloDrone } from '../types/modeloDrone';
 import { useAppDispatch } from '../redux-tool-kit/hooks/useAppDispatch';
 import { setFilter } from '../redux-tool-kit/modeloDrone/modeloDrone.slice';
+import { 
+    selectModeloDroneFilter,
+    selectTieneModelosDrone,
+    selectModelosDroneFiltradosPorEstado
+} from '../redux-tool-kit/modeloDrone/modeloDrone.selectors';
 
 // Mock de modelos de drones para mostrar como ejemplo
 const modelosDroneMock: ModeloDrone[] = [
@@ -39,32 +44,25 @@ const modelosDroneMock: ModeloDrone[] = [
 export default function ListaModelosDrone(): JSX.Element {
     const dispatch = useAppDispatch();
     const history = useHistory();
-    const coleccionModelosDrone = useAppSelector((state) => state.modeloDrone.coleccionModelosDrone);
-    const filter = useAppSelector((state) => state.modeloDrone.filter);
+    
+    // Usar selectores para obtener datos del estado
+    const filter = useAppSelector(selectModeloDroneFilter);
+    const tieneModelos = useAppSelector(selectTieneModelosDrone);
+    const modelosFiltrados = useAppSelector(selectModelosDroneFiltradosPorEstado);
 
     const [modelosList, setModelosList] = useState<ModeloDrone[]>([]);
     const [mostrandoMock, setMostrandoMock] = useState<boolean>(false);
 
     useEffect(() => {
-        if (coleccionModelosDrone.length) {
-            const modelos = coleccionModelosDrone.filter(modelo => {
-                let incluirPorSearch = true;
-                if (filter) {
-                    incluirPorSearch =
-                        modelo.data?.NombreModelo?.toLowerCase().includes(filter.toLowerCase()) ||
-                        modelo.data?.Fabricante?.toLowerCase().includes(filter.toLowerCase()) ||
-                        modelo.data?.DescripcionModelo?.toLowerCase().includes(filter.toLowerCase());
-                }
-                return incluirPorSearch;
-            });
-            setModelosList(modelos);
+        if (tieneModelos) {
+            setModelosList(modelosFiltrados);
             setMostrandoMock(false);
         } else {
             // Usar los datos mock cuando no hay datos reales
             setModelosList(modelosDroneMock);
             setMostrandoMock(true);
         }
-    }, [coleccionModelosDrone, filter]);
+    }, [tieneModelos, modelosFiltrados]);
 
     const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         dispatch(setFilter(e.target.value));
