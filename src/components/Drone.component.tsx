@@ -36,11 +36,31 @@ export default function DroneComponent(): JSX.Element {
     data: {
       ModeloDroneId: '',
       Propietario: '',
-      Observaciones: ''
+      Observaciones: '',
+      Nombre: '',
+      NumeroSerie: ''
     }
   });
 
   const [propietarioValue, setPropietarioValue] = useState<{value: string, label: string} | null>(null);
+
+  // Obtener usuario completo para generar nombre
+  const usuarioCompleto = useAppSelector(state => 
+    drone.data.Propietario ? selectUsuarioPorId(state, drone.data.Propietario) : null
+  );
+
+  // Effect para generar nombre automático cuando cambien modelo o propietario
+  useEffect(() => {
+    if (drone.data.ModeloDroneId && drone.data.Propietario) {
+      const modelo = modelosDrone.find(m => m.id === drone.data.ModeloDroneId);
+      
+      if (modelo && usuarioCompleto?.data) {
+        const nombreCompleto = `${usuarioCompleto.data.NombreUsu || ''} ${usuarioCompleto.data.ApellidoUsu || ''}`.trim();
+        const nombreAuto = `${modelo.data.NombreModelo} - ${nombreCompleto}`;
+        changeInput('Nombre', nombreAuto);
+      }
+    }
+  }, [drone.data.ModeloDroneId, drone.data.Propietario, usuarioCompleto, modelosDrone]);
 
   useEffect(() => {
     if (!isNew && id) {
@@ -48,7 +68,7 @@ export default function DroneComponent(): JSX.Element {
         setDrone(droneActual);
         // Si el propietario existe, configuramos el valor para el selector
         if (droneActual.data.Propietario && propietarioActual) {
-          setPropietarioValue({ value: propietarioActual.id, label: propietarioActual.data.EmailUsu });
+          setPropietarioValue({ value: propietarioActual.id, label: propietarioActual.data.EmailUsu ?? '' });
         }
       } else {
         dispatch(getDroneAsync(id));
@@ -66,10 +86,13 @@ export default function DroneComponent(): JSX.Element {
     }));
   };
 
+  const handleModeloChange = (modeloId: string) => {
+    changeInput('ModeloDroneId', modeloId);
+  };
+
   const handleUsuarioChange = (selectedOption: { value: string; label: string } | null) => {
     if (selectedOption) {
       setPropietarioValue(selectedOption);
-      // Guardar el id del propietario, no el email
       changeInput('Propietario', selectedOption.value);
     } else {
       setPropietarioValue(null);
@@ -166,11 +189,35 @@ export default function DroneComponent(): JSX.Element {
           <h5 className="card-title bluemcdron">DATOS DEL DRONE</h5>
           
           <div className="mb-3">
+            <label className="form-label">Nombre del Drone</label>
+            <input
+              type="text"
+              className="form-control"
+              value={drone.data.Nombre}
+              onChange={(e) => changeInput('Nombre', e.target.value)}
+              placeholder="Ingrese el nombre del drone"
+              required
+            />
+          </div>
+          
+          <div className="mb-3">
+            <label className="form-label">Número de Serie</label>
+            <input
+              type="text"
+              className="form-control"
+              value={drone.data.NumeroSerie}
+              onChange={(e) => changeInput('NumeroSerie', e.target.value)}
+              placeholder="Ingrese el número de serie"
+              required
+            />
+          </div>
+          
+          <div className="mb-3">
             <label className="form-label">Modelo de Drone</label>
             <select
               className="form-select"
               value={drone.data.ModeloDroneId}
-              onChange={(e) => changeInput('ModeloDroneId', e.target.value)}
+              onChange={(e) => handleModeloChange(e.target.value)}
               required
             >
               <option value="">Seleccione un modelo...</option>
