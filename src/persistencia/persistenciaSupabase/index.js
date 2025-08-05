@@ -14,7 +14,6 @@ export {
   getReparacionPersistencia,
   guardarReparacionPersistencia,
   eliminarReparacionPersistencia,
-  guardarPresupuestoPersistencia
 } from './reparacionesPersistencia.js';
 
 // === USUARIOS ===

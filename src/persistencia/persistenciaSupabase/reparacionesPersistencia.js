@@ -36,6 +36,10 @@ export const agregarIntervencionAReparacionPersistencia = async (reparacionId, i
       return { success: true, message: 'La intervención ya está asociada a esta reparación' };
     }
 
+    if (relacionError) {
+      throw new Error(`Error al verificar relación existente: ${relacionError.message}`);
+    }
+
     // 4. Insertar la nueva relación con los costos de la intervención
     const { data: nuevaRelacion, error: insercionError } = await supabase
       .from('repair_intervention')
@@ -402,7 +406,7 @@ export const guardarReparacionPersistencia = async (reparacion) => {
 
     let result;
 
-    if (reparacion.id !== 'new') {
+    if (reparacion.id) {
       // Actualización
       const { data, error } = await supabase
         .from('repair')
@@ -509,31 +513,3 @@ export const eliminarReparacionPersistencia = async (id) => {
   });
 };
 
-// Función para guardar presupuesto
-export const guardarPresupuestoPersistencia = async (presupuesto) => {
-  // En Supabase también agregamos información del usuario a la reparación 
-  // para mantener consistencia con la implementación original
-  presupuesto.reparacion.data.NombreUsu = presupuesto.usuario.data?.NombreUsu || '';
-  presupuesto.reparacion.data.ApellidoUsu = presupuesto.usuario.data?.ApellidoUsu || '';
-  presupuesto.reparacion.data.EmailUsu = presupuesto.usuario.data?.EmailUsu || '';
-  presupuesto.reparacion.data.TelefonoUsu = presupuesto.usuario.data?.TelefonoUsu || '';
-
-  try {
-    // 1. Primero guardar el usuario
-    const { guardarUsuarioPersistencia } = await import('./usuariosPersistencia.js');
-    const usuarioGuardado = await guardarUsuarioPersistencia(presupuesto.usuario);
-
-    // 2. Guardar la reparación con el ID numérico del usuario en owner_id
-    presupuesto.reparacion.data.UsuarioRep = usuarioGuardado.id.toString();
-    const reparacionGuardada = await guardarReparacionPersistencia(presupuesto.reparacion);
-
-    // 3. Devolver el presupuesto actualizado
-    return {
-      usuario: usuarioGuardado,
-      reparacion: reparacionGuardada
-    };
-  } catch (error) {
-    console.error('Error en guardarPresupuestoPersistencia:', error);
-    throw error;
-  }
-};
