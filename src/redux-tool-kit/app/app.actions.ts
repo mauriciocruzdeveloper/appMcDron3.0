@@ -83,10 +83,11 @@ export const enviarReciboAsync = createAsyncThunk(
             });
 
             dispatch(isFetchingComplete());
+
             return response;
         } catch (error: any) { // TODO: Hacer tipo de dato para el error
             dispatch(isFetchingComplete());
-            return error;
+            throw error;
         }
     },
 );

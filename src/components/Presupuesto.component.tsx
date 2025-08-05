@@ -9,10 +9,45 @@ import { useAppDispatch } from "../redux-tool-kit/hooks/useAppDispatch";
 import { useModal } from "./Modal/useModal";
 import { guardarReciboAsync, guardarTransitoAsync } from "../redux-tool-kit/reparacion/reparacion.actions";
 import { getClienteAsync } from "../redux-tool-kit/usuario/usuario.actions";
-import { generarAutoDiagnostico, getLocalidadesPorProvincia, getProvinciasSelect } from "../utils/utils";
+import { getLocalidadesPorProvincia, getProvinciasSelect } from "../utils/utils";
 import { estados } from "../datos/estados";
+import { selectModelosDroneSelect } from "../redux-tool-kit/modeloDrone/modeloDrone.selectors";
 
-// import { provincias } from '../datos/provincias.json'; 
+// import { provincias } from '../datos/provincias.json';
+
+export interface PresupuestoProps {
+    EmailUsu: string;
+    NombreUsu: string;
+    ApellidoUsu: string;
+    TelefonoUsu: string;
+    ProvinciaUsu: string;
+    CiudadUsu: string;
+    DroneRep: string;
+    DroneId: string;
+    DescripcionUsuRep: string;
+    FeRecRep: number | null;
+    EstadoRep: string;
+    PrioridadRep: number | null;
+    FeConRep: number | null;
+    UsuarioRep: string;
+}
+
+const INITIAL_PRESUPUESTO: PresupuestoProps = {
+    EmailUsu: "",
+    NombreUsu: "",
+    ApellidoUsu: "",
+    TelefonoUsu: "",
+    ProvinciaUsu: "",
+    CiudadUsu: "",
+    DroneRep: "",
+    DroneId: "",
+    DescripcionUsuRep: "",
+    FeRecRep: null,
+    FeConRep: null,
+    EstadoRep: "",
+    PrioridadRep: null,
+    UsuarioRep: "",
+};
 
 export default function Presupuesto(): JSX.Element {
     console.log("PRESUPUESTO");
@@ -31,40 +66,32 @@ export default function Presupuesto(): JSX.Element {
     const localidadesSelect = useAppSelector(state => state.usuario.localidadesSelect);
     const provinciasSelect = useAppSelector(state => state.usuario.provinciasSelect);
     const usuariosSelect = useAppSelector(state => state.usuario.usuariosSelect);
+    const modelosDroneSelect = useAppSelector(selectModelosDroneSelect);
     const isAdmin = useMemo(() => usuario?.data?.Admin, [usuario]);
 
-    const [presupuesto, setPresupuesto] = useState<{
-        cliente: {
-            id: string,
-            data: any,
-        },
-        reparacion: {
-            id: string,
-            data: any,
-        },
-    }>({
-        cliente: {
-            id: "new",
-            data: {}
-        },
-        reparacion: {
-            id: "new",
-            data: {}
-        }
-    });
+    const changeInput = (field: keyof PresupuestoProps, value: string | number) => {
+        setPresupuesto(prev => ({
+            ...prev,
+            [field]: value
+        }));
+    };
 
+    const dateNow = Date.now();
+
+
+    const [presupuesto, setPresupuesto] = useState<PresupuestoProps>({
+        ...INITIAL_PRESUPUESTO,
+        FeRecRep: estadoParam === "Recibido" ? dateNow : null,
+        FeConRep: dateNow,
+        EstadoRep: estadoInfo.nombre,
+        PrioridadRep: estadoInfo.prioridad,
+    });
 
     // TODO: Ver cómo está hecho en Reparacion.container.tsx
     const changeInputUsu = (field: string, value: string) => {
         setPresupuesto(prevState => prevState ? {
-            ...presupuesto,
-            cliente: {
-                ...presupuesto?.cliente,
-                data: {
-                    ...presupuesto?.cliente?.data,
-                    [field]: value
-                },
-            }
+            ...prevState,
+            [field]: value
         } : presupuesto);
     };
 
@@ -81,25 +108,23 @@ export default function Presupuesto(): JSX.Element {
         }
         setPresupuesto({
             ...presupuesto,
-            reparacion: {
-                ...presupuesto.reparacion,
-                data: {
-                    ...presupuesto.reparacion.data,
-                    [target.id]: value
-                }
-            }
+            [target.id]: value
         });
     };
 
     const initForm = useCallback(async () => {
-        // Si el usuario es admin, deja todo en blanco para cargar cualquier usuario
-        // sino cargo los datos del usuario logueado.
-        //!usuario.data?.Admin ? await getCliente(usuario.id) : null; // Acá iría getCliente(usuario.id);
         !usuario?.data?.Admin && usuario
-            ? setPresupuesto({ ...presupuesto, cliente: usuario })
-            : null; // Acá iría getCliente(usuario.id);
+            ? setPresupuesto({
+                ...presupuesto,
+                EmailUsu: usuario.data?.EmailUsu || "",
+                NombreUsu: usuario.data?.NombreUsu || "",
+                ApellidoUsu: usuario.data?.ApellidoUsu || "",
+                TelefonoUsu: usuario.data?.TelefonoUsu || "",
+                ProvinciaUsu: usuario.data?.ProvinciaUsu || "",
+                CiudadUsu: usuario.data?.CiudadUsu || "",
+            })
+            : null;
         await dispatch(getProvinciasSelect());
-        // .catch(error => abreModal("Error buscando ProvinciasSelect ", `Código - ${error.code}`, "danger" ));
     }, [usuario]);
 
     useEffect(() => {
@@ -108,31 +133,12 @@ export default function Presupuesto(): JSX.Element {
 
     //////////////////////////////////////////////////////////////
     const confirmaGuardarPresupuesto = async () => {
-        const dateNow = Date.now();
-        
-        const presupuestoObject = {
-            usuario: {
-                ...presupuesto.cliente,
-                id: presupuesto.cliente.id ?? presupuesto.cliente.data.EmailUsu,
-            },
-            reparacion: {
-                ...presupuesto.reparacion,
-                data: {
-                    ...presupuesto.reparacion.data,
-                    EstadoRep: estadoInfo.nombre,
-                    PrioridadRep: estadoInfo.prioridad,
-                    FeConRep: dateNow,
-                    FeRecRep: estadoParam === "Recibido" ? dateNow : null, // Solo poner fecha de recepción si está recibido
-                },
-            },
-        };
-
         let response;
 
         if (estadoInfo.nombre === "Recibido") {
-            response = await dispatch(guardarReciboAsync(presupuestoObject));
-        } else if (estadoInfo.nombre === "Transito") { 
-            response = await dispatch(guardarTransitoAsync(presupuestoObject));
+            response = await dispatch(guardarReciboAsync(presupuesto));
+        } else if (estadoInfo.nombre === "Transito") {
+            response = await dispatch(guardarTransitoAsync(presupuesto));
         }
 
         if (response?.meta.requestStatus === 'fulfilled') {
@@ -145,7 +151,7 @@ export default function Presupuesto(): JSX.Element {
             history.goBack();
         } else {
             openModal({
-                mensaje: "Error al guardar",
+                mensaje: "Error al guardar: " + (response?.payload || "Error desconocido."),
                 tipo: "danger",
                 titulo: `Registrar ${estadoInfo.nombre}`,
             })
@@ -176,26 +182,14 @@ export default function Presupuesto(): JSX.Element {
 
         setPresupuesto({
             ...presupuesto,
-            cliente: {
-                ...presupuesto.cliente,
-                data: {
-                    ...presupuesto.cliente.data,
-                    ProvinciaUsu: e.value
-                }
-            }
+            ProvinciaUsu: e.value
         });
     }
 
     const handleOnChangeLocalidades = (e: any) => {
         setPresupuesto({
             ...presupuesto,
-            cliente: {
-                ...presupuesto.cliente,
-                data: {
-                    ...presupuesto.cliente.data,
-                    CiudadUsu: e.value
-                }
-            }
+            CiudadUsu: e.value,
         });
     }
 
@@ -216,7 +210,13 @@ export default function Presupuesto(): JSX.Element {
             }
             setPresupuesto({
                 ...presupuesto,
-                cliente: response.payload
+                EmailUsu: response.payload.data?.EmailUsu || "",
+                NombreUsu: response.payload.data?.NombreUsu || "",
+                ApellidoUsu: response.payload.data?.ApellidoUsu || "",
+                TelefonoUsu: response.payload.data?.TelefonoUsu || "",
+                ProvinciaUsu: response.payload.data?.ProvinciaUsu || "",
+                CiudadUsu: response.payload.data?.CiudadUsu || "",
+                UsuarioRep: response.payload.id || "",
             });
         }
     }
@@ -233,8 +233,6 @@ export default function Presupuesto(): JSX.Element {
         //if (action?.action !== 'input-blur' && action?.action !== 'menu- close') changeInputUsu(target);
     }
 
-    const { cliente, reparacion } = presupuesto;
-
     // Color de fondo según el estado
     const getCardColor = () => {
         return estadoInfo.color || "bg-bluemcdron";
@@ -242,7 +240,10 @@ export default function Presupuesto(): JSX.Element {
 
     return (
         <div className="p-4">
-            <div className={`card mb-3 ${getCardColor()}`}>
+            <div
+                className={`card mb-3`}
+                style={{ backgroundColor: estadoInfo.color, color: estadoInfo.color === '#cddc39' ? "black" : "white" }}
+            >
                 <div className="card-body">
                     <h3 className={`card-title ${estadoInfo.color === '#cddc39' ? "text-dark" : "text-light"} p-0 m-0`}>
                         {getCardTitle()}
@@ -263,7 +264,7 @@ export default function Presupuesto(): JSX.Element {
                             onChange={e => handleOnChangeUsuarios(e)}
                             onInputChange={handleOnInputChangeUsuarios}
                             id="EmailUsu"
-                            value={{ value: cliente.data?.EmailUsu, label: cliente.data?.EmailUsu }}
+                            value={{ value: presupuesto.EmailUsu, label: presupuesto.EmailUsu }}
                             isDisabled={!isAdmin}
                         />
                     </div>
@@ -274,7 +275,7 @@ export default function Presupuesto(): JSX.Element {
                             type="text"
                             className="form-control"
                             id="NombreUsu"
-                            value={cliente.data?.NombreUsu || ""}
+                            value={presupuesto.NombreUsu || ""}
                         />
                     </div>
                     <div>
@@ -284,7 +285,7 @@ export default function Presupuesto(): JSX.Element {
                             type="text"
                             className="form-control"
                             id="ApellidoUsu"
-                            value={cliente.data?.ApellidoUsu || ""}
+                            value={presupuesto.ApellidoUsu || ""}
                         />
                     </div>
                     <div>
@@ -294,7 +295,7 @@ export default function Presupuesto(): JSX.Element {
                             type="tel"
                             className="form-control"
                             id="TelefonoUsu"
-                            value={cliente.data?.TelefonoUsu || ""}
+                            value={presupuesto.TelefonoUsu || ""}
                         />
                     </div>
                     <div>
@@ -305,8 +306,8 @@ export default function Presupuesto(): JSX.Element {
                             onChange={e => handleOnChangeProvincias(e)}
                             id="ProvinciaUsu"
                             value={{
-                                value: cliente.data?.ProvinciaUsu,
-                                label: cliente.data?.ProvinciaUsu
+                                value: presupuesto.ProvinciaUsu,
+                                label: presupuesto.ProvinciaUsu
                             }}
                         />
                     </div>
@@ -318,8 +319,8 @@ export default function Presupuesto(): JSX.Element {
                             onChange={e => handleOnChangeLocalidades(e)}
                             id="CiudadUsu"
                             value={{
-                                value: cliente.data?.CiudadUsu,
-                                label: cliente.data?.CiudadUsu
+                                value: presupuesto.CiudadUsu,
+                                label: presupuesto.CiudadUsu
                             }}
                         />
                     </div>
@@ -331,12 +332,20 @@ export default function Presupuesto(): JSX.Element {
                     <h5 className="card-title bluemcdron">DRONE</h5>
                     <div>
                         <label className="form-label">Modelo del Drone</label>
-                        <input
-                            onChange={e => changeInputRep(e.target)}
-                            type="text"
-                            className="form-control"
+                        <Select
+                            options={modelosDroneSelect}
+                            onChange={e => {
+                                if (e) {
+                                    changeInput("DroneRep", e.label);
+                                }
+                            }}
                             id="DroneRep"
-                            value={reparacion.data?.DroneRep || ""}
+                            value={{
+                                value: presupuesto.DroneRep,
+                                label: presupuesto.DroneRep
+                            }}
+                            placeholder="Seleccionar modelo de drone..."
+                            noOptionsMessage={() => "No hay modelos disponibles"}
                         />
                     </div>
 
@@ -346,7 +355,7 @@ export default function Presupuesto(): JSX.Element {
                             onChange={e => changeInputRep(e.target)}
                             className="form-control"
                             id="DescripcionUsuRep"
-                            value={reparacion.data?.DescripcionUsuRep || ""}
+                            value={presupuesto.DescripcionUsuRep || ""}
                         />
                     </div>
                 </div>

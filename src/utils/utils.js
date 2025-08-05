@@ -77,7 +77,7 @@ export const callEndpoint = async (params) => {
         return await response.json();
     } catch (error) {
         console.error('Error al llamar al endpoint:', error.message);
-        return null;
+        throw error;
     }
 };
 
@@ -131,7 +131,7 @@ export async function OpenaiFetchAPI(prompt) {
         });
     } catch (error) {
         console.error('Error al llamar a la API de OpenAI:', error);
-        return 'No se pudo generar un diagnóstico automático.';
+        throw 'No se pudo generar un diagnóstico automático.';
     }
 }
 
