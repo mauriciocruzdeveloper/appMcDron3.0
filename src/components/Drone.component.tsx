@@ -9,7 +9,7 @@ import { useModal } from './Modal/useModal';
 import Select from 'react-select';
 import { selectModelosDroneArray } from '../redux-tool-kit/modeloDrone/modeloDrone.selectors';
 import { selectUsuarioPorId } from '../redux-tool-kit/usuario/usuario.selectors';
-import { selectDroneById } from '../redux-tool-kit/drone';
+import { selectDroneById, selectDronesArray } from '../redux-tool-kit/drone';
 
 interface ParamTypes extends Record<string, string | undefined> {
   id: string;
@@ -48,6 +48,26 @@ export default function DroneComponent(): JSX.Element {
   const usuarioCompleto = useAppSelector(state => 
     drone.data.Propietario ? selectUsuarioPorId(state, drone.data.Propietario) : null
   );
+  
+  // Obtener todos los drones para verificar nombres duplicados
+  const todosDrones = useAppSelector(selectDronesArray);
+  
+  // Función para generar nombre único
+  const generarNombreUnico = (nombreBase: string) => {
+    const nombresExistentes = todosDrones
+      .filter(d => d.id !== drone.id) // Excluir el drone actual
+      .map(d => d.data.Nombre);
+    
+    let nombreFinal = nombreBase;
+    let contador = 1;
+    
+    while (nombresExistentes.includes(nombreFinal)) {
+      contador++;
+      nombreFinal = `${nombreBase} ${contador}`;
+    }
+    
+    return nombreFinal;
+  };
 
   // Effect para generar nombre automático cuando cambien modelo o propietario
   useEffect(() => {
@@ -56,11 +76,12 @@ export default function DroneComponent(): JSX.Element {
       
       if (modelo && usuarioCompleto?.data) {
         const nombreCompleto = `${usuarioCompleto.data.NombreUsu || ''} ${usuarioCompleto.data.ApellidoUsu || ''}`.trim();
-        const nombreAuto = `${modelo.data.NombreModelo} - ${nombreCompleto}`;
-        changeInput('Nombre', nombreAuto);
+        const nombreBase = `${modelo.data.NombreModelo} - ${nombreCompleto}`;
+        const nombreUnico = generarNombreUnico(nombreBase);
+        changeInput('Nombre', nombreUnico);
       }
     }
-  }, [drone.data.ModeloDroneId, drone.data.Propietario, usuarioCompleto, modelosDrone]);
+  }, [drone.data.ModeloDroneId, drone.data.Propietario, usuarioCompleto, modelosDrone, todosDrones]);
 
   useEffect(() => {
     if (!isNew && id) {
