@@ -165,8 +165,6 @@ export default function Presupuesto(): JSX.Element {
             response = await dispatch(guardarTransitoAsync(presupuesto));
         }
 
-        console.log('!!! response en Prespuesto.component', response);
-
         if (response?.meta.requestStatus === 'fulfilled') {
             openModal({
                 mensaje: `${estadoInfo.nombre} registrado correctamente!`,
