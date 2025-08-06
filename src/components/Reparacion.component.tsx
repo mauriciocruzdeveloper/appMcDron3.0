@@ -23,6 +23,8 @@ import {
   selectReparacionById,
   selectIntervencionesDeReparacionActual 
 } from "../redux-tool-kit/reparacion";
+import { selectDroneById } from "../redux-tool-kit/drone/drone.selectors";
+import { selectModeloDronePorId } from "../redux-tool-kit/modeloDrone/modeloDrone.selectors";
 
 interface ParamTypes extends Record<string, string | undefined> {
     id: string;
@@ -79,6 +81,16 @@ export default function ReparacionComponent(): React.ReactElement | null {
     const reparacionStore = useAppSelector(selectReparacionById(id || ""));
     const usuarioStore = useAppSelector(
         state => selectUsuarioPorId(state, isNew ? "" : reparacionStore?.data.UsuarioRep || "")
+    );
+
+    // Obtener el drone asociado a la reparación
+    const droneStore = useAppSelector(
+        state => selectDroneById(isNew ? "" : reparacionStore?.data.DroneId || "")(state)
+    );
+
+    // Obtener el modelo del drone
+    const modeloDroneStore = useAppSelector(
+        state => selectModeloDronePorId(state, droneStore?.data.ModeloDroneId || "")
     );
 
     // Obtener las intervenciones aplicadas a esta reparación usando el selector optimizado
@@ -480,7 +492,8 @@ export default function ReparacionComponent(): React.ReactElement | null {
                         REPARACIÓN
                     </h3>
                     <div>id: {reparacion?.id}</div>
-                    <div>Drone: {reparacion?.data?.ModeloDroneNameRep}</div>
+                    <div>Drone: {droneStore?.data?.Nombre || 'Sin nombre'}</div>
+                    <div>Modelo: {modeloDroneStore?.data?.NombreModelo || reparacion?.data?.ModeloDroneNameRep || 'Modelo no disponible'}</div>
                     <div>Cliente: {usuarioStore?.data?.NombreUsu} {usuarioStore?.data?.ApellidoUsu}</div>
                 </div>
             </div>
@@ -639,14 +652,23 @@ export default function ReparacionComponent(): React.ReactElement | null {
                         </div>
                     </div>
                     <div>
+                        <label className="form-label">Nombre del Drone</label>
+                        <input
+                            type="text"
+                            className="form-control"
+                            id="NombreDrone"
+                            value={droneStore?.data?.Nombre || 'Sin nombre'}
+                            disabled
+                        />
+                    </div>
+                    <div>
                         <label className="form-label">Modelo del Drone</label>
                         <input
-                            onChange={handleOnChange}
                             type="text"
                             className="form-control"
                             id="ModeloDroneNameRep"
-                            value={reparacion?.data?.ModeloDroneNameRep || ""}
-                            disabled={!isAdmin}
+                            value={modeloDroneStore?.data?.NombreModelo || reparacion?.data?.ModeloDroneNameRep || ""}
+                            disabled
                         />
                     </div>
                     <div>
