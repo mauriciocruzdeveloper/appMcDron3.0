@@ -23,7 +23,7 @@ import {
   selectReparacionById,
   selectIntervencionesDeReparacionActual 
 } from "../redux-tool-kit/reparacion";
-import { selectDroneById } from "../redux-tool-kit/drone/drone.selectors";
+import { selectDroneById, selectDronesByPropietario } from "../redux-tool-kit/drone/drone.selectors";
 import { selectModeloDronePorId } from "../redux-tool-kit/modeloDrone/modeloDrone.selectors";
 
 interface ParamTypes extends Record<string, string | undefined> {
@@ -83,16 +83,6 @@ export default function ReparacionComponent(): React.ReactElement | null {
         state => selectUsuarioPorId(state, isNew ? "" : reparacionStore?.data.UsuarioRep || "")
     );
 
-    // Obtener el drone asociado a la reparación
-    const droneStore = useAppSelector(
-        state => selectDroneById(isNew ? "" : reparacionStore?.data.DroneId || "")(state)
-    );
-
-    // Obtener el modelo del drone
-    const modeloDroneStore = useAppSelector(
-        state => selectModeloDronePorId(state, droneStore?.data.ModeloDroneId || "")
-    );
-
     // Obtener las intervenciones aplicadas a esta reparación usando el selector optimizado
     const intervencionesAplicadas = useAppSelector(selectIntervencionesDeReparacionActual);
 
@@ -103,6 +93,21 @@ export default function ReparacionComponent(): React.ReactElement | null {
     const [reparacionOriginal, setReparacionOriginal] = useState<ReparacionType | undefined>(isNew ? reparacionVacia : reparacionStore);
     const [reparacion, setReparacion] = useState<ReparacionType | undefined>(isNew ? reparacionVacia : reparacionStore);
     const [fotoSeleccionada, setFotoSeleccionada] = useState<string | null>(null);
+
+    // Obtener el drone asociado a la reparación
+    const drone = useAppSelector(
+        state => selectDroneById(isNew ? "" : reparacion?.data.DroneId || "")(state)
+    );
+
+    // Obtener el modelo del drone
+    const modeloDrone = useAppSelector(
+        state => selectModeloDronePorId(state, drone?.data.ModeloDroneId || "")
+    );
+
+    // Obtener los drones del cliente para el selector
+    const dronesDelCliente = useAppSelector(
+        state => selectDronesByPropietario(usuarioStore?.id || "")(state)
+    );
 
     useEffect(() => {
         if (!isNew && reparacionStore) {
@@ -151,6 +156,19 @@ export default function ReparacionComponent(): React.ReactElement | null {
         }
         const field = target.id;
         changeInputRep(field, value);
+    }
+
+    const handleDroneChange = (event: ChangeEvent<HTMLSelectElement>) => {
+        const droneId = event.target.value;
+        // El nombre del modelo se actualizará automáticamente por el useEffect
+        setReparacion(prevReparacion => prevReparacion ? {
+            ...prevReparacion,
+            data: {
+                ...prevReparacion.data,
+                DroneId: droneId,
+                ModeloDroneNameRep: modeloDrone?.data?.NombreModelo || "" // Asegurarse de que el modelo esté actualizado
+            }
+        } : prevReparacion);
     }
 
     const setEstado = (estado: Estado) => {
@@ -492,8 +510,8 @@ export default function ReparacionComponent(): React.ReactElement | null {
                         REPARACIÓN
                     </h3>
                     <div>id: {reparacion?.id}</div>
-                    <div>Drone: {droneStore?.data?.Nombre || 'Sin nombre'}</div>
-                    <div>Modelo: {modeloDroneStore?.data?.NombreModelo || reparacion?.data?.ModeloDroneNameRep || 'Modelo no disponible'}</div>
+                    <div>Drone: {drone?.data?.Nombre || 'Sin nombre'}</div>
+                    <div>Modelo: {modeloDrone?.data?.NombreModelo || reparacion?.data?.ModeloDroneNameRep || 'Modelo no disponible'}</div>
                     <div>Cliente: {usuarioStore?.data?.NombreUsu} {usuarioStore?.data?.ApellidoUsu}</div>
                 </div>
             </div>
@@ -653,13 +671,25 @@ export default function ReparacionComponent(): React.ReactElement | null {
                     </div>
                     <div>
                         <label className="form-label">Nombre del Drone</label>
-                        <input
-                            type="text"
+                        <select
                             className="form-control"
-                            id="NombreDrone"
-                            value={droneStore?.data?.Nombre || 'Sin nombre'}
-                            disabled
-                        />
+                            id="DroneId"
+                            value={reparacion?.data?.DroneId || ""}
+                            onChange={handleDroneChange}
+                            disabled={!isAdmin}
+                        >
+                            <option value="">Seleccione un drone</option>
+                            {dronesDelCliente.map(drone => (
+                                <option key={drone.id} value={drone.id}>
+                                    {drone.data.Nombre || `Drone sin nombre (${drone.id})`}
+                                </option>
+                            ))}
+                        </select>
+                        {dronesDelCliente.length === 0 && usuarioStore?.id && (
+                            <small className="form-text text-muted">
+                                El cliente no tiene drones registrados
+                            </small>
+                        )}
                     </div>
                     <div>
                         <label className="form-label">Modelo del Drone</label>
@@ -667,8 +697,7 @@ export default function ReparacionComponent(): React.ReactElement | null {
                             type="text"
                             className="form-control"
                             id="ModeloDroneNameRep"
-                            value={modeloDroneStore?.data?.NombreModelo || reparacion?.data?.ModeloDroneNameRep || ""}
-                            disabled
+                            value={modeloDrone?.data?.NombreModelo || reparacion?.data?.ModeloDroneNameRep || ""}
                         />
                     </div>
                     <div>
