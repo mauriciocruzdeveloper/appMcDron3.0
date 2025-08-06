@@ -1,4 +1,4 @@
-import { createAsyncThunk, isRejectedWithValue, Unsubscribe } from "@reduxjs/toolkit";
+import { createAsyncThunk, Unsubscribe } from "@reduxjs/toolkit";
 import { ReparacionType } from "../../types/reparacion";
 import { setReparaciones, setIntervencionesDeReparacionActual } from "./reparacion.slice";
 import {
@@ -13,8 +13,10 @@ import {
 import { AppState, isFetchingComplete, isFetchingStart } from "../app/app.slice";
 import { Usuario } from "../../types/usuario";
 import { enviarReciboAsync } from "../app/app.actions";
-import { generarAutoDiagnostico } from "../../utils/utils";
+import { generarAutoDiagnostico, generarNombreUnico } from "../../utils/utils";
 import { PresupuestoProps } from "../../components/Presupuesto.component";
+import { Drone } from "../../types/drone";
+import { RootState } from "../store";
 
 // OBTENER REPARACIONES
 export const getReparacionesAsync = createAsyncThunk(
@@ -37,7 +39,11 @@ export const getReparacionesAsync = createAsyncThunk(
 // GUARDA Recibo
 export const guardarReciboAsync = createAsyncThunk(
   'app/guardarPresupuesto',
-  async (presupuesto: PresupuestoProps, { dispatch, rejectWithValue }) => {
+  async (presupuesto: PresupuestoProps, { dispatch, rejectWithValue, getState }) => {
+    const state = getState() as RootState;
+    const drones = state.drone.coleccionDrones;
+    const dronesArray = Object.values(drones);
+
     const reparacion: ReparacionType = {
       id: "",
       data: {
@@ -47,7 +53,8 @@ export const guardarReciboAsync = createAsyncThunk(
         PrioridadRep: presupuesto.PrioridadRep,
         FeConRep: presupuesto.FeConRep,
         UsuarioRep: presupuesto.EmailUsu,
-        DroneRep: presupuesto.DroneRep,
+        DroneId: presupuesto.DroneId,
+        ModeloDroneNameRep: presupuesto.ModeloDroneNameRep,
       }
     }
     const usuario: Usuario = {
@@ -61,14 +68,34 @@ export const guardarReciboAsync = createAsyncThunk(
         CiudadUsu: presupuesto.CiudadUsu,
       }
     }
+    const drone: Drone = {
+      id: presupuesto.DroneId,
+      data: {
+        ModeloDroneId: presupuesto.ModeloDroneIdRep,
+        Nombre: generarNombreUnico(dronesArray, presupuesto.ModeloDroneNameRep, presupuesto.NombreUsu, presupuesto.ApellidoUsu),
+        Propietario: '',
+        NumeroSerie: '',
+        Observaciones: '',
+      }
+    }
 
     dispatch(isFetchingStart());
     try {
       // 1. Primero guardar el usuario
       const { guardarUsuarioPersistencia } = await import('../../persistencia/persistencia');
       const usuarioGuardado = await guardarUsuarioPersistencia(usuario);
+
+      // 2. Guardar el drone
+      const { guardarDronePersistencia } = await import('../../persistencia/persistencia');
+      drone.data.Propietario = usuarioGuardado.id;
+      const droneGuardado = await guardarDronePersistencia(drone);
+
+      // 3. Guardar la reparación con el usuario y drone guardados
       reparacion.data.UsuarioRep = usuarioGuardado.id.toString();
+      reparacion.data.DroneId = droneGuardado.id.toString();
       const reparacionGuardada = await guardarReparacionPersistencia(reparacion);
+
+      // 4. Enviar el recibo
       const response = await dispatch(enviarReciboAsync({
         ...reparacionGuardada,
         data: {
@@ -94,7 +121,11 @@ export const guardarReciboAsync = createAsyncThunk(
 // GUARDA Transito
 export const guardarTransitoAsync = createAsyncThunk(
   'app/guardarTransito',
-  async (presupuesto: PresupuestoProps, { dispatch }) => {
+  async (presupuesto: PresupuestoProps, { dispatch, rejectWithValue, getState }) => {
+    const state = getState() as RootState;
+    const drones = state.drone.coleccionDrones;
+    const dronesArray = Object.values(drones);
+
     const reparacion: ReparacionType = {
       id: "",
       data: {
@@ -104,11 +135,11 @@ export const guardarTransitoAsync = createAsyncThunk(
         FeConRep: presupuesto.FeConRep,
         UsuarioRep: presupuesto.EmailUsu,
         DroneId: presupuesto.DroneId,
-        DroneRep: presupuesto.DroneRep,
+        ModeloDroneNameRep: presupuesto.ModeloDroneNameRep,
       }
     }
     const usuario: Usuario = {
-      id: presupuesto.EmailUsu,
+      id: presupuesto.UsuarioRep,
       data: {
         EmailUsu: presupuesto.EmailUsu,
         NombreUsu: presupuesto.NombreUsu,
@@ -118,18 +149,38 @@ export const guardarTransitoAsync = createAsyncThunk(
         CiudadUsu: presupuesto.CiudadUsu,
       }
     }
+    const drone: Drone = {
+      id: presupuesto.DroneId,
+      data: {
+        ModeloDroneId: presupuesto.ModeloDroneIdRep,
+        Nombre: generarNombreUnico(dronesArray, presupuesto.ModeloDroneNameRep, presupuesto.NombreUsu, presupuesto.ApellidoUsu),
+        Propietario: '',
+        NumeroSerie: '',
+        Observaciones: '',
+      }
+    }
 
     dispatch(isFetchingStart());
     try {
+      // 1. Primero guardar el usuario
       const { guardarUsuarioPersistencia } = await import('../../persistencia/persistencia');
       const usuarioGuardado = await guardarUsuarioPersistencia(usuario);
+
+      // 2. Guardar el drone
+      const { guardarDronePersistencia } = await import('../../persistencia/persistencia');
+      drone.data.Propietario = usuarioGuardado.id;
+      const droneGuardado = await guardarDronePersistencia(drone);
+
+      // 3. Guardar la reparación con el usuario y drone guardados
       reparacion.data.UsuarioRep = usuarioGuardado.id.toString();
+      reparacion.data.DroneId = droneGuardado.id.toString();
       const reparacionGuardada = await guardarReparacionPersistencia(reparacion);
+
       dispatch(isFetchingComplete());
       return { reparacion: reparacionGuardada, usuario: usuarioGuardado };
     } catch (error: unknown) { // TODO: Hacer tipo de dato para el error
       dispatch(isFetchingComplete());
-      throw error;
+      return rejectWithValue(error);
     }
   },
 );

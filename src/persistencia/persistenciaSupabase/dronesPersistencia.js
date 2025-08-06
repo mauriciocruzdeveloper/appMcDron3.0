@@ -258,7 +258,10 @@ export const getDronePersistencia = async (id) => {
         ModeloDroneId: data.drone_model_id ? String(data.drone_model_id) : '',
         ModeloDroneRepu: data.drone_model?.name || '',
         Propietario: data.owner_id ? String(data.owner_id) : '',
-        Observaciones: data.observations || ''
+        Observaciones: data.observations || '',
+        Nombre: data.name || '',
+        NumeroSerie: data.serial_number || '',
+
       }
     };
   } catch (error) {
@@ -288,7 +291,9 @@ export const getDronesPorModeloDronePersistencia = async (modeloDroneId) => {
         ModeloDroneId: item.drone_model_id ? String(item.drone_model_id) : '',
         ModeloDroneRepu: item.drone_model?.name || '',
         Propietario: item.owner_id ? String(item.owner_id) : '',
-        Observaciones: item.observations || ''
+        Observaciones: item.observations || '',
+        Nombre: item.name || '',
+        NumeroSerie: item.serial_number || ''
       }
     }));
 
@@ -320,7 +325,9 @@ export const getDronesPorPropietarioPersistencia = async (propietarioId) => {
         ModeloDroneId: item.drone_model_id ? String(item.drone_model_id) : '',
         ModeloDroneRepu: item.drone_model?.name || '',
         Propietario: item.owner_id ? String(item.owner_id) : '',
-        Observaciones: item.observations || ''
+        Observaciones: item.observations || '',
+        Nombre: item.name || '',
+        NumeroSerie: item.serial_number || ''
       }
     }));
 
@@ -338,7 +345,9 @@ export const guardarDronePersistencia = async (drone) => {
     const droneData = {
       drone_model_id: drone.data.ModeloDroneId || null,
       owner_id: drone.data.Propietario || null,
-      observations: drone.data.Observaciones || ''
+      observations: drone.data.Observaciones || '',
+      name: drone.data.Nombre || '',
+      serial_number: drone.data.NumeroSerie || ''
     };
 
     let result;
@@ -382,7 +391,9 @@ export const guardarDronePersistencia = async (drone) => {
         ModeloDroneId: result.drone_model_id ? String(result.drone_model_id) : '',
         ModeloDroneRepu: result.drone_model?.name || '',
         Propietario: result.owner_id ? String(result.owner_id) : '',
-        Observaciones: result.observations || ''
+        Observaciones: result.observations || '',
+        Nombre: result.name || '',
+        NumeroSerie: result.serial_number || ''
       }
     };
   } catch (error) {
@@ -449,7 +460,9 @@ export const getDronesPersistencia = async (setDronesToRedux) => {
           ModeloDroneId: item.drone_model_id ? String(item.drone_model_id) : '', // Convertir a String
           ModeloDroneRepu: item.drone_model?.name || '',
           Propietario: item.owner_id ? String(item.owner_id) : '', // Convertir a String
-          Observaciones: item.observations || ''
+          Observaciones: item.observations || '',
+          Nombre: item.name || '',
+          NumeroSerie: item.serial_number || ''
         }
       }));
 

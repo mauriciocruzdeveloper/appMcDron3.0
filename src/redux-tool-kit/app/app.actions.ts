@@ -67,7 +67,7 @@ export const enviarReciboAsync = createAsyncThunk(
             const body = {
                 cliente: reparacion.data.NombreUsu,
                 nro_reparacion: reparacion.id,
-                equipo: reparacion.data.DroneRep,
+                equipo: reparacion.data.ModeloDroneNameRep,
                 fecha_ingreso: new Date(Number(reparacion.data.FeRecRep)).toLocaleDateString(),
                 observaciones: reparacion.data.DescripcionUsuRep,
                 telefono: reparacion.data.TelefonoUsu,

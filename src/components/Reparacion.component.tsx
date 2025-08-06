@@ -46,7 +46,7 @@ export default function ReparacionComponent(): React.ReactElement | null {
             EstadoRep: "Consulta",
             PrioridadRep: 1,
             DroneId: "",
-            DroneRep: "",
+            ModeloDroneNameRep: "",
             NombreUsu: "",
             ApellidoUsu: "",
             UsuarioRep: "",
@@ -480,7 +480,7 @@ export default function ReparacionComponent(): React.ReactElement | null {
                         REPARACIÓN
                     </h3>
                     <div>id: {reparacion?.id}</div>
-                    <div>Drone: {reparacion?.data?.DroneRep}</div>
+                    <div>Drone: {reparacion?.data?.ModeloDroneNameRep}</div>
                     <div>Cliente: {usuarioStore?.data?.NombreUsu} {usuarioStore?.data?.ApellidoUsu}</div>
                 </div>
             </div>
@@ -644,8 +644,8 @@ export default function ReparacionComponent(): React.ReactElement | null {
                             onChange={handleOnChange}
                             type="text"
                             className="form-control"
-                            id="DroneRep"
-                            value={reparacion?.data?.DroneRep || ""}
+                            id="ModeloDroneNameRep"
+                            value={reparacion?.data?.ModeloDroneNameRep || ""}
                             disabled={!isAdmin}
                         />
                     </div>

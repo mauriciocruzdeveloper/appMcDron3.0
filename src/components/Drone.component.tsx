@@ -10,6 +10,7 @@ import Select from 'react-select';
 import { selectModelosDroneArray } from '../redux-tool-kit/modeloDrone/modeloDrone.selectors';
 import { selectUsuarioPorId } from '../redux-tool-kit/usuario/usuario.selectors';
 import { selectDroneById, selectDronesArray } from '../redux-tool-kit/drone';
+import { generarNombreUnico } from '../utils/utils';
 
 interface ParamTypes extends Record<string, string | undefined> {
   id: string;
@@ -20,14 +21,14 @@ export default function DroneComponent(): JSX.Element {
   const history = useHistory();
   const { openModal } = useModal();
   const { id } = useParams<ParamTypes>();
-  
+
   const isNew = id === 'new';
   // Usar selector optimizado O(1) en lugar de .find() O(n)
   const droneActual = useAppSelector(selectDroneById(id || ''));
-  
+
   const modelosDrone = useAppSelector(selectModelosDroneArray);
   const usuariosSelect = useAppSelector(state => state.usuario.usuariosSelect);
-  const propietarioActual = useAppSelector(state => 
+  const propietarioActual = useAppSelector(state =>
     droneActual?.data.Propietario ? selectUsuarioPorId(state, droneActual.data.Propietario) : null
   );
 
@@ -42,42 +43,23 @@ export default function DroneComponent(): JSX.Element {
     }
   });
 
-  const [propietarioValue, setPropietarioValue] = useState<{value: string, label: string} | null>(null);
+  const [propietarioValue, setPropietarioValue] = useState<{ value: string, label: string } | null>(null);
 
   // Obtener usuario completo para generar nombre
-  const usuarioCompleto = useAppSelector(state => 
+  const usuarioCompleto = useAppSelector(state =>
     drone.data.Propietario ? selectUsuarioPorId(state, drone.data.Propietario) : null
   );
-  
+
   // Obtener todos los drones para verificar nombres duplicados
   const todosDrones = useAppSelector(selectDronesArray);
-  
-  // Función para generar nombre único
-  const generarNombreUnico = (nombreBase: string) => {
-    const nombresExistentes = todosDrones
-      .filter(d => d.id !== drone.id) // Excluir el drone actual
-      .map(d => d.data.Nombre);
-    
-    let nombreFinal = nombreBase;
-    let contador = 1;
-    
-    while (nombresExistentes.includes(nombreFinal)) {
-      contador++;
-      nombreFinal = `${nombreBase} ${contador}`;
-    }
-    
-    return nombreFinal;
-  };
 
   // Effect para generar nombre automático cuando cambien modelo o propietario
   useEffect(() => {
     if (drone.data.ModeloDroneId && drone.data.Propietario) {
       const modelo = modelosDrone.find(m => m.id === drone.data.ModeloDroneId);
-      
+
       if (modelo && usuarioCompleto?.data) {
-        const nombreCompleto = `${usuarioCompleto.data.NombreUsu || ''} ${usuarioCompleto.data.ApellidoUsu || ''}`.trim();
-        const nombreBase = `${modelo.data.NombreModelo} - ${nombreCompleto}`;
-        const nombreUnico = generarNombreUnico(nombreBase);
+        const nombreUnico = generarNombreUnico(todosDrones, modelo.data.NombreModelo, usuarioCompleto.data.NombreUsu, usuarioCompleto.data.ApellidoUsu);
         changeInput('Nombre', nombreUnico);
       }
     }
@@ -133,21 +115,21 @@ export default function DroneComponent(): JSX.Element {
   const confirmaGuardarDrone = async () => {
     try {
       const response = await dispatch(guardarDroneAsync(drone));
-      
+
       if (response.meta.requestStatus === 'fulfilled') {
         openModal({
           mensaje: "Drone guardado correctamente.",
           tipo: "success",
           titulo: "Guardar Drone",
         });
-        
+
         // Si estamos creando un nuevo drone, actualizar la URL con el ID real
         if (isNew && (response.payload as Drone)?.id) { // TODO: Corregir este problema de tipo, acá y en las otras entidades
           history.replace(`/inicio/drones/${(response.payload as Drone).id}`);
         }
       } else if (response.meta.requestStatus === 'rejected') {
         // Mostrar mensaje de error específico si está disponible
-        const resp = response as { error: { message: string }};
+        const resp = response as { error: { message: string } };
         openModal({
           mensaje: "Error al guardar el drone: " + (resp.error?.message || "Error desconocido."),
           tipo: "danger",
@@ -176,7 +158,7 @@ export default function DroneComponent(): JSX.Element {
   const confirmaEliminarDrone = async () => {
     try {
       await dispatch(eliminarDroneAsync(drone.id)).unwrap();
-      
+
       openModal({
         mensaje: "Drone eliminado correctamente.",
         tipo: "success",
@@ -185,7 +167,7 @@ export default function DroneComponent(): JSX.Element {
       history.goBack();
     } catch (error: unknown) {
       console.error("Error al eliminar el drone:", error);
-      
+
       const errorMessage = error instanceof Error ? error.message : "Error al eliminar el drone.";
       openModal({
         mensaje: errorMessage,
@@ -208,7 +190,7 @@ export default function DroneComponent(): JSX.Element {
       <div className="card mb-3">
         <div className="card-body">
           <h5 className="card-title bluemcdron">DATOS DEL DRONE</h5>
-          
+
           <div className="mb-3">
             <label className="form-label">Nombre del Drone</label>
             <input
@@ -220,7 +202,7 @@ export default function DroneComponent(): JSX.Element {
               required
             />
           </div>
-          
+
           <div className="mb-3">
             <label className="form-label">Número de Serie</label>
             <input
@@ -232,7 +214,7 @@ export default function DroneComponent(): JSX.Element {
               required
             />
           </div>
-          
+
           <div className="mb-3">
             <label className="form-label">Modelo de Drone</label>
             <select
@@ -249,7 +231,7 @@ export default function DroneComponent(): JSX.Element {
               ))}
             </select>
           </div>
-          
+
           <div className="mb-3">
             <label className="form-label">Propietario</label>
             <Select
@@ -261,7 +243,7 @@ export default function DroneComponent(): JSX.Element {
               isClearable
             />
           </div>
-          
+
           <div className="mb-3">
             <label className="form-label">Observaciones</label>
             <textarea
@@ -273,7 +255,7 @@ export default function DroneComponent(): JSX.Element {
           </div>
         </div>
       </div>
-      
+
       <div className="text-center">
         <button
           onClick={handleGuardarDrone}
@@ -281,7 +263,7 @@ export default function DroneComponent(): JSX.Element {
         >
           Guardar
         </button>
-        
+
         {!isNew && (
           <button
             onClick={handleEliminarDrone}

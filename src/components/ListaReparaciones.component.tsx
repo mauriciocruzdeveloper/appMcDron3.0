@@ -87,7 +87,7 @@ export default function ListaReparaciones(): JSX.Element {
             onClick={() => history.push(`/inicio/reparaciones/${reparacion.id}`)}
           >
             <div className="d-flex w-100 justify-content-between">
-              <h5 className="mb-1">{reparacion.data.DroneRep}</h5>
+              <h5 className="mb-1">{reparacion.data.ModeloDroneNameRep}</h5>
             </div>
             <small>{reparacion.data?.NombreUsu || reparacion.data?.UsuarioRep}</small>
             <p
