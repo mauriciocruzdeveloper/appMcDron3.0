@@ -129,7 +129,7 @@ export const selectReparacionesFiltradas = createSelector(
       reparacionesFiltradas = reparacionesFiltradas.filter(reparacion => {
         const data = reparacion.data;
         return (
-          data.DroneRep?.toLowerCase().includes(searchTerm) ||
+          data.ModeloDroneNameRep?.toLowerCase().includes(searchTerm) ||
           data.NombreUsu?.toLowerCase().includes(searchTerm) ||
           data.ApellidoUsu?.toLowerCase().includes(searchTerm) ||
           data.EmailUsu?.toLowerCase().includes(searchTerm) ||
@@ -177,7 +177,7 @@ export const selectReparacionesBySearch = (searchTerm: string): ReparacionArrayS
       return reparaciones.filter(reparacion => {
         const data = reparacion.data;
         return (
-          data.DroneRep?.toLowerCase().includes(term) ||
+          data.ModeloDroneNameRep?.toLowerCase().includes(term) ||
           data.NombreUsu?.toLowerCase().includes(term) ||
           data.ApellidoUsu?.toLowerCase().includes(term) ||
           data.EmailUsu?.toLowerCase().includes(term) ||

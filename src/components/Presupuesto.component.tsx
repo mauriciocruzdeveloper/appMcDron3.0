@@ -12,6 +12,7 @@ import { getClienteAsync } from "../redux-tool-kit/usuario/usuario.actions";
 import { getLocalidadesPorProvincia, getProvinciasSelect } from "../utils/utils";
 import { estados } from "../datos/estados";
 import { selectModelosDroneSelect } from "../redux-tool-kit/modeloDrone/modeloDrone.selectors";
+import { selectDronesByPropietario } from "../redux-tool-kit/drone";
 
 // import { provincias } from '../datos/provincias.json';
 
@@ -22,7 +23,8 @@ export interface PresupuestoProps {
     TelefonoUsu: string;
     ProvinciaUsu: string;
     CiudadUsu: string;
-    DroneRep: string;
+    ModeloDroneNameRep: string;
+    ModeloDroneIdRep: string
     DroneId: string;
     DescripcionUsuRep: string;
     FeRecRep: number | null;
@@ -39,7 +41,8 @@ const INITIAL_PRESUPUESTO: PresupuestoProps = {
     TelefonoUsu: "",
     ProvinciaUsu: "",
     CiudadUsu: "",
-    DroneRep: "",
+    ModeloDroneNameRep: "",
+    ModeloDroneIdRep: "",
     DroneId: "",
     DescripcionUsuRep: "",
     FeRecRep: null,
@@ -68,17 +71,9 @@ export default function Presupuesto(): JSX.Element {
     const usuariosSelect = useAppSelector(state => state.usuario.usuariosSelect);
     const modelosDroneSelect = useAppSelector(selectModelosDroneSelect);
     const isAdmin = useMemo(() => usuario?.data?.Admin, [usuario]);
-
-    const changeInput = (field: keyof PresupuestoProps, value: string | number) => {
-        setPresupuesto(prev => ({
-            ...prev,
-            [field]: value
-        }));
-    };
-
+    
     const dateNow = Date.now();
-
-
+    
     const [presupuesto, setPresupuesto] = useState<PresupuestoProps>({
         ...INITIAL_PRESUPUESTO,
         FeRecRep: estadoParam === "Recibido" ? dateNow : null,
@@ -86,6 +81,35 @@ export default function Presupuesto(): JSX.Element {
         EstadoRep: estadoInfo.nombre,
         PrioridadRep: estadoInfo.prioridad,
     });
+    
+    // Obtener drones del usuario seleccionado
+    const dronesDelUsuario = useAppSelector(state => 
+        presupuesto.UsuarioRep ? selectDronesByPropietario(presupuesto.UsuarioRep)(state) : []
+    );
+    
+    // Debug logs
+    console.log('UsuarioRep:', presupuesto.UsuarioRep);
+    console.log('Drones del usuario:', dronesDelUsuario);
+    
+    // Crear opciones para el selector de drones
+    const dronesSelect = useMemo(() => {
+        const options = dronesDelUsuario.map(drone => ({
+            value: drone.id,
+            label: drone.data.Nombre
+        }));
+        console.log('Opciones de drones:', options);
+        return options;
+    }, [dronesDelUsuario]);
+    
+    // Estado para controlar si el selector de modelo está deshabilitado
+    const [modeloDeshabilitado, setModeloDeshabilitado] = useState(false);
+
+    const changeInput = (field: keyof PresupuestoProps, value: string | number) => {
+        setPresupuesto(prev => ({
+            ...prev,
+            [field]: value
+        }));
+    };
 
     // TODO: Ver cómo está hecho en Reparacion.container.tsx
     const changeInputUsu = (field: string, value: string) => {
@@ -140,6 +164,8 @@ export default function Presupuesto(): JSX.Element {
         } else if (estadoInfo.nombre === "Transito") {
             response = await dispatch(guardarTransitoAsync(presupuesto));
         }
+
+        console.log('!!! response en Prespuesto.component', response);
 
         if (response?.meta.requestStatus === 'fulfilled') {
             openModal({
@@ -217,20 +243,46 @@ export default function Presupuesto(): JSX.Element {
                 ProvinciaUsu: response.payload.data?.ProvinciaUsu || "",
                 CiudadUsu: response.payload.data?.CiudadUsu || "",
                 UsuarioRep: response.payload.id || "",
+                // Limpiar drone seleccionado al cambiar usuario
+                DroneId: "",
+                ModeloDroneIdRep: "",
+                ModeloDroneNameRep: ""
             });
+            setModeloDeshabilitado(false);
         }
     }
 
     // Función que maneja los onChange de toda la vida, del Select de usuarios.
-    // Tengo que hacerlo mediante un handle porque el evento de onInputChange
-    // sólo contiene el valor del input, no es un evento.
-    // Abajo creo target con los atributos correctos para pasarlos como 
-    // parámetro del método changeInputPresu.
     const handleOnInputChangeUsuarios = (inputEmailUsu: string, action: InputActionMeta) => {
-        // https://github.com/JedWatson/react-select/issues/588#issuecomment-815133270
         if (action.action === "input-change") changeInputUsu("EmailUsu", inputEmailUsu);
-        // Otra opción
-        //if (action?.action !== 'input-blur' && action?.action !== 'menu- close') changeInputUsu(target);
+    }
+    
+    // Función que maneja el onChange del Select de drones
+    const handleOnChangeDrones = (e: any) => {
+        if (e) {
+            const droneSeleccionado = dronesDelUsuario.find(drone => drone.id === e.value);
+            if (droneSeleccionado) {
+                changeInput("DroneId", droneSeleccionado.id);
+                changeInput("ModeloDroneIdRep", droneSeleccionado.data.ModeloDroneId);
+                // Buscar el nombre del modelo
+                const modelo = modelosDroneSelect.find(m => m.value === droneSeleccionado.data.ModeloDroneId);
+                if (modelo) {
+                    changeInput("ModeloDroneNameRep", modelo.label);
+                }
+                setModeloDeshabilitado(true);
+            }
+        } else {
+            changeInput("DroneId", "");
+            setModeloDeshabilitado(false);
+        }
+    }
+    
+    // Función que maneja el onChange del Select de modelos de drone
+    const handleOnChangeModelosDrone = (e: any) => {
+        if (e && !modeloDeshabilitado) {
+            changeInput("ModeloDroneIdRep", e.value);
+            changeInput("ModeloDroneNameRep", e.label);
+        }
     }
 
     // Color de fondo según el estado
@@ -330,22 +382,37 @@ export default function Presupuesto(): JSX.Element {
             <div className="card mb-3">
                 <div className="card-body">
                     <h5 className="card-title bluemcdron">DRONE</h5>
+                    
+                    <div>
+                        <label className="form-label">Drone Existente (Opcional)</label>
+                        <Select
+                            options={dronesSelect}
+                            onChange={handleOnChangeDrones}
+                            id="DroneId"
+                            value={{
+                                value: presupuesto.DroneId,
+                                label: dronesSelect.find(d => d.value === presupuesto.DroneId)?.label || ""
+                            }}
+                            placeholder="Seleccionar drone existente..."
+                            noOptionsMessage={() => "No hay drones disponibles para este usuario"}
+                            isClearable
+                            isDisabled={!presupuesto.UsuarioRep}
+                        />
+                    </div>
+                    
                     <div>
                         <label className="form-label">Modelo del Drone</label>
                         <Select
                             options={modelosDroneSelect}
-                            onChange={e => {
-                                if (e) {
-                                    changeInput("DroneRep", e.label);
-                                }
-                            }}
-                            id="DroneRep"
+                            onChange={handleOnChangeModelosDrone}
+                            id="ModeloDroneIdRep"
                             value={{
-                                value: presupuesto.DroneRep,
-                                label: presupuesto.DroneRep
+                                value: presupuesto.ModeloDroneIdRep,
+                                label: presupuesto.ModeloDroneNameRep
                             }}
                             placeholder="Seleccionar modelo de drone..."
                             noOptionsMessage={() => "No hay modelos disponibles"}
+                            isDisabled={modeloDeshabilitado}
                         />
                     </div>
 
