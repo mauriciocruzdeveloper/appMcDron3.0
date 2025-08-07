@@ -10,7 +10,9 @@ import Select from 'react-select';
 import { selectModelosDroneArray } from '../redux-tool-kit/modeloDrone/modeloDrone.selectors';
 import { selectUsuarioPorId } from '../redux-tool-kit/usuario/usuario.selectors';
 import { selectDroneById, selectDronesArray } from '../redux-tool-kit/drone';
-import { generarNombreUnico } from '../utils/utils';
+import { selectReparacionesByDrone } from '../redux-tool-kit/reparacion/reparacion.selectors';
+import { generarNombreUnico, convertTimestampCORTO } from '../utils/utils';
+import { estados } from '../datos/estados';
 
 interface ParamTypes extends Record<string, string | undefined> {
   id: string;
@@ -52,6 +54,11 @@ export default function DroneComponent(): JSX.Element {
 
   // Obtener todos los drones para verificar nombres duplicados
   const todosDrones = useAppSelector(selectDronesArray);
+
+  // Obtener las reparaciones relacionadas con este drone
+  const reparacionesDelDrone = useAppSelector(state => 
+    !isNew && drone.id ? selectReparacionesByDrone(drone.id)(state) : []
+  );
 
   // Effect para generar nombre automático cuando cambien modelo o propietario
   useEffect(() => {
@@ -177,6 +184,11 @@ export default function DroneComponent(): JSX.Element {
     }
   };
 
+  // Función para obtener el color del estado
+  const getEstadoColor = (estado: string): string => {
+    return estados[estado]?.color || '#6c757d';
+  };
+
   return (
     <div className="p-4">
       <div className="card mb-3 bg-bluemcdron">
@@ -255,6 +267,57 @@ export default function DroneComponent(): JSX.Element {
           </div>
         </div>
       </div>
+
+      {!isNew && reparacionesDelDrone.length > 0 && (
+        <div className="card mb-3">
+          <div className="card-body">
+            <h5 className="card-title bluemcdron">REPARACIONES RELACIONADAS</h5>
+            <div className="row">
+              <div className="col-12">
+                {reparacionesDelDrone.map((reparacion, index) => (
+                  <div
+                    key={reparacion.id}
+                    className="card mb-2"
+                    style={{ cursor: 'pointer' }}
+                    onClick={() => history.push(`/inicio/reparaciones/${reparacion.id}`)}
+                  >
+                    <div className="card-body p-3">
+                      <div className="d-flex justify-content-between align-items-start">
+                        <div>
+                          <h6 className="mb-1">
+                            Reparación #{index + 1} - {reparacion.data.EstadoRep}
+                          </h6>
+                          <small className="text-muted">
+                            Fecha: {convertTimestampCORTO(reparacion.data.FeConRep)}
+                          </small>
+                          {reparacion.data.DescripcionUsuRep && (
+                            <div className="mt-1">
+                              <small className="text-muted">
+                                {reparacion.data.DescripcionUsuRep.length > 100
+                                  ? `${reparacion.data.DescripcionUsuRep.substring(0, 100)}...`
+                                  : reparacion.data.DescripcionUsuRep}
+                              </small>
+                            </div>
+                          )}
+                        </div>
+                        <span
+                          className="badge"
+                          style={{
+                            backgroundColor: getEstadoColor(reparacion.data.EstadoRep),
+                            color: 'white'
+                          }}
+                        >
+                          {reparacion.data.EstadoRep}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="text-center">
         <button
