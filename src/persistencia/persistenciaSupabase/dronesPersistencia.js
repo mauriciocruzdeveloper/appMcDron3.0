@@ -256,7 +256,7 @@ export const getDronePersistencia = async (id) => {
       id: String(data.id),
       data: {
         ModeloDroneId: data.drone_model_id ? String(data.drone_model_id) : '',
-        ModeloDroneRepu: data.drone_model?.name || '',
+        ModeloDroneName: data.drone_model?.name || '',
         Propietario: data.owner_id ? String(data.owner_id) : '',
         Observaciones: data.observations || '',
         Nombre: data.name || '',
@@ -289,7 +289,7 @@ export const getDronesPorModeloDronePersistencia = async (modeloDroneId) => {
       id: String(item.id),
       data: {
         ModeloDroneId: item.drone_model_id ? String(item.drone_model_id) : '',
-        ModeloDroneRepu: item.drone_model?.name || '',
+        ModeloDroneName: item.drone_model?.name || '',
         Propietario: item.owner_id ? String(item.owner_id) : '',
         Observaciones: item.observations || '',
         Nombre: item.name || '',
@@ -323,7 +323,7 @@ export const getDronesPorPropietarioPersistencia = async (propietarioId) => {
       id: String(item.id),
       data: {
         ModeloDroneId: item.drone_model_id ? String(item.drone_model_id) : '',
-        ModeloDroneRepu: item.drone_model?.name || '',
+        ModeloDroneName: item.drone_model?.name || '',
         Propietario: item.owner_id ? String(item.owner_id) : '',
         Observaciones: item.observations || '',
         Nombre: item.name || '',
@@ -389,7 +389,7 @@ export const guardarDronePersistencia = async (drone) => {
       id: String(result.id),
       data: {
         ModeloDroneId: result.drone_model_id ? String(result.drone_model_id) : '',
-        ModeloDroneRepu: result.drone_model?.name || '',
+        ModeloDroneName: result.drone_model?.name || '',
         Propietario: result.owner_id ? String(result.owner_id) : '',
         Observaciones: result.observations || '',
         Nombre: result.name || '',
@@ -458,7 +458,7 @@ export const getDronesPersistencia = async (setDronesToRedux) => {
         id: String(item.id), // Convertir a String
         data: {
           ModeloDroneId: item.drone_model_id ? String(item.drone_model_id) : '', // Convertir a String
-          ModeloDroneRepu: item.drone_model?.name || '',
+          ModeloDroneName: item.drone_model?.name || '',
           Propietario: item.owner_id ? String(item.owner_id) : '', // Convertir a String
           Observaciones: item.observations || '',
           Nombre: item.name || '',
