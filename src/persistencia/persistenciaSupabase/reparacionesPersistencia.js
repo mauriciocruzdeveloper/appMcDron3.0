@@ -36,6 +36,10 @@ export const agregarIntervencionAReparacionPersistencia = async (reparacionId, i
       return { success: true, message: 'La intervención ya está asociada a esta reparación' };
     }
 
+    if (relacionError) {
+      throw new Error(`Error al verificar relación existente: ${relacionError.message}`);
+    }
+
     // 4. Insertar la nueva relación con los costos de la intervención
     const { data: nuevaRelacion, error: insercionError } = await supabase
       .from('repair_intervention')
@@ -252,7 +256,7 @@ export const getReparacionesPersistencia = (setReparacionesToRedux, usuario) => 
           EstadoRep: item.state,
           PrioridadRep: item.priority,
           DroneId: item.drone?.id ? String(item.drone.id) : '',
-          DroneRep: item.drone_name || '',
+          ModeloDroneNameRep: item.drone_name || '',
           NombreUsu: item.owner?.first_name || '',
           ApellidoUsu: item.owner?.last_name || '',
           UsuarioRep: item.owner_id ? String(item.owner_id) : '',
@@ -337,7 +341,7 @@ export const getReparacionPersistencia = async (id) => {
         EstadoRep: data.state,
         PrioridadRep: data.priority,
         DroneId: data.drone?.id ? String(data.drone.id) : '',
-        DroneRep: data.drone_name || '',
+        ModeloDroneNameRep: data.drone_name || '',
         NombreUsu: data.owner?.first_name || '',
         ApellidoUsu: data.owner?.last_name || '',
         UsuarioRep: data.owner_id ? String(data.owner_id) : '',
@@ -374,12 +378,16 @@ export const getReparacionPersistencia = async (id) => {
 // GUARDAR Reparación
 export const guardarReparacionPersistencia = async (reparacion) => {
   try {
+    console.log('=== DEBUG GUARDAR REPARACION ===');
+    console.log('Datos recibidos:', reparacion);
+    console.log('DroneId recibido:', reparacion.data.DroneId);
+    
     // Transformar el objeto al formato de Supabase
     const reparacionData = {
       state: reparacion.data.EstadoRep,
       priority: reparacion.data.PrioridadRep,
-      drone_id: null, // Se obtendría del drone con número de serie DroneRep
-      drone_name: reparacion.data.DroneRep || '',
+      drone_id: reparacion.data.DroneId || null,
+      drone_name: reparacion.data.ModeloDroneNameRep || '',
       owner_id: reparacion.data.UsuarioRep,
       drive_link: reparacion.data.DriveRep,
       notes: reparacion.data.AnotacionesRep,
@@ -399,29 +407,43 @@ export const guardarReparacionPersistencia = async (reparacion) => {
       photo_urls: reparacion.data.urlsFotos,
       document_urls: reparacion.data.urlsDocumentos
     };
+    
+    console.log('Datos para Supabase:', reparacionData);
+    console.log('drone_id que se enviará:', reparacionData.drone_id);
 
     let result;
 
-    if (reparacion.id !== 'new') {
+    if (reparacion.id) {
       // Actualización
+      console.log('Actualizando reparación con ID:', reparacion.id);
       const { data, error } = await supabase
         .from('repair')
         .update(reparacionData)
         .eq('id', reparacion.id)
         .select();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error en actualización:', error);
+        throw error;
+      }
       result = data[0];
     } else {
       // Inserción
+      console.log('Insertando nueva reparación');
       const { data, error } = await supabase
         .from('repair')
         .insert(reparacionData)
         .select();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error en inserción:', error);
+        throw error;
+      }
       result = data[0];
     }
+
+    console.log('Resultado de la operación:', result);
+    console.log('drone_id guardado:', result?.drone_id);
 
     if (!result) {
       throw new Error('No se pudo guardar la reparación');
@@ -509,31 +531,3 @@ export const eliminarReparacionPersistencia = async (id) => {
   });
 };
 
-// Función para guardar presupuesto
-export const guardarPresupuestoPersistencia = async (presupuesto) => {
-  // En Supabase también agregamos información del usuario a la reparación 
-  // para mantener consistencia con la implementación original
-  presupuesto.reparacion.data.NombreUsu = presupuesto.usuario.data?.NombreUsu || '';
-  presupuesto.reparacion.data.ApellidoUsu = presupuesto.usuario.data?.ApellidoUsu || '';
-  presupuesto.reparacion.data.EmailUsu = presupuesto.usuario.data?.EmailUsu || '';
-  presupuesto.reparacion.data.TelefonoUsu = presupuesto.usuario.data?.TelefonoUsu || '';
-
-  try {
-    // 1. Primero guardar el usuario
-    const { guardarUsuarioPersistencia } = await import('./usuariosPersistencia.js');
-    const usuarioGuardado = await guardarUsuarioPersistencia(presupuesto.usuario);
-
-    // 2. Guardar la reparación con el ID numérico del usuario en owner_id
-    presupuesto.reparacion.data.UsuarioRep = usuarioGuardado.id.toString();
-    const reparacionGuardada = await guardarReparacionPersistencia(presupuesto.reparacion);
-
-    // 3. Devolver el presupuesto actualizado
-    return {
-      usuario: usuarioGuardado,
-      reparacion: reparacionGuardada
-    };
-  } catch (error) {
-    console.error('Error en guardarPresupuestoPersistencia:', error);
-    throw error;
-  }
-};

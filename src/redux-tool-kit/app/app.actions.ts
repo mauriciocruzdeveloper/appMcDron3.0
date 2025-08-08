@@ -67,7 +67,7 @@ export const enviarReciboAsync = createAsyncThunk(
             const body = {
                 cliente: reparacion.data.NombreUsu,
                 nro_reparacion: reparacion.id,
-                equipo: reparacion.data.DroneRep,
+                equipo: reparacion.data.ModeloDroneNameRep,
                 fecha_ingreso: new Date(Number(reparacion.data.FeRecRep)).toLocaleDateString(),
                 observaciones: reparacion.data.DescripcionUsuRep,
                 telefono: reparacion.data.TelefonoUsu,
@@ -83,10 +83,11 @@ export const enviarReciboAsync = createAsyncThunk(
             });
 
             dispatch(isFetchingComplete());
+
             return response;
         } catch (error: any) { // TODO: Hacer tipo de dato para el error
             dispatch(isFetchingComplete());
-            return error;
+            throw error;
         }
     },
 );

@@ -164,7 +164,7 @@ export const selectDronesBySearch = (searchTerm: string): DroneArraySelector =>
 
 /**
  * Selector para drones de un propietario específico
- * @param propietario - Nombre del propietario
+ * @param propietario - ID del propietario
  * @returns Función selector que retorna drones del propietario
  */
 export const selectDronesByPropietario = (propietario: string): DroneArraySelector =>
@@ -172,7 +172,7 @@ export const selectDronesByPropietario = (propietario: string): DroneArraySelect
     [selectDronesArray],
     (drones): Drone[] =>
       drones.filter(drone => 
-        drone.data.Propietario?.toLowerCase().includes(propietario.toLowerCase())
+        drone.data.Propietario === propietario
       )
   );
 

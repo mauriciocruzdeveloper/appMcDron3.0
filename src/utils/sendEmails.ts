@@ -10,7 +10,7 @@ import { callEndpoint, enviarEmail } from "./utils";
 //         to: reparacion.data.EmailUsu,
 //         cc: EMAIL_REPARACIONES,
 //         bcc: [],
-//         subject: 'Recibo de equipo ' + reparacion.data.DroneRep,
+//         subject: 'Recibo de equipo ' + reparacion.data.ModeloDroneNameRep,
 //         body: bodyRecibo(reparacion),
 //     };
 //     enviarEmail(datosEmail);
@@ -21,7 +21,7 @@ import { callEndpoint, enviarEmail } from "./utils";
 //     const body = {
 //         cliente: reparacion.data.NombreUsu,
 //         nro_reparacion: reparacion.id,
-//         equipo: reparacion.data.DroneRep,
+//         equipo: reparacion.data.ModeloDroneNameRep,
 //         fecha_ingreso: new Date(Number(reparacion.data.FeRecRep)).toLocaleDateString(),
 //         observaciones: reparacion.data.DescripcionUsuRep,
 //         telefono: reparacion.data.TelefonoUsu,
