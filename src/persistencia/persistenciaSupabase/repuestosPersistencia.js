@@ -81,7 +81,6 @@ export const getRepuestosPorModeloPersistencia = async (modeloDroneId) => {
       data: {
         NombreRepu: item.name,
         DescripcionRepu: item.description || '',
-        ModeloDroneRepu: 'Múltiple', // Ahora un repuesto puede estar asociado a múltiples modelos
         ModelosDroneIds: [String(modeloDroneId)], // Incluimos el modelo que estamos consultando
         ProveedorRepu: item.provider || '',
         PrecioRepu: item.price || 0,
@@ -116,7 +115,6 @@ export const getRepuestosPorProveedorPersistencia = async (proveedor) => {
       data: {
         NombreRepu: item.name,
         DescripcionRepu: item.description || '',
-        ModeloDroneRepu: item.drone_model?.name || '',
         ProveedorRepu: item.provider || '',
         PrecioRepu: item.price || 0,
         StockRepu: item.stock || 0,

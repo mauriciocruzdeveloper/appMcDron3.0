@@ -106,34 +106,28 @@ export default function ListaRepuestos(): JSX.Element {
             
             <div className='card mb-3'>
                 <div className='card-body'>
-                    <div className='row'>
-                        <div className='col-md-8'>
-                            <div className='form-group'>
-                                <input
-                                    type='text'
-                                    className='form-control'
-                                    placeholder='Buscar repuestos...'
-                                    value={filter}
-                                    onChange={handleSearchChange}
-                                />
-                            </div>
-                        </div>
-                        <div className='col-md-4'>
-                            <div className='form-group'>
-                                <select
-                                    className='form-select'
-                                    value={filtroModeloDrone}
-                                    onChange={handleModeloChange}
-                                >
-                                    <option value=''>Todos los modelos</option>
-                                    {modelosDrone.map((modelo: ModeloDrone) => (
-                                        <option key={modelo.id} value={modelo.id}>
-                                            {modelo.data.NombreModelo}
-                                        </option>
-                                    ))}
-                                </select>
-                            </div>
-                        </div>
+                    <div className='form-group'>
+                        <input
+                            type='text'
+                            className='form-control'
+                            placeholder='Buscar repuestos...'
+                            value={filter}
+                            onChange={handleSearchChange}
+                        />
+                    </div>
+                    <div className='form-group mt-2'>
+                        <select
+                            className='form-select'
+                            value={filtroModeloDrone}
+                            onChange={handleModeloChange}
+                        >
+                            <option value=''>Todos los modelos</option>
+                            {modelosDrone.map((modelo: ModeloDrone) => (
+                                <option key={modelo.id} value={modelo.id}>
+                                    {modelo.data.NombreModelo}
+                                </option>
+                            ))}
+                        </select>
                     </div>
                 </div>
             </div>

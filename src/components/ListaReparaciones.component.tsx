@@ -1,8 +1,6 @@
-import React from "react";
+import React, { useState } from "react";
 import { useHistory } from "../hooks/useHistory";
 import { estados } from '../datos/estados';
-// Estas son las importaciones de react-floating-action-button
-// lightColors y darkColors pueden estar buenos... hay que probarlos
 import { useAppSelector } from "../redux-tool-kit/hooks/useAppSelector";
 import { useAppDispatch } from "../redux-tool-kit/hooks/useAppDispatch";
 import { 
@@ -10,14 +8,19 @@ import {
   selectReparacionFilter,
   setFilter 
 } from "../redux-tool-kit/reparacion";
+import { selectModelosDroneArray, selectColeccionModelosDrone } from "../redux-tool-kit/modeloDrone/modeloDrone.selectors";
+import { selectDronesDictionary } from "../redux-tool-kit/drone/drone.selectors";
 
 export default function ListaReparaciones(): JSX.Element {
   const dispatch = useAppDispatch();
   const history = useHistory();
   
-  // Usar selector optimizado que ya incluye filtrado y ordenamiento
   const reparacionesList = useAppSelector(selectReparacionesFitradasYOrdenadas);
   const filter = useAppSelector(selectReparacionFilter);
+  const modelosDrone = useAppSelector(selectModelosDroneArray);
+  const modelosDroneDictionary = useAppSelector(selectColeccionModelosDrone);
+  const drones = useAppSelector(selectDronesDictionary);
+  const [selectedModelo, setSelectedModelo] = useState<string>('');
 
   const handleOnChange = () => {
     dispatch(setFilter({
@@ -33,7 +36,12 @@ export default function ListaReparaciones(): JSX.Element {
     }));
   }
 
-  console.log("LISTA REPARACIONES");
+  const reparacionesFiltradas = reparacionesList.filter(reparacion => {
+    if (!selectedModelo) return true;
+    const drone = reparacion.data.DroneId ? drones[reparacion.data.DroneId] : undefined;
+    if (!drone) return false;
+    return drone.data.ModeloDroneId === selectedModelo;
+  });
 
   return (
     <div className="p-4">
@@ -59,45 +67,62 @@ export default function ListaReparaciones(): JSX.Element {
               onChange={handleSearchChange}
             />
           </div>
+          <div className='form-group mt-2'>
+            <select
+              className='form-control'
+              value={selectedModelo}
+              onChange={(e) => setSelectedModelo(e.target.value)}
+            >
+              <option value="">Todos los modelos</option>
+              {modelosDrone.map(modelo => (
+                <option key={modelo.id} value={modelo.id}>{modelo.data.NombreModelo}</option>
+              ))}
+            </select>
+          </div>
         </div>
       </div>
 
       <div className="d-flex justify-content-between align-items-center mb-3">
         <div className="mb-2 text-muted">
-          {reparacionesList.length} {reparacionesList.length === 1 ? 'reparación' : 'reparaciones'}
+          {reparacionesFiltradas.length} {reparacionesFiltradas.length === 1 ? 'reparación' : 'reparaciones'}
         </div>
-        {/* <button
-          className="btn w-auto bg-bluemcdron text-white"
-          onClick={() => history.push('/inicio/reparaciones/new')}
-        >
-          <i className="bi bi-plus-circle me-1"></i> Nueva Reparación
-        </button> */}
       </div>
 
-      {reparacionesList.length === 0 ? (
+      {reparacionesFiltradas.length === 0 ? (
         <div className="alert alert-info text-center" role="alert">
           No hay reparaciones disponibles.
         </div>
       ) : (
-        reparacionesList.map(reparacion => (
-          <div
-            key={reparacion.id}
-            className="card mb-3 p-1"
-            aria-current="true"
-            onClick={() => history.push(`/inicio/reparaciones/${reparacion.id}`)}
-          >
-            <div className="d-flex w-100 justify-content-between">
-              <h5 className="mb-1">{reparacion.data.ModeloDroneNameRep}</h5>
-            </div>
-            <small>{reparacion.data?.NombreUsu || reparacion.data?.UsuarioRep}</small>
-            <p
-              className="mb-1"
-              style={{ backgroundColor: estados[reparacion.data.EstadoRep].color }}
+        reparacionesFiltradas.map(reparacion => {
+          const drone = reparacion.data.DroneId ? drones[reparacion.data.DroneId] : undefined;
+          let modeloDroneName = reparacion.data.ModeloDroneNameRep;
+          if (drone) {
+            const modelo = modelosDroneDictionary[drone.data.ModeloDroneId];
+            if (modelo) {
+              modeloDroneName = modelo.data.NombreModelo;
+            }
+          }
+
+          return (
+            <div
+              key={reparacion.id}
+              className="card mb-3 p-1"
+              aria-current="true"
+              onClick={() => history.push(`/inicio/reparaciones/${reparacion.id}`)}
             >
-              {reparacion.data.EstadoRep} - {estados[reparacion.data.EstadoRep].accion}
-            </p>
-          </div>
-        ))
+              <div className="d-flex w-100 justify-content-between">
+                <h5 className="mb-1">{modeloDroneName}</h5>
+              </div>
+              <small>{reparacion.data?.NombreUsu || reparacion.data?.UsuarioRep}</small>
+              <p
+                className="mb-1"
+                style={{ backgroundColor: estados[reparacion.data.EstadoRep].color }}
+              >
+                {reparacion.data.EstadoRep} - {estados[reparacion.data.EstadoRep].accion}
+              </p>
+            </div>
+          )
+        })
       )}
     </div>
   );
