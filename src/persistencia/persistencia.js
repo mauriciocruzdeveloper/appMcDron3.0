@@ -18,7 +18,6 @@ export const getReparacionesPersistencia = backend.getReparacionesPersistencia;
 export const getReparacionPersistencia = backend.getReparacionPersistencia;
 export const guardarReparacionPersistencia = backend.guardarReparacionPersistencia;
 export const eliminarReparacionPersistencia = backend.eliminarReparacionPersistencia;
-export const guardarPresupuestoPersistencia = backend.guardarPresupuestoPersistencia;
 
 // INTERVENCIONES Y RELACIONES
 export const getIntervencionesPorReparacionPersistencia = backend.getIntervencionesPorReparacionPersistencia;

@@ -3,6 +3,8 @@ export interface DroneData {
   ModeloDroneId: string; // Referencia al id del modelo de drone
   Propietario: string;
   Observaciones?: string;
+  Nombre: string;
+  NumeroSerie: string;
 }
 
 export interface Drone {

@@ -23,6 +23,8 @@ import {
   selectReparacionById,
   selectIntervencionesDeReparacionActual 
 } from "../redux-tool-kit/reparacion";
+import { selectDroneById, selectDronesByPropietario } from "../redux-tool-kit/drone/drone.selectors";
+import { selectModeloDronePorId } from "../redux-tool-kit/modeloDrone/modeloDrone.selectors";
 
 interface ParamTypes extends Record<string, string | undefined> {
     id: string;
@@ -46,7 +48,7 @@ export default function ReparacionComponent(): React.ReactElement | null {
             EstadoRep: "Consulta",
             PrioridadRep: 1,
             DroneId: "",
-            DroneRep: "",
+            ModeloDroneNameRep: "",
             NombreUsu: "",
             ApellidoUsu: "",
             UsuarioRep: "",
@@ -91,6 +93,21 @@ export default function ReparacionComponent(): React.ReactElement | null {
     const [reparacionOriginal, setReparacionOriginal] = useState<ReparacionType | undefined>(isNew ? reparacionVacia : reparacionStore);
     const [reparacion, setReparacion] = useState<ReparacionType | undefined>(isNew ? reparacionVacia : reparacionStore);
     const [fotoSeleccionada, setFotoSeleccionada] = useState<string | null>(null);
+
+    // Obtener el drone asociado a la reparación
+    const drone = useAppSelector(
+        state => selectDroneById(isNew ? "" : reparacion?.data.DroneId || "")(state)
+    );
+
+    // Obtener el modelo del drone
+    const modeloDrone = useAppSelector(
+        state => selectModeloDronePorId(state, drone?.data.ModeloDroneId || "")
+    );
+
+    // Obtener los drones del cliente para el selector
+    const dronesDelCliente = useAppSelector(
+        state => selectDronesByPropietario(usuarioStore?.id || "")(state)
+    );
 
     useEffect(() => {
         if (!isNew && reparacionStore) {
@@ -139,6 +156,19 @@ export default function ReparacionComponent(): React.ReactElement | null {
         }
         const field = target.id;
         changeInputRep(field, value);
+    }
+
+    const handleDroneChange = (event: ChangeEvent<HTMLSelectElement>) => {
+        const droneId = event.target.value;
+        // El nombre del modelo se actualizará automáticamente por el useEffect
+        setReparacion(prevReparacion => prevReparacion ? {
+            ...prevReparacion,
+            data: {
+                ...prevReparacion.data,
+                DroneId: droneId,
+                ModeloDroneNameRep: modeloDrone?.data?.NombreModelo || "" // Asegurarse de que el modelo esté actualizado
+            }
+        } : prevReparacion);
     }
 
     const setEstado = (estado: Estado) => {
@@ -480,7 +510,8 @@ export default function ReparacionComponent(): React.ReactElement | null {
                         REPARACIÓN
                     </h3>
                     <div>id: {reparacion?.id}</div>
-                    <div>Drone: {reparacion?.data?.DroneRep}</div>
+                    <div>Drone: {drone?.data?.Nombre || 'Sin nombre'}</div>
+                    <div>Modelo: {modeloDrone?.data?.NombreModelo || reparacion?.data?.ModeloDroneNameRep || 'Modelo no disponible'}</div>
                     <div>Cliente: {usuarioStore?.data?.NombreUsu} {usuarioStore?.data?.ApellidoUsu}</div>
                 </div>
             </div>
@@ -639,14 +670,34 @@ export default function ReparacionComponent(): React.ReactElement | null {
                         </div>
                     </div>
                     <div>
+                        <label className="form-label">Nombre del Drone</label>
+                        <select
+                            className="form-control"
+                            id="DroneId"
+                            value={reparacion?.data?.DroneId || ""}
+                            onChange={handleDroneChange}
+                            disabled={!isAdmin}
+                        >
+                            <option value="">Seleccione un drone</option>
+                            {dronesDelCliente.map(drone => (
+                                <option key={drone.id} value={drone.id}>
+                                    {drone.data.Nombre || `Drone sin nombre (${drone.id})`}
+                                </option>
+                            ))}
+                        </select>
+                        {dronesDelCliente.length === 0 && usuarioStore?.id && (
+                            <small className="form-text text-muted">
+                                El cliente no tiene drones registrados
+                            </small>
+                        )}
+                    </div>
+                    <div>
                         <label className="form-label">Modelo del Drone</label>
                         <input
-                            onChange={handleOnChange}
                             type="text"
                             className="form-control"
-                            id="DroneRep"
-                            value={reparacion?.data?.DroneRep || ""}
-                            disabled={!isAdmin}
+                            id="ModeloDroneNameRep"
+                            value={modeloDrone?.data?.NombreModelo || reparacion?.data?.ModeloDroneNameRep || ""}
                         />
                     </div>
                     <div>

@@ -77,7 +77,7 @@ export const callEndpoint = async (params) => {
         return await response.json();
     } catch (error) {
         console.error('Error al llamar al endpoint:', error.message);
-        return null;
+        throw error;
     }
 };
 
@@ -131,7 +131,7 @@ export async function OpenaiFetchAPI(prompt) {
         });
     } catch (error) {
         console.error('Error al llamar a la API de OpenAI:', error);
-        return 'No se pudo generar un diagnóstico automático.';
+        throw 'No se pudo generar un diagnóstico automático.';
     }
 }
 
@@ -142,7 +142,7 @@ export async function OpenaiFetchAPI(prompt) {
 // Autodiagnóstico
 export const generarAutoDiagnostico = (reparacion) => async (dispatch) => {
     const descripcionProblema = reparacion.data.DescripcionUsuRep;
-    const drone = reparacion.data.DroneRep;
+    const drone = reparacion.data.ModeloDroneNameRep;
 
     const prompt = `
 Eres un experto en reparación de drones de la marca DJI.
@@ -204,4 +204,24 @@ export const getLocalidadesPorProvincia = (provincia) => (dispatch) => {
             .finally(() => dispatch(isFetchingComplete()));
     });
 }
+
+  // Función para generar nombre único de un drone
+  export const generarNombreUnico = (dronesList, NombreModelo, NombreUsu, ApellidoUsu) => {
+    const nombreCompleto = `${NombreUsu} ${ApellidoUsu ?? ''}`.trim();
+    const nombreBase = `${NombreModelo} - ${nombreCompleto}`;
+
+    const nombresExistentes = dronesList
+      .filter(d => d.NombreModelo !== NombreModelo) // Excluir el drone actual
+      .map(d => d.data.Nombre);
+
+    let nombreFinal = nombreBase;
+    let contador = 1;
+
+    while (nombresExistentes.includes(nombreFinal)) {
+      contador++;
+      nombreFinal = `${nombreBase} ${contador}`;
+    }
+
+    return nombreFinal;
+  };
 
