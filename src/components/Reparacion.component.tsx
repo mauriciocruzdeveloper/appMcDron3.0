@@ -257,11 +257,12 @@ export default function ReparacionComponent(): React.ReactElement | null {
                 titulo: "Eliminar Reparación",
             });
             history.goBack();
-        } catch (error: any) { // TODO: Hacer tipo de dato para el error
+        } catch (error: unknown) { // TODO: Hacer tipo de dato para el error
             console.error("Error al eliminar la reparación:", error);
 
             openModal({
-                mensaje: error?.code || "Error al eliminar la reparación.",
+                // TODO: Hacer tipo de dato para el error
+                mensaje: (error as { code?: string })?.code || "Error al eliminar la reparación.",
                 tipo: "danger",
                 titulo: "Eliminar Reparación",
             });
@@ -845,6 +846,7 @@ export default function ReparacionComponent(): React.ReactElement | null {
                     <IntervencionesReparacion
                         reparacionId={reparacion.id}
                         readOnly={!isAdmin}
+                        modeloDroneId={drone?.data.ModeloDroneId}
                     />
                 </div>
             </div>

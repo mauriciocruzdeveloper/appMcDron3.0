@@ -14,9 +14,10 @@ import { selectIntervencionesDeReparacionActual } from '../redux-tool-kit/repara
 interface IntervencionesReparacionProps {
   reparacionId: string;
   readOnly?: boolean;
+  modeloDroneId?: string;
 }
 
-export default function IntervencionesReparacion({ reparacionId, readOnly = false }: IntervencionesReparacionProps): JSX.Element {
+export default function IntervencionesReparacion({ reparacionId, readOnly = false, modeloDroneId }: IntervencionesReparacionProps): JSX.Element {
   const dispatch = useAppDispatch();
   const { openModal } = useModal();
 
@@ -31,9 +32,17 @@ export default function IntervencionesReparacion({ reparacionId, readOnly = fals
   const [totalRepuestos, setTotalRepuestos] = useState<number>(0);
   const [totalGeneral, setTotalGeneral] = useState<number>(0);
 
-  // Opciones para el selector de intervenciones - optimizado para diccionario
+  // Opciones para el selector de intervenciones - filtrado por modelo de drone
   const opcionesIntervenciones = Object.values(todasLasIntervenciones)
     .filter(intervencion => !intervenciones.some(i => i.id === intervencion.id)) // Filtrar las ya asociadas
+    .filter(intervencion => {
+      // Si no hay modeloDroneId, mostrar todas las intervenciones
+      if (!modeloDroneId) return true;
+      // Si la intervención no tiene ModeloDroneId, es compatible con todos los modelos
+      if (!intervencion.data.ModeloDroneId) return true;
+      // Filtrar por modelo específico
+      return intervencion.data.ModeloDroneId === modeloDroneId;
+    })
     .map(intervencion => ({
       value: intervencion.id,
       label: `${intervencion.data.NombreInt}`,
@@ -149,6 +158,11 @@ export default function IntervencionesReparacion({ reparacionId, readOnly = fals
                 placeholder="Seleccionar una intervención..."
                 isClearable
               />
+              {modeloDroneId && (
+                <small className="form-text text-muted">
+                  Mostrando intervenciones compatibles con este modelo de drone
+                </small>
+              )}
             </div>
             <div className="col-auto">
               <button
