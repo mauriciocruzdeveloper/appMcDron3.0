@@ -159,7 +159,7 @@ export const guardarUsuarioPersistencia = async (usuario) => {
 
     let result;
 
-    if (usuario.id !== 'new') {
+    if (usuario.id) {
       // Actualización
       const { data, error } = await supabase
         .from('user')
