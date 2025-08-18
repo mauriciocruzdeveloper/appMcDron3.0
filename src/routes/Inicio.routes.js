@@ -20,6 +20,7 @@ import { DataManagerComponent } from "../components/DataManager.component";
 import ListaIntervenciones from "../components/ListaIntervenciones.component";
 import IntervencionesReparacion from "../components/IntervencionesReparacion.component";
 import Intervencion from "../components/Intervencion.component";
+import Estadisticas from "../components/Estadisticas.component";
 
 const InicioRoutes = ({ isLoggedIn, admin }) => {
 
@@ -55,6 +56,9 @@ const InicioRoutes = ({ isLoggedIn, admin }) => {
                 <Route path="intervenciones" element={admin ? <ListaIntervenciones /> : <h1>ACCESO NO AUTORIZADO</h1>} />
                 <Route path="intervenciones/:id" element={admin ? <Intervencion /> : <h1>ACCESO NO AUTORIZADO</h1>} />
                 <Route path="intervenciones-reparacion/:id" element={admin ? <IntervencionesReparacion /> : <h1>ACCESO NO AUTORIZADO</h1>} />
+                
+                {/* Ruta para estadísticas */}
+                <Route path="estadisticas" element={admin ? <Estadisticas /> : <h1>ACCESO NO AUTORIZADO</h1>} />
             </Routes>
         </DataManagerComponent>
         : <Navigate to="/login" replace />        
