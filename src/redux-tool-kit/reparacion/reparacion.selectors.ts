@@ -311,7 +311,7 @@ export const selectReparacionesByNumeroSerie = (numeroSerie: string): Reparacion
 export const selectReparacionesOrdenadas = createSelector(
   [selectReparacionesFiltradas],
   (reparaciones): ReparacionType[] =>
-    [...reparaciones].sort((a, b) => b.data.FeConRep - a.data.FeConRep)
+    [...reparaciones].sort((a, b) => b.data.FeConRep as number - (a.data.FeConRep as number))
 );
 
 /**
@@ -321,7 +321,7 @@ export const selectReparacionesOrdenadas = createSelector(
 export const selectReparacionesByPrioridad = createSelector(
   [selectReparacionesArray],
   (reparaciones): ReparacionType[] =>
-    [...reparaciones].sort((a, b) => b.data.PrioridadRep - a.data.PrioridadRep)
+    [...reparaciones].sort((a, b) => b.data.PrioridadRep as number - (a.data.PrioridadRep as number))
 );
 
 /**
@@ -394,7 +394,7 @@ export const selectEstadisticasPorPrioridad = createSelector(
     
     reparaciones.forEach(reparacion => {
       const prioridad = reparacion.data.PrioridadRep;
-      estadisticas[prioridad] = (estadisticas[prioridad] || 0) + 1;
+      estadisticas[prioridad as number] = (estadisticas[prioridad as number] || 0) + 1;
     });
     
     return estadisticas;
@@ -427,7 +427,7 @@ export const selectReparacionesByFechas = (fechaInicio: number, fechaFin: number
     (reparaciones): ReparacionType[] =>
       reparaciones.filter(reparacion => {
         const fecha = reparacion.data.FeConRep;
-        return fecha >= fechaInicio && fecha <= fechaFin;
+        return fecha as number >= fechaInicio && fecha as number <= fechaFin;
       })
   );
 
@@ -444,7 +444,7 @@ export const selectReparacionesMesActual = createSelector(
     
     return reparaciones.filter(reparacion => {
       const fecha = reparacion.data.FeConRep;
-      return fecha >= inicioMes && fecha <= finMes;
+      return fecha as number >= inicioMes && fecha as number <= finMes;
     });
   }
 );
