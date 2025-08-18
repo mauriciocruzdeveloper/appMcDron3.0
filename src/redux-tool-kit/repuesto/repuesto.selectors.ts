@@ -66,17 +66,24 @@ export const selectRepuestosPorModeloDrone = createSelector(
   }
 );
 
-// Selector combinado para repuestos filtrados (texto + modelo)
+// Función para calcular el estado del repuesto
+const calcularEstadoRepuesto = (stock: number, unidadesPedidas: number): string => {
+  if (stock > 0) return 'Disponible';
+  return unidadesPedidas > 0 ? 'En Pedido' : 'Agotado';
+};
+
+// Selector combinado para repuestos filtrados (texto + modelo + estado)
 export const selectRepuestosFiltrados = createSelector(
   [
     selectRepuestosArray, 
     selectRepuestoFilter,
-    (state: RootState, filtroModeloDrone?: string) => filtroModeloDrone
+    (state: RootState, filtroModeloDrone?: string, filtroEstado?: string) => ({ filtroModeloDrone, filtroEstado })
   ],
-  (repuestos, textFilter, modeloFilter) => {
+  (repuestos, textFilter, { filtroModeloDrone, filtroEstado }) => {
     return repuestos.filter(repuesto => {
       let incluirPorTexto = true;
       let incluirPorModelo = true;
+      let incluirPorEstado = true;
       
       // Filtro por texto
       if (textFilter) {
@@ -87,11 +94,17 @@ export const selectRepuestosFiltrados = createSelector(
       }
       
       // Filtro por modelo de drone
-      if (modeloFilter) {
-        incluirPorModelo = repuesto.data.ModelosDroneIds?.includes(modeloFilter) || false;
+      if (filtroModeloDrone) {
+        incluirPorModelo = repuesto.data.ModelosDroneIds?.includes(filtroModeloDrone) || false;
       }
       
-      return incluirPorTexto && incluirPorModelo;
+      // Filtro por estado
+      if (filtroEstado) {
+        const estado = calcularEstadoRepuesto(repuesto.data.StockRepu, repuesto.data.UnidadesPedidas || 0);
+        incluirPorEstado = estado === filtroEstado;
+      }
+      
+      return incluirPorTexto && incluirPorModelo && incluirPorEstado;
     });
   }
 );

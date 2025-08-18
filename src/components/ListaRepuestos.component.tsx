@@ -5,11 +5,11 @@ import { Repuesto } from '../types/repuesto';
 import { useAppDispatch } from '../redux-tool-kit/hooks/useAppDispatch';
 import { setFilter } from '../redux-tool-kit/repuesto/repuesto.slice';
 import { ModeloDrone } from '../types/modeloDrone';
-import { 
-  selectRepuestosFiltrados, 
-  selectRepuestoFilter, 
-  selectTieneRepuestos,
-  selectEstadisticasRepuestos 
+import {
+    selectRepuestosFiltrados,
+    selectRepuestoFilter,
+    selectTieneRepuestos,
+    selectEstadisticasRepuestos
 } from '../redux-tool-kit/repuesto/repuesto.selectors';
 import { selectModelosDroneArray } from '../redux-tool-kit/modeloDrone/modeloDrone.selectors';
 
@@ -19,7 +19,6 @@ const repuestosMock: Repuesto[] = [
         id: 'mock-1',
         data: {
             NombreRepu: 'Hélices de carbono 8"',
-            DescripcionRepu: 'Hélices de carbono de 8 pulgadas para drones de carrera',
             ProveedorRepu: 'DronePartes',
             ModelosDroneIds: ['modelo-1', 'modelo-2'], // Simulando que es compatible con varios modelos
             PrecioRepu: 15000,
@@ -31,7 +30,6 @@ const repuestosMock: Repuesto[] = [
         id: 'mock-2',
         data: {
             NombreRepu: 'Batería LiPo 5000mAh',
-            DescripcionRepu: 'Batería de polímero de litio de 5000mAh 4S para drones',
             ProveedorRepu: 'PowerDrones',
             ModelosDroneIds: ['modelo-1'], // Simulando que es compatible con un modelo específico
             PrecioRepu: 38000,
@@ -43,7 +41,6 @@ const repuestosMock: Repuesto[] = [
         id: 'mock-3',
         data: {
             NombreRepu: 'Controlador de vuelo F7',
-            DescripcionRepu: 'Controlador de vuelo F7 con giroscopio y acelerómetro',
             ProveedorRepu: 'ControlTech',
             ModelosDroneIds: ['modelo-1', 'modelo-2'], // Simulando que es compatible con varios modelos
             PrecioRepu: 25600,
@@ -62,7 +59,7 @@ export const calcularEstadoRepuesto = (stock: number, unidadesPedidas: number): 
 export default function ListaRepuestos(): JSX.Element {
     const dispatch = useAppDispatch();
     const history = useHistory();
-    
+
     // Usar selectores para obtener datos del estado
     const filter = useAppSelector(selectRepuestoFilter);
     const tieneRepuestos = useAppSelector(selectTieneRepuestos);
@@ -70,15 +67,24 @@ export default function ListaRepuestos(): JSX.Element {
     const modelosDrone = useAppSelector(selectModelosDroneArray);
 
     const [filtroModeloDrone, setFiltroModeloDrone] = useState<string>('');
+    const [filtroEstado, setFiltroEstado] = useState<string>('');
 
     // Usar selector para obtener repuestos filtrados
-    const repuestosFiltrados = useAppSelector((state) => 
-        selectRepuestosFiltrados(state, filtroModeloDrone)
+    const repuestosFiltrados = useAppSelector((state) =>
+        selectRepuestosFiltrados(state, filtroModeloDrone, filtroEstado)
     );
 
     // Estado para mostrar mock cuando no hay datos
     const mostrandoMock = !tieneRepuestos;
     const repuestosList = mostrandoMock ? repuestosMock : repuestosFiltrados;
+
+    // Función para determinar el estado del repuesto basado en el stock
+    const getEstadoRepuesto = (repuesto: Repuesto): string => {
+        // Manejar migración de datos
+        const unidadesPedidas = repuesto.data.UnidadesPedidas || 0;
+
+        return calcularEstadoRepuesto(repuesto.data.StockRepu, unidadesPedidas);
+    };
 
     const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         dispatch(setFilter(e.target.value));
@@ -91,19 +97,11 @@ export default function ListaRepuestos(): JSX.Element {
     const formatPrice = (precio: number): string => {
         return precio.toLocaleString('es-AR', { style: 'currency', currency: 'ARS' });
     };
-    
-    // Función para determinar el estado del repuesto basado en el stock
-    const getEstadoRepuesto = (repuesto: Repuesto): string => {
-        // Manejar migración de datos
-        const unidadesPedidas = repuesto.data.UnidadesPedidas || 0;
-        
-        return calcularEstadoRepuesto(repuesto.data.StockRepu, unidadesPedidas);
-    };
 
     return (
         <div className='p-4'>
             <h2 className="mb-4">Repuestos</h2>
-            
+
             <div className='card mb-3'>
                 <div className='card-body'>
                     <div className='form-group'>
@@ -129,13 +127,25 @@ export default function ListaRepuestos(): JSX.Element {
                             ))}
                         </select>
                     </div>
+                    <div className='form-group mt-2'>
+                        <select
+                            className='form-select'
+                            value={filtroEstado}
+                            onChange={(e) => setFiltroEstado(e.target.value)}
+                        >
+                            <option value=''>Todos los estados</option>
+                            <option value='Disponible'>Disponibles</option>
+                            <option value='En Pedido'>En Pedido</option>
+                            <option value='Agotado'>Agotados</option>
+                        </select>
+                    </div>
                 </div>
             </div>
 
             <div className="d-flex justify-content-between align-items-center mb-3">
                 <div className="text-muted">
                     {mostrandoMock ? (
-                        <span>Mostrando {repuestosList.length} repuestos de ejemplo 
+                        <span>Mostrando {repuestosList.length} repuestos de ejemplo
                             <span className="badge bg-warning text-dark ms-1">DATOS DE EJEMPLO</span>
                         </span>
                     ) : (
@@ -164,7 +174,7 @@ export default function ListaRepuestos(): JSX.Element {
                         </div>
                     )}
                 </div>
-                
+
                 <button
                     className="btn w-auto bg-bluemcdron text-white"
                     onClick={() => history.push('/inicio/repuestos/new')}
@@ -180,7 +190,7 @@ export default function ListaRepuestos(): JSX.Element {
             ) : (
                 repuestosList.map(repuesto => {
                     const estado = getEstadoRepuesto(repuesto);
-                    
+
                     return (
                         <div
                             key={repuesto.id}
@@ -199,20 +209,15 @@ export default function ListaRepuestos(): JSX.Element {
                                 </div>
                                 <div>
                                     <small className={`${estado === 'Disponible' ? 'text-success' :
-                                            estado === 'Agotado' ? 'text-danger' : 
+                                        estado === 'Agotado' ? 'text-danger' :
                                             estado === 'En Pedido' ? 'text-warning' : ''
                                         }`}>
                                         {estado}
                                         {estado === 'Disponible' && ` ${repuesto.data.StockRepu}`}
-                                        {estado === 'En Pedido' && repuesto.data.UnidadesPedidas && 
-                                          ` ${repuesto.data.UnidadesPedidas}`}
+                                        {estado === 'En Pedido' && repuesto.data.UnidadesPedidas &&
+                                            ` ${repuesto.data.UnidadesPedidas}`}
                                     </small>
                                 </div>
-                                {repuesto.data.DescripcionRepu && (
-                                    <div className="mt-1">
-                                        <small className="text-muted">{repuesto.data.DescripcionRepu}</small>
-                                    </div>
-                                )}
                                 {repuesto.data.ModelosDroneIds.length > 0 && (
                                     <div className="mt-1">
                                         <small className="text-muted">
