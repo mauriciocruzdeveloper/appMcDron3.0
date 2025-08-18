@@ -3,3 +3,19 @@
     box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.5); /* Sombra suave */
     z-index: 1000; /* Asegura que el navbar esté por encima de otros elementos */
 }
+
+/* Estilos para el dropdown del navbar */
+.navbar .dropdown-toggle::after {
+    display: none; /* Oculta la flecha por defecto */
+}
+
+.navbar .dropdown-menu {
+    border: none;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+    margin-top: 5px;
+}
+
+.navbar .dropdown-item:hover {
+    background-color: #f8f9fa;
+}

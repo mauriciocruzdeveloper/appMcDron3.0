@@ -1,6 +1,6 @@
 import React from 'react';
-import { Navbar } from 'react-bootstrap';
-import { ArrowLeftShort } from 'react-bootstrap-icons';
+import { Navbar, NavDropdown } from 'react-bootstrap';
+import { ArrowLeftShort, List } from 'react-bootstrap-icons';
 import { useHistory } from '../hooks/useHistory';
 import { logout } from "../redux-tool-kit/app/app.slice";
 import { useAppSelector } from "../redux-tool-kit/hooks/useAppSelector";
@@ -14,6 +14,7 @@ export default function NavMcDron (): JSX.Element {
 
     const usuario = useAppSelector(state => state.app.usuario);
     const history = useHistory();
+    const admin = usuario?.data?.Admin;
 
     const {
         openModal,
@@ -48,22 +49,53 @@ export default function NavMcDron (): JSX.Element {
                 onClick={handleBack}
                 color="white"
             />
-            <h4 className="text-white m-0 float-left">
+            <h4 className="text-white m-0">
                 Hola {usuario?.data?.NombreUsu || "amigo"}!
             </h4>
-            {/* <div 
-                className="imageContainer rounded-circle float-right"
-                width="50" 
-                height="50"
-            > */}
-            <img
-                src={usuario?.data?.UrlFotoUsu || "./img/logo1.png"}
-                width="50"
-                // height="50"
-                className="rounded-circle float-right"
-                alt="Foto del usuario"
-            />
-            {/* </div> */}
+            <NavDropdown 
+                title={
+                    <img
+                        src={usuario?.data?.UrlFotoUsu || "./img/logo1.png"}
+                        width="50"
+                        className="rounded-circle"
+                        alt="Foto del usuario"
+                    />
+                }
+                id="nav-dropdown"
+                drop="down"
+                align="end"
+            >
+                <NavDropdown.Item onClick={() => history.push('/inicio/perfil')}>
+                    Perfil
+                </NavDropdown.Item>
+                <NavDropdown.Divider />
+                <NavDropdown.Item onClick={() => history.push('/inicio/reparaciones')}>
+                    Reparaciones
+                </NavDropdown.Item>
+                {admin && (
+                    <>
+                        <NavDropdown.Item onClick={() => history.push('/inicio/usuarios')}>
+                            Usuarios
+                        </NavDropdown.Item>
+                        <NavDropdown.Item onClick={() => history.push('/inicio/repuestos')}>
+                            Repuestos
+                        </NavDropdown.Item>
+                        <NavDropdown.Item onClick={() => history.push('/inicio/modelos-drone')}>
+                            Modelos de Drones
+                        </NavDropdown.Item>
+                        <NavDropdown.Item onClick={() => history.push('/inicio/drones')}>
+                            Drones
+                        </NavDropdown.Item>
+                        <NavDropdown.Item onClick={() => history.push('/inicio/intervenciones')}>
+                            Intervenciones
+                        </NavDropdown.Item>
+                        <NavDropdown.Divider />
+                    </>
+                )}
+                <NavDropdown.Item onClick={() => history.push('/inicio/mensajes')}>
+                    Mensajes
+                </NavDropdown.Item>
+            </NavDropdown>
         </Navbar>
     )
 }
