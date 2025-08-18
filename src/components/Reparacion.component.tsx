@@ -67,7 +67,6 @@ export default function ReparacionComponent(): React.ReactElement | null {
             PresuFiRep: 0,
             PresuDiRep: 0,
             TxtRepuestosRep: "",
-            InformeRep: "",
             FeFinRep: 0,
             FeEntRep: 0,
             TxtEntregaRep: "",
@@ -229,6 +228,9 @@ export default function ReparacionComponent(): React.ReactElement | null {
         if (reparacion.data.EstadoRep === 'Recibido' && !reparacion.data.DiagnosticoRep) {
             reparacion.data.DiagnosticoRep = await dispatch(generarAutoDiagnostico(reparacion));
         }
+
+        console.log('!!! reparacion en Reparacion.component', reparacion)
+
         const response = await dispatch(guardarReparacionAsync(reparacion));
         setReparacionOriginal(reparacion);
         if (response.meta.requestStatus === 'fulfilled') {
@@ -878,8 +880,8 @@ export default function ReparacionComponent(): React.ReactElement | null {
                         <TextareaAutosize
                             onChange={handleOnChange}
                             className="form-control"
-                            id="InformeRep"
-                            value={reparacion?.data?.InformeRep || ""}
+                            id="DescripcionTecRep"
+                            value={reparacion?.data?.DescripcionTecRep || ""}
                             rows={5}
                             disabled={!isAdmin}
                         />
