@@ -378,10 +378,6 @@ export const getReparacionPersistencia = async (id) => {
 // GUARDAR Reparación
 export const guardarReparacionPersistencia = async (reparacion) => {
   try {
-    console.log('=== DEBUG GUARDAR REPARACION ===');
-    console.log('Datos recibidos:', reparacion);
-    console.log('DroneId recibido:', reparacion.data.DroneId);
-    
     // Transformar el objeto al formato de Supabase
     const reparacionData = {
       state: reparacion.data.EstadoRep,
