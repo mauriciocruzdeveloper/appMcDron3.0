@@ -42,16 +42,6 @@ const Inicio = (props: InicioProps): React.ReactElement => {
       {/* Ahora usamos la función renderEstadoButton para generar los botones de estado */}
       {renderEstadoButton('Recibido', 'RECEPCIÓN')}
       {renderEstadoButton('Transito', 'DRONE EN TRÁNSITO')}
-      
-      {admin && (
-        <button
-          className='mb-3 btn w-100 btn-info'
-          style={{ height: '100px' }}
-          onClick={() => history.push(`${match.path}/estadisticas`)}
-        >
-          <div className='text-white text-center'>ESTADÍSTICAS</div>
-        </button>
-      )}
     </div>
   )
 };
