@@ -66,13 +66,18 @@ export default function Estadisticas(): JSX.Element {
     const totalAnual = estadisticasPorMes.reduce((total, mes) => total + mes.ingresos, 0);
     const totalReparaciones = estadisticasPorMes.reduce((total, mes) => total + mes.cantidad, 0);
 
+    // Calcular el número de meses a considerar para el promedio
+    const mesActual = new Date().getMonth() + 1; // Mes actual (1-12)
+    const anoActual = new Date().getFullYear();
+    const mesesParaPromedio = filtroAno === anoActual ? mesActual : 12;
+
     const formatPrice = (precio: number): string => {
         return precio.toLocaleString('es-AR', { style: 'currency', currency: 'ARS' });
     };
 
     // Calcular estadísticas por año para el gráfico
     const estadisticasPorAno = reparaciones.reduce((acc, rep) => {
-        const fecha = new Date(rep.data.FeFinRep || rep.data.FeConRep || rep.data.FechaCreacion);
+        const fecha = new Date(rep.data.FeFinRep || rep.data.FeConRep);
         const ano = fecha.getFullYear();
         if (!acc[ano]) {
             acc[ano] = 0;
@@ -140,8 +145,8 @@ export default function Estadisticas(): JSX.Element {
                     <div className="card bg-info text-white">
                         <div className="card-body text-center">
                             <h5>Promedio Mensual</h5>
-                            <h3>{formatPrice(totalAnual / 12)}</h3>
-                            <small>{(totalReparaciones / 12).toFixed(1)} reparaciones/mes</small>
+                            <h3>{formatPrice(totalAnual / mesesParaPromedio)}</h3>
+                            <small>{(totalReparaciones / mesesParaPromedio).toFixed(1)} reparaciones/mes</small>
                         </div>
                     </div>
                 </div>
@@ -186,7 +191,7 @@ export default function Estadisticas(): JSX.Element {
                                         const fecha = new Date(rep.data.FeFinRep || rep.data.FeConRep || rep.data.FechaCreacion);
                                         return (
                                             <div key={rep.id} className="d-flex justify-content-between py-1 border-bottom"
-                                                 onClick={() => navigate(`inicio/reparaciones/${rep.id}`)} style={{ cursor: 'pointer' }}>
+                                                 onClick={() => navigate(`/inicio/reparaciones/${rep.id}`)} style={{ cursor: 'pointer' }}>
                                                 <div>
                                                     <small><strong>{rep.data.NombreUsu} {rep.data.ApellidoUsu}</strong></small>
                                                     <br />
