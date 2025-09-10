@@ -203,6 +203,15 @@ export const selectRepuestosStockBajo = createSelector(
     )
 );
 
+// Selector para repuestos agotados (stock = 0)
+export const selectRepuestosFaltantes = createSelector(
+  [selectRepuestosArray],
+  (repuestos) => 
+    repuestos.filter(repuesto => 
+      repuesto.data.StockRepu === 0 // Solo repuestos agotados
+    )
+);
+
 // Selector para el valor total del inventario
 export const selectValorTotalInventario = createSelector(
   [selectRepuestosArray],
@@ -229,3 +238,19 @@ export const selectModeloTieneRepuestos = createSelector(
       repuesto.data.ModelosDroneIds?.includes(modeloId) && repuesto.data.StockRepu > 0
     )
 );
+
+// Selector para obtener nombres de modelos de drone de un repuesto
+export const selectModelosNombresByRepuestoId = (repuestoId: string) =>
+  createSelector(
+    [
+      (state: RootState) => selectRepuestoPorId(state, repuestoId),
+      (state: RootState) => state.modeloDrone.coleccionModelosDrone
+    ],
+    (repuesto, modelos) => {
+      if (!repuesto?.data.ModelosDroneIds) return [];
+      
+      return repuesto.data.ModelosDroneIds
+        .map(modeloId => modelos[modeloId]?.data.NombreModelo)
+        .filter(nombre => nombre !== undefined);
+    }
+  );
