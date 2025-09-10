@@ -221,6 +221,47 @@ export const selectReparacionesEstadosPrioritarios = createSelector(
 );
 
 /**
+ * Selector memoizado para reparaciones que requieren acción inmediata
+ * @returns Array de reparaciones en estados Recibido, Revisado o Reparar
+ */
+export const selectReparacionesAccionInmediata = createSelector(
+  [selectReparacionesArray],
+  (reparaciones): ReparacionType[] => {
+    const estadosAccion = ["Recibido", "Revisado", "Reparar"];
+    return reparaciones
+      .filter(reparacion => estadosAccion.includes(reparacion.data.EstadoRep))
+      .sort((a, b) => {
+        const prioridadA = estados[a.data.EstadoRep]?.prioridad || 999;
+        const prioridadB = estados[b.data.EstadoRep]?.prioridad || 999;
+        return prioridadA - prioridadB;
+      });
+  }
+);
+
+/**
+ * Selector para obtener el nombre del modelo de drone de una reparación
+ * @param reparacionId - ID de la reparación
+ * @returns Función selector que retorna el nombre del modelo o null
+ */
+export const selectModeloNombreByReparacionId = (reparacionId: string) =>
+  createSelector(
+    [
+      (state: RootState) => selectReparacionById(reparacionId)(state),
+      (state: RootState) => state.drone.coleccionDrones,
+      (state: RootState) => state.modeloDrone.coleccionModelosDrone
+    ],
+    (reparacion, drones, modelos) => {
+      if (!reparacion?.data.DroneId) return null;
+      
+      const drone = drones[reparacion.data.DroneId];
+      if (!drone?.data.ModeloDroneId) return null;
+      
+      const modelo = modelos[drone.data.ModeloDroneId];
+      return modelo?.data.NombreModelo || null;
+    }
+  );
+
+/**
  * Selector memoizado para reparaciones pendientes
  * @returns Array de reparaciones pendientes
  */

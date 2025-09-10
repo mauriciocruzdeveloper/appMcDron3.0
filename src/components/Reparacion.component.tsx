@@ -93,6 +93,8 @@ export default function ReparacionComponent(): React.ReactElement | null {
     const [reparacion, setReparacion] = useState<ReparacionType | undefined>(isNew ? reparacionVacia : reparacionStore);
     const [fotoSeleccionada, setFotoSeleccionada] = useState<string | null>(null);
 
+    console.log('!!! reparacion en reparación componente', reparacion);
+
     // Obtener el drone asociado a la reparación
     const drone = useAppSelector(
         state => selectDroneById(isNew ? "" : reparacion?.data.DroneId || "")(state)

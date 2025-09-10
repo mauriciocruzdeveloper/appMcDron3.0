@@ -21,6 +21,7 @@ import ListaIntervenciones from "../components/ListaIntervenciones.component";
 import IntervencionesReparacion from "../components/IntervencionesReparacion.component";
 import Intervencion from "../components/Intervencion.component";
 import Estadisticas from "../components/Estadisticas.component";
+import AdminGuard from "../components/AdminGuard.component";
 
 const InicioRoutes = ({ isLoggedIn, admin }) => {
 
@@ -34,31 +35,33 @@ const InicioRoutes = ({ isLoggedIn, admin }) => {
             {/* TODO: Verificar si Nav debe ir acá, quizás en App */}
             <NavMcDron /> 
             <Routes>
-                <Route index element={<Inicio admin={admin}/>} />
-                <Route path="reparaciones" element={<ListaReparaciones admin={admin}/>} />
-                <Route path="reparaciones/:id" element={<Reparacion admin={admin}/>} />
-                <Route path="usuarios" element={admin ? <ListaUsuarios /> : <h1>ACCESO NO AUTORIZADO</h1>} />
-                <Route path="usuarios/:id" element={<Usuario/>} />
-                <Route path="presupuesto" element={<Presupuesto admin={admin}/>} />
-                <Route path="mensajes" element={<Mensajes admin={admin}/>} />
-                <Route path="repuestos" element={<ListaRepuestos admin={admin}/>} />
-                <Route path="repuestos/:id" element={admin ? <Repuesto /> : <h1>ACCESO NO AUTORIZADO</h1>} />
+                {/* Rutas públicas */}
                 
-                {/* Rutas para modelos de drone */}
-                <Route path="modelos-drone" element={admin ? <ListaModelosDrone /> : <h1>ACCESO NO AUTORIZADO</h1>} />
-                <Route path="modelos-drone/:id" element={admin ? <ModeloDrone /> : <h1>ACCESO NO AUTORIZADO</h1>} />
                 
-                {/* Rutas para drones */}
-                <Route path="drones" element={admin ? <ListaDrones /> : <h1>ACCESO NO AUTORIZADO</h1>} />
-                <Route path="drones/:id" element={admin ? <Drone /> : <h1>ACCESO NO AUTORIZADO</h1>} />
-                
-                {/* Rutas para intervenciones */}
-                <Route path="intervenciones" element={admin ? <ListaIntervenciones /> : <h1>ACCESO NO AUTORIZADO</h1>} />
-                <Route path="intervenciones/:id" element={admin ? <Intervencion /> : <h1>ACCESO NO AUTORIZADO</h1>} />
-                <Route path="intervenciones-reparacion/:id" element={admin ? <IntervencionesReparacion /> : <h1>ACCESO NO AUTORIZADO</h1>} />
-                
-                {/* Ruta para estadísticas */}
-                <Route path="estadisticas" element={admin ? <Estadisticas /> : <h1>ACCESO NO AUTORIZADO</h1>} />
+                {/* Rutas protegidas con AdminGuard */}
+                <Route path="*" element={
+                    <AdminGuard admin={admin}>
+                        <Routes>
+                            <Route index element={<Inicio admin={admin}/>} />
+                            <Route path="presupuesto" element={<Presupuesto admin={admin}/>} />
+                            <Route path="reparaciones" element={<ListaReparaciones admin={admin}/>} />
+                            <Route path="reparaciones/:id" element={<Reparacion admin={admin}/>} />
+                            <Route path="usuarios" element={<ListaUsuarios />} />
+                            <Route path="usuarios/:id" element={<Usuario/>} />
+                            <Route path="mensajes" element={<Mensajes admin={admin}/>} />
+                            <Route path="repuestos" element={<ListaRepuestos admin={admin}/>} />
+                            <Route path="repuestos/:id" element={<Repuesto />} />
+                            <Route path="modelos-drone" element={<ListaModelosDrone />} />
+                            <Route path="modelos-drone/:id" element={<ModeloDrone />} />
+                            <Route path="drones" element={<ListaDrones />} />
+                            <Route path="drones/:id" element={<Drone />} />
+                            <Route path="intervenciones" element={<ListaIntervenciones />} />
+                            <Route path="intervenciones/:id" element={<Intervencion />} />
+                            <Route path="intervenciones-reparacion/:id" element={<IntervencionesReparacion />} />
+                            <Route path="estadisticas" element={<Estadisticas />} />
+                        </Routes>
+                    </AdminGuard>
+                } />
             </Routes>
         </DataManagerComponent>
         : <Navigate to="/login" replace />        
