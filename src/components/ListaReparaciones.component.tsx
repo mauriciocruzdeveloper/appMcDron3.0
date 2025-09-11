@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useHistory } from "../hooks/useHistory";
-import { estados } from '../datos/estados';
+import { obtenerEstadoSeguro, esEstadoLegacy } from '../utils/estadosHelper';
 import { useAppSelector } from "../redux-tool-kit/hooks/useAppSelector";
 import { useAppDispatch } from "../redux-tool-kit/hooks/useAppDispatch";
 import { 
@@ -114,12 +114,34 @@ export default function ListaReparaciones(): JSX.Element {
                 <h5 className="mb-1">{modeloDroneName}</h5>
               </div>
               <small>{reparacion.data?.NombreUsu || reparacion.data?.UsuarioRep}</small>
-              <p
-                className="mb-1"
-                style={{ backgroundColor: estados[reparacion.data.EstadoRep].color }}
-              >
-                {reparacion.data.EstadoRep} - {estados[reparacion.data.EstadoRep].accion}
-              </p>
+              {(() => {
+                const estadoInfo = obtenerEstadoSeguro(reparacion.data.EstadoRep);
+                const isLegacy = esEstadoLegacy(reparacion.data.EstadoRep);
+                
+                return (
+                  <div>
+                    <p
+                      className="mb-1"
+                      style={{ 
+                        backgroundColor: estadoInfo.color,
+                        border: isLegacy ? '2px solid #ffc107' : 'none',
+                        borderRadius: '4px',
+                        padding: '4px 8px'
+                      }}
+                    >
+                      {reparacion.data.EstadoRep} - {estadoInfo.accion}
+                      {isLegacy && (
+                        <span 
+                          className="badge badge-warning ml-2" 
+                          title="Estado legacy - requiere actualización"
+                        >
+                          ⚠️ Legacy
+                        </span>
+                      )}
+                    </p>
+                  </div>
+                );
+              })()}
             </div>
           )
         })

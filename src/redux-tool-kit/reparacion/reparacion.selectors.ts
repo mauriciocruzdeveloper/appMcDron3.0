@@ -5,6 +5,13 @@ import { Filtro } from '../../types/Filtro';
 import { Intervencion } from '../../types/intervencion';
 import { estados } from '../../datos/estados';
 
+// Constantes para filtros
+/**
+ * Estados que no se consideran prioritarios en los filtros
+ * Incluye estados finalizados, cancelados y legacy
+ */
+const ESTADOS_NO_PRIORITARIOS = ["Entregado", "Liquidación", "Abandonado", "Respondido", "Finalizado", "Cancelado"];
+
 // Tipos para los selectores
 type ReparacionSelector = (state: RootState) => ReparacionType | undefined;
 type ReparacionArraySelector = (state: RootState) => ReparacionType[];
@@ -117,9 +124,8 @@ export const selectReparacionesFiltradas = createSelector(
 
     // Filtro por estados prioritarios
     if (filtro.estadosPrioritarios) {
-      const noPrioritarios = ["Entregado", "Liquidación", "Trabado", "Respondido"];
       reparacionesFiltradas = reparacionesFiltradas.filter(reparacion =>
-        !noPrioritarios.includes(reparacion.data.EstadoRep)
+        !ESTADOS_NO_PRIORITARIOS.includes(reparacion.data.EstadoRep)
       );
     }
 
@@ -213,9 +219,8 @@ export const selectReparacionesByEstado = (estado: string): ReparacionArraySelec
 export const selectReparacionesEstadosPrioritarios = createSelector(
   [selectReparacionesArray],
   (reparaciones): ReparacionType[] => {
-    const noPrioritarios = ["Entregado", "Liquidación", "Trabado", "Respondido"];
     return reparaciones.filter(reparacion =>
-      !noPrioritarios.includes(reparacion.data.EstadoRep)
+      !ESTADOS_NO_PRIORITARIOS.includes(reparacion.data.EstadoRep)
     );
   }
 );
@@ -564,4 +569,57 @@ export const selectReparacionesDashboard = createSelector(
     totalPresupuestos,
     porcentajeCompletadas: total > 0 ? Math.round((completadas.length / total) * 100) : 0,
   })
+);
+
+// ============================================================================
+// SELECTORES DE COMPATIBILIDAD Y MIGRACIÓN
+// ============================================================================
+
+/**
+ * Selector memoizado para reparaciones con estados legacy
+ * @returns Array de reparaciones que requieren migración
+ */
+export const selectReparacionesConEstadosLegacy = createSelector(
+  [selectReparacionesArray],
+  (reparaciones): ReparacionType[] => {
+    const estadosLegacy = ['Reparar', 'Repuestos', 'Entregado', 'Venta', 'Liquidación'];
+    return reparaciones.filter(reparacion =>
+      estadosLegacy.includes(reparacion.data.EstadoRep)
+    );
+  }
+);
+
+/**
+ * Selector memoizado para reparaciones con estados indefinidos
+ * @returns Array de reparaciones con estado "Indefinido"
+ */
+export const selectReparacionesEstadoIndefinido = createSelector(
+  [selectReparacionesArray],
+  (reparaciones): ReparacionType[] =>
+    reparaciones.filter(reparacion => reparacion.data.EstadoRep === "Indefinido")
+);
+
+/**
+ * Selector memoizado para estadísticas de migración
+ * @returns Objeto con estadísticas de estados legacy
+ */
+export const selectEstadisticasMigracion = createSelector(
+  [selectReparacionesArray, selectReparacionesConEstadosLegacy, selectReparacionesEstadoIndefinido],
+  (todasReparaciones, reparacionesLegacy, reparacionesIndefinidas) => {
+    const estadisticasLegacy = reparacionesLegacy.reduce((acc, reparacion) => {
+      const estado = reparacion.data.EstadoRep;
+      acc[estado] = (acc[estado] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+
+    return {
+      total: todasReparaciones.length,
+      conEstadosLegacy: reparacionesLegacy.length,
+      conEstadoIndefinido: reparacionesIndefinidas.length,
+      estadisticasLegacy,
+      porcentajeLegacy: todasReparaciones.length > 0 
+        ? Math.round((reparacionesLegacy.length / todasReparaciones.length) * 100) 
+        : 0,
+    };
+  }
 );

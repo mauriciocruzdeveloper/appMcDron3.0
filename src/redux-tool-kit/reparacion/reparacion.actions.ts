@@ -298,3 +298,203 @@ export const eliminarIntervencionDeReparacionAsync = createAsyncThunk(
     }
   },
 );
+
+// GUARDA Presupuestado (nuevo estado)
+export const guardarPresupuestadoAsync = createAsyncThunk(
+  'app/guardarPresupuestado',
+  async (presupuesto: PresupuestoProps, { dispatch, rejectWithValue, getState }) => {
+    const state = getState() as RootState;
+    const drones = state.drone.coleccionDrones;
+    const dronesArray = Object.values(drones);
+
+    const reparacion: ReparacionType = {
+      id: "",
+      data: {
+        DescripcionUsuRep: presupuesto.DescripcionUsuRep,
+        EstadoRep: presupuesto.EstadoRep,
+        PrioridadRep: presupuesto.PrioridadRep,
+        FeConRep: presupuesto.FeConRep,
+        UsuarioRep: presupuesto.EmailUsu,
+        DroneId: presupuesto.DroneId,
+        ModeloDroneNameRep: presupuesto.ModeloDroneNameRep,
+      }
+    }
+    const usuario: Usuario = {
+      id: presupuesto.UsuarioRep,
+      data: {
+        EmailUsu: presupuesto.EmailUsu,
+        NombreUsu: presupuesto.NombreUsu,
+        ApellidoUsu: presupuesto.ApellidoUsu,
+        TelefonoUsu: presupuesto.TelefonoUsu,
+        ProvinciaUsu: presupuesto.ProvinciaUsu,
+        CiudadUsu: presupuesto.CiudadUsu,
+      }
+    }
+    const drone: Drone = {
+      id: presupuesto.DroneId,
+      data: {
+        ModeloDroneId: presupuesto.ModeloDroneIdRep,
+        Nombre: generarNombreUnico(dronesArray, presupuesto.ModeloDroneNameRep, presupuesto.NombreUsu, presupuesto.ApellidoUsu),
+        Propietario: '',
+        NumeroSerie: '',
+        Observaciones: '',
+      }
+    }
+
+    dispatch(isFetchingStart());
+    try {
+      // 1. Primero guardar el usuario
+      const { guardarUsuarioPersistencia } = await import('../../persistencia/persistencia');
+      const usuarioGuardado = await guardarUsuarioPersistencia(usuario);
+
+      // 2. Guardar el drone
+      const { guardarDronePersistencia } = await import('../../persistencia/persistencia');
+      drone.data.Propietario = usuarioGuardado.id;
+      const droneGuardado = await guardarDronePersistencia(drone);
+
+      // 3. Guardar la reparación con el usuario y drone guardados
+      reparacion.data.UsuarioRep = usuarioGuardado.id.toString();
+      reparacion.data.DroneId = droneGuardado.id.toString();
+      const reparacionGuardada = await guardarReparacionPersistencia(reparacion);
+
+      dispatch(isFetchingComplete());
+      return { reparacion: reparacionGuardada, usuario: usuarioGuardado };
+    } catch (error: unknown) { // TODO: Hacer tipo de dato para el error
+      dispatch(isFetchingComplete());
+      return rejectWithValue(error);
+    }
+  },
+);
+
+// ACEPTAR Presupuesto
+export const aceptarPresupuestoAsync = createAsyncThunk(
+  'app/aceptarPresupuesto',
+  async (reparacion: ReparacionType, { dispatch, rejectWithValue }) => {
+    dispatch(isFetchingStart());
+    try {
+      const reparacionActualizada = {
+        ...reparacion,
+        data: {
+          ...reparacion.data,
+          EstadoRep: "Aceptado",
+          PrioridadRep: 1,
+        }
+      };
+      
+      const reparacionGuardada = await guardarReparacionPersistencia(reparacionActualizada);
+      dispatch(isFetchingComplete());
+      return reparacionGuardada;
+    } catch (error: unknown) {
+      dispatch(isFetchingComplete());
+      return rejectWithValue(error);
+    }
+  }
+);
+
+// RECHAZAR Presupuesto
+export const rechazarPresupuestoAsync = createAsyncThunk(
+  'app/rechazarPresupuesto',
+  async (reparacion: ReparacionType, { dispatch, rejectWithValue }) => {
+    dispatch(isFetchingStart());
+    try {
+      const reparacionActualizada = {
+        ...reparacion,
+        data: {
+          ...reparacion.data,
+          EstadoRep: "Rechazado",
+          PrioridadRep: 1,
+        }
+      };
+      
+      const reparacionGuardada = await guardarReparacionPersistencia(reparacionActualizada);
+      dispatch(isFetchingComplete());
+      return reparacionGuardada;
+    } catch (error: unknown) {
+      dispatch(isFetchingComplete());
+      return rejectWithValue(error);
+    }
+  }
+);
+
+// DIAGNOSTICAR (cuando presupuesto fue rechazado)
+export const diagnosticarAsync = createAsyncThunk(
+  'app/diagnosticar',
+  async (reparacion: ReparacionType, { dispatch, rejectWithValue }) => {
+    dispatch(isFetchingStart());
+    try {
+      const reparacionActualizada = {
+        ...reparacion,
+        data: {
+          ...reparacion.data,
+          EstadoRep: "Diagnosticado",
+          PrioridadRep: 3,
+        }
+      };
+      
+      const reparacionGuardada = await guardarReparacionPersistencia(reparacionActualizada);
+      dispatch(isFetchingComplete());
+      return reparacionGuardada;
+    } catch (error: unknown) {
+      dispatch(isFetchingComplete());
+      return rejectWithValue(error);
+    }
+  }
+);
+
+// COBRAR Reparación (después de reparado)
+export const cobrarReparacionAsync = createAsyncThunk(
+  'app/cobrarReparacion',
+  async (reparacion: ReparacionType, { dispatch, rejectWithValue }) => {
+    dispatch(isFetchingStart());
+    try {
+      const reparacionActualizada = {
+        ...reparacion,
+        data: {
+          ...reparacion.data,
+          EstadoRep: "Cobrado",
+          PrioridadRep: 4,
+        }
+      };
+      
+      const reparacionGuardada = await guardarReparacionPersistencia(reparacionActualizada);
+      dispatch(isFetchingComplete());
+      return reparacionGuardada;
+    } catch (error: unknown) {
+      dispatch(isFetchingComplete());
+      return rejectWithValue(error);
+    }
+  }
+);
+
+// MIGRAR Estado Legacy
+export const migrarEstadoLegacyAsync = createAsyncThunk(
+  'app/migrarEstadoLegacy',
+  async ({ reparacionId, nuevoEstado }: { reparacionId: string, nuevoEstado: string }, { dispatch, rejectWithValue }) => {
+    dispatch(isFetchingStart());
+    try {
+      // Primero obtener la reparación actual
+      const reparacionActual = await getReparacionPersistencia(reparacionId);
+      
+      const reparacionActualizada = {
+        ...reparacionActual,
+        data: {
+          ...reparacionActual.data,
+          EstadoRep: nuevoEstado,
+          // Ajustar prioridad según el nuevo estado
+          PrioridadRep: nuevoEstado === "Aceptado" ? 1 : 
+                        nuevoEstado === "Reparado" ? 3 :
+                        nuevoEstado === "Finalizado" ? 10 :
+                        nuevoEstado === "Cancelado" ? 10 :
+                        nuevoEstado === "Abandonado" ? 10 : 5,
+        }
+      };
+      
+      const reparacionGuardada = await guardarReparacionPersistencia(reparacionActualizada);
+      dispatch(isFetchingComplete());
+      return reparacionGuardada;
+    } catch (error: unknown) {
+      dispatch(isFetchingComplete());
+      return rejectWithValue(error);
+    }
+  }
+);

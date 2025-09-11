@@ -93,6 +93,9 @@ export default function NavMcDron (): JSX.Element {
                         <NavDropdown.Item onClick={() => history.push('/inicio/estadisticas')}>
                             Estadísticas
                         </NavDropdown.Item>
+                        <NavDropdown.Item onClick={() => history.push('/inicio/estados-legacy')}>
+                            Estados Legacy
+                        </NavDropdown.Item>
                         <NavDropdown.Divider />
                     </>
                 )}

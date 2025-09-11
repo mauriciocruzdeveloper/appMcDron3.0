@@ -17,7 +17,7 @@ const ReparacionItem = ({ reparacion, estado, onClick }: {
   onClick: () => void;
 }) => {
   const modeloNombre = useAppSelector(selectModeloNombreByReparacionId(reparacion.id));
-  
+
   return (
     <div
       className='list-group-item list-group-item-action mb-2'
@@ -29,15 +29,25 @@ const ReparacionItem = ({ reparacion, estado, onClick }: {
           <h6 className='mb-1'>{modeloNombre || reparacion.data.ModeloDroneNameRep || 'Modelo no especificado'}</h6>
           <p className='mb-1 text-muted'>{reparacion.data.NombreUsu} {reparacion.data.ApellidoUsu}</p>
         </div>
-        <span 
-          className='badge'
-          style={{ 
-            backgroundColor: estado?.color || '#6c757d',
-            color: reparacion.data.EstadoRep === 'Recibido' ? 'white' : 'black'
-          }}
-        >
-          {reparacion.data.EstadoRep}
-        </span>
+        <div className='d-flex flex-column align-items-end'>
+          <span
+            className='badge'
+            style={{
+              backgroundColor: estado?.color || '#6c757d',
+              color: reparacion.data.EstadoRep === 'Recibido' ? 'white' : 'black'
+            }}
+          >
+            {reparacion.data.EstadoRep}
+          </span>
+          <span
+            className='badge mt-2'
+            style={{
+              color: 'black',
+            }}
+          >
+            {estado.accion}
+          </span>
+        </div>
       </div>
     </div>
   );
@@ -49,7 +59,7 @@ const RepuestoItem = ({ repuesto, onClick }: {
   onClick: () => void;
 }) => {
   const modelosNombres = useAppSelector(selectModelosNombresByRepuestoId(repuesto.id));
-  
+
   return (
     <div
       className='list-group-item list-group-item-action mb-2'
@@ -64,9 +74,9 @@ const RepuestoItem = ({ repuesto, onClick }: {
             {modelosNombres.length > 0 ? modelosNombres.join(', ') : 'Sin modelos asignados'}
           </small>
         </div>
-        <span 
+        <span
           className='badge'
-          style={{ 
+          style={{
             backgroundColor: '#dc3545',
             color: 'white'
           }}
@@ -93,12 +103,12 @@ const Inicio = (props: InicioProps): React.ReactElement => {
   const renderEstadoButton = (estadoKey: string, texto: string) => {
     const estado = estados[estadoKey];
     if (!estado) return null;
-    
+
     return (
       <button
         className='mb-3 btn w-100'
-        style={{ 
-          height: '100px', 
+        style={{
+          height: '100px',
           backgroundColor: estado.color,
           color: estadoKey === 'Recibido' ? 'white' : 'black' // Texto blanco para Recibido, negro para otros
         }}
@@ -144,7 +154,7 @@ const Inicio = (props: InicioProps): React.ReactElement => {
 
       {/* Lista de repuestos agotados */}
       <div>
-        <div 
+        <div
           className='d-flex justify-content-between align-items-center mb-3'
           onClick={() => setRepuestosExpanded(!repuestosExpanded)}
           style={{ cursor: 'pointer' }}
