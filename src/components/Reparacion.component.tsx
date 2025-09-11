@@ -19,9 +19,9 @@ import { convertTimestampCORTO } from "../utils/utils";
 import "bootstrap-icons/font/bootstrap-icons.css";
 import IntervencionesReparacion from './IntervencionesReparacion.component';
 import { selectUsuarioPorId } from "../redux-tool-kit/usuario/usuario.selectors";
-import { 
-  selectReparacionById,
-  selectIntervencionesDeReparacionActual 
+import {
+    selectReparacionById,
+    selectIntervencionesDeReparacionActual
 } from "../redux-tool-kit/reparacion";
 import { selectDroneById, selectDronesByPropietario } from "../redux-tool-kit/drone/drone.selectors";
 import { selectModeloDronePorId } from "../redux-tool-kit/modeloDrone/modeloDrone.selectors";
@@ -360,13 +360,13 @@ export default function ReparacionComponent(): React.ReactElement | null {
     const handleFotoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         if (!e.target.files?.length || !reparacion) return;
         const file = e.target.files[0];
-        
+
         try {
-            const response = await dispatch(subirFotoYActualizarReparacionAsync({ 
-                reparacion, 
-                file 
+            const response = await dispatch(subirFotoYActualizarReparacionAsync({
+                reparacion,
+                file
             }));
-            
+
             if (response.meta.requestStatus !== 'fulfilled') {
                 openModal({
                     mensaje: "Error al subir la foto.",
@@ -389,13 +389,13 @@ export default function ReparacionComponent(): React.ReactElement | null {
     const handleDocumentoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         if (!e.target.files?.length || !reparacion) return;
         const file = e.target.files[0];
-        
+
         try {
-            const response = await dispatch(subirDocumentoYActualizarReparacionAsync({ 
-                reparacion, 
-                file 
+            const response = await dispatch(subirDocumentoYActualizarReparacionAsync({
+                reparacion,
+                file
             }));
-            
+
             if (response.meta.requestStatus === 'fulfilled') {
                 const nuevaReparacion = response.payload as ReparacionType;
                 setReparacion(nuevaReparacion);
@@ -427,10 +427,10 @@ export default function ReparacionComponent(): React.ReactElement | null {
                     urlsFotos: reparacion.data.urlsFotos?.filter(url => url !== fotoUrl)
                 }
             };
-            
+
             // Guardar los cambios en la base de datos
             const responseGuardar = await dispatch(guardarReparacionAsync(nuevaReparacion));
-            
+
             if (responseGuardar.meta.requestStatus === 'fulfilled') {
                 // Actualizar el estado local y el estado original
                 setReparacion(nuevaReparacion);
@@ -462,10 +462,10 @@ export default function ReparacionComponent(): React.ReactElement | null {
                     urlsDocumentos: reparacion.data.urlsDocumentos?.filter(url => url !== docUrl)
                 }
             };
-            
+
             // Guardar los cambios en la base de datos
             const responseGuardar = await dispatch(guardarReparacionAsync(nuevaReparacion));
-            
+
             if (responseGuardar.meta.requestStatus === 'fulfilled') {
                 // Actualizar el estado local y el estado original
                 setReparacion(nuevaReparacion);
@@ -597,7 +597,7 @@ export default function ReparacionComponent(): React.ReactElement | null {
             <div className="card mb-3">
                 <div className="card-body">
                     <div className="d-flex w-100 justify-content-between align-items-center">
-                        <h5 className="card-title bluemcdron">CONSULTA - PRIMEROS DATOS</h5>
+                        <h5 className="card-title bluemcdron">CONSULTA</h5>
                         <button
                             type="button"
                             className="btn btn-outline-secondary bg-bluemcdron text-white"
@@ -766,7 +766,7 @@ export default function ReparacionComponent(): React.ReactElement | null {
 
             <div className="card mb-3">
                 <div className="card-body">
-                    <h5 className="card-title bluemcdron">REVISIÓN - DIAGNÓSTICO Y PRESUPUESTO DATOS</h5>
+                    <h5 className="card-title bluemcdron">REVISIÓN</h5>
                     <div>
                         <label className="form-label">Número de Serie</label>
                         <input
@@ -789,6 +789,19 @@ export default function ReparacionComponent(): React.ReactElement | null {
                             disabled={!isAdmin}
                         />
                     </div>
+                </div>
+            </div>
+
+            <div className="card mb-3">
+                <div className="card-body">
+                    <h5 className="card-title bluemcdron">PRESUPUESTO</h5>
+                    <h6 className="card-title bluemcdron">INTERVENCIONES</h6>
+                    <IntervencionesReparacion
+                        reparacionId={reparacion.id}
+                        readOnly={!isAdmin}
+                        modeloDroneId={drone?.data.ModeloDroneId}
+                    />
+                    <h6 className="card-title bluemcdron">PRECIO</h6>
                     <div>
                         <label className="form-label">Presupuesto Mano de Obra $</label>
                         <input
@@ -844,21 +857,10 @@ export default function ReparacionComponent(): React.ReactElement | null {
                 </div>
             </div>
 
-            <div className="card mb-3">
-                <div className="card-body">
-                    <h5 className="card-title bluemcdron">INTERVENCIONES - TRABAJOS REALIZADOS</h5>
-                    <IntervencionesReparacion
-                        reparacionId={reparacion.id}
-                        readOnly={!isAdmin}
-                        modeloDroneId={drone?.data.ModeloDroneId}
-                    />
-                </div>
-            </div>
-
             {isAdmin ? // Sólo para administrador
                 <div className="card mb-3">
                     <div className="card-body">
-                        <h5 className="card-title bluemcdron">REPUESTOS - CUALES Y SEGUIMIENTO</h5>
+                        <h5 className="card-title bluemcdron">REPUESTOS</h5>
                         <div>
                             <label className="form-label">Qué repuesto, seguimiento, transportista</label>
                             <TextareaAutosize
@@ -876,7 +878,7 @@ export default function ReparacionComponent(): React.ReactElement | null {
 
             <div className="card mb-3">
                 <div className="card-body">
-                    <h5 className="card-title bluemcdron">REPARACIÓN - DATOS DE LA REPARACIÓN</h5>
+                    <h5 className="card-title bluemcdron">REPARAR</h5>
                     <div>
                         <label className="form-label">Informe de Reparación o Diagnóstico</label>
                         <TextareaAutosize
@@ -904,7 +906,7 @@ export default function ReparacionComponent(): React.ReactElement | null {
 
             <div className="card mb-3">
                 <div className="card-body">
-                    <h5 className="card-title bluemcdron">ENTREGA - DATOS DE LA ENTREGA</h5>
+                    <h5 className="card-title bluemcdron">ENTREGA</h5>
                     <div>
                         <label className="form-label">Fecha Entrega</label>
                         <input
