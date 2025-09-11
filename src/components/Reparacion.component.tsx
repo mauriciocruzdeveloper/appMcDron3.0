@@ -4,6 +4,7 @@ import { useHistory } from "../hooks/useHistory";
 import { useParams } from "react-router-dom";
 import { enviarSms, generarAutoDiagnostico } from "../utils/utils";
 import { estados } from '../datos/estados';
+import { obtenerEstadoSeguro, esEstadoLegacy, obtenerMensajeMigracion } from '../utils/estadosHelper';
 import { Estado } from "../types/estado";
 import { ReparacionType } from "../types/reparacion";
 import { enviarEmailVacio } from "../utils/sendEmails";
@@ -175,7 +176,7 @@ export default function ReparacionComponent(): React.ReactElement | null {
     const setEstado = (estado: Estado) => {
         if (!reparacion || !reparacionOriginal) return;
 
-        const estadoActual = estados[reparacionOriginal.data.EstadoRep];
+        const estadoActual = obtenerEstadoSeguro(reparacionOriginal.data.EstadoRep);
         const nuevaEtapa = estado.etapa;
 
         // No permitir bajar de estado o seleccionar el mismo estado
@@ -501,7 +502,7 @@ export default function ReparacionComponent(): React.ReactElement | null {
         <div
             className="p-4"
             style={{
-                backgroundColor: estados[reparacion.data.EstadoRep].color
+                backgroundColor: obtenerEstadoSeguro(reparacion.data.EstadoRep).color
             }}
         >
             <div
@@ -514,6 +515,19 @@ export default function ReparacionComponent(): React.ReactElement | null {
                     <h3 className="card-title">
                         REPARACIÓN
                     </h3>
+                    
+                    {/* Alerta para estados legacy */}
+                    {esEstadoLegacy(reparacion.data.EstadoRep) && (
+                        <div className="alert alert-warning alert-dismissible fade show" role="alert">
+                            <strong>⚠️ Estado Legacy Detectado:</strong> Esta reparación tiene el estado &quot;{reparacion.data.EstadoRep}&quot; 
+                            que pertenece al sistema anterior. 
+                            <br />
+                            <small>
+                                <strong>Recomendación:</strong> {obtenerMensajeMigracion(reparacion.data.EstadoRep)}
+                            </small>
+                        </div>
+                    )}
+                    
                     <div>id: {reparacion?.id}</div>
                     <div>Drone: {drone?.data?.Nombre || 'Sin nombre'}</div>
                     <div>Modelo: {modeloDrone?.data?.NombreModelo || reparacion?.data?.ModeloDroneNameRep || 'Modelo no disponible'}</div>
@@ -525,7 +539,9 @@ export default function ReparacionComponent(): React.ReactElement | null {
                 <div className="card-body">
                     <h5 className="card-title bluemcdron">ESTADO DE LA REPARACIÓN</h5>
                     <div className="text-center">
-                        {Object.values(estados).map(estado =>
+                        {Object.values(estados)
+                            .filter(estado => !esEstadoLegacy(estado.nombre) && estado.nombre !== "Indefinido")
+                            .map(estado =>
                             <button
                                 key={estado.nombre}
                                 className="m-2 btn btn-outline-secondary overflow-hidden"

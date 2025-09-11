@@ -7,10 +7,11 @@ import { useHistory } from "../hooks/useHistory";
 import { useAppSelector } from "../redux-tool-kit/hooks/useAppSelector";
 import { useAppDispatch } from "../redux-tool-kit/hooks/useAppDispatch";
 import { useModal } from "./Modal/useModal";
-import { guardarReciboAsync, guardarTransitoAsync } from "../redux-tool-kit/reparacion/reparacion.actions";
+import { guardarReciboAsync, guardarTransitoAsync, guardarPresupuestadoAsync, aceptarPresupuestoAsync, rechazarPresupuestoAsync, diagnosticarAsync } from "../redux-tool-kit/reparacion/reparacion.actions";
 import { getClienteAsync } from "../redux-tool-kit/usuario/usuario.actions";
 import { getLocalidadesPorProvincia, getProvinciasSelect } from "../utils/utils";
 import { estados } from "../datos/estados";
+import { obtenerEstadoSeguro } from "../utils/estadosHelper";
 import { selectModelosDroneSelect } from "../redux-tool-kit/modeloDrone/modeloDrone.selectors";
 import { selectDronesByPropietario } from "../redux-tool-kit/drone";
 
@@ -59,7 +60,7 @@ export default function Presupuesto(): JSX.Element {
     const location = useLocation();
     const queryParams = new URLSearchParams(location.search);
     const estadoParam = queryParams.get('estado') || "Recibido";
-    const estadoInfo = estados[estadoParam] || estados["Recibido"];
+    const estadoInfo = obtenerEstadoSeguro(estadoParam);
 
     const {
         openModal,
@@ -163,6 +164,8 @@ export default function Presupuesto(): JSX.Element {
             response = await dispatch(guardarReciboAsync(presupuesto));
         } else if (estadoInfo.nombre === "Transito") {
             response = await dispatch(guardarTransitoAsync(presupuesto));
+        } else if (estadoInfo.nombre === "Presupuestado") {
+            response = await dispatch(guardarPresupuestadoAsync(presupuesto));
         }
 
         if (response?.meta.requestStatus === 'fulfilled') {

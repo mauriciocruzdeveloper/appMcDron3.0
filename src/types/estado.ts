@@ -11,19 +11,27 @@ export interface Estados {
 }
 
 export enum Etapas {
+    Indefinido = 0,     // Estado para casos no reconocidos
     Consulta = 1,
     Respondido = 2,
     Transito = 3,
     Recibido = 4,
     Revisado = 5,
     Presupuestado = 6,
-    Reparar = 7,
-    Repuestos = 8,
-    Reparado = 9,
-    Diagnosticado = 10,
-    Cobrado = 11,
-    Entregado = 12,
-    Venta = 13,
-    Liquidación = 14,
-    Trabado = 15,
+    Aceptado = 7,
+    Abandonado = 8,
+    Rechazado = 9,
+    Reparado = 10,
+    Diagnosticado = 11,
+    Cobrado = 12,
+    Enviado = 13,
+    Finalizado = 14,
+    Cancelado = 15,
+    
+    // Estados de retrocompatibilidad (etapas altas para identificarlos)
+    Reparar = 100,
+    Repuestos = 101,
+    Entregado = 103,
+    Venta = 104,
+    Liquidación = 105,
 }
