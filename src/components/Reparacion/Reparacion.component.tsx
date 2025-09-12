@@ -162,9 +162,9 @@ export default function ReparacionComponent(): React.ReactElement | null {
                     sectionId = 'seccion-revision';
                     break;
                 case 'Revisado':
+                case 'Presupuestado':
                     sectionId = 'seccion-presupuesto';
                     break;
-                case 'Presupuestado':
                 case 'Aceptado':
                     sectionId = 'seccion-reparar';
                     break;
@@ -195,7 +195,7 @@ export default function ReparacionComponent(): React.ReactElement | null {
                 if (element) {
                     const navHeight = 80; // Altura aproximada del NavMcDron + padding
                     const elementPosition = element.offsetTop - navHeight;
-                    
+
                     window.scrollTo({
                         top: elementPosition,
                         behavior: 'smooth'
@@ -308,10 +308,10 @@ export default function ReparacionComponent(): React.ReactElement | null {
         // Guardar automáticamente en la base de datos
         try {
             const response = await dispatch(guardarReparacionAsync(newReparacion));
-            
+
             if (response.meta.requestStatus === 'fulfilled') {
                 setReparacionOriginal(newReparacion);
-                
+
                 // // Si el estado es "Rechazado", enviar email de finalización
                 // if (newReparacion.data.EstadoRep === 'Rechazado') {
                 //     try {
@@ -649,7 +649,7 @@ export default function ReparacionComponent(): React.ReactElement | null {
     // Componente de resumen de progreso
     const ResumenProgreso = () => {
         const estadosOrdenados = [
-            'Consulta', 'Respondido', 'Transito', 'Recibido', 'Revisado', 
+            'Consulta', 'Respondido', 'Transito', 'Recibido', 'Revisado',
             'Presupuestado', 'Aceptado', 'Reparado', 'Cobrado', 'Enviado', 'Finalizado'
         ];
 
@@ -665,13 +665,12 @@ export default function ReparacionComponent(): React.ReactElement | null {
                             const estado = estados[nombreEstado];
                             const completado = estado.etapa <= etapaActual && !esEstadoLegacy(reparacion.data.EstadoRep);
                             const esActual = estado.nombre === reparacion.data.EstadoRep;
-                            
+
                             return (
                                 <div key={nombreEstado} className="col-6 col-md-4 col-lg-3 mb-2">
-                                    <div 
-                                        className={`d-flex align-items-center p-2 rounded ${
-                                            esActual ? 'border border-dark' : ''
-                                        }`}
+                                    <div
+                                        className={`d-flex align-items-center p-2 rounded ${esActual ? 'border border-dark' : ''
+                                            }`}
                                         style={{
                                             backgroundColor: completado || esActual ? estado.color : '#e9ecef',
                                             color: completado || esActual ? 'white' : '#6c757d',
@@ -705,7 +704,7 @@ export default function ReparacionComponent(): React.ReactElement | null {
     const obtenerSeccionesAMostrar = () => {
         const estadoActual = obtenerEstadoSeguro(reparacion.data.EstadoRep);
         const etapa = estadoActual.etapa;
-        
+
         // Si es admin, mostrar todo
         if (isAdmin) {
             return {
@@ -720,7 +719,7 @@ export default function ReparacionComponent(): React.ReactElement | null {
                 documentos: true
             };
         }
-        
+
         // Para no-admin, mostrar según el estado
         const secciones = {
             consulta: etapa >= 1, // Siempre visible desde Consulta
@@ -733,7 +732,7 @@ export default function ReparacionComponent(): React.ReactElement | null {
             fotos: etapa >= 1, // Siempre visible
             documentos: etapa >= 1 // Siempre visible
         };
-        
+
         return secciones;
     };
 
@@ -757,19 +756,19 @@ export default function ReparacionComponent(): React.ReactElement | null {
                     <h3 className="card-title">
                         REPARACIÓN
                     </h3>
-                    
+
                     {/* Alerta para estados legacy */}
                     {esEstadoLegacy(reparacion.data.EstadoRep) && (
                         <div className="alert alert-warning alert-dismissible fade show" role="alert">
-                            <strong>⚠️ Estado Legacy Detectado:</strong> Esta reparación tiene el estado &quot;{reparacion.data.EstadoRep}&quot; 
-                            que pertenece al sistema anterior. 
+                            <strong>⚠️ Estado Legacy Detectado:</strong> Esta reparación tiene el estado &quot;{reparacion.data.EstadoRep}&quot;
+                            que pertenece al sistema anterior.
                             <br />
                             <small>
                                 <strong>Recomendación:</strong> {obtenerMensajeMigracion(reparacion.data.EstadoRep)}
                             </small>
                         </div>
                     )}
-                    
+
                     <div>id: {reparacion?.id}</div>
                     <div>Drone: {drone?.data?.Nombre || 'Sin nombre'}</div>
                     <div>Modelo: {modeloDrone?.data?.NombreModelo || reparacion?.data?.ModeloDroneNameRep || 'Modelo no disponible'}</div>
@@ -840,159 +839,159 @@ export default function ReparacionComponent(): React.ReactElement | null {
                                 Ir al Cliente
                             </button>
                         </div>
-                    <div>
-                        <label className="form-label">Fecha de Cosulta</label>
-                        <input
-                            type="date"
-                            className="form-control"
-                            id="FeConRep"
-                            value={convertTimestampCORTO(reparacion?.data?.FeConRep)}
-                            disabled
-                        />
-                    </div>
-                    <div>
-                        <label className="form-label">Email Cliente</label>
-                        <div className="d-flex w-100 justify-content-between">
+                        <div>
+                            <label className="form-label">Fecha de Cosulta</label>
+                            <input
+                                type="date"
+                                className="form-control"
+                                id="FeConRep"
+                                value={convertTimestampCORTO(reparacion?.data?.FeConRep)}
+                                disabled
+                            />
+                        </div>
+                        <div>
+                            <label className="form-label">Email Cliente</label>
+                            <div className="d-flex w-100 justify-content-between">
+                                <input
+                                    type="text"
+                                    className="form-control"
+                                    id="EmailUsu"
+                                    value={usuarioStore?.data?.EmailUsu || ''}
+                                    disabled
+                                />
+                                <button
+                                    type="submit"
+                                    className="btn btn-outline-secondary bg-bluemcdron text-white"
+                                    onClick={handleSendEmail}
+                                >
+                                    <i className="bi bi-envelope"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div>
+                            <label className="form-label">Nombre Cliente</label>
                             <input
                                 type="text"
                                 className="form-control"
-                                id="EmailUsu"
-                                value={usuarioStore?.data?.EmailUsu || ''}
+                                id="NombreUsu"
+                                value={usuarioStore?.data?.NombreUsu}
                                 disabled
                             />
-                            <button
-                                type="submit"
-                                className="btn btn-outline-secondary bg-bluemcdron text-white"
-                                onClick={handleSendEmail}
-                            >
-                                <i className="bi bi-envelope"></i>
-                            </button>
                         </div>
-                    </div>
-                    <div>
-                        <label className="form-label">Nombre Cliente</label>
-                        <input
-                            type="text"
-                            className="form-control"
-                            id="NombreUsu"
-                            value={usuarioStore?.data?.NombreUsu}
-                            disabled
-                        />
-                    </div>
-                    <div>
-                        <label className="form-label">Apellido Cliente</label>
-                        <input
-                            type="text"
-                            className="form-control"
-                            id="ApellidoUsu"
-                            value={usuarioStore?.data?.ApellidoUsu}
-                            disabled
-                        />
-                    </div>
-                    <div>
-                        <label className="form-label">Teléfono Cliente</label>
-                        <div className="d-flex w-100 justify-content-between">
+                        <div>
+                            <label className="form-label">Apellido Cliente</label>
                             <input
-                                type="tel"
+                                type="text"
                                 className="form-control"
-                                id="TelefonoUsu"
-                                value={usuarioStore?.data?.TelefonoUsu}
+                                id="ApellidoUsu"
+                                value={usuarioStore?.data?.ApellidoUsu}
                                 disabled
                             />
-                            <button
-                                type="submit"
-                                className="btn btn-outline-secondary bg-bluemcdron text-white"
-                                onClick={handleSendSms}
-                            >
-                                <i className="bi bi-chat-left-text"></i>
-                            </button>
                         </div>
-                    </div>
-                    <div>
-                        <label className="form-label">Nombre del Drone</label>
-                        <select
-                            className="form-control"
-                            id="DroneId"
-                            value={reparacion?.data?.DroneId || ""}
-                            onChange={handleDroneChange}
-                            disabled={!isAdmin}
-                        >
-                            <option value="">Seleccione un drone</option>
-                            {dronesDelCliente.map(drone => (
-                                <option key={drone.id} value={drone.id}>
-                                    {drone.data.Nombre || `Drone sin nombre (${drone.id})`}
-                                </option>
-                            ))}
-                        </select>
-                        {dronesDelCliente.length === 0 && usuarioStore?.id && (
-                            <small className="form-text text-muted">
-                                El cliente no tiene drones registrados
-                            </small>
+                        <div>
+                            <label className="form-label">Teléfono Cliente</label>
+                            <div className="d-flex w-100 justify-content-between">
+                                <input
+                                    type="tel"
+                                    className="form-control"
+                                    id="TelefonoUsu"
+                                    value={usuarioStore?.data?.TelefonoUsu}
+                                    disabled
+                                />
+                                <button
+                                    type="submit"
+                                    className="btn btn-outline-secondary bg-bluemcdron text-white"
+                                    onClick={handleSendSms}
+                                >
+                                    <i className="bi bi-chat-left-text"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div>
+                            <label className="form-label">Nombre del Drone</label>
+                            <select
+                                className="form-control"
+                                id="DroneId"
+                                value={reparacion?.data?.DroneId || ""}
+                                onChange={handleDroneChange}
+                                disabled={!isAdmin}
+                            >
+                                <option value="">Seleccione un drone</option>
+                                {dronesDelCliente.map(drone => (
+                                    <option key={drone.id} value={drone.id}>
+                                        {drone.data.Nombre || `Drone sin nombre (${drone.id})`}
+                                    </option>
+                                ))}
+                            </select>
+                            {dronesDelCliente.length === 0 && usuarioStore?.id && (
+                                <small className="form-text text-muted">
+                                    El cliente no tiene drones registrados
+                                </small>
+                            )}
+                        </div>
+                        <div>
+                            <label className="form-label">Modelo del Drone</label>
+                            <input
+                                type="text"
+                                className="form-control"
+                                id="ModeloDroneNameRep"
+                                value={modeloDrone?.data?.NombreModelo || reparacion?.data?.ModeloDroneNameRep || ""}
+                            />
+                        </div>
+                        <div>
+                            <label className="form-label">Desperfectos o Roturas</label>
+                            <TextareaAutosize
+                                onChange={handleOnChange}
+                                className="form-control"
+                                id="DescripcionUsuRep"
+                                value={reparacion?.data?.DescripcionUsuRep || ""}
+                                disabled={!isAdmin}
+                            />
+                        </div>
+                        <div>
+                            <div className="d-flex w-100 justify-content-between align-items-center">
+                                <label className="form-label">Autodiagnóstico</label>
+                                <button
+                                    type="button"
+                                    className="btn btn-outline-secondary bg-bluemcdron text-white"
+                                    onClick={handleGenerarAutoDiagnostico}
+                                >
+                                    <i className="bi bi-arrow-repeat"></i>
+                                </button>
+                            </div>
+                            <TextareaAutosize
+                                readOnly
+                                className="form-control"
+                                id="DiagnosticoRep"
+                                value={reparacion?.data?.DiagnosticoRep || ""}
+                            />
+                        </div>
+
+                        {/* Botones de avance de estado para CONSULTA */}
+                        {isAdmin && (
+                            <div className="d-flex gap-2 mt-3">
+                                {puedeAvanzarA('Respondido') && (
+                                    <button
+                                        type="button"
+                                        className="btn btn-success"
+                                        onClick={avanzarARespondido}
+                                    >
+                                        Marcar como Respondido
+                                    </button>
+                                )}
+                                {puedeAvanzarA('Transito') && (
+                                    <button
+                                        type="button"
+                                        className="btn btn-warning"
+                                        onClick={avanzarATransito}
+                                    >
+                                        Marcar en Tránsito
+                                    </button>
+                                )}
+                            </div>
                         )}
                     </div>
-                    <div>
-                        <label className="form-label">Modelo del Drone</label>
-                        <input
-                            type="text"
-                            className="form-control"
-                            id="ModeloDroneNameRep"
-                            value={modeloDrone?.data?.NombreModelo || reparacion?.data?.ModeloDroneNameRep || ""}
-                        />
-                    </div>
-                    <div>
-                        <label className="form-label">Desperfectos o Roturas</label>
-                        <TextareaAutosize
-                            onChange={handleOnChange}
-                            className="form-control"
-                            id="DescripcionUsuRep"
-                            value={reparacion?.data?.DescripcionUsuRep || ""}
-                            disabled={!isAdmin}
-                        />
-                    </div>
-                    <div>
-                        <div className="d-flex w-100 justify-content-between align-items-center">
-                            <label className="form-label">Autodiagnóstico</label>
-                            <button
-                                type="button"
-                                className="btn btn-outline-secondary bg-bluemcdron text-white"
-                                onClick={handleGenerarAutoDiagnostico}
-                            >
-                                <i className="bi bi-arrow-repeat"></i>
-                            </button>
-                        </div>
-                        <TextareaAutosize
-                            readOnly
-                            className="form-control"
-                            id="DiagnosticoRep"
-                            value={reparacion?.data?.DiagnosticoRep || ""}
-                        />
-                    </div>
-                    
-                    {/* Botones de avance de estado para CONSULTA */}
-                    {isAdmin && (
-                        <div className="d-flex gap-2 mt-3">
-                            {puedeAvanzarA('Respondido') && (
-                                <button
-                                    type="button"
-                                    className="btn btn-success"
-                                    onClick={avanzarARespondido}
-                                >
-                                    Marcar como Respondido
-                                </button>
-                            )}
-                            {puedeAvanzarA('Transito') && (
-                                <button
-                                    type="button"
-                                    className="btn btn-warning"
-                                    onClick={avanzarATransito}
-                                >
-                                    Marcar en Tránsito
-                                </button>
-                            )}
-                        </div>
-                    )}
                 </div>
-            </div>
             )}
 
             {/* Resto de secciones del formulario */}
@@ -1000,7 +999,7 @@ export default function ReparacionComponent(): React.ReactElement | null {
                 <div className="card mb-3" id="seccion-recepcion">
                     <div className="card-body">
                         <h5 className="card-title bluemcdron">RECEPCIÓN</h5>
-                        
+
                         {/* Mostrar información del estado actual si no está recibido */}
                         {reparacion.data.EstadoRep !== 'Recibido' && (
                             <div className="alert alert-info mb-3">
@@ -1009,7 +1008,7 @@ export default function ReparacionComponent(): React.ReactElement | null {
                                 <small>Una vez que el equipo llegue al taller, márcalo como recibido.</small>
                             </div>
                         )}
-                        
+
                         <div>
                             <label className="form-label">Fecha de Recepción</label>
                             <div className="d-flex w-100 justify-content-between">
@@ -1032,7 +1031,7 @@ export default function ReparacionComponent(): React.ReactElement | null {
                                 </button>
                             </div>
                         </div>
-                        
+
                         {/* Botones de avance de estado para RECEPCIÓN */}
                         {isAdmin && (
                             <div className="mt-3">
@@ -1062,143 +1061,152 @@ export default function ReparacionComponent(): React.ReactElement | null {
                 <div className="card mb-3" id="seccion-revision">
                     <div className="card-body">
                         <h5 className="card-title bluemcdron">REVISIÓN</h5>
-                    <div>
-                        <label className="form-label">Número de Serie</label>
-                        <input
-                            onChange={handleOnChange}
-                            type="text"
-                            className="form-control"
-                            id="NumeroSerieRep"
-                            value={reparacion?.data?.NumeroSerieRep || ""}
-                            disabled={!isAdmin}
-                        />
-                    </div>
-                    <div>
-                        <label className="form-label">Observaciones del Técnico</label>
-                        <TextareaAutosize
-                            onChange={handleOnChange}
-                            className="form-control"
-                            id="DescripcionTecRep"
-                            value={reparacion?.data?.DescripcionTecRep || ""}
-                            rows={5}
-                            disabled={!isAdmin}
-                        />
-                    </div>
-                    
-                    {/* Botones de avance de estado para REVISIÓN */}
-                    {isAdmin && puedeAvanzarA('Revisado') && (
-                        <div className="mt-3">
-                            <button
-                                type="button"
-                                className="btn btn-info"
-                                onClick={avanzarARevisado}
-                            >
-                                Marcar como Revisado
-                            </button>
+                        <div>
+                            <label className="form-label">Número de Serie</label>
+                            <input
+                                onChange={handleOnChange}
+                                type="text"
+                                className="form-control"
+                                id="NumeroSerieRep"
+                                value={reparacion?.data?.NumeroSerieRep || ""}
+                                disabled={!isAdmin}
+                            />
                         </div>
-                    )}
+                        <div>
+                            <label className="form-label">Observaciones del Técnico</label>
+                            <TextareaAutosize
+                                onChange={handleOnChange}
+                                className="form-control"
+                                id="DescripcionTecRep"
+                                value={reparacion?.data?.DescripcionTecRep || ""}
+                                rows={5}
+                                disabled={!isAdmin}
+                            />
+                        </div>
+
+                        {/* Botones de avance de estado para REVISIÓN */}
+                        {isAdmin && puedeAvanzarA('Revisado') && (
+                            <div className="mt-3">
+                                <button
+                                    type="button"
+                                    className="btn btn-info"
+                                    onClick={avanzarARevisado}
+                                >
+                                    Marcar como Revisado
+                                </button>
+                            </div>
+                        )}
+                    </div>
                 </div>
-            </div>
             )}
 
             {seccionesVisibles.presupuesto && (
                 <div className="card mb-3" id="seccion-presupuesto">
                     <div className="card-body">
                         <h5 className="card-title bluemcdron">PRESUPUESTO</h5>
-                    <h6 className="card-title bluemcdron">INTERVENCIONES</h6>
-                    <IntervencionesReparacion
-                        reparacionId={reparacion.id}
-                        readOnly={!isAdmin}
-                        modeloDroneId={drone?.data.ModeloDroneId}
-                    />
-                    <h6 className="card-title bluemcdron">PRECIO</h6>
-                    <div>
-                        <label className="form-label">Presupuesto Mano de Obra $</label>
-                        <input
-                            onChange={handleOnChange}
-                            type="number"
-                            className="form-control"
-                            id="PresuMoRep"
-                            value={reparacion?.data?.PresuMoRep || ""}
-                            disabled={!isAdmin}
+                        <h6 className="card-title bluemcdron">INTERVENCIONES</h6>
+                        <IntervencionesReparacion
+                            reparacionId={reparacion.id}
+                            readOnly={!isAdmin}
+                            modeloDroneId={drone?.data.ModeloDroneId}
                         />
-                    </div>
-                    <div>
-                        <label className="form-label">Presupuesto Repuestos $</label>
-                        <input
-                            onChange={handleOnChange}
-                            type="number"
-                            className="form-control"
-                            id="PresuReRep"
-                            value={reparacion?.data?.PresuReRep || ""}
-                            disabled={!isAdmin}
-                        />
-                    </div>
-                    <div>
-                        <label className="form-label">Presupuesto Final $</label>
-                        <input
-                            onChange={handleOnChange}
-                            type="number"
-                            className="form-control"
-                            id="PresuFiRep"
-                            value={reparacion?.data?.PresuFiRep || ""}
-                            disabled={!isAdmin}
-                            title="El precio se calcula automáticamente en base a las intervenciones, o puede ingresar un valor manual"
-                        />
-                        {isAdmin && intervencionesAplicadas.length > 0 && (
-                            <small className="form-text text-muted">
-                                {totalIntervenciones !== reparacion.data.PresuFiRep
-                                    ? `El precio actual difiere del total de intervenciones (${formatPrice(totalIntervenciones)})`
-                                    : `Precio calculado a partir de las intervenciones: ${formatPrice(totalIntervenciones)}`}
-                            </small>
-                        )}
-                    </div>
-                    <div>
-                        <label className="form-label">Diagnóstico $</label>
-                        <input
-                            onChange={handleOnChange}
-                            type="number"
-                            className="form-control"
-                            id="PresuDiRep"
-                            value={reparacion?.data?.PresuDiRep || ""}
-                            disabled={!isAdmin}
-                        />
-                    </div>
-                    
-                    {/* Botones de avance de estado para PRESUPUESTO */}
-                    {isAdmin && (
-                        <div className="d-flex gap-2 mt-3">
-                            {puedeAvanzarA('Presupuestado') && (
-                                <button
-                                    type="button"
-                                    className="btn btn-warning"
-                                    onClick={avanzarAPresupuestado}
-                                >
-                                    Marcar como Presupuestado
-                                </button>
-                            )}
-                            {puedeAvanzarA('Aceptado') && (
-                                <button
-                                    type="button"
-                                    className="btn btn-success"
-                                    onClick={avanzarAAceptado}
-                                >
-                                    Presupuesto Aceptado
-                                </button>
-                            )}
-                            {puedeAvanzarA('Rechazado') && (
-                                <button
-                                    type="button"
-                                    className="btn btn-danger"
-                                    onClick={avanzarARechazado}
-                                >
-                                    Presupuesto Rechazado
-                                </button>
+                        <h6 className="card-title bluemcdron">PRECIO</h6>
+                        <div>
+                            <label className="form-label">Presupuesto Mano de Obra $</label>
+                            <input
+                                onChange={handleOnChange}
+                                type="number"
+                                className="form-control"
+                                id="PresuMoRep"
+                                value={reparacion?.data?.PresuMoRep || ""}
+                                disabled={!isAdmin}
+                            />
+                        </div>
+                        <div>
+                            <label className="form-label">Presupuesto Repuestos $</label>
+                            <input
+                                onChange={handleOnChange}
+                                type="number"
+                                className="form-control"
+                                id="PresuReRep"
+                                value={reparacion?.data?.PresuReRep || ""}
+                                disabled={!isAdmin}
+                            />
+                        </div>
+                        <div>
+                            <label className="form-label">Presupuesto Final $</label>
+                            <input
+                                onChange={handleOnChange}
+                                type="number"
+                                className="form-control"
+                                id="PresuFiRep"
+                                value={reparacion?.data?.PresuFiRep || ""}
+                                disabled={!isAdmin}
+                                title="El precio se calcula automáticamente en base a las intervenciones, o puede ingresar un valor manual"
+                            />
+                            {isAdmin && intervencionesAplicadas.length > 0 && (
+                                <small className="form-text text-muted">
+                                    {totalIntervenciones !== reparacion.data.PresuFiRep
+                                        ? `El precio actual difiere del total de intervenciones (${formatPrice(totalIntervenciones)})`
+                                        : `Precio calculado a partir de las intervenciones: ${formatPrice(totalIntervenciones)}`}
+                                </small>
                             )}
                         </div>
-                    )}
+                        <div>
+                            <label className="form-label">Diagnóstico $</label>
+                            <input
+                                onChange={handleOnChange}
+                                type="number"
+                                className="form-control"
+                                id="PresuDiRep"
+                                value={reparacion?.data?.PresuDiRep || ""}
+                                disabled={!isAdmin}
+                            />
+                        </div>
+
+                        {/* Botones de avance de estado para PRESUPUESTO */}
+                        {isAdmin && (
+                            <div className="mt-3">
+                                {/* Botón de Presupuestado arriba */}
+                                {puedeAvanzarA('Presupuestado') && (
+                                    <div className="mb-2">
+                                        <button
+                                            type="button"
+                                            className="btn btn-warning"
+                                            onClick={avanzarAPresupuestado}
+                                        >
+                                            Marcar como Presupuestado
+                                        </button>
+                                    </div>
+                                )}
+                                
+                                {/* Botones de Aceptado y Rechazado juntos abajo */}
+                                {(puedeAvanzarA('Aceptado') || puedeAvanzarA('Rechazado')) && (
+                                    <div className="d-flex gap-2">
+                                        {puedeAvanzarA('Aceptado') && (
+                                            <button
+                                                type="button"
+                                                className="btn btn-success"
+                                                onClick={avanzarAAceptado}
+                                            >
+                                                Presupuesto Aceptado
+                                            </button>
+                                        )}
+                                        {puedeAvanzarA('Rechazado') && (
+                                            <button
+                                                type="button"
+                                                className="btn btn-danger"
+                                                onClick={avanzarARechazado}
+                                            >
+                                                Presupuesto Rechazado
+                                            </button>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+                        )}
+                    </div>
                 </div>
-            </div>
             )}
 
             {(isAdmin && seccionesVisibles.repuestos) ? // Sólo para administrador
@@ -1224,117 +1232,117 @@ export default function ReparacionComponent(): React.ReactElement | null {
                 <div className="card mb-3" id="seccion-reparar">
                     <div className="card-body">
                         <h5 className="card-title bluemcdron">REPARAR</h5>
-                    <div>
-                        <label className="form-label">Informe de Reparación o Diagnóstico</label>
-                        <TextareaAutosize
-                            onChange={handleOnChange}
-                            className="form-control"
-                            id="DescripcionTecRep"
-                            value={reparacion?.data?.DescripcionTecRep || ""}
-                            rows={5}
-                            disabled={!isAdmin}
-                        />
-                    </div>
-                    <div>
-                        <label className="form-label">Fecha Finalizacion</label>
-                        <input
-                            onChange={handleOnChange}
-                            type="date"
-                            className="form-control"
-                            id="FeFinRep"
-                            value={convertTimestampCORTO(reparacion?.data?.FeFinRep)}
-                            disabled={!isAdmin}
-                        />
-                    </div>
-                    
-                    {/* Botones de avance de estado para REPARAR */}
-                    {isAdmin && puedeAvanzarA('Reparado') && (
-                        <div className="mt-3">
-                            <button
-                                type="button"
-                                className="btn btn-success"
-                                onClick={avanzarAReparado}
-                            >
-                                Marcar como Reparado
-                            </button>
+                        <div>
+                            <label className="form-label">Informe de Reparación o Diagnóstico</label>
+                            <TextareaAutosize
+                                onChange={handleOnChange}
+                                className="form-control"
+                                id="DescripcionTecRep"
+                                value={reparacion?.data?.DescripcionTecRep || ""}
+                                rows={5}
+                                disabled={!isAdmin}
+                            />
                         </div>
-                    )}
+                        <div>
+                            <label className="form-label">Fecha Finalizacion</label>
+                            <input
+                                onChange={handleOnChange}
+                                type="date"
+                                className="form-control"
+                                id="FeFinRep"
+                                value={convertTimestampCORTO(reparacion?.data?.FeFinRep)}
+                                disabled={!isAdmin}
+                            />
+                        </div>
+
+                        {/* Botones de avance de estado para REPARAR */}
+                        {isAdmin && puedeAvanzarA('Reparado') && (
+                            <div className="mt-3">
+                                <button
+                                    type="button"
+                                    className="btn btn-success"
+                                    onClick={avanzarAReparado}
+                                >
+                                    Marcar como Reparado
+                                </button>
+                            </div>
+                        )}
+                    </div>
                 </div>
-            </div>
             )}
 
             {seccionesVisibles.entrega && (
                 <div className="card mb-3" id="seccion-entrega">
                     <div className="card-body">
                         <h5 className="card-title bluemcdron">ENTREGA</h5>
-                    <div>
-                        <label className="form-label">Fecha Entrega</label>
-                        <input
-                            onChange={handleOnChange}
-                            type="date"
-                            className="form-control"
-                            id="FeEntRep"
-                            value={convertTimestampCORTO(reparacion?.data?.FeEntRep)}
-                            disabled={!isAdmin}
-                        />
-                    </div>
-                    <div>
-                        <label className="form-label">Cliente, Comisionista, Correo, Seguimiento</label>
-                        <TextareaAutosize
-                            onChange={handleOnChange}
-                            className="form-control"
-                            id="TxtEntregaRep"
-                            value={reparacion?.data?.TxtEntregaRep || ""}
-                            rows={5}
-                            disabled={!isAdmin}
-                        />
-                    </div>
-                    <div>
-                        <label className="form-label">Nro. de Seguimiento</label>
-                        <input
-                            onChange={handleOnChange}
-                            type="text"
-                            className="form-control"
-                            id="SeguimientoEntregaRep"
-                            value={reparacion?.data?.SeguimientoEntregaRep || ""}
-                            disabled={!isAdmin}
-                        />
-                    </div>
-                    
-                    {/* Botones de avance de estado para ENTREGA */}
-                    {isAdmin && (
-                        <div className="d-flex gap-2 mt-3">
-                            {puedeAvanzarA('Cobrado') && (
-                                <button
-                                    type="button"
-                                    className="btn btn-info"
-                                    onClick={avanzarACobrado}
-                                >
-                                    Marcar como Cobrado
-                                </button>
-                            )}
-                            {puedeAvanzarA('Enviado') && (
-                                <button
-                                    type="button"
-                                    className="btn btn-warning"
-                                    onClick={avanzarAEnviado}
-                                >
-                                    Marcar como Enviado
-                                </button>
-                            )}
-                            {puedeAvanzarA('Finalizado') && (
-                                <button
-                                    type="button"
-                                    className="btn btn-success"
-                                    onClick={avanzarAFinalizado}
-                                >
-                                    Finalizar Reparación
-                                </button>
-                            )}
+                        <div>
+                            <label className="form-label">Fecha Entrega</label>
+                            <input
+                                onChange={handleOnChange}
+                                type="date"
+                                className="form-control"
+                                id="FeEntRep"
+                                value={convertTimestampCORTO(reparacion?.data?.FeEntRep)}
+                                disabled={!isAdmin}
+                            />
                         </div>
-                    )}
+                        <div>
+                            <label className="form-label">Cliente, Comisionista, Correo, Seguimiento</label>
+                            <TextareaAutosize
+                                onChange={handleOnChange}
+                                className="form-control"
+                                id="TxtEntregaRep"
+                                value={reparacion?.data?.TxtEntregaRep || ""}
+                                rows={5}
+                                disabled={!isAdmin}
+                            />
+                        </div>
+                        <div>
+                            <label className="form-label">Nro. de Seguimiento</label>
+                            <input
+                                onChange={handleOnChange}
+                                type="text"
+                                className="form-control"
+                                id="SeguimientoEntregaRep"
+                                value={reparacion?.data?.SeguimientoEntregaRep || ""}
+                                disabled={!isAdmin}
+                            />
+                        </div>
+
+                        {/* Botones de avance de estado para ENTREGA */}
+                        {isAdmin && (
+                            <div className="d-flex gap-2 mt-3">
+                                {puedeAvanzarA('Cobrado') && (
+                                    <button
+                                        type="button"
+                                        className="btn btn-info"
+                                        onClick={avanzarACobrado}
+                                    >
+                                        Marcar como Cobrado
+                                    </button>
+                                )}
+                                {puedeAvanzarA('Enviado') && (
+                                    <button
+                                        type="button"
+                                        className="btn btn-warning"
+                                        onClick={avanzarAEnviado}
+                                    >
+                                        Marcar como Enviado
+                                    </button>
+                                )}
+                                {puedeAvanzarA('Finalizado') && (
+                                    <button
+                                        type="button"
+                                        className="btn btn-success"
+                                        onClick={avanzarAFinalizado}
+                                    >
+                                        Finalizar Reparación
+                                    </button>
+                                )}
+                            </div>
+                        )}
+                    </div>
                 </div>
-            </div>
             )}
 
             {seccionesVisibles.fotos && (
@@ -1342,98 +1350,98 @@ export default function ReparacionComponent(): React.ReactElement | null {
                     <div className="card-body">
                         <div className="d-flex w-100 justify-content-between align-items-center">
                             <h5 className="card-title bluemcdron">FOTOS</h5>
-                        <div className="d-flex justify-content-start mb-2">
-                            <label className="btn btn-outline-secondary bg-bluemcdron text-white">
-                                Subir Foto
-                                <input
-                                    type="file"
-                                    onChange={handleFotoChange}
-                                    style={{ display: "none" }}
-                                    accept="image/*" // Especifica que solo se aceptan imágenes
-                                />
-                            </label>
+                            <div className="d-flex justify-content-start mb-2">
+                                <label className="btn btn-outline-secondary bg-bluemcdron text-white">
+                                    Subir Foto
+                                    <input
+                                        type="file"
+                                        onChange={handleFotoChange}
+                                        style={{ display: "none" }}
+                                        accept="image/*" // Especifica que solo se aceptan imágenes
+                                    />
+                                </label>
+                            </div>
                         </div>
-                    </div>
-                    <div className="d-flex flex-wrap mt-3">
-                        {reparacion.data.urlsFotos?.map((url, idx) => (
+                        <div className="d-flex flex-wrap mt-3">
+                            {reparacion.data.urlsFotos?.map((url, idx) => (
+                                <div
+                                    key={idx}
+                                    style={{
+                                        width: "calc((100% - (2 * 12px)) / 3)",
+                                        margin: "4px",
+                                        backgroundColor: "#f1f1f1"
+                                    }}
+                                >
+                                    <div
+                                        style={{
+                                            height: "150px",
+                                            display: "flex",
+                                            justifyContent: "center",
+                                            alignItems: "center",
+                                            cursor: "pointer",
+                                        }}
+                                        onClick={() => setFotoSeleccionada(url)}
+                                    >
+                                        <img
+                                            src={url}
+                                            alt="Foto Reparación"
+                                            style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain" }}
+                                        />
+                                    </div>
+                                    {isAdmin && (
+                                        <div className="flex text-center my-2">
+                                            <a
+                                                target="_blank"
+                                                href={url}
+                                                download
+                                                className="btn btn-sm btn-success me-2 bi-cloud-download"
+                                            >
+                                            </a>
+                                            <a
+                                                className="btn btn-sm btn-danger bi bi-trash"
+                                                onClick={() => handleDeleteFoto(url)}
+                                            >
+                                            </a>
+                                        </div>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+                        {fotoSeleccionada && (
                             <div
-                                key={idx}
                                 style={{
-                                    width: "calc((100% - (2 * 12px)) / 3)",
-                                    margin: "4px",
-                                    backgroundColor: "#f1f1f1"
+                                    position: "fixed",
+                                    top: 0, left: 0,
+                                    width: "100%", height: "100%",
+                                    backgroundColor: "rgba(0,0,0,0.7)",
+                                    display: "flex", alignItems: "center", justifyContent: "center",
+                                    zIndex: 1000,
                                 }}
                             >
-                                <div
-                                    style={{
-                                        height: "150px",
-                                        display: "flex",
-                                        justifyContent: "center",
-                                        alignItems: "center",
-                                        cursor: "pointer",
-                                    }}
-                                    onClick={() => setFotoSeleccionada(url)}
-                                >
+                                <div style={{ position: "relative" }}>
+                                    <button
+                                        type="button"
+                                        style={{
+                                            position: "absolute",
+                                            top: 0,
+                                            right: 0,
+                                            margin: "8px"
+                                        }}
+                                        className="btn btn-sm btn-light"
+                                        onClick={() => setFotoSeleccionada(null)}
+                                    >
+                                        X
+                                    </button>
                                     <img
-                                        src={url}
-                                        alt="Foto Reparación"
-                                        style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain" }}
+                                        src={fotoSeleccionada}
+                                        alt="Foto Ampliada"
+                                        style={{ maxHeight: "80vh", maxWidth: "90vw", objectFit: "contain" }}
                                     />
                                 </div>
-                                {isAdmin && (
-                                    <div className="flex text-center my-2">
-                                        <a
-                                            target="_blank"
-                                            href={url}
-                                            download
-                                            className="btn btn-sm btn-success me-2 bi-cloud-download"
-                                        >
-                                        </a>
-                                        <a
-                                            className="btn btn-sm btn-danger bi bi-trash"
-                                            onClick={() => handleDeleteFoto(url)}
-                                        >
-                                        </a>
-                                    </div>
-                                )}
                             </div>
-                        ))}
+                        )}
                     </div>
-                    {fotoSeleccionada && (
-                        <div
-                            style={{
-                                position: "fixed",
-                                top: 0, left: 0,
-                                width: "100%", height: "100%",
-                                backgroundColor: "rgba(0,0,0,0.7)",
-                                display: "flex", alignItems: "center", justifyContent: "center",
-                                zIndex: 1000,
-                            }}
-                        >
-                            <div style={{ position: "relative" }}>
-                                <button
-                                    type="button"
-                                    style={{
-                                        position: "absolute",
-                                        top: 0,
-                                        right: 0,
-                                        margin: "8px"
-                                    }}
-                                    className="btn btn-sm btn-light"
-                                    onClick={() => setFotoSeleccionada(null)}
-                                >
-                                    X
-                                </button>
-                                <img
-                                    src={fotoSeleccionada}
-                                    alt="Foto Ampliada"
-                                    style={{ maxHeight: "80vh", maxWidth: "90vw", objectFit: "contain" }}
-                                />
-                            </div>
-                        </div>
-                    )}
                 </div>
-            </div>
             )}
 
             {seccionesVisibles.documentos && (
@@ -1441,67 +1449,67 @@ export default function ReparacionComponent(): React.ReactElement | null {
                     <div className="card-body">
                         <div className="d-flex w-100 justify-content-between align-items-center">
                             <h5 className="card-title bluemcdron">DOCUMENTOS</h5>
-                        <div className="d-flex justify-content-start mb-2">
-                            <label className="btn btn-outline-secondary bg-bluemcdron text-white">
-                                Subir Documento
-                                <input
-                                    type="file"
-                                    onChange={handleDocumentoChange}
-                                    style={{ display: "none" }}
-                                />
-                            </label>
+                            <div className="d-flex justify-content-start mb-2">
+                                <label className="btn btn-outline-secondary bg-bluemcdron text-white">
+                                    Subir Documento
+                                    <input
+                                        type="file"
+                                        onChange={handleDocumentoChange}
+                                        style={{ display: "none" }}
+                                    />
+                                </label>
+                            </div>
+                        </div>
+                        <div className="mt-3">
+                            {reparacion.data.urlsDocumentos?.length ? (
+                                <div className="list-group">
+                                    {reparacion.data.urlsDocumentos.map((url, idx) => {
+                                        // Decodificar caracteres especiales como %20
+                                        let fileName = decodeURIComponent(url);
+                                        // Extraer nombre del documento de la URL y decodificar
+                                        fileName = fileName.split('/').pop() || `Documento ${idx + 1}`;
+                                        // Eliminar los parámetros de consulta
+                                        fileName = fileName.split('?')[0];
+
+                                        return (
+                                            <div
+                                                key={idx}
+                                                className="list-group-item list-group-item-action d-flex justify-content-between align-items-center mb-2"
+                                            >
+                                                <div className="text-truncate" style={{ maxWidth: "70%" }}>
+                                                    <i className="bi bi-file-earmark-text me-2"></i>
+                                                    <span className="text-truncate">{fileName}</span>
+                                                </div>
+                                                <div>
+                                                    <a
+                                                        href={url}
+                                                        target="_blank"
+                                                        className="btn btn-sm btn-success me-3"
+                                                        download
+                                                    >
+                                                        <i className="bi bi-cloud-download"></i>
+                                                    </a>
+                                                    {isAdmin && (
+                                                        <button
+                                                            className="btn btn-sm btn-danger"
+                                                            onClick={() => handleDeleteDocumento(url)}
+                                                        >
+                                                            <i className="bi bi-trash"></i>
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            ) : (
+                                <div className="text-center text-muted">
+                                    <p>No hay documentos adjuntos</p>
+                                </div>
+                            )}
                         </div>
                     </div>
-                    <div className="mt-3">
-                        {reparacion.data.urlsDocumentos?.length ? (
-                            <div className="list-group">
-                                {reparacion.data.urlsDocumentos.map((url, idx) => {
-                                    // Decodificar caracteres especiales como %20
-                                    let fileName = decodeURIComponent(url);
-                                    // Extraer nombre del documento de la URL y decodificar
-                                    fileName = fileName.split('/').pop() || `Documento ${idx + 1}`;
-                                    // Eliminar los parámetros de consulta
-                                    fileName = fileName.split('?')[0];
-
-                                    return (
-                                        <div
-                                            key={idx}
-                                            className="list-group-item list-group-item-action d-flex justify-content-between align-items-center mb-2"
-                                        >
-                                            <div className="text-truncate" style={{ maxWidth: "70%" }}>
-                                                <i className="bi bi-file-earmark-text me-2"></i>
-                                                <span className="text-truncate">{fileName}</span>
-                                            </div>
-                                            <div>
-                                                <a
-                                                    href={url}
-                                                    target="_blank"
-                                                    className="btn btn-sm btn-success me-3"
-                                                    download
-                                                >
-                                                    <i className="bi bi-cloud-download"></i>
-                                                </a>
-                                                {isAdmin && (
-                                                    <button
-                                                        className="btn btn-sm btn-danger"
-                                                        onClick={() => handleDeleteDocumento(url)}
-                                                    >
-                                                        <i className="bi bi-trash"></i>
-                                                    </button>
-                                                )}
-                                            </div>
-                                        </div>
-                                    );
-                                })}
-                            </div>
-                        ) : (
-                            <div className="text-center text-muted">
-                                <p>No hay documentos adjuntos</p>
-                            </div>
-                        )}
-                    </div>
                 </div>
-            </div>
             )}
 
             {isAdmin ? // Sólo para administrador
