@@ -51,7 +51,7 @@ export function DataManagerComponent({ children }: DataManagerProps): React.Reac
                     console.log("Conexión al websocket activa");
                     getUsuarios();
                     getReparaciones();
-                    getMensajes();
+                    // getMensajes();
                     getRepuestos();
                     getModelosDrone();
                     getDrones();
@@ -146,7 +146,7 @@ export function DataManagerComponent({ children }: DataManagerProps): React.Reac
                     const usuariosSelect = usuarios.map(usuario => {
                         return {
                             value: usuario.id,
-                            label: usuario.data.EmailUsu,
+                            label: usuario.data.EmailUsu ?? usuario.data.NombreUsu,
                         }
                     });
                     dispatch(setUsuarios(usuarios));
