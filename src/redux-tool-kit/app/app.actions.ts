@@ -98,7 +98,12 @@ export const enviarDroneReparadoAsync = createAsyncThunk(
     async (reparacion: ReparacionType, { dispatch }) => {
         try {
             dispatch(isFetchingStart());
-            const montoTotal = reparacion.data.PresuDiRep ? `$${reparacion.data.PresuDiRep}` : `$${reparacion.data.PresuFiRep ? reparacion.data.PresuFiRep - (reparacion.data.PresuReRep ?? 0) : 0}`;
+            
+            // Cálculo correcto de los montos
+            const montoTotal = reparacion.data.PresuFiRep || 0;
+            const montoPagado = reparacion.data.PresuReRep || 0;
+            const montoRestante = montoTotal - montoPagado;
+            
             const body = {
                 cliente: reparacion.data.NombreUsu,
                 nro_reparacion: reparacion.id,
@@ -106,7 +111,9 @@ export const enviarDroneReparadoAsync = createAsyncThunk(
                 fecha_ingreso: new Date(Number(reparacion.data.FeRecRep)).toLocaleDateString(),
                 fecha_finalizacion: new Date().toLocaleDateString(),
                 trabajo_realizado: reparacion.data.DescripcionTecRep || "Sin descripción",
-                monto_total: montoTotal,
+                monto_total: `$${montoTotal}`,
+                monto_pagado: `$${montoPagado}`,
+                monto_restante: `$${montoRestante}`,
                 telefono: reparacion.data.TelefonoUsu,
                 email: reparacion.data.EmailUsu
             };
