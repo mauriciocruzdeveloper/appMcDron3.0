@@ -1,31 +1,31 @@
 /* eslint-disable react/jsx-no-target-blank */
 import React, { useEffect, useState } from "react";
-import { useHistory } from "../hooks/useHistory";
+import { useHistory } from "../../hooks/useHistory";
 import { useParams } from "react-router-dom";
-import { enviarSms, generarAutoDiagnostico } from "../utils/utils";
-import { estados } from '../datos/estados';
-import { obtenerEstadoSeguro, esEstadoLegacy, obtenerMensajeMigracion } from '../utils/estadosHelper';
-import { Estado } from "../types/estado";
-import { ReparacionType } from "../types/reparacion";
-import { enviarEmailVacio } from "../utils/sendEmails";
-import { useAppSelector } from "../redux-tool-kit/hooks/useAppSelector";
-import { useAppDispatch } from "../redux-tool-kit/hooks/useAppDispatch";
-import { useModal } from "./Modal/useModal";
-import { eliminarReparacionAsync, guardarReparacionAsync } from "../redux-tool-kit/reparacion/reparacion.actions";
-import { borrarFotoAsync, enviarReciboAsync, borrarDocumentoAsync, subirFotoYActualizarReparacionAsync, subirDocumentoYActualizarReparacionAsync } from "../redux-tool-kit/app/app.actions";
+import { enviarSms, generarAutoDiagnostico } from "../../utils/utils";
+import { estados } from '../../datos/estados';
+import { obtenerEstadoSeguro, esEstadoLegacy, obtenerMensajeMigracion } from '../../utils/estadosHelper';
+import { Estado } from "../../types/estado";
+import { ReparacionType } from "../../types/reparacion";
+import { enviarEmailVacio } from "../../utils/sendEmails";
+import { useAppSelector } from "../../redux-tool-kit/hooks/useAppSelector";
+import { useAppDispatch } from "../../redux-tool-kit/hooks/useAppDispatch";
+import { useModal } from "../Modal/useModal";
+import { eliminarReparacionAsync, guardarReparacionAsync } from "../../redux-tool-kit/reparacion/reparacion.actions";
+import { borrarFotoAsync, enviarReciboAsync, borrarDocumentoAsync, subirFotoYActualizarReparacionAsync, subirDocumentoYActualizarReparacionAsync } from "../../redux-tool-kit/app/app.actions";
 import { ChangeEvent } from "react";
-import { InputType } from "../types/types";
+import { InputType } from "../../types/types";
 import TextareaAutosize from "react-textarea-autosize";
-import { convertTimestampCORTO } from "../utils/utils";
+import { convertTimestampCORTO } from "../../utils/utils";
 import "bootstrap-icons/font/bootstrap-icons.css";
-import IntervencionesReparacion from './IntervencionesReparacion.component';
-import { selectUsuarioPorId } from "../redux-tool-kit/usuario/usuario.selectors";
+import IntervencionesReparacion from '../IntervencionesReparacion.component';
+import { selectUsuarioPorId } from "../../redux-tool-kit/usuario/usuario.selectors";
 import {
     selectReparacionById,
     selectIntervencionesDeReparacionActual
-} from "../redux-tool-kit/reparacion";
-import { selectDroneById, selectDronesByPropietario } from "../redux-tool-kit/drone/drone.selectors";
-import { selectModeloDronePorId } from "../redux-tool-kit/modeloDrone/modeloDrone.selectors";
+} from "../../redux-tool-kit/reparacion";
+import { selectDroneById, selectDronesByPropietario } from "../../redux-tool-kit/drone/drone.selectors";
+import { selectModeloDronePorId } from "../../redux-tool-kit/modeloDrone/modeloDrone.selectors";
 
 interface ParamTypes extends Record<string, string | undefined> {
     id: string;
@@ -194,11 +194,11 @@ export default function ReparacionComponent(): React.ReactElement | null {
             case "Consulta":
                 campofecha = "FeConRep";
                 break;
-            case "Reparado":
-                campofecha = "FeFinRep";
-                break;
             case "Recibido":
                 campofecha = "FeRecRep";
+                break;
+            case "Reparado":
+                campofecha = "FeFinRep";
                 break;
             case "Entregado":
                 campofecha = "FeEntRep";
@@ -226,6 +226,26 @@ export default function ReparacionComponent(): React.ReactElement | null {
 
         setReparacion(newReparacion);
     }
+
+    // Funciones específicas para avanzar al siguiente estado
+    const avanzarARespondido = () => setEstado(estados.Respondido);
+    const avanzarATransito = () => setEstado(estados.Transito);
+    const avanzarARecibido = () => setEstado(estados.Recibido);
+    const avanzarARevisado = () => setEstado(estados.Revisado);
+    const avanzarAPresupuestado = () => setEstado(estados.Presupuestado);
+    const avanzarAAceptado = () => setEstado(estados.Aceptado);
+    const avanzarAReparado = () => setEstado(estados.Reparado);
+    const avanzarACobrado = () => setEstado(estados.Cobrado);
+    const avanzarAEnviado = () => setEstado(estados.Enviado);
+    const avanzarAFinalizado = () => setEstado(estados.Finalizado);
+
+    // Función para verificar si se puede avanzar a un estado
+    const puedeAvanzarA = (nombreEstado: string): boolean => {
+        if (!isAdmin) return false;
+        const estadoActual = obtenerEstadoSeguro(reparacion.data.EstadoRep);
+        const estadoDestino = estados[nombreEstado];
+        return estadoDestino.etapa > estadoActual.etapa;
+    };
 
     const confirmaGuardarReparacion = async () => {
         if (reparacion.data.EstadoRep === 'Recibido' && !reparacion.data.DiagnosticoRep) {
@@ -497,6 +517,99 @@ export default function ReparacionComponent(): React.ReactElement | null {
         return precio.toLocaleString('es-AR', { style: 'currency', currency: 'ARS' });
     };
 
+    // Componente de resumen de progreso
+    const ResumenProgreso = () => {
+        const estadosOrdenados = [
+            'Consulta', 'Respondido', 'Transito', 'Recibido', 'Revisado', 
+            'Presupuestado', 'Aceptado', 'Reparado', 'Cobrado', 'Enviado', 'Finalizado'
+        ];
+
+        const estadoActual = obtenerEstadoSeguro(reparacion.data.EstadoRep);
+        const etapaActual = estadoActual.etapa;
+
+        return (
+            <div className="card mb-3">
+                <div className="card-body">
+                    <h5 className="card-title bluemcdron">PROGRESO DE LA REPARACIÓN</h5>
+                    <div className="row">
+                        {estadosOrdenados.map((nombreEstado) => {
+                            const estado = estados[nombreEstado];
+                            const completado = estado.etapa <= etapaActual && !esEstadoLegacy(reparacion.data.EstadoRep);
+                            const esActual = estado.nombre === reparacion.data.EstadoRep;
+                            
+                            return (
+                                <div key={nombreEstado} className="col-6 col-md-4 col-lg-3 mb-2">
+                                    <div 
+                                        className={`d-flex align-items-center p-2 rounded ${
+                                            esActual ? 'border border-dark' : ''
+                                        }`}
+                                        style={{
+                                            backgroundColor: completado || esActual ? estado.color : '#e9ecef',
+                                            color: completado || esActual ? 'white' : '#6c757d',
+                                            fontSize: '0.85rem'
+                                        }}
+                                    >
+                                        <div className="me-2">
+                                            {completado && !esActual ? '✓' : esActual ? '●' : '○'}
+                                        </div>
+                                        <div className="text-truncate">
+                                            {estado.nombre}
+                                        </div>
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
+                    {esEstadoLegacy(reparacion.data.EstadoRep) && (
+                        <div className="mt-2">
+                            <small className="text-muted">
+                                * Estado legacy detectado. El progreso no se puede calcular automáticamente.
+                            </small>
+                        </div>
+                    )}
+                </div>
+            </div>
+        );
+    };
+
+    // Función para determinar qué secciones mostrar según el estado
+    const obtenerSeccionesAMostrar = () => {
+        const estadoActual = obtenerEstadoSeguro(reparacion.data.EstadoRep);
+        const etapa = estadoActual.etapa;
+        
+        // Si es admin, mostrar todo
+        if (isAdmin) {
+            return {
+                consulta: true,
+                recepcion: true,
+                revision: true,
+                presupuesto: true,
+                repuestos: true,
+                reparar: true,
+                entrega: true,
+                fotos: true,
+                documentos: true
+            };
+        }
+        
+        // Para no-admin, mostrar según el estado
+        const secciones = {
+            consulta: etapa >= 1, // Siempre visible desde Consulta
+            recepcion: etapa >= 3, // Visible desde Transito para poder marcar como Recibido
+            revision: etapa >= 4, // Visible desde Recibido
+            presupuesto: etapa >= 5, // Visible desde Revisado
+            repuestos: etapa >= 7, // Visible desde Aceptado
+            reparar: etapa >= 7, // Visible desde Aceptado
+            entrega: etapa >= 10, // Visible desde Reparado
+            fotos: etapa >= 1, // Siempre visible
+            documentos: etapa >= 1 // Siempre visible
+        };
+        
+        return secciones;
+    };
+
+    const seccionesVisibles = obtenerSeccionesAMostrar();
+
     // UI RENDER
     return (
         <div
@@ -535,34 +648,9 @@ export default function ReparacionComponent(): React.ReactElement | null {
                 </div>
             </div>
 
-            <div className="card mb-3">
-                <div className="card-body">
-                    <h5 className="card-title bluemcdron">ESTADO DE LA REPARACIÓN</h5>
-                    <div className="text-center">
-                        {Object.values(estados)
-                            .filter(estado => !esEstadoLegacy(estado.nombre) && estado.nombre !== "Indefinido")
-                            .map(estado =>
-                            <button
-                                key={estado.nombre}
-                                className="m-2 btn btn-outline-secondary overflow-hidden"
-                                type="button"
-                                style={{
-                                    backgroundColor:
-                                        estado.nombre == reparacion?.data?.EstadoRep ?
-                                            estado.color :
-                                            "#CCCCCC"
-                                    ,
-                                    width: "90px",
-                                    height: "30px"
-                                }}
-                                onClick={() => setEstado(estado)} // PARA REDUX, Y QUIZÁS PARA USESTATE
-                            >
-                                {estado.nombre}
-                            </button>
-                        )}
-                    </div>
-                </div>
-            </div>
+            {/* Resumen de progreso */}
+            <ResumenProgreso />
+
             {isAdmin ? // Sólo para administrador
                 <div className="card mb-3">
                     <div className="card-body">
@@ -610,18 +698,19 @@ export default function ReparacionComponent(): React.ReactElement | null {
                 </div>
                 : null}
 
-            <div className="card mb-3">
-                <div className="card-body">
-                    <div className="d-flex w-100 justify-content-between align-items-center">
-                        <h5 className="card-title bluemcdron">CONSULTA</h5>
-                        <button
-                            type="button"
-                            className="btn btn-outline-secondary bg-bluemcdron text-white"
-                            onClick={handleGoToUser}
-                        >
-                            Ir al Cliente
-                        </button>
-                    </div>
+            {seccionesVisibles.consulta && (
+                <div className="card mb-3">
+                    <div className="card-body">
+                        <div className="d-flex w-100 justify-content-between align-items-center">
+                            <h5 className="card-title bluemcdron">CONSULTA</h5>
+                            <button
+                                type="button"
+                                className="btn btn-outline-secondary bg-bluemcdron text-white"
+                                onClick={handleGoToUser}
+                            >
+                                Ir al Cliente
+                            </button>
+                        </div>
                     <div>
                         <label className="form-label">Fecha de Cosulta</label>
                         <input
@@ -749,40 +838,101 @@ export default function ReparacionComponent(): React.ReactElement | null {
                             value={reparacion?.data?.DiagnosticoRep || ""}
                         />
                     </div>
+                    
+                    {/* Botones de avance de estado para CONSULTA */}
+                    {isAdmin && (
+                        <div className="d-flex gap-2 mt-3">
+                            {puedeAvanzarA('Respondido') && (
+                                <button
+                                    type="button"
+                                    className="btn btn-success"
+                                    onClick={avanzarARespondido}
+                                >
+                                    Marcar como Respondido
+                                </button>
+                            )}
+                            {puedeAvanzarA('Transito') && (
+                                <button
+                                    type="button"
+                                    className="btn btn-warning"
+                                    onClick={avanzarATransito}
+                                >
+                                    Marcar en Tránsito
+                                </button>
+                            )}
+                        </div>
+                    )}
                 </div>
             </div>
+            )}
 
             {/* Resto de secciones del formulario */}
-            <div className="card mb-3">
-                <div className="card-body">
-                    <h5 className="card-title bluemcdron">RECEPCIÓN</h5>
-                    <div>
-                        <label className="form-label">Fecha de Recepción</label>
-                        <div className="d-flex w-100 justify-content-between">
-
-                            <input
-                                onChange={handleOnChange}
-                                type="date"
-                                className="form-control"
-                                id="FeRecRep"
-                                value={convertTimestampCORTO(reparacion?.data?.FeRecRep)}
-                                disabled={!isAdmin}
-                            />
-                            <button
-                                type="submit"
-                                className="btn btn-outline-secondary bg-bluemcdron text-white"
-                                onClick={handleSendRecibo}
-                            >
-                                <i className="bi bi-envelope"></i>
-                            </button>
+            {seccionesVisibles.recepcion && (
+                <div className="card mb-3">
+                    <div className="card-body">
+                        <h5 className="card-title bluemcdron">RECEPCIÓN</h5>
+                        
+                        {/* Mostrar información del estado actual si no está recibido */}
+                        {reparacion.data.EstadoRep !== 'Recibido' && (
+                            <div className="alert alert-info mb-3">
+                                <strong>Estado actual:</strong> {reparacion.data.EstadoRep}
+                                <br />
+                                <small>Una vez que el equipo llegue al taller, márcalo como recibido.</small>
+                            </div>
+                        )}
+                        
+                        <div>
+                            <label className="form-label">Fecha de Recepción</label>
+                            <div className="d-flex w-100 justify-content-between">
+                                <input
+                                    onChange={handleOnChange}
+                                    type="date"
+                                    className="form-control"
+                                    id="FeRecRep"
+                                    value={convertTimestampCORTO(reparacion?.data?.FeRecRep)}
+                                    disabled={!isAdmin}
+                                />
+                                <button
+                                    type="submit"
+                                    className="btn btn-outline-secondary bg-bluemcdron text-white"
+                                    onClick={handleSendRecibo}
+                                    disabled={!reparacion?.data?.FeRecRep}
+                                    title={!reparacion?.data?.FeRecRep ? "Primero marque como recibido" : "Enviar recibo por email"}
+                                >
+                                    <i className="bi bi-envelope"></i>
+                                </button>
+                            </div>
                         </div>
+                        
+                        {/* Botones de avance de estado para RECEPCIÓN */}
+                        {isAdmin && (
+                            <div className="mt-3">
+                                {puedeAvanzarA('Recibido') && (
+                                    <button
+                                        type="button"
+                                        className="btn btn-primary"
+                                        onClick={avanzarARecibido}
+                                    >
+                                        <i className="bi bi-check-circle me-2"></i>
+                                        Marcar como Recibido
+                                    </button>
+                                )}
+                                {reparacion.data.EstadoRep === 'Recibido' && (
+                                    <div className="alert alert-success mt-2 mb-0">
+                                        <i className="bi bi-check-circle-fill me-2"></i>
+                                        Equipo recibido correctamente
+                                    </div>
+                                )}
+                            </div>
+                        )}
                     </div>
                 </div>
-            </div>
+            )}
 
-            <div className="card mb-3">
-                <div className="card-body">
-                    <h5 className="card-title bluemcdron">REVISIÓN</h5>
+            {seccionesVisibles.revision && (
+                <div className="card mb-3">
+                    <div className="card-body">
+                        <h5 className="card-title bluemcdron">REVISIÓN</h5>
                     <div>
                         <label className="form-label">Número de Serie</label>
                         <input
@@ -805,12 +955,27 @@ export default function ReparacionComponent(): React.ReactElement | null {
                             disabled={!isAdmin}
                         />
                     </div>
+                    
+                    {/* Botones de avance de estado para REVISIÓN */}
+                    {isAdmin && puedeAvanzarA('Revisado') && (
+                        <div className="mt-3">
+                            <button
+                                type="button"
+                                className="btn btn-info"
+                                onClick={avanzarARevisado}
+                            >
+                                Marcar como Revisado
+                            </button>
+                        </div>
+                    )}
                 </div>
             </div>
+            )}
 
-            <div className="card mb-3">
-                <div className="card-body">
-                    <h5 className="card-title bluemcdron">PRESUPUESTO</h5>
+            {seccionesVisibles.presupuesto && (
+                <div className="card mb-3">
+                    <div className="card-body">
+                        <h5 className="card-title bluemcdron">PRESUPUESTO</h5>
                     <h6 className="card-title bluemcdron">INTERVENCIONES</h6>
                     <IntervencionesReparacion
                         reparacionId={reparacion.id}
@@ -870,10 +1035,35 @@ export default function ReparacionComponent(): React.ReactElement | null {
                             disabled={!isAdmin}
                         />
                     </div>
+                    
+                    {/* Botones de avance de estado para PRESUPUESTO */}
+                    {isAdmin && (
+                        <div className="d-flex gap-2 mt-3">
+                            {puedeAvanzarA('Presupuestado') && (
+                                <button
+                                    type="button"
+                                    className="btn btn-warning"
+                                    onClick={avanzarAPresupuestado}
+                                >
+                                    Marcar como Presupuestado
+                                </button>
+                            )}
+                            {puedeAvanzarA('Aceptado') && (
+                                <button
+                                    type="button"
+                                    className="btn btn-success"
+                                    onClick={avanzarAAceptado}
+                                >
+                                    Presupuesto Aceptado
+                                </button>
+                            )}
+                        </div>
+                    )}
                 </div>
             </div>
+            )}
 
-            {isAdmin ? // Sólo para administrador
+            {(isAdmin && seccionesVisibles.repuestos) ? // Sólo para administrador
                 <div className="card mb-3">
                     <div className="card-body">
                         <h5 className="card-title bluemcdron">REPUESTOS</h5>
@@ -892,9 +1082,10 @@ export default function ReparacionComponent(): React.ReactElement | null {
                 : null
             }
 
-            <div className="card mb-3">
-                <div className="card-body">
-                    <h5 className="card-title bluemcdron">REPARAR</h5>
+            {seccionesVisibles.reparar && (
+                <div className="card mb-3">
+                    <div className="card-body">
+                        <h5 className="card-title bluemcdron">REPARAR</h5>
                     <div>
                         <label className="form-label">Informe de Reparación o Diagnóstico</label>
                         <TextareaAutosize
@@ -917,12 +1108,27 @@ export default function ReparacionComponent(): React.ReactElement | null {
                             disabled={!isAdmin}
                         />
                     </div>
+                    
+                    {/* Botones de avance de estado para REPARAR */}
+                    {isAdmin && puedeAvanzarA('Reparado') && (
+                        <div className="mt-3">
+                            <button
+                                type="button"
+                                className="btn btn-success"
+                                onClick={avanzarAReparado}
+                            >
+                                Marcar como Reparado
+                            </button>
+                        </div>
+                    )}
                 </div>
             </div>
+            )}
 
-            <div className="card mb-3">
-                <div className="card-body">
-                    <h5 className="card-title bluemcdron">ENTREGA</h5>
+            {seccionesVisibles.entrega && (
+                <div className="card mb-3">
+                    <div className="card-body">
+                        <h5 className="card-title bluemcdron">ENTREGA</h5>
                     <div>
                         <label className="form-label">Fecha Entrega</label>
                         <input
@@ -956,13 +1162,48 @@ export default function ReparacionComponent(): React.ReactElement | null {
                             disabled={!isAdmin}
                         />
                     </div>
+                    
+                    {/* Botones de avance de estado para ENTREGA */}
+                    {isAdmin && (
+                        <div className="d-flex gap-2 mt-3">
+                            {puedeAvanzarA('Cobrado') && (
+                                <button
+                                    type="button"
+                                    className="btn btn-info"
+                                    onClick={avanzarACobrado}
+                                >
+                                    Marcar como Cobrado
+                                </button>
+                            )}
+                            {puedeAvanzarA('Enviado') && (
+                                <button
+                                    type="button"
+                                    className="btn btn-warning"
+                                    onClick={avanzarAEnviado}
+                                >
+                                    Marcar como Enviado
+                                </button>
+                            )}
+                            {puedeAvanzarA('Finalizado') && (
+                                <button
+                                    type="button"
+                                    className="btn btn-success"
+                                    onClick={avanzarAFinalizado}
+                                >
+                                    Finalizar Reparación
+                                </button>
+                            )}
+                        </div>
+                    )}
                 </div>
             </div>
+            )}
 
-            <div className="card mb-3">
-                <div className="card-body">
-                    <div className="d-flex w-100 justify-content-between align-items-center">
-                        <h5 className="card-title bluemcdron">FOTOS</h5>
+            {seccionesVisibles.fotos && (
+                <div className="card mb-3">
+                    <div className="card-body">
+                        <div className="d-flex w-100 justify-content-between align-items-center">
+                            <h5 className="card-title bluemcdron">FOTOS</h5>
                         <div className="d-flex justify-content-start mb-2">
                             <label className="btn btn-outline-secondary bg-bluemcdron text-white">
                                 Subir Foto
@@ -1055,11 +1296,13 @@ export default function ReparacionComponent(): React.ReactElement | null {
                     )}
                 </div>
             </div>
+            )}
 
-            <div className="card mb-3">
-                <div className="card-body">
-                    <div className="d-flex w-100 justify-content-between align-items-center">
-                        <h5 className="card-title bluemcdron">DOCUMENTOS</h5>
+            {seccionesVisibles.documentos && (
+                <div className="card mb-3">
+                    <div className="card-body">
+                        <div className="d-flex w-100 justify-content-between align-items-center">
+                            <h5 className="card-title bluemcdron">DOCUMENTOS</h5>
                         <div className="d-flex justify-content-start mb-2">
                             <label className="btn btn-outline-secondary bg-bluemcdron text-white">
                                 Subir Documento
@@ -1121,6 +1364,7 @@ export default function ReparacionComponent(): React.ReactElement | null {
                     </div>
                 </div>
             </div>
+            )}
 
             {isAdmin ? // Sólo para administrador
                 <div className="text-center">
