@@ -98,14 +98,15 @@ export const enviarDroneReparadoAsync = createAsyncThunk(
     async (reparacion: ReparacionType, { dispatch }) => {
         try {
             dispatch(isFetchingStart());
+            const montoTotal = reparacion.data.PresuDiRep ? `$${reparacion.data.PresuDiRep}` : `$${reparacion.data.PresuFiRep ? reparacion.data.PresuFiRep - (reparacion.data.PresuReRep ?? 0) : 0}`;
             const body = {
                 cliente: reparacion.data.NombreUsu,
                 nro_reparacion: reparacion.id,
                 equipo: reparacion.data.ModeloDroneNameRep,
                 fecha_ingreso: new Date(Number(reparacion.data.FeRecRep)).toLocaleDateString(),
                 fecha_finalizacion: new Date().toLocaleDateString(),
-                trabajo_realizado: reparacion.data.DescripcionTecRep || "Diagnóstico realizado - presupuesto rechazado",
-                monto_total: reparacion.data.PresuDiRep ? `$${reparacion.data.PresuDiRep}` : "Ver diagnóstico",
+                trabajo_realizado: reparacion.data.DescripcionTecRep || "Sin descripción",
+                monto_total: montoTotal,
                 telefono: reparacion.data.TelefonoUsu,
                 email: reparacion.data.EmailUsu
             };
