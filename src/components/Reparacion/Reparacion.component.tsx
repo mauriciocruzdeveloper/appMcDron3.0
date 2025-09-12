@@ -134,6 +134,70 @@ export default function ReparacionComponent(): React.ReactElement | null {
         }
     }, [totalIntervenciones]);
 
+    // useEffect para scroll automático según el estado
+    useEffect(() => {
+        if (!reparacion || isNew) return;
+
+        const scrollToSection = () => {
+            const estadoActual = obtenerEstadoSeguro(reparacion.data.EstadoRep);
+            let sectionId = '';
+
+            // Determinar a qué sección hacer scroll según el estado
+            switch (estadoActual.nombre) {
+                case 'Consulta':
+                case 'Respondido':
+                    sectionId = 'seccion-consulta';
+                    break;
+                case 'Transito':
+                case 'Recibido':
+                    sectionId = 'seccion-recepcion';
+                    break;
+                case 'Revisado':
+                    sectionId = 'seccion-revision';
+                    break;
+                case 'Presupuestado':
+                case 'Aceptado':
+                    sectionId = 'seccion-presupuesto';
+                    break;
+                case 'Reparado':
+                    sectionId = 'seccion-reparar';
+                    break;
+                case 'Cobrado':
+                case 'Enviado':
+                case 'Finalizado':
+                    sectionId = 'seccion-entrega';
+                    break;
+                // Estados legacy
+                case 'Reparar':
+                case 'Repuestos':
+                    sectionId = 'seccion-reparar';
+                    break;
+                case 'Entregado':
+                    sectionId = 'seccion-entrega';
+                    break;
+                default:
+                    sectionId = 'seccion-consulta';
+                    break;
+            }
+
+            // Hacer scroll suave a la sección con offset para compensar el NavMcDron
+            setTimeout(() => {
+                const element = document.getElementById(sectionId);
+                if (element) {
+                    const navHeight = 80; // Altura aproximada del NavMcDron + padding
+                    const elementPosition = element.offsetTop - navHeight;
+                    
+                    window.scrollTo({
+                        top: elementPosition,
+                        behavior: 'smooth'
+                    });
+                }
+            }, 100); // Pequeño delay para asegurar que el DOM esté renderizado
+        };
+
+        scrollToSection();
+    }, [reparacion?.data.EstadoRep, isNew]);
+
     if (!reparacion) return null;
 
     const changeInputRep = (field: string, value: string) => {
@@ -173,7 +237,7 @@ export default function ReparacionComponent(): React.ReactElement | null {
         } : prevReparacion);
     }
 
-    const setEstado = (estado: Estado) => {
+    const setEstado = async (estado: Estado) => {
         if (!reparacion || !reparacionOriginal) return;
 
         const estadoActual = obtenerEstadoSeguro(reparacionOriginal.data.EstadoRep);
@@ -224,7 +288,43 @@ export default function ReparacionComponent(): React.ReactElement | null {
             };
         }
 
+        // Generar diagnóstico automático si es necesario
+        if (newReparacion.data.EstadoRep === 'Recibido' && !newReparacion.data.DiagnosticoRep) {
+            newReparacion.data.DiagnosticoRep = await dispatch(generarAutoDiagnostico(newReparacion));
+        }
+
+        // Actualizar estado local primero
         setReparacion(newReparacion);
+
+        // Guardar automáticamente en la base de datos
+        try {
+            const response = await dispatch(guardarReparacionAsync(newReparacion));
+            
+            if (response.meta.requestStatus === 'fulfilled') {
+                setReparacionOriginal(newReparacion);
+                openModal({
+                    mensaje: `Estado cambiado a "${estado.nombre}" y guardado correctamente.`,
+                    tipo: "success",
+                    titulo: "Cambio de Estado",
+                });
+            } else {
+                // Si falla el guardado, revertir el estado local
+                setReparacion(reparacion);
+                openModal({
+                    mensaje: "Error al guardar el cambio de estado.",
+                    tipo: "danger",
+                    titulo: "Error",
+                });
+            }
+        } catch (error) {
+            // Si hay error, revertir el estado local
+            setReparacion(reparacion);
+            openModal({
+                mensaje: "Error al guardar el cambio de estado.",
+                tipo: "danger",
+                titulo: "Error",
+            });
+        }
     }
 
     // Funciones específicas para avanzar al siguiente estado
@@ -699,7 +799,7 @@ export default function ReparacionComponent(): React.ReactElement | null {
                 : null}
 
             {seccionesVisibles.consulta && (
-                <div className="card mb-3">
+                <div className="card mb-3" id="seccion-consulta">
                     <div className="card-body">
                         <div className="d-flex w-100 justify-content-between align-items-center">
                             <h5 className="card-title bluemcdron">CONSULTA</h5>
@@ -868,7 +968,7 @@ export default function ReparacionComponent(): React.ReactElement | null {
 
             {/* Resto de secciones del formulario */}
             {seccionesVisibles.recepcion && (
-                <div className="card mb-3">
+                <div className="card mb-3" id="seccion-recepcion">
                     <div className="card-body">
                         <h5 className="card-title bluemcdron">RECEPCIÓN</h5>
                         
@@ -930,7 +1030,7 @@ export default function ReparacionComponent(): React.ReactElement | null {
             )}
 
             {seccionesVisibles.revision && (
-                <div className="card mb-3">
+                <div className="card mb-3" id="seccion-revision">
                     <div className="card-body">
                         <h5 className="card-title bluemcdron">REVISIÓN</h5>
                     <div>
@@ -973,7 +1073,7 @@ export default function ReparacionComponent(): React.ReactElement | null {
             )}
 
             {seccionesVisibles.presupuesto && (
-                <div className="card mb-3">
+                <div className="card mb-3" id="seccion-presupuesto">
                     <div className="card-body">
                         <h5 className="card-title bluemcdron">PRESUPUESTO</h5>
                     <h6 className="card-title bluemcdron">INTERVENCIONES</h6>
@@ -1064,7 +1164,7 @@ export default function ReparacionComponent(): React.ReactElement | null {
             )}
 
             {(isAdmin && seccionesVisibles.repuestos) ? // Sólo para administrador
-                <div className="card mb-3">
+                <div className="card mb-3" id="seccion-repuestos">
                     <div className="card-body">
                         <h5 className="card-title bluemcdron">REPUESTOS</h5>
                         <div>
@@ -1083,7 +1183,7 @@ export default function ReparacionComponent(): React.ReactElement | null {
             }
 
             {seccionesVisibles.reparar && (
-                <div className="card mb-3">
+                <div className="card mb-3" id="seccion-reparar">
                     <div className="card-body">
                         <h5 className="card-title bluemcdron">REPARAR</h5>
                     <div>
@@ -1126,7 +1226,7 @@ export default function ReparacionComponent(): React.ReactElement | null {
             )}
 
             {seccionesVisibles.entrega && (
-                <div className="card mb-3">
+                <div className="card mb-3" id="seccion-entrega">
                     <div className="card-body">
                         <h5 className="card-title bluemcdron">ENTREGA</h5>
                     <div>

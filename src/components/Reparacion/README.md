@@ -172,14 +172,17 @@ Estos estados se mantienen por retrocompatibilidad pero se recomienda migrarlos:
 ### Reglas de Negocio
 
 1. **Progresión Lineal**: Solo se puede avanzar al siguiente estado en la secuencia
-2. **Campos Automáticos**: Algunos campos se completan automáticamente:
+2. **Guardado Automático**: Al cambiar de estado usando los botones, la reparación se guarda automáticamente
+3. **Campos Automáticos**: Algunos campos se completan automáticamente:
    - Fechas se setean al avanzar estados
    - Modelo de drone se obtiene del drone seleccionado
    - Precio final se calcula desde intervenciones
-3. **Validaciones**: 
+   - Diagnóstico se genera automáticamente al marcar como "Recibido"
+4. **Validaciones**: 
    - Estado "Recibido" requiere diagnóstico antes de guardar
    - No se puede retroceder a estados anteriores
-4. **Visibilidad Progresiva**: Las secciones aparecen según el estado actual
+5. **Visibilidad Progresiva**: Las secciones aparecen según el estado actual
+6. **Feedback Visual**: Se muestran notificaciones de éxito o error al cambiar estados
 
 ### Integraciones
 
@@ -218,6 +221,32 @@ Objeto que define las propiedades de cada estado (nombre, etapa, color, etc.).
 - Lazy loading de imágenes
 - Cálculos automáticos memoizados
 - Validación en tiempo real
+- **Scroll automático**: El componente se posiciona automáticamente en la sección correspondiente al estado actual de la reparación
+
+## Funcionalidades de UX
+
+### Scroll Automático
+Cuando se carga una reparación existente, el componente automáticamente hace scroll a la sección más relevante según el estado actual:
+
+- **Consulta/Respondido** → Sección CONSULTA
+- **Transito/Recibido** → Sección RECEPCIÓN  
+- **Revisado** → Sección REVISIÓN
+- **Presupuestado/Aceptado** → Sección PRESUPUESTO
+- **Reparado** → Sección REPARAR
+- **Cobrado/Enviado/Finalizado** → Sección ENTREGA
+- **Estados Legacy** → Sección correspondiente según migración recomendada
+
+El scroll es suave y incluye un offset de 80px para compensar la altura del NavMcDron y evitar que la navegación tape el contenido. Se ejecuta con un pequeño delay para asegurar que el DOM esté completamente renderizado.
+
+### Cambio de Estado Automático
+Los botones de cambio de estado en cada sección realizan las siguientes acciones automáticamente:
+
+1. **Actualización del Estado**: Cambia el estado de la reparación
+2. **Seteo de Fechas**: Asigna la fecha actual a campos relevantes (recepción, finalización, etc.)
+3. **Generación de Diagnóstico**: Si se marca como "Recibido" y no hay diagnóstico, se genera automáticamente
+4. **Guardado en Base de Datos**: Persiste todos los cambios inmediatamente
+5. **Feedback Visual**: Muestra notificación de éxito o error
+6. **Manejo de Errores**: Revierte cambios locales si falla el guardado
 
 ## Mantenimiento
 
