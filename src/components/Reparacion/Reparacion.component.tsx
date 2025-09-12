@@ -15,7 +15,7 @@ import { eliminarReparacionAsync, guardarReparacionAsync } from "../../redux-too
 import {
     borrarFotoAsync,
     enviarReciboAsync,
-    // enviarFinalizacionAsync,
+    enviarDroneReparadoAsync,
     borrarDocumentoAsync,
     subirFotoYActualizarReparacionAsync,
     subirDocumentoYActualizarReparacionAsync,
@@ -311,30 +311,6 @@ export default function ReparacionComponent(): React.ReactElement | null {
 
             if (response.meta.requestStatus === 'fulfilled') {
                 setReparacionOriginal(newReparacion);
-
-                // // Si el estado es "Rechazado", enviar email de finalización
-                // if (newReparacion.data.EstadoRep === 'Rechazado') {
-                //     try {
-                //         await dispatch(enviarFinalizacionAsync(newReparacion));
-                //         openModal({
-                //             mensaje: `Estado cambiado a "${estado.nombre}", guardado correctamente y email de finalización enviado.`,
-                //             tipo: "success",
-                //             titulo: "Cambio de Estado",
-                //         });
-                //     } catch (emailError) {
-                //         openModal({
-                //             mensaje: `Estado cambiado a "${estado.nombre}" y guardado correctamente, pero hubo un error al enviar el email.`,
-                //             tipo: "warning",
-                //             titulo: "Cambio de Estado",
-                //         });
-                //     }
-                // } else {
-                //     openModal({
-                //         mensaje: `Estado cambiado a "${estado.nombre}" y guardado correctamente.`,
-                //         tipo: "success",
-                //         titulo: "Cambio de Estado",
-                //     });
-                // }
             } else {
                 // Si falla el guardado, revertir el estado local
                 setReparacion(reparacion);
@@ -358,12 +334,68 @@ export default function ReparacionComponent(): React.ReactElement | null {
     // Funciones específicas para avanzar al siguiente estado
     const avanzarARespondido = () => setEstado(estados.Respondido);
     const avanzarATransito = () => setEstado(estados.Transito);
-    const avanzarARecibido = () => setEstado(estados.Recibido);
+    const avanzarARecibido = async () => {
+        await setEstado(estados.Recibido);
+        
+        // Enviar email de recibo automáticamente
+        if (reparacion) {
+            try {
+                const response = await dispatch(enviarReciboAsync(reparacion));
+                if (response.meta.requestStatus === 'fulfilled') {
+                    openModal({
+                        mensaje: "Drone marcado como recibido y recibo enviado por email correctamente.",
+                        tipo: "success",
+                        titulo: "Drone Recibido",
+                    });
+                } else {
+                    openModal({
+                        mensaje: "Drone marcado como recibido, pero hubo un error al enviar el recibo.",
+                        tipo: "warning",
+                        titulo: "Drone Recibido",
+                    });
+                }
+            } catch (error) {
+                openModal({
+                    mensaje: "Drone marcado como recibido, pero hubo un error al enviar el recibo.",
+                    tipo: "warning",
+                    titulo: "Drone Recibido",
+                });
+            }
+        }
+    };
     const avanzarARevisado = () => setEstado(estados.Revisado);
     const avanzarAPresupuestado = () => setEstado(estados.Presupuestado);
     const avanzarAAceptado = () => setEstado(estados.Aceptado);
     const avanzarARechazado = () => setEstado(estados.Rechazado);
-    const avanzarAReparado = () => setEstado(estados.Reparado);
+    const avanzarAReparado = async () => {
+        await setEstado(estados.Reparado);
+        
+        // Enviar email de notificación de drone reparado
+        if (reparacion) {
+            try {
+                const response = await dispatch(enviarDroneReparadoAsync(reparacion));
+                if (response.meta.requestStatus === 'fulfilled') {
+                    openModal({
+                        mensaje: "Drone marcado como reparado y email enviado correctamente.",
+                        tipo: "success",
+                        titulo: "Drone Reparado",
+                    });
+                } else {
+                    openModal({
+                        mensaje: "Drone marcado como reparado, pero hubo un error al enviar el email.",
+                        tipo: "warning",
+                        titulo: "Drone Reparado",
+                    });
+                }
+            } catch (error) {
+                openModal({
+                    mensaje: "Drone marcado como reparado, pero hubo un error al enviar el email.",
+                    tipo: "warning",
+                    titulo: "Drone Reparado",
+                });
+            }
+        }
+    };
     const avanzarACobrado = () => setEstado(estados.Cobrado);
     const avanzarAEnviado = () => setEstado(estados.Enviado);
     const avanzarAFinalizado = () => setEstado(estados.Finalizado);

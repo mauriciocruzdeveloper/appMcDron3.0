@@ -93,7 +93,7 @@ export const enviarReciboAsync = createAsyncThunk(
 );
 
 // ENVIAR EMAIL DE FINALIZACIÓN
-export const enviarFinalizacionAsync = createAsyncThunk(
+export const enviarDroneReparadoAsync = createAsyncThunk(
     'app/enviarFinalizacion',
     async (reparacion: ReparacionType, { dispatch }) => {
         try {
@@ -110,7 +110,7 @@ export const enviarFinalizacionAsync = createAsyncThunk(
                 email: reparacion.data.EmailUsu
             };
 
-            const url = process.env.REACT_APP_API_URL + '/send_finalizacion';
+            const url = process.env.REACT_APP_API_URL + '/send_drone_reparado';
 
             const response = await callEndpoint({
                 url,
