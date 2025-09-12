@@ -149,24 +149,25 @@ export default function ReparacionComponent(): React.ReactElement | null {
                     sectionId = 'seccion-consulta';
                     break;
                 case 'Transito':
-                case 'Recibido':
                     sectionId = 'seccion-recepcion';
                     break;
-                case 'Revisado':
+                case 'Recibido':
                     sectionId = 'seccion-revision';
+                    break;
+                case 'Revisado':
+                    sectionId = 'seccion-presupuesto';
                     break;
                 case 'Presupuestado':
                 case 'Aceptado':
-                    sectionId = 'seccion-presupuesto';
-                    break;
-                case 'Reparado':
                     sectionId = 'seccion-reparar';
                     break;
+                case 'Reparado':
                 case 'Cobrado':
                 case 'Enviado':
-                case 'Finalizado':
                     sectionId = 'seccion-entrega';
                     break;
+                case 'Finalizado':
+                    break; // No hacer scroll
                 // Estados legacy
                 case 'Reparar':
                 case 'Repuestos':
