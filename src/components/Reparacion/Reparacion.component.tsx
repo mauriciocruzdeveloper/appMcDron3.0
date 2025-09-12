@@ -12,7 +12,14 @@ import { useAppSelector } from "../../redux-tool-kit/hooks/useAppSelector";
 import { useAppDispatch } from "../../redux-tool-kit/hooks/useAppDispatch";
 import { useModal } from "../Modal/useModal";
 import { eliminarReparacionAsync, guardarReparacionAsync } from "../../redux-tool-kit/reparacion/reparacion.actions";
-import { borrarFotoAsync, enviarReciboAsync, borrarDocumentoAsync, subirFotoYActualizarReparacionAsync, subirDocumentoYActualizarReparacionAsync } from "../../redux-tool-kit/app/app.actions";
+import {
+    borrarFotoAsync,
+    enviarReciboAsync,
+    // enviarFinalizacionAsync,
+    borrarDocumentoAsync,
+    subirFotoYActualizarReparacionAsync,
+    subirDocumentoYActualizarReparacionAsync,
+} from "../../redux-tool-kit/app/app.actions";
 import { ChangeEvent } from "react";
 import { InputType } from "../../types/types";
 import TextareaAutosize from "react-textarea-autosize";
@@ -161,6 +168,7 @@ export default function ReparacionComponent(): React.ReactElement | null {
                 case 'Aceptado':
                     sectionId = 'seccion-reparar';
                     break;
+                case 'Rechazado':
                 case 'Reparado':
                 case 'Cobrado':
                 case 'Enviado':
@@ -303,11 +311,30 @@ export default function ReparacionComponent(): React.ReactElement | null {
             
             if (response.meta.requestStatus === 'fulfilled') {
                 setReparacionOriginal(newReparacion);
-                openModal({
-                    mensaje: `Estado cambiado a "${estado.nombre}" y guardado correctamente.`,
-                    tipo: "success",
-                    titulo: "Cambio de Estado",
-                });
+                
+                // // Si el estado es "Rechazado", enviar email de finalización
+                // if (newReparacion.data.EstadoRep === 'Rechazado') {
+                //     try {
+                //         await dispatch(enviarFinalizacionAsync(newReparacion));
+                //         openModal({
+                //             mensaje: `Estado cambiado a "${estado.nombre}", guardado correctamente y email de finalización enviado.`,
+                //             tipo: "success",
+                //             titulo: "Cambio de Estado",
+                //         });
+                //     } catch (emailError) {
+                //         openModal({
+                //             mensaje: `Estado cambiado a "${estado.nombre}" y guardado correctamente, pero hubo un error al enviar el email.`,
+                //             tipo: "warning",
+                //             titulo: "Cambio de Estado",
+                //         });
+                //     }
+                // } else {
+                //     openModal({
+                //         mensaje: `Estado cambiado a "${estado.nombre}" y guardado correctamente.`,
+                //         tipo: "success",
+                //         titulo: "Cambio de Estado",
+                //     });
+                // }
             } else {
                 // Si falla el guardado, revertir el estado local
                 setReparacion(reparacion);
@@ -335,6 +362,7 @@ export default function ReparacionComponent(): React.ReactElement | null {
     const avanzarARevisado = () => setEstado(estados.Revisado);
     const avanzarAPresupuestado = () => setEstado(estados.Presupuestado);
     const avanzarAAceptado = () => setEstado(estados.Aceptado);
+    const avanzarARechazado = () => setEstado(estados.Rechazado);
     const avanzarAReparado = () => setEstado(estados.Reparado);
     const avanzarACobrado = () => setEstado(estados.Cobrado);
     const avanzarAEnviado = () => setEstado(estados.Enviado);
@@ -1156,6 +1184,15 @@ export default function ReparacionComponent(): React.ReactElement | null {
                                     onClick={avanzarAAceptado}
                                 >
                                     Presupuesto Aceptado
+                                </button>
+                            )}
+                            {puedeAvanzarA('Rechazado') && (
+                                <button
+                                    type="button"
+                                    className="btn btn-danger"
+                                    onClick={avanzarARechazado}
+                                >
+                                    Presupuesto Rechazado
                                 </button>
                             )}
                         </div>
