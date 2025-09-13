@@ -232,7 +232,7 @@ export const selectReparacionesEstadosPrioritarios = createSelector(
 export const selectReparacionesAccionInmediata = createSelector(
   [selectReparacionesArray],
   (reparaciones): ReparacionType[] => {
-    const estadosAccion = ["Recibido", "Revisado", "Aceptado", "Consulta", "Reparado", "Diagnosticado", "Rechazado"];
+    const estadosAccion = ["Recibido", "Revisado", "Aceptado", "Consulta"];
     return reparaciones
       .filter(reparacion => estadosAccion.includes(reparacion.data.EstadoRep))
       .sort((a, b) => {
