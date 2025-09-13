@@ -8,10 +8,11 @@ import {
   verificarConexionWebSocket
 } from "../../persistencia/persistencia"; // Actualizado para usar la importación centralizada
 import { ReparacionType } from "../../types/reparacion";
+import { Intervenciones } from "../../types/intervencion";
 import { isFetchingComplete, isFetchingStart } from "./app.slice";
 import { callEndpoint } from "../../utils/utils";
 import { HttpMethod } from "../../types/httpMethods";
-import { getReparacionAsync, guardarReparacionAsync } from '../reparacion/reparacion.actions';
+import { guardarReparacionAsync } from '../reparacion/reparacion.actions';
 import { supabaseAuthErrors } from "../../persistencia/persistenciaSupabase/supabaseAuthErrors";
 
 // LOGIN
@@ -95,9 +96,35 @@ export const enviarReciboAsync = createAsyncThunk(
 // ENVIAR EMAIL DE FINALIZACIÓN
 export const enviarDroneReparadoAsync = createAsyncThunk(
     'app/enviarFinalizacion',
-    async (reparacion: ReparacionType, { dispatch }) => {
+    async (reparacion: ReparacionType, { dispatch, getState }) => {
         try {
             dispatch(isFetchingStart());
+            
+            // Obtener las intervenciones aplicadas a esta reparación
+            const state = getState() as { intervencion: { coleccionIntervenciones: Intervenciones } };
+            const todasLasIntervenciones = state.intervencion.coleccionIntervenciones;
+            const intervencionesIds = reparacion.data.IntervencionesIds || [];
+
+            // TODO: El problema es que la reparacion no tiene los ids de las intervenciones, no se por que. Arreglar en los mappers o donde sea.
+            console.log("Intervenciones IDs:", intervencionesIds);
+            console.log("Todas las intervenciones:", todasLasIntervenciones);
+            console.log('!!! state', state);
+
+            // Filtrar solo las intervenciones que están aplicadas a esta reparación
+            const intervencionesAplicadas = intervencionesIds
+                .map(id => todasLasIntervenciones[id])
+                .filter(Boolean); // Filtrar undefined en caso de que algún ID no exista
+            
+            // Construir la descripción del trabajo realizado
+            let trabajoRealizado = reparacion.data.DescripcionTecRep || "Sin descripción";
+            
+            if (intervencionesAplicadas.length > 0) {
+                const listaIntervenciones = intervencionesAplicadas
+                    .map((intervencion) => `• ${intervencion.data.NombreInt}`)
+                    .join('\n');
+                
+                trabajoRealizado = `${trabajoRealizado}\n\nIntervenciones realizadas:\n${listaIntervenciones}`;
+            }
             
             // Cálculo correcto de los montos
             const montoTotal = reparacion.data.PresuFiRep || 0;
@@ -110,7 +137,7 @@ export const enviarDroneReparadoAsync = createAsyncThunk(
                 equipo: reparacion.data.ModeloDroneNameRep,
                 fecha_ingreso: new Date(Number(reparacion.data.FeRecRep)).toLocaleDateString(),
                 fecha_finalizacion: new Date().toLocaleDateString(),
-                trabajo_realizado: reparacion.data.DescripcionTecRep || "Sin descripción",
+                trabajo_realizado: trabajoRealizado,
                 monto_total: `$${montoTotal}`,
                 monto_pagado: `$${montoPagado}`,
                 monto_restante: `$${montoRestante}`,
