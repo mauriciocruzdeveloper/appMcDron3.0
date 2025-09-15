@@ -163,6 +163,43 @@ export const enviarDroneReparadoAsync = createAsyncThunk(
     },
 );
 
+// ENVIAR EMAIL DE DIAGNÓSTICO
+export const enviarDroneDiagnosticadoAsync = createAsyncThunk(
+    'app/enviarDiagnostico',
+    async (reparacion: ReparacionType, { dispatch }) => {
+        try {
+            dispatch(isFetchingStart());
+            
+            const body = {
+                cliente: reparacion.data.NombreUsu,
+                nro_reparacion: reparacion.id,
+                equipo: reparacion.data.ModeloDroneNameRep,
+                fecha_ingreso: new Date(Number(reparacion.data.FeRecRep)).toLocaleDateString(),
+                fecha_diagnostico: new Date().toLocaleDateString(),
+                diagnostico: reparacion.data.DiagnosticoRep || reparacion.data.DescripcionTecRep || "Diagnóstico completado",
+                costo_diagnostico: `$${reparacion.data.PresuDiRep || 25}`,
+                telefono: reparacion.data.TelefonoUsu,
+                email: reparacion.data.EmailUsu
+            };
+
+            const url = process.env.REACT_APP_API_URL + '/send_drone_diagnosticado';
+
+            const response = await callEndpoint({
+                url,
+                method: HttpMethod.POST,
+                body,
+            });
+
+            dispatch(isFetchingComplete());
+
+            return response;
+        } catch (error: any) { // TODO: Hacer tipo de dato para el error
+            dispatch(isFetchingComplete());
+            throw error;
+        }
+    },
+);
+
 // SUBIR FOTO
 export const subirFotoAsync = createAsyncThunk(
   'app/subirFoto',
