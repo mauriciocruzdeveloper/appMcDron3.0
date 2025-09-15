@@ -399,6 +399,7 @@ export default function ReparacionComponent(): React.ReactElement | null {
             }
         }
     };
+    const avanzarADiagnosticado = () => setEstado(estados.Diagnosticado);
     const avanzarACobrado = () => setEstado(estados.Cobrado);
     const avanzarAEnviado = () => setEstado(estados.Enviado);
     const avanzarAFinalizado = () => setEstado(estados.Finalizado);
@@ -409,6 +410,18 @@ export default function ReparacionComponent(): React.ReactElement | null {
         if (!isAdmin) return false;
         const estadoActual = obtenerEstadoSeguro(reparacion.data.EstadoRep);
         const estadoDestino = estados[nombreEstado];
+        
+        // Lógica especial para los flujos de Aceptado/Rechazado
+        if (nombreEstado === 'Reparado') {
+            return estadoActual.nombre === 'Aceptado';
+        }
+        if (nombreEstado === 'Diagnosticado') {
+            return estadoActual.nombre === 'Rechazado';
+        }
+
+        if (estadoActual.nombre === 'Aceptado' && nombreEstado === 'Rechazado') return false;
+        if (estadoActual.nombre === 'Rechazado' && nombreEstado === 'Aceptado') return false;
+        
         return estadoDestino.etapa > estadoActual.etapa;
     };
 
@@ -1297,15 +1310,27 @@ export default function ReparacionComponent(): React.ReactElement | null {
                         </div>
 
                         {/* Botones de avance de estado para REPARAR */}
-                        {isAdmin && puedeAvanzarA('Reparado') && (
+                        {isAdmin && (
                             <div className="mt-3">
-                                <button
-                                    type="button"
-                                    className="btn btn-success"
-                                    onClick={avanzarAReparado}
-                                >
-                                    Marcar como Reparado
-                                </button>
+                                {/* La lógica está centralizada en puedeAvanzarA() */}
+                                {puedeAvanzarA('Reparado') && (
+                                    <button
+                                        type="button"
+                                        className="btn btn-success"
+                                        onClick={avanzarAReparado}
+                                    >
+                                        Marcar como Reparado
+                                    </button>
+                                )}
+                                {puedeAvanzarA('Diagnosticado') && (
+                                    <button
+                                        type="button"
+                                        className="btn btn-warning"
+                                        onClick={avanzarADiagnosticado}
+                                    >
+                                        Marcar como Diagnosticado
+                                    </button>
+                                )}
                             </div>
                         )}
                     </div>
@@ -1355,7 +1380,7 @@ export default function ReparacionComponent(): React.ReactElement | null {
                             <div className="mt-3">
                                 {/* Primera fila de botones */}
                                 <div className="d-flex flex-wrap gap-2 mb-2">
-                                    {puedeAvanzarA('Cobrado') && (
+                                    {(reparacion.data.EstadoRep === 'Reparado' || reparacion.data.EstadoRep === 'Diagnosticado') && puedeAvanzarA('Cobrado') && (
                                         <button
                                             type="button"
                                             className="btn btn-info flex-fill"
