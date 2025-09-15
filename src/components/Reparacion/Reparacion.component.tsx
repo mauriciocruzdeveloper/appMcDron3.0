@@ -166,9 +166,9 @@ export default function ReparacionComponent(): React.ReactElement | null {
                     sectionId = 'seccion-presupuesto';
                     break;
                 case 'Aceptado':
+                case 'Rechazado':
                     sectionId = 'seccion-reparar';
                     break;
-                case 'Rechazado':
                 case 'Reparado':
                 case 'Diagnosticado':
                 case 'Cobrado':
