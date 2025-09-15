@@ -16,6 +16,7 @@ import {
     borrarFotoAsync,
     enviarReciboAsync,
     enviarDroneReparadoAsync,
+    enviarDroneDiagnosticadoAsync,
     borrarDocumentoAsync,
     subirFotoYActualizarReparacionAsync,
     subirDocumentoYActualizarReparacionAsync,
@@ -399,7 +400,35 @@ export default function ReparacionComponent(): React.ReactElement | null {
             }
         }
     };
-    const avanzarADiagnosticado = () => setEstado(estados.Diagnosticado);
+    const avanzarADiagnosticado = async () => {
+        await setEstado(estados.Diagnosticado);
+        
+        // Enviar email de notificación de drone diagnosticado
+        if (reparacion) {
+            try {
+                const response = await dispatch(enviarDroneDiagnosticadoAsync(reparacion));
+                if (response.meta.requestStatus === 'fulfilled') {
+                    openModal({
+                        mensaje: "Drone marcado como diagnosticado y email enviado correctamente.",
+                        tipo: "success",
+                        titulo: "Drone Diagnosticado",
+                    });
+                } else {
+                    openModal({
+                        mensaje: "Drone marcado como diagnosticado, pero hubo un error al enviar el email.",
+                        tipo: "warning",
+                        titulo: "Drone Diagnosticado",
+                    });
+                }
+            } catch (error) {
+                openModal({
+                    mensaje: "Drone marcado como diagnosticado, pero hubo un error al enviar el email.",
+                    tipo: "warning",
+                    titulo: "Drone Diagnosticado",
+                });
+            }
+        }
+    };
     const avanzarACobrado = () => setEstado(estados.Cobrado);
     const avanzarAEnviado = () => setEstado(estados.Enviado);
     const avanzarAFinalizado = () => setEstado(estados.Finalizado);
