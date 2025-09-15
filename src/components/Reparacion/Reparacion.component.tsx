@@ -170,11 +170,14 @@ export default function ReparacionComponent(): React.ReactElement | null {
                     break;
                 case 'Rechazado':
                 case 'Reparado':
+                case 'Diagnosticado':
                 case 'Cobrado':
                 case 'Enviado':
                     sectionId = 'seccion-entrega';
                     break;
                 case 'Finalizado':
+                case 'Abandonado':
+                case 'Cancelado':
                     break; // No hacer scroll
                 // Estados legacy
                 case 'Reparar':
@@ -399,6 +402,7 @@ export default function ReparacionComponent(): React.ReactElement | null {
     const avanzarACobrado = () => setEstado(estados.Cobrado);
     const avanzarAEnviado = () => setEstado(estados.Enviado);
     const avanzarAFinalizado = () => setEstado(estados.Finalizado);
+    const avanzarAAbandonado = () => setEstado(estados.Abandonado);
 
     // Función para verificar si se puede avanzar a un estado
     const puedeAvanzarA = (nombreEstado: string): boolean => {
@@ -682,7 +686,8 @@ export default function ReparacionComponent(): React.ReactElement | null {
     const ResumenProgreso = () => {
         const estadosOrdenados = [
             'Consulta', 'Respondido', 'Transito', 'Recibido', 'Revisado',
-            'Presupuestado', 'Aceptado', 'Reparado', 'Cobrado', 'Enviado', 'Finalizado'
+            'Presupuestado', 'Aceptado', 'Rechazado', 'Reparado', 'Diagnosticado', 
+            'Cobrado', 'Enviado', 'Finalizado', 'Abandonado', 'Cancelado'
         ];
 
         const estadoActual = obtenerEstadoSeguro(reparacion.data.EstadoRep);
@@ -760,7 +765,7 @@ export default function ReparacionComponent(): React.ReactElement | null {
             presupuesto: etapa >= 5, // Visible desde Revisado
             repuestos: etapa >= 7, // Visible desde Aceptado
             reparar: etapa >= 7, // Visible desde Aceptado
-            entrega: etapa >= 10, // Visible desde Reparado
+            entrega: etapa >= 8, // Visible desde Rechazado/Reparado/Diagnosticado
             fotos: etapa >= 1, // Siempre visible
             documentos: etapa >= 1 // Siempre visible
         };
@@ -1001,11 +1006,12 @@ export default function ReparacionComponent(): React.ReactElement | null {
 
                         {/* Botones de avance de estado para CONSULTA */}
                         {isAdmin && (
-                            <div className="d-flex gap-2 mt-3">
+                            <div className="d-flex flex-wrap gap-2 mt-3">
                                 {puedeAvanzarA('Respondido') && (
                                     <button
                                         type="button"
-                                        className="btn btn-success"
+                                        className="btn btn-success flex-fill"
+                                        style={{ minWidth: '140px' }}
                                         onClick={avanzarARespondido}
                                     >
                                         Marcar como Respondido
@@ -1014,7 +1020,8 @@ export default function ReparacionComponent(): React.ReactElement | null {
                                 {puedeAvanzarA('Transito') && (
                                     <button
                                         type="button"
-                                        className="btn btn-warning"
+                                        className="btn btn-warning flex-fill"
+                                        style={{ minWidth: '140px' }}
                                         onClick={avanzarATransito}
                                     >
                                         Marcar en Tránsito
@@ -1214,11 +1221,12 @@ export default function ReparacionComponent(): React.ReactElement | null {
                                 
                                 {/* Botones de Aceptado y Rechazado juntos abajo */}
                                 {(puedeAvanzarA('Aceptado') || puedeAvanzarA('Rechazado')) && (
-                                    <div className="d-flex gap-2">
+                                    <div className="d-flex flex-wrap gap-2">
                                         {puedeAvanzarA('Aceptado') && (
                                             <button
                                                 type="button"
-                                                className="btn btn-success"
+                                                className="btn btn-success flex-fill"
+                                                style={{ minWidth: '140px' }}
                                                 onClick={avanzarAAceptado}
                                             >
                                                 Presupuesto Aceptado
@@ -1227,7 +1235,8 @@ export default function ReparacionComponent(): React.ReactElement | null {
                                         {puedeAvanzarA('Rechazado') && (
                                             <button
                                                 type="button"
-                                                className="btn btn-danger"
+                                                className="btn btn-danger flex-fill"
+                                                style={{ minWidth: '140px' }}
                                                 onClick={avanzarARechazado}
                                             >
                                                 Presupuesto Rechazado
@@ -1343,34 +1352,54 @@ export default function ReparacionComponent(): React.ReactElement | null {
 
                         {/* Botones de avance de estado para ENTREGA */}
                         {isAdmin && (
-                            <div className="d-flex gap-2 mt-3">
-                                {puedeAvanzarA('Cobrado') && (
-                                    <button
-                                        type="button"
-                                        className="btn btn-info"
-                                        onClick={avanzarACobrado}
-                                    >
-                                        Marcar como Cobrado
-                                    </button>
-                                )}
-                                {puedeAvanzarA('Enviado') && (
-                                    <button
-                                        type="button"
-                                        className="btn btn-warning"
-                                        onClick={avanzarAEnviado}
-                                    >
-                                        Marcar como Enviado
-                                    </button>
-                                )}
-                                {puedeAvanzarA('Finalizado') && (
-                                    <button
-                                        type="button"
-                                        className="btn btn-success"
-                                        onClick={avanzarAFinalizado}
-                                    >
-                                        Finalizar Reparación
-                                    </button>
-                                )}
+                            <div className="mt-3">
+                                {/* Primera fila de botones */}
+                                <div className="d-flex flex-wrap gap-2 mb-2">
+                                    {puedeAvanzarA('Cobrado') && (
+                                        <button
+                                            type="button"
+                                            className="btn btn-info flex-fill"
+                                            style={{ minWidth: '140px' }}
+                                            onClick={avanzarACobrado}
+                                        >
+                                            Marcar como Cobrado
+                                        </button>
+                                    )}
+                                    {puedeAvanzarA('Enviado') && (
+                                        <button
+                                            type="button"
+                                            className="btn btn-warning flex-fill"
+                                            style={{ minWidth: '140px' }}
+                                            onClick={avanzarAEnviado}
+                                        >
+                                            Marcar como Enviado
+                                        </button>
+                                    )}
+                                </div>
+                                
+                                {/* Segunda fila de botones */}
+                                <div className="d-flex flex-wrap gap-2">
+                                    {puedeAvanzarA('Finalizado') && (
+                                        <button
+                                            type="button"
+                                            className="btn btn-success flex-fill"
+                                            style={{ minWidth: '140px' }}
+                                            onClick={avanzarAFinalizado}
+                                        >
+                                            Finalizar Reparación
+                                        </button>
+                                    )}
+                                    {puedeAvanzarA('Abandonado') && (
+                                        <button
+                                            type="button"
+                                            className="btn btn-secondary flex-fill"
+                                            style={{ minWidth: '140px' }}
+                                            onClick={avanzarAAbandonado}
+                                        >
+                                            Marcar como Abandonado
+                                        </button>
+                                    )}
+                                </div>
                             </div>
                         )}
                     </div>
