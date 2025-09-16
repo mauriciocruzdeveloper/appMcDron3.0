@@ -17,187 +17,187 @@ import { supabaseAuthErrors } from "../../persistencia/persistenciaSupabase/supa
 
 // LOGIN
 export const loginAsync = createAsyncThunk(
-    'app/login',
-    async (
-        { email, password }: { email: string; password: string },
-        { rejectWithValue }
-    ) => {
+  'app/login',
+  async (
+    { email, password }: { email: string; password: string },
+    { rejectWithValue }
+  ) => {
+    try {
+      const usuario = await loginPersistencia(email, password);
+      return usuario;
+    } catch (error: any) {
+      // Verificar si el error es de email no confirmado
+      if (error.code === 'email_not_confirmed') {
         try {
-            const usuario = await loginPersistencia(email, password);
-            return usuario;
-        } catch (error: any) {            
-            // Verificar si el error es de email no confirmado
-            if (error.code === 'email_not_confirmed') {
-                try {
-                    // Reenviar email de verificación
-                    await reenviarEmailVerificacionPersistencia(email);
-                    return rejectWithValue('Email no verificado. Se ha enviado un nuevo correo de verificación a su dirección de email.');
-                } catch (verificationError: any) {
-                    return rejectWithValue('Error al reenviar email de verificación: ' + (verificationError.message || 'Intente más tarde'));
-                }
-            }
-            
-            const errorMessage = supabaseAuthErrors[error.code] || 'Error desconocido';
-            return rejectWithValue(errorMessage);
+          // Reenviar email de verificación
+          await reenviarEmailVerificacionPersistencia(email);
+          return rejectWithValue('Email no verificado. Se ha enviado un nuevo correo de verificación a su dirección de email.');
+        } catch (verificationError: any) {
+          return rejectWithValue('Error al reenviar email de verificación: ' + (verificationError.message || 'Intente más tarde'));
         }
+      }
+
+      const errorMessage = supabaseAuthErrors[error.code] || 'Error desconocido';
+      return rejectWithValue(errorMessage);
     }
+  }
 );
 
 // REGISTRO
 export const registroAsync = createAsyncThunk(
-    'app/registro',
-    async (registro: any, { dispatch }) => {
-        try {
-            dispatch(isFetchingStart());
-            const response = await registroUsuarioEndpointPersistencia(registro);
-            dispatch(isFetchingComplete());
-            return response;
-        } catch (error: any) {
-            dispatch(isFetchingComplete());
-            throw error;
-        }
-    },
+  'app/registro',
+  async (registro: any, { dispatch }) => {
+    try {
+      dispatch(isFetchingStart());
+      const response = await registroUsuarioEndpointPersistencia(registro);
+      dispatch(isFetchingComplete());
+      return response;
+    } catch (error: any) {
+      dispatch(isFetchingComplete());
+      throw error;
+    }
+  },
 );
 
 // ENVIA RECIBO
 export const enviarReciboAsync = createAsyncThunk(
-    'app/enviarRecibo',
-    async (reparacion: ReparacionType, { dispatch }) => {
-        try {
-            dispatch(isFetchingStart());
-            const body = {
-                cliente: reparacion.data.NombreUsu,
-                nro_reparacion: reparacion.id,
-                equipo: reparacion.data.ModeloDroneNameRep,
-                fecha_ingreso: new Date(Number(reparacion.data.FeRecRep)).toLocaleDateString(),
-                observaciones: reparacion.data.DescripcionUsuRep,
-                telefono: reparacion.data.TelefonoUsu,
-                email: reparacion.data.EmailUsu
-            };
+  'app/enviarRecibo',
+  async (reparacion: ReparacionType, { dispatch }) => {
+    try {
+      dispatch(isFetchingStart());
+      const body = {
+        cliente: `${reparacion.data.NombreUsu} ${reparacion.data.ApellidoUsu}`,
+        nro_reparacion: reparacion.id,
+        equipo: reparacion.data.ModeloDroneNameRep,
+        fecha_ingreso: new Date(Number(reparacion.data.FeRecRep)).toLocaleDateString(),
+        observaciones: reparacion.data.DescripcionUsuRep,
+        telefono: reparacion.data.TelefonoUsu,
+        email: reparacion.data.EmailUsu
+      };
 
-            const url = process.env.REACT_APP_API_URL + '/send_recibo';
+      const url = process.env.REACT_APP_API_URL + '/send_recibo';
 
-            const response = await callEndpoint({
-                url,
-                method: HttpMethod.POST,
-                body,
-            });
+      const response = await callEndpoint({
+        url,
+        method: HttpMethod.POST,
+        body,
+      });
 
-            dispatch(isFetchingComplete());
+      dispatch(isFetchingComplete());
 
-            return response;
-        } catch (error: any) { // TODO: Hacer tipo de dato para el error
-            dispatch(isFetchingComplete());
-            throw error;
-        }
-    },
+      return response;
+    } catch (error: any) { // TODO: Hacer tipo de dato para el error
+      dispatch(isFetchingComplete());
+      throw error;
+    }
+  },
 );
 
 // ENVIAR EMAIL DE FINALIZACIÓN
 export const enviarDroneReparadoAsync = createAsyncThunk(
-    'app/enviarFinalizacion',
-    async (reparacion: ReparacionType, { dispatch, getState }) => {
-        try {
-            dispatch(isFetchingStart());
-            
-            // Obtener las intervenciones aplicadas a esta reparación
-            const state = getState() as { intervencion: { coleccionIntervenciones: Intervenciones } };
-            const todasLasIntervenciones = state.intervencion.coleccionIntervenciones;
-            const intervencionesIds = reparacion.data.IntervencionesIds || [];
+  'app/enviarFinalizacion',
+  async (reparacion: ReparacionType, { dispatch, getState }) => {
+    try {
+      dispatch(isFetchingStart());
 
-            // TODO: El problema es que la reparacion no tiene los ids de las intervenciones, no se por que. Arreglar en los mappers o donde sea.
-            console.log("Intervenciones IDs:", intervencionesIds);
-            console.log("Todas las intervenciones:", todasLasIntervenciones);
-            console.log('!!! state', state);
+      // Obtener las intervenciones aplicadas a esta reparación
+      const state = getState() as { intervencion: { coleccionIntervenciones: Intervenciones } };
+      const todasLasIntervenciones = state.intervencion.coleccionIntervenciones;
+      const intervencionesIds = reparacion.data.IntervencionesIds || [];
 
-            // Filtrar solo las intervenciones que están aplicadas a esta reparación
-            const intervencionesAplicadas = intervencionesIds
-                .map(id => todasLasIntervenciones[id])
-                .filter(Boolean); // Filtrar undefined en caso de que algún ID no exista
-            
-            // Construir la descripción del trabajo realizado
-            let trabajoRealizado = reparacion.data.DescripcionTecRep || "Sin descripción";
-            
-            if (intervencionesAplicadas.length > 0) {
-                const listaIntervenciones = intervencionesAplicadas
-                    .map((intervencion) => `• ${intervencion.data.NombreInt}`)
-                    .join('\n');
-                
-                trabajoRealizado = `${trabajoRealizado}\n\nIntervenciones realizadas:\n${listaIntervenciones}`;
-            }
-            
-            // Cálculo correcto de los montos
-            const montoTotal = reparacion.data.PresuFiRep || 0;
-            const montoPagado = reparacion.data.PresuReRep || 0;
-            const montoRestante = montoTotal - montoPagado;
-            
-            const body = {
-                cliente: reparacion.data.NombreUsu,
-                nro_reparacion: reparacion.id,
-                equipo: reparacion.data.ModeloDroneNameRep,
-                fecha_ingreso: new Date(Number(reparacion.data.FeRecRep)).toLocaleDateString(),
-                fecha_finalizacion: new Date().toLocaleDateString(),
-                trabajo_realizado: trabajoRealizado,
-                monto_total: `$${montoTotal}`,
-                monto_pagado: `$${montoPagado}`,
-                monto_restante: `$${montoRestante}`,
-                telefono: reparacion.data.TelefonoUsu,
-                email: reparacion.data.EmailUsu
-            };
+      // TODO: El problema es que la reparacion no tiene los ids de las intervenciones, no se por que. Arreglar en los mappers o donde sea.
+      console.log("Intervenciones IDs:", intervencionesIds);
+      console.log("Todas las intervenciones:", todasLasIntervenciones);
+      console.log('!!! state', state);
 
-            const url = process.env.REACT_APP_API_URL + '/send_drone_reparado';
+      // Filtrar solo las intervenciones que están aplicadas a esta reparación
+      const intervencionesAplicadas = intervencionesIds
+        .map(id => todasLasIntervenciones[id])
+        .filter(Boolean); // Filtrar undefined en caso de que algún ID no exista
 
-            const response = await callEndpoint({
-                url,
-                method: HttpMethod.POST,
-                body,
-            });
+      // Construir la descripción del trabajo realizado
+      let trabajoRealizado = reparacion.data.DescripcionTecRep || "Sin descripción";
 
-            dispatch(isFetchingComplete());
+      if (intervencionesAplicadas.length > 0) {
+        const listaIntervenciones = intervencionesAplicadas
+          .map((intervencion) => `• ${intervencion.data.NombreInt}`)
+          .join('\n');
 
-            return response;
-        } catch (error: any) { // TODO: Hacer tipo de dato para el error
-            dispatch(isFetchingComplete());
-            throw error;
-        }
-    },
+        trabajoRealizado = `${trabajoRealizado}\n\nIntervenciones realizadas:\n${listaIntervenciones}`;
+      }
+
+      // Cálculo correcto de los montos
+      const montoTotal = reparacion.data.PresuFiRep || 0;
+      const montoPagado = reparacion.data.PresuReRep || 0;
+      const montoRestante = montoTotal - montoPagado;
+
+      const body = {
+        cliente: `${reparacion.data.NombreUsu} ${reparacion.data.ApellidoUsu}`,
+        nro_reparacion: reparacion.id,
+        equipo: reparacion.data.ModeloDroneNameRep,
+        fecha_ingreso: new Date(Number(reparacion.data.FeRecRep)).toLocaleDateString(),
+        fecha_finalizacion: new Date().toLocaleDateString(),
+        trabajo_realizado: trabajoRealizado,
+        monto_total: `$${montoTotal}`,
+        monto_pagado: `$${montoPagado}`,
+        monto_restante: `$${montoRestante}`,
+        telefono: reparacion.data.TelefonoUsu,
+        email: reparacion.data.EmailUsu
+      };
+
+      const url = process.env.REACT_APP_API_URL + '/send_drone_reparado';
+
+      const response = await callEndpoint({
+        url,
+        method: HttpMethod.POST,
+        body,
+      });
+
+      dispatch(isFetchingComplete());
+
+      return response;
+    } catch (error: any) { // TODO: Hacer tipo de dato para el error
+      dispatch(isFetchingComplete());
+      throw error;
+    }
+  },
 );
 
 // ENVIAR EMAIL DE DIAGNÓSTICO
 export const enviarDroneDiagnosticadoAsync = createAsyncThunk(
-    'app/enviarDiagnostico',
-    async (reparacion: ReparacionType, { dispatch }) => {
-        try {
-            dispatch(isFetchingStart());
-            
-            const body = {
-                cliente: reparacion.data.NombreUsu,
-                nro_reparacion: reparacion.id,
-                equipo: reparacion.data.ModeloDroneNameRep,
-                fecha_ingreso: new Date(Number(reparacion.data.FeRecRep)).toLocaleDateString(),
-                fecha_diagnostico: new Date().toLocaleDateString(),
-                diagnostico: reparacion.data.DescripcionTecRep || "Sin diagnóstico",
-                costo_diagnostico: `$${reparacion.data.PresuDiRep || 25 + ' dolares'}`,
-                telefono: reparacion.data.TelefonoUsu,
-                email: reparacion.data.EmailUsu
-            };
+  'app/enviarDiagnostico',
+  async (reparacion: ReparacionType, { dispatch }) => {
+    try {
+      dispatch(isFetchingStart());
 
-            const url = process.env.REACT_APP_API_URL + '/send_drone_diagnosticado';
+      const body = {
+        cliente: `${reparacion.data.NombreUsu} ${reparacion.data.ApellidoUsu}`,
+        nro_reparacion: reparacion.id,
+        equipo: reparacion.data.ModeloDroneNameRep,
+        fecha_ingreso: new Date(Number(reparacion.data.FeRecRep)).toLocaleDateString(),
+        fecha_diagnostico: new Date().toLocaleDateString(),
+        diagnostico: reparacion.data.DescripcionTecRep || "Sin diagnóstico",
+        costo_diagnostico: `$${reparacion.data.PresuDiRep || 25 + ' dolares'}`,
+        telefono: reparacion.data.TelefonoUsu,
+        email: reparacion.data.EmailUsu
+      };
 
-            const response = await callEndpoint({
-                url,
-                method: HttpMethod.POST,
-                body,
-            });
+      const url = process.env.REACT_APP_API_URL + '/send_drone_diagnosticado';
 
-            dispatch(isFetchingComplete());
+      const response = await callEndpoint({
+        url,
+        method: HttpMethod.POST,
+        body,
+      });
 
-            return response;
-        } catch (error: any) { // TODO: Hacer tipo de dato para el error
-            dispatch(isFetchingComplete());
-            throw error;
-        }
-    },
+      dispatch(isFetchingComplete());
+
+      return response;
+    } catch (error: any) { // TODO: Hacer tipo de dato para el error
+      dispatch(isFetchingComplete());
+      throw error;
+    }
+  },
 );
 
 // SUBIR FOTO
@@ -206,10 +206,10 @@ export const subirFotoAsync = createAsyncThunk(
   async ({ reparacionId, file }: { reparacionId: string, file: File }, { dispatch }) => {
     try {
       dispatch(isFetchingStart());
-      
+
       // Crear un Blob a partir del archivo para evitar problemas de referencia
       const fileBlob = new Blob([await file.arrayBuffer()], { type: file.type });
-      
+
       // Generar un nombre único para el archivo usando timestamp y manteniendo la extensión
       const extIndex = file.name.lastIndexOf('.');
       const baseName = extIndex !== -1 ? file.name.substring(0, extIndex) : file.name;
@@ -217,10 +217,10 @@ export const subirFotoAsync = createAsyncThunk(
       const timestamp = Date.now();
       const fileName = `${baseName.replace(/[^a-zA-Z0-9]/g, '_')}_${timestamp}${ext}`;
       const path = `REPARACIONES/${reparacionId}/fotos/${fileName}`;
-      
+
       // Subir el Blob en lugar del archivo original
       const urlFoto = await subirArchivoPersistencia(path, fileBlob);
-      
+
       dispatch(isFetchingComplete());
       return urlFoto;
     } catch (error: any) {
@@ -237,10 +237,10 @@ export const subirDocumentoAsync = createAsyncThunk(
   async ({ reparacionId, file }: { reparacionId: string, file: File }, { dispatch }) => {
     try {
       dispatch(isFetchingStart());
-      
+
       // Crear un Blob a partir del archivo para evitar problemas de referencia
       const fileBlob = new Blob([await file.arrayBuffer()], { type: file.type });
-      
+
       // Generar un nombre único para el archivo usando timestamp y manteniendo la extensión
       const extIndexDoc = file.name.lastIndexOf('.');
       const baseNameDoc = extIndexDoc !== -1 ? file.name.substring(0, extIndexDoc) : file.name;
@@ -248,10 +248,10 @@ export const subirDocumentoAsync = createAsyncThunk(
       const timestampDoc = Date.now();
       const fileNameDoc = `${baseNameDoc.replace(/[^a-zA-Z0-9]/g, '_')}_${timestampDoc}${extDoc}`;
       const pathDoc = `REPARACIONES/${reparacionId}/documentos/${fileNameDoc}`;
-      
+
       // Subir el Blob en lugar del archivo original
       const urlDocumento = await subirArchivoPersistencia(pathDoc, fileBlob);
-      
+
       dispatch(isFetchingComplete());
       return urlDocumento;
     } catch (error: any) {
@@ -268,10 +268,10 @@ export const borrarFotoAsync = createAsyncThunk(
   async ({ reparacionId, fotoUrl }: { reparacionId: string, fotoUrl: string }, { dispatch, getState }) => {
     try {
       dispatch(isFetchingStart());
-      
+
       // Eliminar el archivo de Storage
       await eliminarArchivoPersistencia(fotoUrl);
-      
+
       dispatch(isFetchingComplete());
       return fotoUrl;
     } catch (error: any) {
@@ -288,10 +288,10 @@ export const borrarDocumentoAsync = createAsyncThunk(
   async ({ reparacionId, documentoUrl }: { reparacionId: string, documentoUrl: string }, { dispatch }) => {
     try {
       dispatch(isFetchingStart());
-      
+
       // Eliminar el archivo de Storage
       await eliminarArchivoPersistencia(documentoUrl);
-      
+
       dispatch(isFetchingComplete());
       return documentoUrl;
     } catch (error: any) {
@@ -308,15 +308,15 @@ export const subirFotoYActualizarReparacionAsync = createAsyncThunk(
   async ({ reparacion, file }: { reparacion: ReparacionType, file: File }, { dispatch }) => {
     try {
       dispatch(isFetchingStart());
-      
+
       // 1. Subir la foto
       const response = await dispatch(subirFotoAsync({ reparacionId: reparacion.id, file }));
       if (response.meta.requestStatus !== 'fulfilled') {
         throw new Error("Error al subir la foto");
       }
-      
+
       const urlFoto = response.payload as string;
-            
+
       // 2. Actualizar la reparación con la nueva foto
       const nuevaReparacion = {
         ...reparacion,
@@ -325,16 +325,16 @@ export const subirFotoYActualizarReparacionAsync = createAsyncThunk(
           urlsFotos: [...(reparacion.data.urlsFotos || []), urlFoto]
         }
       };
-      
+
       // 3. Guardar la reparación actualizada
       const guardarResponse = await dispatch(guardarReparacionAsync(nuevaReparacion));
       if (guardarResponse.meta.requestStatus !== 'fulfilled') {
         throw new Error("Error al guardar la reparación");
       }
-      
+
       dispatch(isFetchingComplete());
       return nuevaReparacion;
-      
+
     } catch (error: any) {
       dispatch(isFetchingComplete());
       throw error;
@@ -348,13 +348,13 @@ export const subirDocumentoYActualizarReparacionAsync = createAsyncThunk(
   async ({ reparacion, file }: { reparacion: ReparacionType, file: File }, { dispatch }) => {
     try {
       dispatch(isFetchingStart());
-      
+
       // 1. Subir el documento
       const response = await dispatch(subirDocumentoAsync({ reparacionId: reparacion.id, file }));
       if (response.meta.requestStatus !== 'fulfilled') {
         throw new Error("Error al subir el documento");
       }
-      
+
       const urlDocumento = response.payload as string;
 
       // 2. Actualizar la reparación con el nuevo documento
@@ -365,16 +365,16 @@ export const subirDocumentoYActualizarReparacionAsync = createAsyncThunk(
           urlsDocumentos: [...(reparacion.data.urlsDocumentos || []), urlDocumento]
         }
       };
-      
+
       // 3. Guardar la reparación actualizada
       const guardarResponse = await dispatch(guardarReparacionAsync(nuevaReparacion));
       if (guardarResponse.meta.requestStatus !== 'fulfilled') {
         throw new Error("Error al guardar la reparación");
       }
-      
+
       dispatch(isFetchingComplete());
       return nuevaReparacion;
-      
+
     } catch (error: any) {
       dispatch(isFetchingComplete());
       throw error;
