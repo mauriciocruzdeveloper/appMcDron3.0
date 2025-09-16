@@ -1,4 +1,5 @@
 # Diagrama de Flujo de Estados - Sistema de Reparaciones McDron
+## 📍 Documentación alineada con `Reparacion.component.tsx`
 
 ## Estados Principales (Etapas 1-15)
 
@@ -91,55 +92,71 @@ Diagnosticado (Etapa 10) ──┘
 Cobrado → Enviado → Finalizado
 ```
 
-## Lógica de Botones en la UI
+## Lógica de Botones en la UI (IMPLEMENTACIÓN REAL)
 
 ### En Sección PRESUPUESTO:
-```javascript
-// Si puede avanzar a Aceptado Y no está en Rechazado
-if (puedeAvanzarA('Aceptado') && reparacion.data.EstadoRep !== 'Rechazado') {
-    // Mostrar botón "Presupuesto Aceptado"
-}
-
-// Si puede avanzar a Rechazado Y no está en Aceptado  
-if (puedeAvanzarA('Rechazado') && reparacion.data.EstadoRep !== 'Aceptado') {
-    // Mostrar botón "Presupuesto Rechazado"
-}
+```typescript
+// Botones se muestran según la función puedeAvanzarA() únicamente
+{(puedeAvanzarA('Aceptado') || puedeAvanzarA('Rechazado')) && (
+    <div className="d-flex flex-wrap gap-2">
+        {puedeAvanzarA('Aceptado') && (
+            <button onClick={avanzarAAceptado}>
+                Presupuesto Aceptado
+            </button>
+        )}
+        {puedeAvanzarA('Rechazado') && (
+            <button onClick={avanzarARechazado}>
+                Presupuesto Rechazado
+            </button>
+        )}
+    </div>
+)}
 ```
 
 ### En Sección REPARAR:
-```javascript
-// Solo si está en Aceptado
-if (reparacion.data.EstadoRep === 'Aceptado' && puedeAvanzarA('Reparado')) {
-    // Mostrar botón "Marcar como Reparado"
-}
-
-// Solo si está en Rechazado
-if (reparacion.data.EstadoRep === 'Rechazado' && puedeAvanzarA('Diagnosticado')) {
-    // Mostrar botón "Marcar como Diagnosticado"  
-}
+```typescript
+// La lógica está centralizada en puedeAvanzarA()
+{puedeAvanzarA('Reparado') && (
+    <button onClick={avanzarAReparado}>
+        Marcar como Reparado
+    </button>
+)}
+{puedeAvanzarA('Diagnosticado') && (
+    <button onClick={avanzarADiagnosticado}>
+        Marcar como Diagnosticado
+    </button>
+)}
 ```
 
-## Función `puedeAvanzarA()` - Lógica Central
+## Función `puedeAvanzarA()` - Lógica Central (IMPLEMENTACIÓN REAL)
 
-```javascript
+```typescript
 const puedeAvanzarA = (nombreEstado: string): boolean => {
     if (!isAdmin) return false;
-    
     const estadoActual = obtenerEstadoSeguro(reparacion.data.EstadoRep);
     const estadoDestino = estados[nombreEstado];
     
-    // Lógica especial para flujos exclusivos
+    // Lógica especial para los flujos de Aceptado/Rechazado
     if (nombreEstado === 'Reparado') {
         return estadoActual.nombre === 'Aceptado';
     }
     if (nombreEstado === 'Diagnosticado') {
-        return estadoActual.nombre === 'Rechazado';  
+        return estadoActual.nombre === 'Rechazado';
     }
+
+    // Prevenir cambio entre Aceptado y Rechazado
+    if (estadoActual.nombre === 'Aceptado' && nombreEstado === 'Rechazado') return false;
+    if (estadoActual.nombre === 'Rechazado' && nombreEstado === 'Aceptado') return false;
     
     // Regla general: solo avanzar a etapas superiores
     return estadoDestino.etapa > estadoActual.etapa;
 };
 ```
+
+### Diferencias con la documentación anterior:
+- ✅ **Más simple**: No hay validaciones adicionales en la UI
+- ✅ **Centralizada**: Toda la lógica está en `puedeAvanzarA()`
+- ✅ **Flexibilidad**: Los botones se muestran basándose únicamente en esta función
 
 ## Estados Legacy (Retrocompatibilidad)
 
@@ -171,8 +188,29 @@ const puedeAvanzarA = (nombreEstado: string): boolean => {
 
 ## Resumen de Restricciones Clave
 
-1. **Exclusividad Aceptado/Rechazado**: Una vez en etapa 7 u 8, no se puede ir al estado contrario
-2. **Flujos Paralelos**: Aceptado solo puede ir a Reparado, Rechazado solo a Diagnosticado  
-3. **Convergencia**: Ambos flujos convergen en Cobrado (etapa 11)
-4. **Solo Admin**: Solo administradores pueden cambiar estados
-5. **Progresión**: Solo se puede avanzar a etapas superiores (salvo excepciones legacy)
+1. **Exclusividad Aceptado/Rechazado**: Una vez en etapa 7 u 8, no se puede ir al estado contrario ✅ **IMPLEMENTADO**
+2. **Flujos Paralelos**: Aceptado solo puede ir a Reparado, Rechazado solo a Diagnosticado ✅ **IMPLEMENTADO**
+3. **Convergencia**: Ambos flujos convergen en Cobrado (etapa 11) ✅ **IMPLEMENTADO**
+4. **Solo Admin**: Solo administradores pueden cambiar estados ✅ **IMPLEMENTADO**
+5. **Progresión**: Solo se puede avanzar a etapas superiores ✅ **IMPLEMENTADO**
+
+## Implementación vs Documentación
+
+### ✅ **Lo que SÍ está implementado:**
+- Función `puedeAvanzarA()` centralizada
+- Restricciones de flujos exclusivos (Aceptado→Reparado, Rechazado→Diagnosticado)
+- Prevención de cambio entre Aceptado/Rechazado
+- Solo administradores pueden cambiar estados
+- Progresión a etapas superiores
+
+### ⚠️ **Diferencias encontradas:**
+- **UI más simple**: Los botones solo dependen de `puedeAvanzarA()`, sin validaciones adicionales
+- **Menos restricciones**: No hay validaciones extra del tipo `reparacion.data.EstadoRep !== 'Rechazado'`
+- **Lógica centralizada**: Toda la complejidad está en la función `puedeAvanzarA()`
+
+### 📍 **Ubicación del archivo:**
+Este documento ahora está ubicado en:
+```
+/src/components/Reparacion/diagrama_flujo_estados.md
+```
+Junto al componente que implementa esta lógica.
