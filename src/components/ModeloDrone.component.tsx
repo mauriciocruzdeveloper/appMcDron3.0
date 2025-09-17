@@ -30,7 +30,8 @@ export default function ModeloDroneComponent(): JSX.Element {
       NombreModelo: '',
       Fabricante: '',
       DescripcionModelo: '',
-      PrecioReferencia: 0
+      PrecioReferencia: 0,
+      code: ''
     }
   });
 
@@ -178,6 +179,17 @@ export default function ModeloDroneComponent(): JSX.Element {
               value={modeloDrone.data.Fabricante}
               onChange={handleTextInputChange}
               required
+            />
+          </div>
+          
+          <div className="mb-3">
+            <label className="form-label">Código</label>
+            <input
+              type="text"
+              className="form-control"
+              id="code"
+              value={modeloDrone.data.code}
+              onChange={handleTextInputChange}
             />
           </div>
           

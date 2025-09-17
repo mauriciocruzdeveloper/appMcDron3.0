@@ -4,6 +4,7 @@ export interface ModeloDroneData {
   Fabricante: string;
   DescripcionModelo: string;
   PrecioReferencia: number;
+  code: string;
 }
 
 export interface ModeloDrone {

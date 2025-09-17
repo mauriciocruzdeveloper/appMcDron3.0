@@ -18,7 +18,8 @@ const modelosDroneMock: ModeloDrone[] = [
             NombreModelo: 'Mavic 3',
             Fabricante: 'DJI',
             DescripcionModelo: 'Drone profesional con cámara Hasselblad',
-            PrecioReferencia: 2049000
+            PrecioReferencia: 2049000,
+            code: 'DJI-MAV3'
         }
     },
     {
@@ -27,7 +28,8 @@ const modelosDroneMock: ModeloDrone[] = [
             NombreModelo: 'Mini 3 Pro',
             Fabricante: 'DJI',
             DescripcionModelo: 'Drone compacto y ligero con excelente calidad de imagen',
-            PrecioReferencia: 759000
+            PrecioReferencia: 759000,
+            code: 'DJI-MINI3P'
         }
     },
     {
@@ -36,7 +38,8 @@ const modelosDroneMock: ModeloDrone[] = [
             NombreModelo: 'Phantom 4 Pro V2.0',
             Fabricante: 'DJI',
             DescripcionModelo: 'Drone profesional para fotografía aérea',
-            PrecioReferencia: 1699000
+            PrecioReferencia: 1699000,
+            code: 'DJI-PH4P'
         }
     }
 ];
@@ -126,6 +129,9 @@ export default function ListaModelosDrone(): JSX.Element {
                             </div>
                             <div>
                                 <small className='text-muted'>{modelo.data.Fabricante}</small>
+                                {modelo.data.code && (
+                                    <span className='badge bg-secondary ms-2'>{modelo.data.code}</span>
+                                )}
                             </div>
                             <div>
                                 <small className='text-muted'>{modelo.data.DescripcionModelo}</small>

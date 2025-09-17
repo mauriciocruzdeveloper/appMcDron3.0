@@ -22,7 +22,8 @@ export const getModeloDronePersistencia = async (id) => {
         NombreModelo: data.name,
         DescripcionModelo: data.description || '',
         Fabricante: data.manufacturer || '', // Asumiendo que se añadió esta columna
-        PrecioReferencia: data.price_ref || 0
+        PrecioReferencia: data.price_ref || 0,
+        code: data.code || ''
       }
     };
   } catch (error) {
@@ -48,7 +49,8 @@ export const getModelosDronePorFabricantePersistencia = async (fabricante) => {
         NombreModelo: item.name,
         DescripcionModelo: item.description || '',
         Fabricante: item.manufacturer || '',
-        PrecioReferencia: item.price_ref || 0
+        PrecioReferencia: item.price_ref || 0,
+        code: item.code || ''
       }
     }));
 
@@ -67,7 +69,8 @@ export const guardarModeloDronePersistencia = async (modeloDrone) => {
       name: modeloDrone.data.NombreModelo,
       description: modeloDrone.data.DescripcionModelo || '',
       manufacturer: modeloDrone.data.Fabricante || '',
-      price_ref: modeloDrone.data.PrecioReferencia || 0
+      price_ref: modeloDrone.data.PrecioReferencia || 0,
+      code: modeloDrone.data.code || ''
     };
 
     let result;
@@ -103,7 +106,8 @@ export const guardarModeloDronePersistencia = async (modeloDrone) => {
         NombreModelo: result.name,
         DescripcionModelo: result.description || '',
         Fabricante: result.manufacturer || '',
-        PrecioReferencia: result.price_ref || 0
+        PrecioReferencia: result.price_ref || 0,
+        code: result.code || ''
       }
     };
   } catch (error) {
@@ -196,9 +200,11 @@ export const getModelosDronePersistencia = async (setModelosDroneToRedux) => {
           NombreModelo: item.name,
           DescripcionModelo: item.description || '',
           Fabricante: item.manufacturer || '',
-          PrecioReferencia: item.price_ref || 0
+          PrecioReferencia: item.price_ref || 0,
+          code: item.code || ''
         }
       }));
+
 
       // Actualizar el estado en Redux
       setModelosDroneToRedux(modelosDrone);
