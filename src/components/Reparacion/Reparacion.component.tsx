@@ -340,7 +340,7 @@ export default function ReparacionComponent(): React.ReactElement | null {
     const avanzarATransito = () => setEstado(estados.Transito);
     const avanzarARecibido = async () => {
         await setEstado(estados.Recibido);
-        
+
         // Enviar email de recibo automáticamente
         if (reparacion) {
             try {
@@ -373,7 +373,7 @@ export default function ReparacionComponent(): React.ReactElement | null {
     const avanzarARechazado = () => setEstado(estados.Rechazado);
     const avanzarAReparado = async () => {
         await setEstado(estados.Reparado);
-        
+
         // Enviar email de notificación de drone reparado
         if (reparacion) {
             try {
@@ -402,7 +402,7 @@ export default function ReparacionComponent(): React.ReactElement | null {
     };
     const avanzarADiagnosticado = async () => {
         await setEstado(estados.Diagnosticado);
-        
+
         // Enviar email de notificación de drone diagnosticado
         if (reparacion) {
             try {
@@ -439,7 +439,7 @@ export default function ReparacionComponent(): React.ReactElement | null {
         if (!isAdmin) return false;
         const estadoActual = obtenerEstadoSeguro(reparacion.data.EstadoRep);
         const estadoDestino = estados[nombreEstado];
-        
+
         // Lógica especial para los flujos de Aceptado/Rechazado
         if (nombreEstado === 'Reparado') {
             return estadoActual.nombre === 'Aceptado';
@@ -450,7 +450,7 @@ export default function ReparacionComponent(): React.ReactElement | null {
 
         if (estadoActual.nombre === 'Aceptado' && nombreEstado === 'Rechazado') return false;
         if (estadoActual.nombre === 'Rechazado' && nombreEstado === 'Aceptado') return false;
-        
+
         return estadoDestino.etapa > estadoActual.etapa;
     };
 
@@ -728,7 +728,7 @@ export default function ReparacionComponent(): React.ReactElement | null {
     const ResumenProgreso = () => {
         const estadosOrdenados = [
             'Consulta', 'Respondido', 'Transito', 'Recibido', 'Revisado',
-            'Presupuestado', 'Aceptado', 'Rechazado', 'Reparado', 'Diagnosticado', 
+            'Presupuestado', 'Aceptado', 'Rechazado', 'Reparado', 'Diagnosticado',
             'Cobrado', 'Enviado', 'Finalizado', 'Abandonado', 'Cancelado'
         ];
 
@@ -1027,24 +1027,6 @@ export default function ReparacionComponent(): React.ReactElement | null {
                                 disabled={!isAdmin}
                             />
                         </div>
-                        <div>
-                            <div className="d-flex w-100 justify-content-between align-items-center">
-                                <label className="form-label">Autodiagnóstico</label>
-                                <button
-                                    type="button"
-                                    className="btn btn-outline-secondary bg-bluemcdron text-white"
-                                    onClick={handleGenerarAutoDiagnostico}
-                                >
-                                    <i className="bi bi-arrow-repeat"></i>
-                                </button>
-                            </div>
-                            <TextareaAutosize
-                                readOnly
-                                className="form-control"
-                                id="DiagnosticoRep"
-                                value={reparacion?.data?.DiagnosticoRep || ""}
-                            />
-                        </div>
 
                         {/* Botones de avance de estado para CONSULTA */}
                         {isAdmin && (
@@ -1153,13 +1135,23 @@ export default function ReparacionComponent(): React.ReactElement | null {
                                 disabled={!isAdmin}
                             />
                         </div>
+                        <div className="d-flex w-100 justify-content-between align-items-center">
+                            <label className="form-label">Autodiagnóstico</label>
+                            <button
+                                type="button"
+                                className="btn btn-outline-secondary bg-bluemcdron text-white"
+                                onClick={handleGenerarAutoDiagnostico}
+                            >
+                                <i className="bi bi-arrow-repeat"></i>
+                            </button>
+                        </div>
                         <div>
                             <label className="form-label">Observaciones del Técnico</label>
                             <TextareaAutosize
                                 onChange={handleOnChange}
                                 className="form-control"
-                                id="DescripcionTecRep"
-                                value={reparacion?.data?.DescripcionTecRep || ""}
+                                id="DiagnosticoRep"
+                                value={reparacion?.data?.DiagnosticoRep || ""}
                                 rows={5}
                                 disabled={!isAdmin}
                             />
@@ -1260,7 +1252,7 @@ export default function ReparacionComponent(): React.ReactElement | null {
                                         </button>
                                     </div>
                                 )}
-                                
+
                                 {/* Botones de Aceptado y Rechazado juntos abajo */}
                                 {(puedeAvanzarA('Aceptado') || puedeAvanzarA('Rechazado')) && (
                                     <div className="d-flex flex-wrap gap-2">
@@ -1430,7 +1422,7 @@ export default function ReparacionComponent(): React.ReactElement | null {
                                         </button>
                                     )}
                                 </div>
-                                
+
                                 {/* Segunda fila de botones */}
                                 <div className="d-flex flex-wrap gap-2">
                                     {puedeAvanzarA('Finalizado') && (
