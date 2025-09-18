@@ -66,7 +66,7 @@ export const enviarReciboAsync = createAsyncThunk(
     try {
       dispatch(isFetchingStart());
       const body = {
-        cliente: `${reparacion.data.NombreUsu} ${reparacion.data.ApellidoUsu}`,
+        cliente: reparacion.data.ApellidoUsu ? `${reparacion.data.NombreUsu} ${reparacion.data.ApellidoUsu}` : reparacion.data.NombreUsu,
         nro_reparacion: reparacion.id,
         equipo: reparacion.data.ModeloDroneNameRep,
         fecha_ingreso: new Date(Number(reparacion.data.FeRecRep)).toLocaleDateString(),
@@ -132,7 +132,7 @@ export const enviarDroneReparadoAsync = createAsyncThunk(
       const montoRestante = montoTotal - montoPagado;
 
       const body = {
-        cliente: `${reparacion.data.NombreUsu} ${reparacion.data.ApellidoUsu}`,
+        cliente: reparacion.data.ApellidoUsu ? `${reparacion.data.NombreUsu} ${reparacion.data.ApellidoUsu}` : reparacion.data.NombreUsu,
         nro_reparacion: reparacion.id,
         equipo: reparacion.data.ModeloDroneNameRep,
         fecha_ingreso: new Date(Number(reparacion.data.FeRecRep)).toLocaleDateString(),
@@ -171,7 +171,7 @@ export const enviarDroneDiagnosticadoAsync = createAsyncThunk(
       dispatch(isFetchingStart());
 
       const body = {
-        cliente: `${reparacion.data.NombreUsu} ${reparacion.data.ApellidoUsu}`,
+        cliente: reparacion.data.ApellidoUsu ? `${reparacion.data.NombreUsu} ${reparacion.data.ApellidoUsu}` : reparacion.data.NombreUsu,
         nro_reparacion: reparacion.id,
         equipo: reparacion.data.ModeloDroneNameRep,
         fecha_ingreso: new Date(Number(reparacion.data.FeRecRep)).toLocaleDateString(),
