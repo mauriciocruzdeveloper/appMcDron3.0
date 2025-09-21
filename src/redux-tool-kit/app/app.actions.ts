@@ -14,6 +14,7 @@ import { callEndpoint } from "../../utils/utils";
 import { HttpMethod } from "../../types/httpMethods";
 import { guardarReparacionAsync } from '../reparacion/reparacion.actions';
 import { supabaseAuthErrors } from "../../persistencia/persistenciaSupabase/supabaseAuthErrors";
+import { RootState } from "../store";
 
 // LOGIN
 export const loginAsync = createAsyncThunk(
@@ -101,9 +102,22 @@ export const enviarDroneReparadoAsync = createAsyncThunk(
       dispatch(isFetchingStart());
 
       // Obtener las intervenciones aplicadas a esta reparación
-      const state = getState() as { intervencion: { coleccionIntervenciones: Intervenciones } };
+      const state = getState() as RootState;
       const todasLasIntervenciones = state.intervencion.coleccionIntervenciones;
       const intervencionesIds = reparacion.data.IntervencionesIds || [];
+      let equipo = reparacion.data.ModeloDroneNameRep;
+      if (!equipo) {
+        if (reparacion.data.DroneId) {
+          const drone = state.drone.coleccionDrones[reparacion.data.DroneId];
+          if (drone) {
+            equipo = state.modeloDrone.coleccionModelosDrone[drone.data.ModeloDroneId].data.NombreModelo;
+          } else {
+            equipo = 'Drone no encontrado';
+          }
+        } else {
+          equipo = 'Drone no asignado';
+        }
+      }
 
       // TODO: El problema es que la reparacion no tiene los ids de las intervenciones, no se por que. Arreglar en los mappers o donde sea.
       console.log("Intervenciones IDs:", intervencionesIds);
@@ -134,7 +148,7 @@ export const enviarDroneReparadoAsync = createAsyncThunk(
       const body = {
         cliente: reparacion.data.ApellidoUsu ? `${reparacion.data.NombreUsu} ${reparacion.data.ApellidoUsu}` : reparacion.data.NombreUsu,
         nro_reparacion: reparacion.id,
-        equipo: reparacion.data.ModeloDroneNameRep,
+        equipo,
         fecha_ingreso: new Date(Number(reparacion.data.FeRecRep)).toLocaleDateString(),
         fecha_finalizacion: new Date().toLocaleDateString(),
         trabajo_realizado: trabajoRealizado,
