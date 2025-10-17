@@ -49,7 +49,11 @@ export default function Estadisticas(): JSX.Element {
             if (rep.data.PresuDiRep > 0) {
                 return total + rep.data.PresuDiRep;
             } else if (rep.data.PresuFiRep > 0) {
-                return total + rep.data.PresuFiRep;
+                if (rep.data.EstadoRep === 'Finalizado' || rep.data.EstadoRep === 'Enviado' || rep.data.EstadoRep === 'Cobrado') {
+                    return total + rep.data.PresuFiRep;
+                } else {
+                    return total + rep.data.PresuReRep;
+                }
             }
             return total;
         }, 0);
@@ -62,6 +66,8 @@ export default function Estadisticas(): JSX.Element {
             reparaciones: reparacionesDelMes
         };
     });
+
+    console.log('!!! estadisticas por mes', estadisticasPorMes);
 
     const totalAnual = estadisticasPorMes.reduce((total, mes) => total + mes.ingresos, 0);
     const totalReparaciones = estadisticasPorMes.reduce((total, mes) => total + mes.cantidad, 0);
@@ -187,7 +193,23 @@ export default function Estadisticas(): JSX.Element {
                             {mesExpandido === mes.mes && mes.reparaciones.length > 0 && (
                                 <div className="ps-4 py-2 bg-light">
                                     {mes.reparaciones.map(rep => {
-                                        const ingreso = rep.data.PresuDiRep > 0 ? rep.data.PresuDiRep : (rep.data.PresuFiRep || 0);
+                                        // Usar la misma lógica que en el cálculo de ingresos
+                                        let ingreso = 0;
+                                        let tipoIngreso = '';
+                                        
+                                        if (rep.data.PresuDiRep > 0) {
+                                            ingreso = rep.data.PresuDiRep;
+                                            tipoIngreso = 'Diagnóstico';
+                                        } else if (rep.data.PresuFiRep > 0) {
+                                            if (rep.data.EstadoRep === 'Finalizado' || rep.data.EstadoRep === 'Enviado' || rep.data.EstadoRep === 'Cobrado') {
+                                                ingreso = rep.data.PresuFiRep;
+                                                tipoIngreso = 'Presupuesto Final';
+                                            } else {
+                                                ingreso = rep.data.PresuReRep;
+                                                tipoIngreso = 'Presupuesto Reparación';
+                                            }
+                                        }
+                                        
                                         const fecha = new Date(rep.data.FeFinRep || rep.data.FeConRep || rep.data.FechaCreacion);
                                         return (
                                             <div key={rep.id} className="d-flex justify-content-between py-1 border-bottom"
@@ -203,8 +225,8 @@ export default function Estadisticas(): JSX.Element {
                                                 </div>
                                                 <div className="text-end">
                                                     <small className="text-success">{formatPrice(ingreso)}</small>
-                                                    {rep.data.PresuDiRep > 0 && <br />}
-                                                    {rep.data.PresuDiRep > 0 && <small className="text-muted">Diagnóstico</small>}
+                                                    {tipoIngreso && <br />}
+                                                    {tipoIngreso && <small className="text-muted">{tipoIngreso}</small>}
                                                 </div>
                                             </div>
                                         );
