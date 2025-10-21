@@ -28,6 +28,7 @@ import { convertTimestampCORTO } from "../../utils/utils";
 import "bootstrap-icons/font/bootstrap-icons.css";
 import IntervencionesReparacion from '../IntervencionesReparacion.component';
 import { selectUsuarioPorId } from "../../redux-tool-kit/usuario/usuario.selectors";
+import { ImageGallery } from '../ImageGallery';
 import {
     selectReparacionById,
     selectIntervencionesDeReparacionActual
@@ -100,7 +101,6 @@ export default function ReparacionComponent(): React.ReactElement | null {
 
     const [reparacionOriginal, setReparacionOriginal] = useState<ReparacionType | undefined>(isNew ? reparacionVacia : reparacionStore);
     const [reparacion, setReparacion] = useState<ReparacionType | undefined>(isNew ? reparacionVacia : reparacionStore);
-    const [fotoSeleccionada, setFotoSeleccionada] = useState<string | null>(null);
 
     console.log('!!! reparacion en reparación componente', reparacion);
 
@@ -610,7 +610,6 @@ export default function ReparacionComponent(): React.ReactElement | null {
             });
         }
 
-        setFotoSeleccionada(null); // Resetear el input de archivo
         e.target.value = ''; // Limpiar el input para permitir subir el mismo archivo nuevamente
     };
 
@@ -1455,98 +1454,25 @@ export default function ReparacionComponent(): React.ReactElement | null {
             {seccionesVisibles.fotos && (
                 <div className="card mb-3">
                     <div className="card-body">
-                        <div className="d-flex w-100 justify-content-between align-items-center">
+                        <div className="d-flex w-100 justify-content-between align-items-center mb-3">
                             <h5 className="card-title bluemcdron">FOTOS</h5>
-                            <div className="d-flex justify-content-start mb-2">
+                            <div className="d-flex justify-content-start">
                                 <label className="btn btn-outline-secondary bg-bluemcdron text-white">
                                     Subir Foto
                                     <input
                                         type="file"
                                         onChange={handleFotoChange}
                                         style={{ display: "none" }}
-                                        accept="image/*" // Especifica que solo se aceptan imágenes
+                                        accept="image/*"
                                     />
                                 </label>
                             </div>
                         </div>
-                        <div className="d-flex flex-wrap mt-3">
-                            {reparacion.data.urlsFotos?.map((url, idx) => (
-                                <div
-                                    key={idx}
-                                    style={{
-                                        width: "calc((100% - (2 * 12px)) / 3)",
-                                        margin: "4px",
-                                        backgroundColor: "#f1f1f1"
-                                    }}
-                                >
-                                    <div
-                                        style={{
-                                            height: "150px",
-                                            display: "flex",
-                                            justifyContent: "center",
-                                            alignItems: "center",
-                                            cursor: "pointer",
-                                        }}
-                                        onClick={() => setFotoSeleccionada(url)}
-                                    >
-                                        <img
-                                            src={url}
-                                            alt="Foto Reparación"
-                                            style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain" }}
-                                        />
-                                    </div>
-                                    {isAdmin && (
-                                        <div className="flex text-center my-2">
-                                            <a
-                                                target="_blank"
-                                                href={url}
-                                                download
-                                                className="btn btn-sm btn-success me-2 bi-cloud-download"
-                                            >
-                                            </a>
-                                            <a
-                                                className="btn btn-sm btn-danger bi bi-trash"
-                                                onClick={() => handleDeleteFoto(url)}
-                                            >
-                                            </a>
-                                        </div>
-                                    )}
-                                </div>
-                            ))}
-                        </div>
-                        {fotoSeleccionada && (
-                            <div
-                                style={{
-                                    position: "fixed",
-                                    top: 0, left: 0,
-                                    width: "100%", height: "100%",
-                                    backgroundColor: "rgba(0,0,0,0.7)",
-                                    display: "flex", alignItems: "center", justifyContent: "center",
-                                    zIndex: 1000,
-                                }}
-                            >
-                                <div style={{ position: "relative" }}>
-                                    <button
-                                        type="button"
-                                        style={{
-                                            position: "absolute",
-                                            top: 0,
-                                            right: 0,
-                                            margin: "8px"
-                                        }}
-                                        className="btn btn-sm btn-light"
-                                        onClick={() => setFotoSeleccionada(null)}
-                                    >
-                                        X
-                                    </button>
-                                    <img
-                                        src={fotoSeleccionada}
-                                        alt="Foto Ampliada"
-                                        style={{ maxHeight: "80vh", maxWidth: "90vw", objectFit: "contain" }}
-                                    />
-                                </div>
-                            </div>
-                        )}
+                        <ImageGallery
+                            images={reparacion.data.urlsFotos || []}
+                            onDelete={isAdmin ? handleDeleteFoto : undefined}
+                            isAdmin={isAdmin}
+                        />
                     </div>
                 </div>
             )}
