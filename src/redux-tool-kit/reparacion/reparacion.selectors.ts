@@ -335,6 +335,25 @@ export const selectReparacionesByDrone = (droneId: string): ReparacionArraySelec
   );
 
 /**
+ * Selector para obtener todas las fotos de las reparaciones de un drone
+ * @param droneId - ID del drone
+ * @returns Función selector que retorna array de URLs de fotos
+ */
+export const selectFotosByDrone = (droneId: string): (state: RootState) => string[] =>
+  createSelector(
+    [(state: RootState) => selectReparacionesByDrone(droneId)(state)],
+    (reparaciones): string[] => {
+      const fotos: string[] = [];
+      reparaciones.forEach(reparacion => {
+        if (reparacion.data.urlsFotos && reparacion.data.urlsFotos.length > 0) {
+          fotos.push(...reparacion.data.urlsFotos);
+        }
+      });
+      return fotos;
+    }
+  );
+
+/**
  * Selector para reparaciones por número de serie
  * @param numeroSerie - Número de serie del drone
  * @returns Función selector que retorna reparaciones del drone

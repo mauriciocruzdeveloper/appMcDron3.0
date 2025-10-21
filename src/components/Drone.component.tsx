@@ -10,9 +10,10 @@ import Select from 'react-select';
 import { selectModelosDroneArray } from '../redux-tool-kit/modeloDrone/modeloDrone.selectors';
 import { selectUsuarioPorId } from '../redux-tool-kit/usuario/usuario.selectors';
 import { selectDroneById, selectDronesArray } from '../redux-tool-kit/drone';
-import { selectReparacionesByDrone } from '../redux-tool-kit/reparacion/reparacion.selectors';
+import { selectReparacionesByDrone, selectFotosByDrone } from '../redux-tool-kit/reparacion/reparacion.selectors';
 import { generarNombreUnico, convertTimestampCORTO } from '../utils/utils';
 import { estados } from '../datos/estados';
+import { ImageGallery } from './ImageGallery';
 
 interface ParamTypes extends Record<string, string | undefined> {
   id: string;
@@ -58,6 +59,11 @@ export default function DroneComponent(): JSX.Element {
   // Obtener las reparaciones relacionadas con este drone
   const reparacionesDelDrone = useAppSelector(state => 
     !isNew && drone.id ? selectReparacionesByDrone(drone.id)(state) : []
+  );
+
+  // Obtener todas las fotos de las reparaciones del drone
+  const fotosDrone = useAppSelector(state =>
+    !isNew && drone.id ? selectFotosByDrone(drone.id)(state) : []
   );
 
   // Effect para generar nombre automático cuando cambien modelo o propietario
@@ -315,6 +321,21 @@ export default function DroneComponent(): JSX.Element {
                 ))}
               </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {!isNew && fotosDrone.length > 0 && (
+        <div className="card mb-3">
+          <div className="card-body">
+            <h5 className="card-title bluemcdron">GALERÍA DE IMÁGENES DEL DRONE</h5>
+            <p className="text-muted small mb-3">
+              Fotos de todas las reparaciones de este drone ({fotosDrone.length} {fotosDrone.length === 1 ? 'imagen' : 'imágenes'})
+            </p>
+            <ImageGallery
+              images={fotosDrone}
+              isAdmin={false}
+            />
           </div>
         </div>
       )}
