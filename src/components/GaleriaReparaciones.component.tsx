@@ -178,10 +178,36 @@ export default function GaleriaReparaciones(): JSX.Element {
                                     {/* Galería de Fotos */}
                                     {estaExpandida && (
                                         <div className="mt-3 ps-4">
+                                            {(reparacion.data.FotoAntes || reparacion.data.FotoDespues) && (
+                                                <div className="alert alert-success mb-3">
+                                                    <small>
+                                                        <i className="bi bi-check-circle me-2"></i>
+                                                        <strong>Fotos marcadas:</strong>
+                                                        {reparacion.data.FotoAntes && (
+                                                            <span className="ms-2">
+                                                                <span className="badge bg-warning text-dark me-1">
+                                                                    <i className="bi bi-arrow-left-circle me-1"></i>
+                                                                    ANTES
+                                                                </span>
+                                                            </span>
+                                                        )}
+                                                        {reparacion.data.FotoDespues && (
+                                                            <span className="ms-2">
+                                                                <span className="badge bg-success me-1">
+                                                                    <i className="bi bi-arrow-right-circle me-1"></i>
+                                                                    DESPUÉS
+                                                                </span>
+                                                            </span>
+                                                        )}
+                                                    </small>
+                                                </div>
+                                            )}
                                             <div className="bg-light p-3 rounded">
                                                 <ImageGallery
                                                     images={reparacion.data.urlsFotos || []}
                                                     isAdmin={false}
+                                                    photoBeforeUrl={reparacion.data.FotoAntes}
+                                                    photoAfterUrl={reparacion.data.FotoDespues}
                                                 />
                                             </div>
                                         </div>

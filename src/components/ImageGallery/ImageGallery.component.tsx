@@ -5,12 +5,22 @@ interface ImageGalleryProps {
     images: string[];
     onDelete?: (url: string) => void;
     isAdmin?: boolean;
+    photoBeforeUrl?: string;
+    photoAfterUrl?: string;
+    onSelectBefore?: (url: string) => void;
+    onSelectAfter?: (url: string) => void;
+    enableSelection?: boolean;
 }
 
 export const ImageGallery: React.FC<ImageGalleryProps> = ({ 
     images, 
     onDelete, 
-    isAdmin = false
+    isAdmin = false,
+    photoBeforeUrl,
+    photoAfterUrl,
+    onSelectBefore,
+    onSelectAfter,
+    enableSelection = false
 }) => {
     const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
     const [isFullscreen, setIsFullscreen] = useState(false);
@@ -60,6 +70,23 @@ export const ImageGallery: React.FC<ImageGalleryProps> = ({
         document.body.removeChild(link);
     };
 
+    const handleSelectBefore = (url: string, e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (onSelectBefore) {
+            onSelectBefore(url);
+        }
+    };
+
+    const handleSelectAfter = (url: string, e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (onSelectAfter) {
+            onSelectAfter(url);
+        }
+    };
+
+    const isSelectedBefore = (url: string) => photoBeforeUrl === url;
+    const isSelectedAfter = (url: string) => photoAfterUrl === url;
+
     // Navegación con teclado
     useEffect(() => {
         if (!isFullscreen) return;
@@ -104,9 +131,34 @@ export const ImageGallery: React.FC<ImageGalleryProps> = ({
                 <div className="image-gallery-grid">
                     {images.map((url, idx) => (
                         <div key={idx} className="image-gallery-item">
+                            {/* Badge para indicar Antes/Después */}
+                            {(isSelectedBefore(url) || isSelectedAfter(url)) && (
+                                <div 
+                                    className="position-absolute top-0 start-0 m-2 z-3"
+                                    style={{ zIndex: 10 }}
+                                >
+                                    {isSelectedBefore(url) && (
+                                        <span className="badge bg-warning text-dark">
+                                            <i className="bi bi-arrow-left-circle me-1"></i>
+                                            ANTES
+                                        </span>
+                                    )}
+                                    {isSelectedAfter(url) && (
+                                        <span className="badge bg-success">
+                                            <i className="bi bi-arrow-right-circle me-1"></i>
+                                            DESPUÉS
+                                        </span>
+                                    )}
+                                </div>
+                            )}
                             <div 
                                 className="image-gallery-thumbnail"
                                 onClick={() => openFullscreen(idx)}
+                                style={{
+                                    border: isSelectedBefore(url) ? '3px solid #ffc107' : 
+                                            isSelectedAfter(url) ? '3px solid #28a745' : 
+                                            undefined
+                                }}
                             >
                                 <img
                                     src={url}
@@ -119,9 +171,32 @@ export const ImageGallery: React.FC<ImageGalleryProps> = ({
                             </div>
                             {isAdmin && (
                                 <div className="image-gallery-actions">
+                                    {enableSelection && (
+                                        <>
+                                            <button
+                                                className={`btn btn-sm ${isSelectedBefore(url) ? 'btn-warning' : 'btn-outline-warning'}`}
+                                                onClick={(e) => handleSelectBefore(url, e)}
+                                                title="Marcar como ANTES"
+                                                disabled={isSelectedAfter(url)}
+                                            >
+                                                <i className="bi bi-arrow-left-circle"></i>
+                                            </button>
+                                            <button
+                                                className={`btn btn-sm ${isSelectedAfter(url) ? 'btn-success' : 'btn-outline-success'}`}
+                                                onClick={(e) => handleSelectAfter(url, e)}
+                                                title="Marcar como DESPUÉS"
+                                                disabled={isSelectedBefore(url)}
+                                            >
+                                                <i className="bi bi-arrow-right-circle"></i>
+                                            </button>
+                                        </>
+                                    )}
                                     <button
-                                        className="btn btn-sm btn-success"
-                                        onClick={() => handleDownload(url)}
+                                        className="btn btn-sm btn-info"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleDownload(url);
+                                        }}
                                         title="Descargar"
                                     >
                                         <i className="bi bi-cloud-download"></i>
@@ -129,7 +204,10 @@ export const ImageGallery: React.FC<ImageGalleryProps> = ({
                                     {onDelete && (
                                         <button
                                             className="btn btn-sm btn-danger"
-                                            onClick={() => onDelete(url)}
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                onDelete(url);
+                                            }}
                                             title="Eliminar"
                                         >
                                             <i className="bi bi-trash"></i>

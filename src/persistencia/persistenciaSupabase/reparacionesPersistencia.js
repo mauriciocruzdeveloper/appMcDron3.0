@@ -233,6 +233,8 @@ export const getReparacionesPersistencia = (setReparacionesToRedux, usuario) => 
         delivery_date,
         photo_urls,
         document_urls,
+        photo_before,
+        photo_after,
         drone:drone_id (id),
         owner:owner_id (id, email, first_name, last_name, telephone)
       `);
@@ -281,7 +283,9 @@ export const getReparacionesPersistencia = (setReparacionesToRedux, usuario) => 
           SeguimientoEntregaRep: item.delivery_tracking || '',
           urlsFotos: item.photo_urls || [],
           urlsDocumentos: item.document_urls || [],
-          IntervencionesIds: []  // Obtendremos estos de otra consulta
+          IntervencionesIds: [],  // Obtendremos estos de otra consulta
+          FotoAntes: item.photo_before || undefined,  // Mapeo de BD a frontend
+          FotoDespues: item.photo_after || undefined  // Mapeo de BD a frontend
         }
       }));
 
@@ -366,7 +370,9 @@ export const getReparacionPersistencia = async (id) => {
         SeguimientoEntregaRep: data.delivery_tracking || '',
         urlsFotos: data.photo_urls || [],
         urlsDocumentos: data.document_urls || [],
-        IntervencionesIds: []  // Obtendremos estos de otra consulta
+        IntervencionesIds: [],  // Obtendremos estos de otra consulta
+        FotoAntes: data.photo_before || undefined,  // Mapeo de BD a frontend
+        FotoDespues: data.photo_after || undefined  // Mapeo de BD a frontend
       }
     };
   } catch (error) {
@@ -401,9 +407,18 @@ export const guardarReparacionPersistencia = async (reparacion) => {
       delivery_description: reparacion.data.TxtEntregaRep,
       delivery_tracking: reparacion.data.SeguimientoEntregaRep,
       photo_urls: reparacion.data.urlsFotos,
-      document_urls: reparacion.data.urlsDocumentos
+      document_urls: reparacion.data.urlsDocumentos,
+      photo_before: reparacion.data.FotoAntes || null,  // Mapeo de frontend a BD
+      photo_after: reparacion.data.FotoDespues || null   // Mapeo de frontend a BD
     };
     
+    console.log('🔍 GUARDANDO REPARACION:', {
+      id: reparacion.id,
+      'Frontend FotoAntes': reparacion.data.FotoAntes,
+      'Frontend FotoDespues': reparacion.data.FotoDespues,
+      'BD photo_before': reparacionData.photo_before,
+      'BD photo_after': reparacionData.photo_after
+    });
     console.log('Datos para Supabase:', reparacionData);
     console.log('drone_id que se enviará:', reparacionData.drone_id);
 
@@ -419,10 +434,21 @@ export const guardarReparacionPersistencia = async (reparacion) => {
         .select();
 
       if (error) {
-        console.error('Error en actualización:', error);
+        console.error('❌ Error en actualización:', error);
+        console.error('❌ Detalles del error:', {
+          message: error.message,
+          details: error.details,
+          hint: error.hint,
+          code: error.code
+        });
         throw error;
       }
       result = data[0];
+      console.log('✅ Actualización exitosa. Datos guardados:', {
+        id: result.id,
+        photo_before: result.photo_before,
+        photo_after: result.photo_after
+      });
     } else {
       // Inserción
       console.log('Insertando nueva reparación');
