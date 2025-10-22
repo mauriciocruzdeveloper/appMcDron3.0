@@ -20,3 +20,5 @@ ainfo/
 
 # Variables de entorno
 .env
+
+prompts.txt
