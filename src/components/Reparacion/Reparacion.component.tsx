@@ -713,6 +713,76 @@ export default function ReparacionComponent(): React.ReactElement | null {
         }
     };
 
+    const handleSelectFotoAntes = async (url: string) => {
+        if (!reparacion) return;
+        
+        const nuevaReparacion = {
+            ...reparacion,
+            data: {
+                ...reparacion.data,
+                FotoAntes: reparacion.data.FotoAntes === url ? undefined : url
+            }
+        };
+
+        console.log('📸 Seleccionando foto ANTES:', {
+            url,
+            'FotoAntes anterior': reparacion.data.FotoAntes,
+            'FotoAntes nueva': nuevaReparacion.data.FotoAntes,
+            'acción': reparacion.data.FotoAntes === url ? 'DESELECCIONAR' : 'SELECCIONAR'
+        });
+
+        const response = await dispatch(guardarReparacionAsync(nuevaReparacion));
+        console.log('📸 Respuesta de guardado ANTES:', response.meta.requestStatus);
+        
+        if (response.meta.requestStatus === 'fulfilled') {
+            setReparacion(nuevaReparacion);
+            setReparacionOriginal(nuevaReparacion);
+            console.log('✅ Estado local actualizado con FotoAntes');
+        } else {
+            console.error('❌ Error al guardar foto ANTES');
+            openModal({
+                mensaje: "Error al guardar la selección de foto ANTES.",
+                tipo: "danger",
+                titulo: "Seleccionar Foto",
+            });
+        }
+    };
+
+    const handleSelectFotoDespues = async (url: string) => {
+        if (!reparacion) return;
+        
+        const nuevaReparacion = {
+            ...reparacion,
+            data: {
+                ...reparacion.data,
+                FotoDespues: reparacion.data.FotoDespues === url ? undefined : url
+            }
+        };
+
+        console.log('📸 Seleccionando foto DESPUÉS:', {
+            url,
+            'FotoDespues anterior': reparacion.data.FotoDespues,
+            'FotoDespues nueva': nuevaReparacion.data.FotoDespues,
+            'acción': reparacion.data.FotoDespues === url ? 'DESELECCIONAR' : 'SELECCIONAR'
+        });
+
+        const response = await dispatch(guardarReparacionAsync(nuevaReparacion));
+        console.log('📸 Respuesta de guardado DESPUÉS:', response.meta.requestStatus);
+        
+        if (response.meta.requestStatus === 'fulfilled') {
+            setReparacion(nuevaReparacion);
+            setReparacionOriginal(nuevaReparacion);
+            console.log('✅ Estado local actualizado con FotoDespues');
+        } else {
+            console.error('❌ Error al guardar foto DESPUÉS');
+            openModal({
+                mensaje: "Error al guardar la selección de foto DESPUÉS.",
+                tipo: "danger",
+                titulo: "Seleccionar Foto",
+            });
+        }
+    };
+
     const handleGoToUser = () => {
         if (!usuarioStore?.id) return;
         history.push(`/inicio/usuarios/${usuarioStore.id}`);
@@ -1468,10 +1538,31 @@ export default function ReparacionComponent(): React.ReactElement | null {
                                 </label>
                             </div>
                         </div>
+                        {isAdmin && (
+                            <div className="alert alert-info mb-3">
+                                <small>
+                                    <i className="bi bi-info-circle me-2"></i>
+                                    <strong>Selecciona fotos ANTES/DESPUÉS:</strong> Usa los botones 
+                                    <span className="badge bg-warning text-dark mx-1">
+                                        <i className="bi bi-arrow-left-circle"></i> ANTES
+                                    </span> 
+                                    y 
+                                    <span className="badge bg-success mx-1">
+                                        <i className="bi bi-arrow-right-circle"></i> DESPUÉS
+                                    </span>
+                                    para marcar las fotos que muestran el estado del drone antes y después de la reparación.
+                                </small>
+                            </div>
+                        )}
                         <ImageGallery
                             images={reparacion.data.urlsFotos || []}
                             onDelete={isAdmin ? handleDeleteFoto : undefined}
                             isAdmin={isAdmin}
+                            photoBeforeUrl={reparacion.data.FotoAntes}
+                            photoAfterUrl={reparacion.data.FotoDespues}
+                            onSelectBefore={isAdmin ? handleSelectFotoAntes : undefined}
+                            onSelectAfter={isAdmin ? handleSelectFotoDespues : undefined}
+                            enableSelection={isAdmin}
                         />
                     </div>
                 </div>
