@@ -20,6 +20,7 @@ export enum Etapas {
     Presupuestado = 6,
     Aceptado = 7,
     Rechazado = 8,
+    Repuestos = 8.5,    // Estado principal - Esperando repuestos
     Reparado = 9,
     Diagnosticado = 10,
     Cobrado = 11,
@@ -30,7 +31,6 @@ export enum Etapas {
     
     // Estados de retrocompatibilidad (etapas altas para identificarlos)
     Reparar = 100,
-    Repuestos = 101,
     Entregado = 103,
     Venta = 104,
     Liquidación = 105,

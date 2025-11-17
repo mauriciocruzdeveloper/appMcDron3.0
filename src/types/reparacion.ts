@@ -32,6 +32,26 @@ export interface DataReparacion {
     IntervencionesIds?: string[]; // Lista de IDs de intervenciones aplicadas en la reparación
     FotoAntes?: string; // URL de la foto "antes" de la reparación
     FotoDespues?: string; // URL de la foto "después" de la reparación
+    
+    // ======================================================
+    // CAMPOS PARA ESTADO "REPUESTOS"
+    // ======================================================
+    
+    /**
+     * Observaciones sobre qué repuestos se necesitan.
+     * Texto libre para especificar detalles.
+     * @maxLength 2000
+     * @example "Necesita: Motor delantero izquierdo DJI Mini 3 Pro, tornillos M2x6 (x4)"
+     */
+    ObsRepuestos?: string;
+    
+    /**
+     * Lista de IDs de repuestos del inventario que se solicitaron.
+     * Cada ID corresponde a un documento en la colección 'repuestos' o tabla 'part' en Supabase.
+     * @maxItems 50
+     * @example ["rep_abc123xyz", "rep_def456uvw"]
+     */
+    RepuestosSolicitados?: string[];
 }
 
 export interface ReparacionType {

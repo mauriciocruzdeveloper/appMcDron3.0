@@ -642,3 +642,65 @@ export const selectEstadisticasMigracion = createSelector(
     };
   }
 );
+
+// ============================================================================
+// SELECTORES PARA ESTADO "REPUESTOS"
+// ============================================================================
+
+/**
+ * Selector memoizado para reparaciones en estado "Repuestos"
+ * Retorna todas las reparaciones que están esperando la llegada de repuestos
+ * Complejidad: O(n) donde n = total de reparaciones
+ * 
+ * @returns Array de reparaciones en estado "Repuestos"
+ */
+export const selectReparacionesEnRepuestos = createSelector(
+  [selectReparacionesArray],
+  (reparaciones): ReparacionType[] =>
+    reparaciones.filter(reparacion => reparacion.data.EstadoRep === "Repuestos")
+);
+
+/**
+ * Selector memoizado para contador de reparaciones en cada estado
+ * Incluye el nuevo estado "Repuestos"
+ * Complejidad: O(n) donde n = total de reparaciones
+ * 
+ * @returns Record con cantidad de reparaciones por estado
+ */
+export const selectContadorEstados = createSelector(
+  [selectReparacionesArray],
+  (reparaciones): Record<string, number> => {
+    return reparaciones.reduce((acc, rep) => {
+      const estado = rep.data.EstadoRep;
+      acc[estado] = (acc[estado] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+  }
+);
+
+/**
+ * Selector memoizado para cantidad de reparaciones en Repuestos
+ * Útil para mostrar badges en UI
+ * Complejidad: O(n) donde n = total de reparaciones
+ * 
+ * @returns Número de reparaciones esperando repuestos
+ */
+export const selectCantidadEnRepuestos = createSelector(
+  [selectReparacionesEnRepuestos],
+  (reparacionesEnRepuestos): number => reparacionesEnRepuestos.length
+);
+
+/**
+ * Selector memoizado para reparaciones en Repuestos con observaciones
+ * Útil para filtrar reparaciones que tienen detalles específicos
+ * Complejidad: O(n) donde n = reparaciones en Repuestos
+ * 
+ * @returns Array de reparaciones en Repuestos con observaciones
+ */
+export const selectReparacionesEnRepuestosConObservaciones = createSelector(
+  [selectReparacionesEnRepuestos],
+  (reparacionesEnRepuestos): ReparacionType[] =>
+    reparacionesEnRepuestos.filter(rep => 
+      rep.data.ObsRepuestos && rep.data.ObsRepuestos.trim().length > 0
+    )
+);
