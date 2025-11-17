@@ -235,6 +235,8 @@ export const getReparacionesPersistencia = (setReparacionesToRedux, usuario) => 
         document_urls,
         photo_before,
         photo_after,
+        parts_notes,
+        requested_parts_ids,
         drone:drone_id (id),
         owner:owner_id (id, email, first_name, last_name, telephone)
       `);
@@ -285,7 +287,9 @@ export const getReparacionesPersistencia = (setReparacionesToRedux, usuario) => 
           urlsDocumentos: item.document_urls || [],
           IntervencionesIds: [],  // Obtendremos estos de otra consulta
           FotoAntes: item.photo_before || undefined,  // Mapeo de BD a frontend
-          FotoDespues: item.photo_after || undefined  // Mapeo de BD a frontend
+          FotoDespues: item.photo_after || undefined,  // Mapeo de BD a frontend
+          ObsRepuestos: item.parts_notes || undefined,  // Mapeo de BD a frontend - NUEVO
+          RepuestosSolicitados: item.requested_parts_ids || undefined  // Mapeo de BD a frontend - NUEVO
         }
       }));
 
@@ -384,6 +388,15 @@ export const getReparacionPersistencia = async (id) => {
 // GUARDAR Reparación
 export const guardarReparacionPersistencia = async (reparacion) => {
   try {
+    // Validar campos de repuestos ANTES de guardar
+    if (reparacion.data.ObsRepuestos && reparacion.data.ObsRepuestos.length > 2000) {
+      throw new Error('Las observaciones de repuestos no pueden superar los 2000 caracteres');
+    }
+    
+    if (reparacion.data.RepuestosSolicitados && reparacion.data.RepuestosSolicitados.length > 50) {
+      throw new Error('No se pueden solicitar más de 50 repuestos por reparación');
+    }
+    
     // Transformar el objeto al formato de Supabase
     const reparacionData = {
       state: reparacion.data.EstadoRep,
@@ -409,7 +422,9 @@ export const guardarReparacionPersistencia = async (reparacion) => {
       photo_urls: reparacion.data.urlsFotos,
       document_urls: reparacion.data.urlsDocumentos,
       photo_before: reparacion.data.FotoAntes || null,  // Mapeo de frontend a BD
-      photo_after: reparacion.data.FotoDespues || null   // Mapeo de frontend a BD
+      photo_after: reparacion.data.FotoDespues || null,   // Mapeo de frontend a BD
+      parts_notes: reparacion.data.ObsRepuestos || null,  // Mapeo de frontend a BD - NUEVO
+      requested_parts_ids: reparacion.data.RepuestosSolicitados || null  // Mapeo de frontend a BD - NUEVO
     };
     
     console.log('🔍 GUARDANDO REPARACION:', {

@@ -371,6 +371,7 @@ export default function ReparacionComponent(): React.ReactElement | null {
     const avanzarAPresupuestado = () => setEstado(estados.Presupuestado);
     const avanzarAAceptado = () => setEstado(estados.Aceptado);
     const avanzarARechazado = () => setEstado(estados.Rechazado);
+    const avanzarARepuestos = () => setEstado(estados.Repuestos);
     const avanzarAReparado = async () => {
         await setEstado(estados.Reparado);
 
@@ -439,6 +440,14 @@ export default function ReparacionComponent(): React.ReactElement | null {
         if (!isAdmin) return false;
         const estadoActual = obtenerEstadoSeguro(reparacion.data.EstadoRep);
         const estadoDestino = estados[nombreEstado];
+
+        // Lógica especial para transiciones bidireccionales Repuestos ⇄ Aceptado
+        if (estadoActual.nombre === 'Aceptado' && nombreEstado === 'Repuestos') {
+            return true; // Aceptado puede pausarse por Repuestos
+        }
+        if (estadoActual.nombre === 'Repuestos' && nombreEstado === 'Aceptado') {
+            return true; // Repuestos puede volver a Aceptado cuando llegan
+        }
 
         // Lógica especial para los flujos de Aceptado/Rechazado
         if (nombreEstado === 'Reparado') {
@@ -797,7 +806,7 @@ export default function ReparacionComponent(): React.ReactElement | null {
     const ResumenProgreso = () => {
         const estadosOrdenados = [
             'Consulta', 'Respondido', 'Transito', 'Recibido', 'Revisado',
-            'Presupuestado', 'Aceptado', 'Rechazado', 'Reparado', 'Diagnosticado',
+            'Presupuestado', 'Aceptado', 'Repuestos', 'Rechazado', 'Reparado', 'Diagnosticado',
             'Cobrado', 'Enviado', 'Finalizado', 'Abandonado', 'Cancelado'
         ];
 
@@ -874,9 +883,9 @@ export default function ReparacionComponent(): React.ReactElement | null {
             recepcion: etapa >= 3, // Visible desde Transito para poder marcar como Recibido
             revision: etapa >= 4, // Visible desde Recibido
             presupuesto: etapa >= 5, // Visible desde Revisado
-            repuestos: etapa >= 7, // Visible desde Aceptado
+            repuestos: etapa >= 7, // Visible desde Aceptado (7) y Repuestos (8)
             reparar: etapa >= 7, // Visible desde Aceptado
-            entrega: etapa >= 8, // Visible desde Rechazado/Reparado/Diagnosticado
+            entrega: etapa >= 9, // Visible desde Rechazado/Reparado/Diagnosticado
             fotos: etapa >= 1, // Siempre visible
             documentos: etapa >= 1 // Siempre visible
         };
@@ -1357,16 +1366,84 @@ export default function ReparacionComponent(): React.ReactElement | null {
                 <div className="card mb-3" id="seccion-repuestos">
                     <div className="card-body">
                         <h5 className="card-title bluemcdron">REPUESTOS</h5>
-                        <div>
-                            <label className="form-label">Qué repuesto, seguimiento, transportista</label>
+                        
+                        {/* Campo nuevo: Observaciones de Repuestos */}
+                        <div className="mb-3">
+                            <label className="form-label">
+                                Observaciones de Repuestos 
+                                <small className="text-muted ms-2">
+                                    ({(reparacion?.data?.ObsRepuestos || "").length}/2000 caracteres)
+                                </small>
+                            </label>
+                            <TextareaAutosize
+                                onChange={handleOnChange}
+                                className="form-control"
+                                id="ObsRepuestos"
+                                value={reparacion?.data?.ObsRepuestos || ""}
+                                rows={3}
+                                maxLength={2000}
+                                placeholder="Ej: Motor delantero izquierdo DJI Mini 3 Pro, tornillos M2x6 (x4)"
+                            />
+                            <small className="form-text text-muted">
+                                Especificar qué repuestos se necesitan para continuar con la reparación
+                            </small>
+                        </div>
+
+                        {/* Campo legacy: para compatibilidad */}
+                        <div className="mb-3">
+                            <label className="form-label">
+                                Seguimiento de Repuestos (Legacy)
+                                <span className="badge bg-secondary ms-2">Opcional</span>
+                            </label>
                             <TextareaAutosize
                                 onChange={handleOnChange}
                                 className="form-control"
                                 id="TxtRepuestosRep"
-                                value={reparacion?.data?.TxtRepuestosRep || ""} //Esto es lo correcto
-                                rows={5}
+                                value={reparacion?.data?.TxtRepuestosRep || ""}
+                                rows={3}
+                                placeholder="Información de transportista, seguimiento, etc."
                             />
+                            <small className="form-text text-muted">
+                                Información adicional: transportista, número de seguimiento, etc.
+                            </small>
                         </div>
+
+                        {/* Botones de cambio de estado */}
+                        {isAdmin && (
+                            <div className="mt-3">
+                                {/* Si está en Aceptado, puede pasar a Repuestos */}
+                                {reparacion.data.EstadoRep === 'Aceptado' && puedeAvanzarA('Repuestos') && (
+                                    <button
+                                        type="button"
+                                        className="btn btn-warning me-2 mb-2"
+                                        onClick={avanzarARepuestos}
+                                    >
+                                        ⏸️ Pausar - Esperando Repuestos
+                                    </button>
+                                )}
+                                
+                                {/* Si está en Repuestos, puede volver a Aceptado */}
+                                {reparacion.data.EstadoRep === 'Repuestos' && puedeAvanzarA('Aceptado') && (
+                                    <button
+                                        type="button"
+                                        className="btn btn-success me-2 mb-2"
+                                        onClick={avanzarAAceptado}
+                                    >
+                                        ✅ Repuestos Llegaron - Continuar Reparación
+                                    </button>
+                                )}
+
+                                {/* Info sobre estado actual de Repuestos */}
+                                {reparacion.data.EstadoRep === 'Repuestos' && (
+                                    <div className="alert alert-warning mt-2" role="alert">
+                                        <strong>⚠️ Estado: Esperando Repuestos</strong>
+                                        <p className="mb-0 mt-1">
+                                            La reparación está pausada hasta que lleguen los repuestos necesarios.
+                                        </p>
+                                    </div>
+                                )}
+                            </div>
+                        )}
                     </div>
                 </div>
                 : null

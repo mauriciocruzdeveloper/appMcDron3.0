@@ -57,6 +57,13 @@ export const estados: Estados = {
     color: "#ff9500",
     etapa: 8,
   },
+  Repuestos: {
+    nombre: "Repuestos",
+    prioridad: 1,
+    accion: "Esperar llegada de repuestos",
+    color: "#009688",
+    etapa: 8.5, // Entre Aceptado/Rechazado y Reparado
+  },
   Reparado: {
     nombre: "Reparado",
     prioridad: 3,
@@ -123,13 +130,6 @@ export const estados: Estados = {
     accion: "Migrar a 'Aceptado'",
     color: "#ff3b30",
     etapa: 100, // Etapa alta para indicar que es legacy
-  },
-  Repuestos: {
-    nombre: "Repuestos",
-    prioridad: 2,
-    accion: "Migrar a 'Aceptado'",
-    color: "#009688",
-    etapa: 101,
   },
   Entregado: {
     nombre: "Entregado",

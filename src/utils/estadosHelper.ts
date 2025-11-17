@@ -32,7 +32,6 @@ export const obtenerEstadoSeguro = (estadoNombre: string): Estado => {
 export const mapearEstadoLegacy = (estadoLegacy: string): string => {
   const mapeoLegacy: { [key: string]: string } = {
     'Reparar': 'Aceptado',      // Reparar -> Aceptado (estado actual equivalente)
-    'Repuestos': 'Aceptado',    // Repuestos -> Aceptado (esperando repuestos para reparar)
     'Entregado': 'Finalizado',  // Entregado -> Finalizado (proceso completado)
     'Venta': 'Indefinido',     // Venta -> requiere revisión manual
     'Liquidación': 'Cancelado', // Liquidación -> Cancelado (proceso terminado)
@@ -43,11 +42,12 @@ export const mapearEstadoLegacy = (estadoLegacy: string): string => {
 
 /**
  * Determina si un estado es legacy (del sistema anterior)
+ * NOTA: "Repuestos" ya NO es legacy - fue modernizado como estado activo
  * @param estadoNombre - Nombre del estado
  * @returns boolean - true si es un estado legacy
  */
 export const esEstadoLegacy = (estadoNombre: string): boolean => {
-  const estadosLegacy = ['Reparar', 'Repuestos', 'Entregado', 'Venta', 'Liquidación'];
+  const estadosLegacy = ['Reparar', 'Entregado', 'Venta', 'Liquidación', 'Indefinido'];
   return estadosLegacy.includes(estadoNombre);
 };
 
@@ -56,7 +56,7 @@ export const esEstadoLegacy = (estadoNombre: string): boolean => {
  * @returns Array de nombres de estados legacy
  */
 export const obtenerEstadosLegacy = (): string[] => {
-  return ['Reparar', 'Repuestos', 'Entregado', 'Venta', 'Liquidación'];
+  return ['Reparar', 'Entregado', 'Venta', 'Liquidación', 'Indefinido'];
 };
 
 /**
@@ -67,10 +67,10 @@ export const obtenerEstadosLegacy = (): string[] => {
 export const obtenerMensajeMigracion = (estadoLegacy: string): string => {
   const mensajes: Record<string, string> = {
     'Reparar': 'Este estado puede migrarse a "Aceptado" si el presupuesto fue aprobado.',
-    'Repuestos': 'Este estado puede migrarse a "Aceptado" si se están esperando repuestos para la reparación.',
     'Entregado': 'Este estado puede migrarse a "Finalizado" si el proceso fue completado exitosamente.',
     'Liquidación': 'Este estado puede migrarse a "Cancelado" si el proceso fue cancelado.',
     'Venta': 'Este estado requiere revisión manual para determinar el estado actual.',
+    'Indefinido': 'Este estado requiere revisión manual para asignar un estado válido.',
   };
   
   return mensajes[estadoLegacy] || 'Estado no reconocido. Requiere revisión manual.';
