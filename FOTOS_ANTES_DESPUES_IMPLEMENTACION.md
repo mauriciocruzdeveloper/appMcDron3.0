@@ -63,6 +63,18 @@ FotoDespues?: string;    // URL de la foto "después" de la reparación
 - 📊 **Indicador visual**: Muestra un alert cuando una reparación tiene fotos marcadas
 - 👁️ **Vista de badges**: Los badges se muestran en las fotos seleccionadas
 - 📖 **Modo lectura**: Los usuarios no-admin pueden ver las fotos marcadas pero no modificarlas
+- ✨ **Selección desde galería (Admin)**: Los administradores pueden seleccionar fotos ANTES/DESPUÉS directamente desde la galería sin entrar al detalle de cada reparación
+- 🔍 **Filtro de fotos seleccionadas**: 
+  - **Todas**: Muestra todas las reparaciones con fotos
+  - **⚪ Sin fotos seleccionadas**: Muestra solo reparaciones que NO tienen fotos ANTES/DESPUÉS marcadas
+  - **✅ Con fotos seleccionadas**: Muestra solo reparaciones que tienen al menos una foto ANTES o DESPUÉS marcada
+
+**Funcionalidades para Admin:**
+- `handleSelectFotoAntes(reparacion, url)` - Selecciona/deselecciona foto como "ANTES" desde la galería
+- `handleSelectFotoDespues(reparacion, url)` - Selecciona/deselecciona foto como "DESPUÉS" desde la galería
+- Guardado automático al seleccionar/deseleccionar
+- Logs detallados con prefijo `[Galería]` para depuración
+- Alert informativo indicando que está en modo Admin
 
 ## 🗄️ CAMBIOS REQUERIDOS EN BACKEND
 
@@ -147,24 +159,46 @@ if (photo_before && photo_after && photo_before === photo_after) {
 
 ## 🎯 Casos de Uso
 
-### Caso 1: Seleccionar Foto "ANTES"
+### Caso 1: Seleccionar Foto "ANTES" desde Detalle de Reparación
 1. Admin entra a la vista de reparación
 2. Ve la galería de fotos con botones de selección
 3. Hace clic en el botón "ANTES" (amarillo) de una foto
 4. La foto se marca con badge amarillo "ANTES"
 5. Se guarda automáticamente en la base de datos
 
-### Caso 2: Seleccionar Foto "DESPUÉS"
+### Caso 2: Seleccionar Foto "DESPUÉS" desde Detalle de Reparación
 1. Admin hace clic en el botón "DESPUÉS" (verde) de otra foto
 2. La foto se marca con badge verde "DESPUÉS"
 3. Se guarda automáticamente
 
-### Caso 3: Cambiar Selección
+### Caso 3: Seleccionar Fotos desde Galería de Reparaciones (NUEVO ✨)
+1. Admin navega a "Galería de Reparaciones"
+2. Expande una reparación haciendo clic en ella
+3. Ve un alert azul indicando "Modo Admin" con instrucciones
+4. Hace clic en el botón "ANTES" o "DESPUÉS" de cualquier foto
+5. La foto se marca con el badge correspondiente
+6. Se guarda automáticamente SIN necesidad de entrar al detalle
+7. La selección se ve reflejada inmediatamente con los badges
+
+### Caso 4: Filtrar Reparaciones sin Fotos Seleccionadas (NUEVO 🔍)
+1. Usuario o Admin navega a "Galería de Reparaciones"
+2. En el filtro "Fotos Antes/Después" selecciona "⚪ Sin fotos seleccionadas"
+3. Solo se muestran las reparaciones que NO tienen fotos ANTES ni DESPUÉS marcadas
+4. Esto facilita identificar qué reparaciones necesitan que se marquen las fotos
+5. El contador muestra cuántas reparaciones cumplen el criterio
+
+### Caso 5: Filtrar Reparaciones con Fotos Seleccionadas (NUEVO 🔍)
+1. Usuario o Admin navega a "Galería de Reparaciones"
+2. En el filtro "Fotos Antes/Después" selecciona "✅ Con fotos seleccionadas"
+3. Solo se muestran las reparaciones que tienen al menos una foto ANTES o DESPUÉS marcada
+4. Útil para revisar qué reparaciones ya tienen las fotos configuradas
+
+### Caso 6: Cambiar Selección
 1. Admin hace clic en el botón "ANTES" de una foto ya marcada
 2. La selección se quita (toggle)
 3. Puede seleccionar otra foto como "ANTES"
 
-### Caso 4: Vista en Galería de Reparaciones
+### Caso 7: Vista en Galería de Reparaciones
 1. Usuario navega a "Galería de Reparaciones"
 2. Expande una reparación que tiene fotos marcadas
 3. Ve un alert indicando que hay fotos marcadas
@@ -204,9 +238,14 @@ if (photo_before && photo_after && photo_before === photo_after) {
 
 | Acción | Admin | Usuario Regular |
 |--------|-------|-----------------|
-| Ver fotos marcadas | ✅ | ✅ |
-| Seleccionar foto ANTES | ✅ | ❌ |
-| Seleccionar foto DESPUÉS | ✅ | ❌ |
+| Ver fotos marcadas (Detalle) | ✅ | ✅ |
+| Ver fotos marcadas (Galería) | ✅ | ✅ |
+| Seleccionar foto ANTES (Detalle) | ✅ | ❌ |
+| Seleccionar foto DESPUÉS (Detalle) | ✅ | ❌ |
+| Seleccionar foto ANTES (Galería) | ✅ | ❌ |
+| Seleccionar foto DESPUÉS (Galería) | ✅ | ❌ |
+| Usar filtro "Sin fotos seleccionadas" | ✅ | ✅ |
+| Usar filtro "Con fotos seleccionadas" | ✅ | ✅ |
 | Cambiar selección | ✅ | ❌ |
 
 ## 🧪 Testing
@@ -236,6 +275,47 @@ describe('Reparaciones - Fotos Antes/Después', () => {
     });
 });
 ```
+
+## ✨ Nuevas Funcionalidades (Última Actualización)
+
+### 1. Selección desde Galería de Reparaciones
+Ahora los administradores pueden seleccionar fotos ANTES/DESPUÉS directamente desde la **Galería de Reparaciones** sin necesidad de entrar al detalle de cada reparación.
+
+**Beneficios:**
+- ⚡ **Más rápido**: No necesitas abrir cada reparación individualmente
+- 👁️ **Vista previa**: Ves todas las fotos de la reparación a la vez
+- 🎯 **Eficiente**: Ideal para marcar fotos en múltiples reparaciones seguidas
+
+**Cómo usar:**
+1. Ve a "Galería de Reparaciones"
+2. Haz clic en cualquier reparación para expandirla
+3. Si eres admin, verás un alert azul con instrucciones
+4. Usa los botones amarillo (ANTES) y verde (DESPUÉS) en cada foto
+5. Los cambios se guardan automáticamente
+
+### 2. Filtros Avanzados
+Nuevos filtros para encontrar rápidamente reparaciones según el estado de sus fotos:
+
+**⚪ Sin fotos seleccionadas:**
+- Muestra solo reparaciones que NO tienen fotos ANTES ni DESPUÉS marcadas
+- Útil para identificar qué reparaciones necesitan atención
+- Ideal para workflow: "Voy a marcar fotos de todas las reparaciones pendientes"
+
+**✅ Con fotos seleccionadas:**
+- Muestra solo reparaciones que tienen al menos una foto ANTES o DESPUÉS
+- Útil para revisar o verificar reparaciones ya procesadas
+- Perfecto para control de calidad
+
+**Cómo usar:**
+1. En la Galería de Reparaciones, busca el selector "Fotos Antes/Después"
+2. Selecciona el filtro deseado
+3. El contador se actualiza mostrando cuántas reparaciones cumplen el criterio
+4. Combina con el filtro de estado para mayor precisión
+
+**Ejemplo de uso combinado:**
+- Estado: "Reparado"
+- Fotos: "Sin fotos seleccionadas"
+- Resultado: Todas las reparaciones terminadas que aún no tienen fotos ANTES/DESPUÉS marcadas
 
 ## 📝 Notas Adicionales
 

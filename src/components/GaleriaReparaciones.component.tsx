@@ -4,12 +4,20 @@ import { selectReparacionesArray } from '../redux-tool-kit/reparacion/reparacion
 import { useNavigate } from 'react-router-dom';
 import { ImageGallery } from './ImageGallery';
 import { ChevronDown, ChevronUp, ImageFill } from 'react-bootstrap-icons';
+import { useAppDispatch } from '../redux-tool-kit/hooks/useAppDispatch';
+import { guardarReparacionAsync } from '../redux-tool-kit/reparacion/reparacion.actions';
+import { ReparacionType } from '../types/reparacion';
+import { useModal } from './Modal/useModal';
 
 export default function GaleriaReparaciones(): JSX.Element {
     const [reparacionExpandida, setReparacionExpandida] = useState<string | null>(null);
     const [filtroEstado, setFiltroEstado] = useState<string>('todas');
+    const [filtroFotos, setFiltroFotos] = useState<'todas' | 'sin-seleccion' | 'con-seleccion'>('todas');
     const reparaciones = useAppSelector(selectReparacionesArray);
+    const isAdmin = useAppSelector(state => state.app.usuario?.data.Admin) ?? false;
     const navigate = useNavigate();
+    const dispatch = useAppDispatch();
+    const { openModal } = useModal();
 
     // Filtrar reparaciones que tengan al menos una foto
     const reparacionesConFotos = reparaciones.filter(rep => 
@@ -17,9 +25,20 @@ export default function GaleriaReparaciones(): JSX.Element {
     );
 
     // Aplicar filtro por estado
-    const reparacionesFiltradas = filtroEstado === 'todas' 
+    let reparacionesFiltradas = filtroEstado === 'todas' 
         ? reparacionesConFotos 
         : reparacionesConFotos.filter(rep => rep.data.EstadoRep === filtroEstado);
+
+    // Aplicar filtro por fotos ANTES/DESPUÉS
+    if (filtroFotos === 'sin-seleccion') {
+        reparacionesFiltradas = reparacionesFiltradas.filter(rep => 
+            !rep.data.FotoAntes && !rep.data.FotoDespues
+        );
+    } else if (filtroFotos === 'con-seleccion') {
+        reparacionesFiltradas = reparacionesFiltradas.filter(rep => 
+            rep.data.FotoAntes || rep.data.FotoDespues
+        );
+    }
 
     // Ordenar por fecha de consulta (más reciente primero)
     const reparacionesOrdenadas = [...reparacionesFiltradas].sort((a, b) => {
@@ -57,6 +76,72 @@ export default function GaleriaReparaciones(): JSX.Element {
         navigate(`/inicio/reparaciones/${reparacionId}`);
     };
 
+    const handleSelectFotoAntes = async (reparacion: ReparacionType, url: string) => {
+        if (!isAdmin) return;
+        
+        const nuevaReparacion = {
+            ...reparacion,
+            data: {
+                ...reparacion.data,
+                FotoAntes: reparacion.data.FotoAntes === url ? undefined : url
+            }
+        };
+
+        console.log('📸 [Galería] Seleccionando foto ANTES:', {
+            reparacionId: reparacion.id,
+            url,
+            'FotoAntes anterior': reparacion.data.FotoAntes,
+            'FotoAntes nueva': nuevaReparacion.data.FotoAntes,
+            'acción': reparacion.data.FotoAntes === url ? 'DESELECCIONAR' : 'SELECCIONAR'
+        });
+
+        const response = await dispatch(guardarReparacionAsync(nuevaReparacion));
+        
+        if (response.meta.requestStatus === 'fulfilled') {
+            console.log('✅ [Galería] Foto ANTES guardada correctamente');
+        } else {
+            console.error('❌ [Galería] Error al guardar foto ANTES');
+            openModal({
+                mensaje: "Error al guardar la selección de foto ANTES.",
+                tipo: "danger",
+                titulo: "Seleccionar Foto",
+            });
+        }
+    };
+
+    const handleSelectFotoDespues = async (reparacion: ReparacionType, url: string) => {
+        if (!isAdmin) return;
+        
+        const nuevaReparacion = {
+            ...reparacion,
+            data: {
+                ...reparacion.data,
+                FotoDespues: reparacion.data.FotoDespues === url ? undefined : url
+            }
+        };
+
+        console.log('📸 [Galería] Seleccionando foto DESPUÉS:', {
+            reparacionId: reparacion.id,
+            url,
+            'FotoDespues anterior': reparacion.data.FotoDespues,
+            'FotoDespues nueva': nuevaReparacion.data.FotoDespues,
+            'acción': reparacion.data.FotoDespues === url ? 'DESELECCIONAR' : 'SELECCIONAR'
+        });
+
+        const response = await dispatch(guardarReparacionAsync(nuevaReparacion));
+        
+        if (response.meta.requestStatus === 'fulfilled') {
+            console.log('✅ [Galería] Foto DESPUÉS guardada correctamente');
+        } else {
+            console.error('❌ [Galería] Error al guardar foto DESPUÉS');
+            openModal({
+                mensaje: "Error al guardar la selección de foto DESPUÉS.",
+                tipo: "danger",
+                titulo: "Seleccionar Foto",
+            });
+        }
+    };
+
     return (
         <div className='p-4'>
             <h2 className="mb-4">
@@ -70,7 +155,7 @@ export default function GaleriaReparaciones(): JSX.Element {
                     <div className="card">
                         <div className="card-body">
                             <div className="row align-items-center">
-                                <div className="col-md-6">
+                                <div className="col-md-4">
                                     <label className="form-label">Filtrar por Estado:</label>
                                     <select
                                         className="form-select"
@@ -83,8 +168,21 @@ export default function GaleriaReparaciones(): JSX.Element {
                                         ))}
                                     </select>
                                 </div>
-                                <div className="col-md-6 text-end">
-                                    <div className="mb-2">
+                                <div className="col-md-4">
+                                    <label className="form-label">Fotos Antes/Después:</label>
+                                    <select
+                                        className="form-select"
+                                        value={filtroFotos}
+                                        onChange={(e) => setFiltroFotos(e.target.value as 'todas' | 'sin-seleccion' | 'con-seleccion')}
+                                    >
+                                        <option value="todas">Todas</option>
+                                        <option value="sin-seleccion">⚪ Sin fotos seleccionadas</option>
+                                        <option value="con-seleccion">✅ Con fotos seleccionadas</option>
+                                    </select>
+                                </div>
+                                <div className="col-md-4 text-end">
+                                    <label className="form-label d-block">&nbsp;</label>
+                                    <div>
                                         <span className="badge bg-primary me-2">
                                             {reparacionesFiltradas.length} Reparaciones
                                         </span>
@@ -178,6 +276,14 @@ export default function GaleriaReparaciones(): JSX.Element {
                                     {/* Galería de Fotos */}
                                     {estaExpandida && (
                                         <div className="mt-3 ps-4">
+                                            {isAdmin && (
+                                                <div className="alert alert-info mb-3">
+                                                    <small>
+                                                        <i className="bi bi-info-circle me-2"></i>
+                                                        <strong>Modo Admin:</strong> Puedes seleccionar fotos ANTES/DESPUÉS desde aquí usando los botones amarillo y verde.
+                                                    </small>
+                                                </div>
+                                            )}
                                             {(reparacion.data.FotoAntes || reparacion.data.FotoDespues) && (
                                                 <div className="alert alert-success mb-3">
                                                     <small>
@@ -205,9 +311,12 @@ export default function GaleriaReparaciones(): JSX.Element {
                                             <div className="bg-light p-3 rounded">
                                                 <ImageGallery
                                                     images={reparacion.data.urlsFotos || []}
-                                                    isAdmin={false}
+                                                    isAdmin={isAdmin}
                                                     photoBeforeUrl={reparacion.data.FotoAntes}
                                                     photoAfterUrl={reparacion.data.FotoDespues}
+                                                    onSelectBefore={isAdmin ? (url) => handleSelectFotoAntes(reparacion, url) : undefined}
+                                                    onSelectAfter={isAdmin ? (url) => handleSelectFotoDespues(reparacion, url) : undefined}
+                                                    enableSelection={isAdmin}
                                                 />
                                             </div>
                                         </div>
