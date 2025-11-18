@@ -371,7 +371,15 @@ export default function ReparacionComponent(): React.ReactElement | null {
     const avanzarAPresupuestado = () => setEstado(estados.Presupuestado);
     const avanzarAAceptado = () => setEstado(estados.Aceptado);
     const avanzarARechazado = () => setEstado(estados.Rechazado);
+    
+    /**
+     * Avanza la reparación al estado "Repuestos" (Esperando Repuestos)
+     * Este estado permite pausar una reparación que está en "Aceptado" cuando faltan repuestos necesarios.
+     * La transición es bidireccional: Aceptado ⇄ Repuestos
+     * @see estados.Repuestos (etapa 8.5)
+     */
     const avanzarARepuestos = () => setEstado(estados.Repuestos);
+    
     const avanzarAReparado = async () => {
         await setEstado(estados.Reparado);
 
@@ -435,7 +443,19 @@ export default function ReparacionComponent(): React.ReactElement | null {
     const avanzarAFinalizado = () => setEstado(estados.Finalizado);
     const avanzarAAbandonado = () => setEstado(estados.Abandonado);
 
-    // Función para verificar si se puede avanzar a un estado
+    /**
+     * Verifica si el usuario administrador puede avanzar la reparación a un estado específico
+     * Implementa la lógica de transiciones permitidas del workflow de reparaciones
+     * 
+     * Lógica especial:
+     * - Repuestos ⇄ Aceptado: Transición bidireccional permitida explícitamente
+     * - Aceptado → Reparado: Flujo normal de reparación
+     * - Rechazado → Diagnosticado: Flujo de diagnóstico
+     * - Estados legacy solo avanzan hacia adelante
+     * 
+     * @param nombreEstado - Nombre del estado destino (ej: "Repuestos", "Reparado")
+     * @returns true si la transición está permitida, false en caso contrario
+     */
     const puedeAvanzarA = (nombreEstado: string): boolean => {
         if (!isAdmin) return false;
         const estadoActual = obtenerEstadoSeguro(reparacion.data.EstadoRep);

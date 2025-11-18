@@ -169,14 +169,28 @@ Component → Action Creator → Async Logic → Dispatch → Reducer → State 
 #### Entidades Principales
 
 1. **Reparación** (`ReparacionType`)
-   - Estados: Consulta → Diagnóstico → Presupuesto → En Reparación → Finalizado → Enviado/Entregado
-   - Estados legacy: Respondido, Liquidación, Abandonado, Cancelado
-   - Campos financieros:
+   - **Estados principales**: Consulta → Respondido → Transito → Recibido → Revisado → Presupuestado → Aceptado → **Repuestos** ⇄ Aceptado → Reparado → Diagnosticado → Cobrado → Enviado → Finalizado
+   - **Estados terminales**: Rechazado, Cancelado, Abandonado
+   - **Estados legacy**: Reparar, Entregado, Venta, Liquidación
+   - **Estado "Repuestos" (Etapa 8.5)**:
+     - **Propósito**: Pausar reparaciones cuando faltan repuestos necesarios
+     - **Transición bidireccional**: Aceptado ⇄ Repuestos (permite volver a Aceptado cuando llegan los repuestos)
+     - **Color**: #009688 (teal)
+     - **Prioridad**: 1 (estado activo de trabajo)
+     - **Acción**: "Esperar llegada de repuestos"
+     - **Campos específicos**:
+       - `ObsRepuestos`: Observaciones sobre repuestos faltantes (max 2000 caracteres)
+       - `RepuestosSolicitados`: Array de IDs de repuestos pedidos (max 50 items)
+     - **Database (Supabase)**: 
+       - `parts_notes`: TEXT (mapea a ObsRepuestos)
+       - `requested_parts_ids`: TEXT[] (mapea a RepuestosSolicitados)
+     - **UI**: Widget en dashboard "⏸️ Esperando Repuestos" con contador de reparaciones pausadas
+   - **Campos financieros**:
      - `PresuDiRep`: Presupuesto de diagnóstico
      - `PresuReRep`: Presupuesto de reparación
      - `PresuFiRep`: Presupuesto final
      - `PresuMoRep`: Presupuesto de mano de obra
-   - Campos temporales:
+   - **Campos temporales**:
      - `FeConRep`: Fecha de consulta
      - `FeRecRep`: Fecha de recepción
      - `FeFinRep`: Fecha de finalización
@@ -214,7 +228,14 @@ Component → Action Creator → Async Logic → Dispatch → Reducer → State 
    - "Entregado", "Liquidación", "Abandonado", "Respondido", "Finalizado", "Cancelado"
    - Usados en filtros de visualización
 
-3. **Persistencia Optimizada**:
+3. **Transiciones de Estado "Repuestos"**:
+   - **Desde Aceptado → Repuestos**: Pausar reparación cuando faltan repuestos
+   - **Desde Repuestos → Aceptado**: Reanudar cuando llegan los repuestos
+   - **Validación**: ObsRepuestos tiene límite de 2000 caracteres
+   - **Validación**: RepuestosSolicitados tiene límite de 50 items
+   - **UI**: Botones bidireccionales ("⏸️ Pausar - Esperando Repuestos" y "✅ Repuestos Llegaron - Continuar Reparación")
+
+4. **Persistencia Optimizada**:
    - Reparaciones almacenadas como diccionario `{[id: string]: ReparacionType}` para O(1) lookup
    - Conversión a array cuando se necesita iterar/filtrar
 
