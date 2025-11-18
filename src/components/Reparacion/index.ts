@@ -43,6 +43,7 @@ export { FormField } from './components/shared/FormField.component';
 
 // Tabs
 export { GeneralTab } from './tabs/GeneralTab';
+export { WorkflowTab } from './tabs/WorkflowTab';
 
 // Tipos
 export type { ReparacionContextValue, ReparacionProviderProps } from './types/context.types';
