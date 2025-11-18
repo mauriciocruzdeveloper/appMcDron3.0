@@ -41,6 +41,9 @@ export { ActionButton } from './components/shared/ActionButton.component';
 export { SeccionCard } from './components/shared/SeccionCard.component';
 export { FormField } from './components/shared/FormField.component';
 
+// Tabs
+export { GeneralTab } from './tabs/GeneralTab';
+
 // Tipos
 export type { ReparacionContextValue, ReparacionProviderProps } from './types/context.types';
 export type { ReparacionData } from './hooks/useReparacionData';
