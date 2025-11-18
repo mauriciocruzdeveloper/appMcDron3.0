@@ -1,31 +1,50 @@
 /**
- * Barrel export para el componente Reparación refactorizado
+ * Barrel exports para el módulo Reparacion
  * 
- * Este archivo exporta todos los componentes públicos del módulo Reparación.
+ * Este archivo exporta todos los componentes públicos del módulo Reparación refactorizado.
  * 
  * @module Reparacion
  */
 
-// Container principal (será creado en Phase 1)
-// export { default as ReparacionContainer } from './Reparacion.container';
+// Container principal (Smart Component)
+export { default as ReparacionContainer } from './Reparacion.container';
 
-// Layout (será creado en Phase 1)
-// export { default as ReparacionLayout } from './ReparacionLayout.component';
+// Context y Provider
+export { 
+    ReparacionProvider,
+    useReparacion,
+    useReparacionPermissions,
+    useReparacionStatus
+} from './ReparacionContext';
 
-// Custom Hooks (serán creados en Phase 1)
-// export { useReparacionForm } from './hooks/useReparacionForm';
-// export { useReparacionValidation } from './hooks/useReparacionValidation';
-// export { useEstadoTransition } from './hooks/useEstadoTransition';
-// export { useFileUpload } from './hooks/useFileUpload';
+// Hooks de datos y acciones
+export { 
+    useReparacionData,
+    useReparacionDataComplete,
+    useReparacionSummary 
+} from './hooks/useReparacionData';
 
-// Tabs (serán creados en Phase 2-3)
-// export { default as GeneralTab } from './tabs/GeneralTab/GeneralTab';
-// export { default as DiagnosticoTab } from './tabs/DiagnosticoTab/DiagnosticoTab';
-// export { default as PresupuestoTab } from './tabs/PresupuestoTab/PresupuestoTab';
-// export { default as ReparacionTab } from './tabs/ReparacionTab/ReparacionTab';
-// export { default as GaleriaTab } from './tabs/GaleriaTab/GaleriaTab';
-// export { default as IntervencionesTab } from './tabs/IntervencionesTab/IntervencionesTab';
-// export { default as FinalizacionTab } from './tabs/FinalizacionTab/FinalizacionTab';
+export { 
+    useReparacionActions,
+    useActionValidation 
+} from './hooks/useReparacionActions';
 
-// Componente legacy (actual)
-export { default as Reparacion } from './Reparacion.component';
+// Componentes de presentación
+export { ReparacionLayout } from './ReparacionLayout.component';
+export { ReparacionHeader } from './components/Header/ReparacionHeader.component';
+export { ReparacionFooter } from './components/Footer/ReparacionFooter.component';
+export { ReparacionTabs } from './components/Tabs/ReparacionTabs.component';
+
+// Componentes compartidos
+export { EstadoBadge } from './components/shared/EstadoBadge.component';
+export { ActionButton } from './components/shared/ActionButton.component';
+export { SeccionCard } from './components/shared/SeccionCard.component';
+export { FormField } from './components/shared/FormField.component';
+
+// Tipos
+export type { ReparacionContextValue, ReparacionProviderProps } from './types/context.types';
+export type { ReparacionData } from './hooks/useReparacionData';
+export type { ReparacionActions } from './hooks/useReparacionActions';
+
+// Legacy: Componente monolítico original (mantener hasta migración completa)
+export { default as ReparacionLegacy } from './Reparacion.component';
