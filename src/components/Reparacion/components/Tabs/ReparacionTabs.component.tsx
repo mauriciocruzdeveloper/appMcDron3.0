@@ -9,6 +9,7 @@
 
 import React from 'react';
 import { Tabs, Tab, Container } from 'react-bootstrap';
+import { GeneralTab } from '../../tabs/GeneralTab';
 
 interface ReparacionTabsProps {
     /** Tab activa actual */
@@ -36,16 +37,7 @@ export function ReparacionTabs({ activeTab, onTabChange }: ReparacionTabsProps):
             className="mb-3"
         >
             <Tab eventKey="general" title="Datos Generales">
-                <Container fluid className="py-3">
-                    <div className="text-center text-muted py-5">
-                        <i className="bi bi-info-circle fs-1 mb-3 d-block"></i>
-                        <h5>Pestaña Datos Generales</h5>
-                        <p>Se implementará en Phase 2 - Tab System</p>
-                        <small className="text-muted">
-                            Mostrará información del cliente, drone, y detalles de la reparación
-                        </small>
-                    </div>
-                </Container>
+                <GeneralTab />
             </Tab>
 
             <Tab eventKey="workflow" title="Flujo de Trabajo">
