@@ -7,7 +7,7 @@
  */
 
 import React, { useMemo } from 'react';
-import { useReparacion, useReparacionStatus } from '../../ReparacionContext';
+import { useReparacion } from '../../ReparacionContext';
 import { TimelineItem } from './TimelineItem';
 import { EstadoReparacion } from '../../../../usecases/estadosReparacion';
 
@@ -25,10 +25,12 @@ interface TimelineItemData {
 /**
  * Timeline vertical de estados.
  * Muestra todos los estados posibles del flujo de reparación.
+ * 
+ * **Phase 3 - T3.5:** Conectado a datos reales desde Context.
  */
 export function WorkflowTimeline(): React.ReactElement {
-    const { reparacion } = useReparacion();
-    const { estadoActual } = useReparacionStatus();
+    const { reparacion, getCurrentEstado } = useReparacion();
+    const estadoActual = getCurrentEstado();
     
     /**
      * Define el flujo completo de estados en orden
@@ -66,20 +68,20 @@ export function WorkflowTimeline(): React.ReactElement {
             const esActual = estado === estadoActual;
             const esCompletado = index < estadoActualIndex || esActual;
             
-            // En una implementación real, obtendríamos la fecha del historial
-            // Por ahora usamos la fecha de ingreso para el primer estado
-            let fecha: string | null = null;
-            if (estado === 'Recibido' && reparacion.data.FechaIngresoRep) {
-                fecha = reparacion.data.FechaIngresoRep;
-            }
+            // Mapear fechas reales desde DataReparacion
+            let fecha: string | number | null = null;
+            if (estado === 'Consulta') fecha = reparacion.data.FeConRep;
+            if (estado === 'Recibido') fecha = reparacion.data.FeRecRep;
+            if (estado === 'Finalizado') fecha = reparacion.data.FeFinRep;
+            if (estado === 'Entregado') fecha = reparacion.data.FeEntRep;
             
             return {
                 estado,
-                fecha,
+                fecha: fecha ? fecha.toString() : null,
                 esActual,
                 esCompletado,
-                observaciones: esActual && reparacion.data.ObservacionesRep 
-                    ? reparacion.data.ObservacionesRep 
+                observaciones: esActual && reparacion.data.AnotacionesRep 
+                    ? reparacion.data.AnotacionesRep 
                     : undefined
             };
         });

@@ -9,7 +9,7 @@
 
 import React from 'react';
 import { Container, Row, Col, Alert } from 'react-bootstrap';
-import { useReparacion, useReparacionStatus } from '../../ReparacionContext';
+import { useReparacion } from '../../ReparacionContext';
 import { WorkflowTimeline } from './WorkflowTimeline';
 import { StateTransitionPanel } from './StateTransitionPanel';
 import { SeccionCard } from '../../components/shared/SeccionCard.component';
@@ -22,14 +22,23 @@ import { SeccionCard } from '../../components/shared/SeccionCard.component';
  * 2. Panel de transiciones disponibles
  * 3. Información del estado actual
  * 
+ * **Phase 3 - T3.5:** Conectado a datos reales desde Context.
+ * 
  * @example
  * ```tsx
  * <WorkflowTab />
  * ```
  */
 export function WorkflowTab(): React.ReactElement {
-    const { reparacion, isLoading } = useReparacion();
-    const { estadoActual, esEstadoFinal, esEstadoPausado } = useReparacionStatus();
+    const { 
+        reparacion, 
+        isLoading, 
+        getCurrentEstado 
+    } = useReparacion();
+    
+    const estadoActual = getCurrentEstado();
+    const esEstadoFinal = ['Finalizado', 'Cancelado', 'Entregado'].includes(estadoActual);
+    const esEstadoPausado = estadoActual === 'Repuestos';
     
     if (isLoading) {
         return (
@@ -41,6 +50,24 @@ export function WorkflowTab(): React.ReactElement {
             </Container>
         );
     }
+    
+    /**
+     * Formatea timestamp a fecha legible
+     */
+    const formatFecha = (timestamp: number | null | undefined): string => {
+        if (!timestamp) return 'No especificada';
+        try {
+            return new Date(timestamp).toLocaleDateString('es-AR', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        } catch {
+            return 'Fecha inválida';
+        }
+    };
     
     return (
         <Container fluid className="py-3">
@@ -86,39 +113,38 @@ export function WorkflowTab(): React.ReactElement {
                             
                             <div className="mb-2">
                                 <small className="text-muted">
-                                    <strong>Fecha de ingreso:</strong>
+                                    <strong>Fecha de consulta:</strong>
                                 </small>
                                 <div>
-                                    {reparacion.data.FechaIngresoRep 
-                                        ? new Date(reparacion.data.FechaIngresoRep).toLocaleDateString('es-AR', {
-                                            year: 'numeric',
-                                            month: 'long',
-                                            day: 'numeric'
-                                        })
-                                        : 'No especificada'
-                                    }
+                                    {formatFecha(reparacion.data.FeConRep)}
                                 </div>
                             </div>
                             
-                            {reparacion.data.FechaEstimadaEntregaRep && (
+                            {reparacion.data.FeRecRep && (
                                 <div className="mb-2">
                                     <small className="text-muted">
-                                        <strong>Fecha estimada de entrega:</strong>
+                                        <strong>Fecha de recepción:</strong>
                                     </small>
                                     <div>
-                                        {new Date(reparacion.data.FechaEstimadaEntregaRep).toLocaleDateString('es-AR', {
-                                            year: 'numeric',
-                                            month: 'long',
-                                            day: 'numeric'
-                                        })}
+                                        {formatFecha(reparacion.data.FeRecRep)}
+                                    </div>
+                                </div>
+                            )}
+                            
+                            {reparacion.data.FeFinRep && (
+                                <div className="mb-2">
+                                    <small className="text-muted">
+                                        <strong>Fecha de finalización:</strong>
+                                    </small>
+                                    <div>
+                                        {formatFecha(reparacion.data.FeFinRep)}
                                     </div>
                                 </div>
                             )}
                             
                             <div className="mt-3 pt-3 border-top">
                                 <small className="text-muted">
-                                    <i className="bi bi-clock-history me-1"></i>
-                                    Tiempo en estado actual: <strong>Calculando...</strong>
+                                    <strong>Prioridad:</strong> {reparacion.data.PrioridadRep || 0}
                                 </small>
                             </div>
                         </div>

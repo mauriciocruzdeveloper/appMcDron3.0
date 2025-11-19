@@ -4,6 +4,9 @@
  * Panel que muestra las transiciones de estado disponibles.
  * Permite cambiar el estado de la reparación.
  * 
+ * **Phase 3 - T3.5:** Conectado a datos reales desde Context usando
+ * useReparacion y useReparacionPermissions para validaciones de permisos.
+ * 
  * @module Reparacion/tabs/WorkflowTab
  */
 
