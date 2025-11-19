@@ -4,7 +4,7 @@ import { Route, Routes, Navigate } from "react-router-dom";
 // Components
 import Inicio from "../components/Inicio.component";
 import ListaUsuarios from "../components/ListaUsuarios.component";
-import Reparacion from "../components/Reparacion/Reparacion.component";
+import Reparacion from "../components/Reparacion/Reparacion.container";
 import Usuario from "../components/Usuario.component";
 import Presupuesto from "../components/Presupuesto.component";
 import NavMcDron from "../components/NavMcDron.component";
