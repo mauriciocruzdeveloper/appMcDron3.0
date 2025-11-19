@@ -6,6 +6,9 @@
  * proporcionando acceso a datos, acciones y validaciones para todos los
  * componentes hijos.
  * 
+ * **Phase 3 Integration:** Este Context recibe datos del Container que
+ * los obtiene de Redux mediante useReparacionRedux hook.
+ * 
  * @module Reparacion/ReparacionContext
  */
 

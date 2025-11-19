@@ -3,21 +3,29 @@
  * 
  * Container Component (Smart Component) para la gestión de reparaciones.
  * 
+ * **Phase 3 Integration:**
+ * Este Container ahora usa `useReparacionRedux` para obtener datos de Redux
+ * y coordinar las acciones. El flujo es:
+ * 1. useReparacionRedux obtiene reparacion, intervenciones, acciones de Redux
+ * 2. Container carga entidades relacionadas (usuario, drone, modelo)
+ * 3. Container maneja estado local del formulario (dirty tracking)
+ * 4. Container pasa todo al Context como props
+ * 
  * Responsabilidades:
- * - Coordinar hooks de datos y acciones
+ * - Coordinar datos desde Redux (useReparacionRedux)
  * - Gestionar estado local del formulario
- * - Integración con Redux
+ * - Cargar entidades relacionadas
  * - Proveer contexto a componentes hijos
  * - NO contiene UI directamente (solo lógica)
  * 
  * @module Reparacion/Reparacion.container
  */
 
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import { useAppSelector } from '../../redux-tool-kit/hooks/useAppSelector';
 import { ReparacionProvider } from './ReparacionContext';
-import { useReparacionData } from './hooks/useReparacionData';
-import { useReparacionActions } from './hooks/useReparacionActions';
+import { useReparacionRedux } from './hooks/useReparacionRedux';
 import { ReparacionType } from '../../types/reparacion';
 
 // TODO: Importar ReparacionLayout cuando esté creado
@@ -38,8 +46,40 @@ import { ReparacionType } from '../../types/reparacion';
  */
 export default function ReparacionContainer(): React.ReactElement | null {
     // ========================================================================
-    // DATOS DESDE REDUX
+    // URL PARAMS Y NAVIGATION
     // ========================================================================
+    
+    const { id: reparacionIdParam } = useParams<{ id: string }>();
+    const navigate = useNavigate();
+    
+    /**
+     * Determinar si es nueva reparación o edición
+     */
+    const isNew = reparacionIdParam === 'nueva' || !reparacionIdParam;
+    const reparacionId = isNew ? undefined : reparacionIdParam;
+    
+    // ========================================================================
+    // DATOS DESDE REDUX (useReparacionRedux)
+    // ========================================================================
+    
+    /**
+     * Hook principal que conecta con Redux
+     */
+    const {
+        reparacion: reparacionFromRedux,
+        intervenciones,
+        isLoading,
+        isSaving: isSavingRedux,
+        error: reduxError,
+        saveReparacion: saveReparacionRedux,
+        deleteReparacion: deleteReparacionRedux,
+        loadIntervenciones,
+        addIntervencion,
+        removeIntervencion
+    } = useReparacionRedux({ 
+        reparacionId, 
+        autoLoad: !isNew 
+    });
     
     /**
      * Obtener información del usuario actual (admin check)
@@ -50,18 +90,28 @@ export default function ReparacionContainer(): React.ReactElement | null {
     }, [usuarioActual]);
     
     /**
-     * Obtener datos de la reparación y entidades relacionadas
+     * Cargar entidades relacionadas desde Redux
+     * TODO: Implementar selectores para usuario, drone, modelo
+     * Por ahora retornamos null, en T3.3 se optimizará
      */
-    const {
-        reparacion: reparacionFromRedux,
-        usuario,
-        drone,
-        modelo,
-        isNew,
-        isLoading,
-        notFound,
-        reparacionId
-    } = useReparacionData();
+    const usuario = useAppSelector(() => {
+        // const usuarioId = reparacionFromRedux?.data.UsuarioRep;
+        // if (!usuarioId) return null;
+        // TODO: usar selectUsuarioById(usuarioId)
+        return null;
+    });
+    
+    const drone = useAppSelector(() => {
+        // const droneId = reparacionFromRedux?.data.DroneId;
+        // if (!droneId) return null;
+        // TODO: usar selectDroneById(droneId)
+        return null;
+    });
+    
+    const modelo = useAppSelector(() => {
+        // TODO: obtener ModeloId desde drone y usar selectModeloById
+        return null;
+    });
     
     // ========================================================================
     // ESTADO LOCAL DEL FORMULARIO
@@ -76,43 +126,59 @@ export default function ReparacionContainer(): React.ReactElement | null {
             return reparacionFromRedux;
         }
         
-        // Crear nueva reparación vacía
+        // Crear nueva reparación vacía conforme a DataReparacion
         return {
             id: 'new',
             data: {
-                UsuarioRep: '',
-                DroneId: '',
+                // Campos obligatorios
                 EstadoRep: 'Consulta',
-                EstadoAnterior: '',
+                PrioridadRep: null,
+                FeConRep: Date.now(),
+                ModeloDroneNameRep: '',
                 DescripcionUsuRep: '',
-                DiagnosticoTecRep: '',
+                UsuarioRep: '',
+                
+                // Campos opcionales
+                NombreUsu: '',
+                EmailUsu: '',
+                TelefonoUsu: '',
+                ApellidoUsu: '',
+                DroneId: '',
+                DriveRep: '',
+                AnotacionesRep: '',
+                DiagnosticoRep: '',
+                FeRecRep: null,
+                NumeroSerieRep: '',
                 DescripcionTecRep: '',
-                FechaConsultaRep: Date.now(),
-                FechaRecibidoRep: 0,
-                FechaRevisadoRep: 0,
-                FechaPresupuestadoRep: 0,
-                FechaAceptadoRep: 0,
-                FechaReparadoRep: 0,
-                FechaEntregadoRep: 0,
-                FechaFinalizadoRep: 0,
-                PrecioPresupuestoDiag: 0,
-                PrecioManoObra: 0,
-                PrecioReparacion: 0,
-                PrecioFinal: 0,
-                ObservacionesRep: '',
-                AnotacionesPrivRep: '',
-                TextoEntregaRep: '',
-                SeguimientoRep: '',
-                EnlaceDriveRep: '',
-                ObsRepuestos: '',
+                PresuMoRep: null,
+                PresuReRep: null,
+                PresuFiRep: null,
+                PresuDiRep: null,
                 TxtRepuestosRep: '',
-                FotosRep: [],
-                FotoAntesRep: '',
-                FotoDespuesRep: '',
-                DocumentosRep: []
+                InformeRep: '',
+                FeFinRep: null,
+                FeEntRep: null,
+                TxtEntregaRep: '',
+                SeguimientoEntregaRep: '',
+                urlsFotos: [],
+                urlsDocumentos: [],
+                IntervencionesIds: [],
+                FotoAntes: '',
+                FotoDespues: '',
+                ObsRepuestos: '',
+                RepuestosSolicitados: []
             }
         };
     });
+    
+    /**
+     * Sincronizar estado local cuando Redux se actualiza
+     */
+    useEffect(() => {
+        if (reparacionFromRedux && !isNew) {
+            setReparacion(reparacionFromRedux);
+        }
+    }, [reparacionFromRedux, isNew]);
     
     /**
      * Copia original para dirty checking
@@ -163,59 +229,96 @@ export default function ReparacionContainer(): React.ReactElement | null {
     // ========================================================================
     
     /**
-     * Callback después de guardar exitosamente
-     */
-    const handleSaveSuccess = useCallback((savedReparacion: ReparacionType) => {
-        // Actualizar estado local con la reparación guardada
-        setReparacion(savedReparacion);
-        
-        // Si era nueva, redirigir a la URL con el ID real
-        if (isNew && savedReparacion.id !== 'new') {
-            // TODO: Redirigir a /reparacion/{id}
-            console.log('Redireccionar a:', `/reparacion/${savedReparacion.id}`);
-        }
-    }, [isNew]);
-    
-    /**
-     * Obtener acciones disponibles (save, delete, changeState, etc.)
-     */
-    const {
-        save,
-        deleteReparacion,
-        changeState,
-        cancel,
-        sendEmail,
-        sendSMS,
-        uploadFile,
-        deleteFile
-    } = useReparacionActions(reparacion, isDirty, isNew, handleSaveSuccess);
-    
-    /**
-     * Wrapper para save que maneja el estado de loading
+     * Guardar reparación (nueva o actualización)
      */
     const handleSave = useCallback(async () => {
         setIsSaving(true);
         try {
-            await save({ showConfirmation: true });
+            const savedReparacion = await saveReparacionRedux(reparacion);
+            
+            // Si era nueva, redirigir a la URL con el ID real
+            if (isNew && savedReparacion?.id && savedReparacion.id !== 'new') {
+                navigate(`/reparacion/${savedReparacion.id}`, { replace: true });
+            }
+            
+            // Actualizar estado local con la versión guardada
+            if (savedReparacion) {
+                setReparacion(savedReparacion);
+            }
+        } catch (error) {
+            console.error('Error al guardar reparación:', error);
+            // TODO: Mostrar notificación de error
         } finally {
             setIsSaving(false);
         }
-    }, [save]);
+    }, [reparacion, saveReparacionRedux, isNew, navigate]);
     
     /**
-     * Wrapper para changeState (avanzar a nuevo estado)
+     * Cancelar cambios y volver
+     */
+    const handleCancel = useCallback(() => {
+        if (isDirty) {
+            // TODO: Mostrar confirmación antes de descartar cambios
+            const confirmed = window.confirm('¿Descartar los cambios sin guardar?');
+            if (!confirmed) return;
+        }
+        
+        navigate(-1);
+    }, [isDirty, navigate]);
+    
+    /**
+     * Eliminar reparación
+     */
+    const handleDelete = useCallback(async () => {
+        if (!reparacionId) return;
+        
+        // TODO: Mostrar confirmación antes de eliminar
+        const confirmed = window.confirm('¿Está seguro de eliminar esta reparación?');
+        if (!confirmed) return;
+        
+        setIsSaving(true);
+        try {
+            await deleteReparacionRedux(reparacionId);
+            navigate('/reparaciones', { replace: true });
+        } catch (error) {
+            console.error('Error al eliminar reparación:', error);
+            // TODO: Mostrar notificación de error
+        } finally {
+            setIsSaving(false);
+        }
+    }, [reparacionId, deleteReparacionRedux, navigate]);
+    
+    /**
+     * Avanzar a nuevo estado
      */
     const handleAdvanceState = useCallback(async (nuevoEstado: string) => {
         setIsSaving(true);
         try {
-            await changeState(nuevoEstado, {
-                showConfirmation: true,
-                sendEmail: false // TODO: Configurar según el estado
-            });
+            // Actualizar el estado en la reparación local
+            const updatedReparacion: ReparacionType = {
+                ...reparacion,
+                data: {
+                    ...reparacion.data,
+                    EstadoRep: nuevoEstado
+                    // TODO: Actualizar fechas según el estado
+                    // Ej: Si nuevoEstado === 'Recibido', actualizar FeRecRep
+                }
+            };
+            
+            // Guardar con el nuevo estado
+            await saveReparacionRedux(updatedReparacion);
+            
+            // Actualizar estado local
+            setReparacion(updatedReparacion);
+            
+            // TODO: Enviar email/SMS según configuración del estado
+        } catch (error) {
+            console.error('Error al cambiar estado:', error);
+            // TODO: Mostrar notificación de error
         } finally {
             setIsSaving(false);
         }
-    }, [changeState]);
+    }, [reparacion, saveReparacionRedux]);
     
     /**
      * Verifica si se puede avanzar a un estado específico
@@ -224,10 +327,63 @@ export default function ReparacionContainer(): React.ReactElement | null {
         if (!isAdmin) return false;
         if (!reparacion) return false;
         
-        // TODO: Implementar lógica de validación de transiciones
+        // TODO: Implementar lógica de validación de transiciones según targetState
         // Por ahora, permitir cualquier transición para admin
         return true;
     }, [isAdmin, reparacion]);
+    
+    /**
+     * Obtener estado actual
+     */
+    const getCurrentEstado = useCallback(() => {
+        return reparacion.data.EstadoRep;
+    }, [reparacion]);
+    
+    /**
+     * Obtener estados siguientes posibles
+     */
+    const getNextEstados = useCallback(() => {
+        // TODO: Implementar lógica de estados siguientes según workflow
+        const estadoActual = reparacion.data.EstadoRep;
+        
+        // Workflow simplificado
+        const workflow: Record<string, string[]> = {
+            'Consulta': ['Recibido'],
+            'Recibido': ['Revisado'],
+            'Revisado': ['Presupuestado'],
+            'Presupuestado': ['Aceptado', 'Rechazado'],
+            'Aceptado': ['Reparado'],
+            'Reparado': ['Entregado'],
+            'Entregado': ['Finalizado'],
+            'Rechazado': ['Finalizado'],
+            'Finalizado': []
+        };
+        
+        return workflow[estadoActual] || [];
+    }, [reparacion]);
+    
+    // ========================================================================
+    // ACCIONES ADICIONALES (STUBS)
+    // ========================================================================
+    
+    /**
+     * TODO: Implementar en fases posteriores
+     */
+    const handleSendEmail = useCallback(async () => {
+        console.log('TODO: Implementar envío de email');
+    }, []);
+    
+    const handleSendSMS = useCallback(async () => {
+        console.log('TODO: Implementar envío de SMS');
+    }, []);
+    
+    const handleUploadFile = useCallback(async (file: File) => {
+        console.log('TODO: Implementar subida de archivo', file);
+    }, []);
+    
+    const handleDeleteFile = useCallback(async (fileId: string) => {
+        console.log('TODO: Implementar eliminación de archivo', fileId);
+    }, []);
     
     // ========================================================================
     // VALIDACIONES
@@ -267,9 +423,9 @@ export default function ReparacionContainer(): React.ReactElement | null {
     }
     
     /**
-     * Si no se encontró (404)
+     * Si no se encontró (404) - solo para edición
      */
-    if (notFound) {
+    if (!isNew && !reparacionFromRedux && !isLoading) {
         return (
             <div className="container mt-5">
                 <div className="alert alert-danger" role="alert">
@@ -281,7 +437,28 @@ export default function ReparacionContainer(): React.ReactElement | null {
                     <hr />
                     <button 
                         className="btn btn-secondary"
-                        onClick={() => window.history.back()}
+                        onClick={() => navigate(-1)}
+                    >
+                        Volver atrás
+                    </button>
+                </div>
+            </div>
+        );
+    }
+    
+    /**
+     * Si hay error en Redux
+     */
+    if (reduxError) {
+        return (
+            <div className="container mt-5">
+                <div className="alert alert-danger" role="alert">
+                    <h4 className="alert-heading">Error al cargar datos</h4>
+                    <p>{reduxError}</p>
+                    <hr />
+                    <button 
+                        className="btn btn-secondary"
+                        onClick={() => navigate(-1)}
                     >
                         Volver atrás
                     </button>
@@ -305,7 +482,7 @@ export default function ReparacionContainer(): React.ReactElement | null {
                     <hr />
                     <button 
                         className="btn btn-secondary"
-                        onClick={() => window.history.back()}
+                        onClick={() => navigate(-1)}
                     >
                         Volver atrás
                     </button>
@@ -332,27 +509,36 @@ export default function ReparacionContainer(): React.ReactElement | null {
         isAdmin,
         isNew,
         isDirty,
-        isLoading: false, // Ya manejado arriba
-        isSaving,
+        isLoading,
+        isSaving: isSaving || isSavingRedux,
+        hasChanges: isDirty,
         
         // Acciones principales
         onSave: handleSave,
-        onCancel: cancel,
+        onCancel: handleCancel,
         onChange: handleChange,
         
         // Transiciones de estado
         onAdvanceState: handleAdvanceState,
         canAdvanceTo,
+        getCurrentEstado,
+        getNextEstados,
         
         // Acciones opcionales
-        onDelete: deleteReparacion,
-        onSendEmail: sendEmail,
-        onSendSMS: sendSMS,
-        onUploadFile: uploadFile,
-        onDeleteFile: deleteFile,
+        onDelete: handleDelete,
+        onSendEmail: handleSendEmail,
+        onSendSMS: handleSendSMS,
+        onUploadFile: handleUploadFile,
+        onDeleteFile: handleDeleteFile,
         
         // Validaciones
-        validationErrors
+        validationErrors,
+        
+        // Intervenciones (para tabs)
+        intervenciones,
+        onLoadIntervenciones: loadIntervenciones,
+        onAddIntervencion: addIntervencion,
+        onRemoveIntervencion: removeIntervencion
     };
     
     return (
@@ -360,16 +546,17 @@ export default function ReparacionContainer(): React.ReactElement | null {
             {/* TODO: Reemplazar con ReparacionLayout cuando esté implementado */}
             <div className="container mt-4">
                 <div className="alert alert-info">
-                    <h4>Container Component Funcionando ✅</h4>
-                    <p>Datos cargados correctamente:</p>
+                    <h4>Container Component con Redux ✅</h4>
+                    <p>Datos cargados desde Redux:</p>
                     <ul>
-                        <li>Usuario: {usuario?.data.NombreUsu || 'No asignado'}</li>
-                        <li>Drone: {drone?.data.Nombre || 'No asignado'}</li>
-                        <li>Modelo: {modelo?.data.NombreModelo || 'No asignado'}</li>
+                        <li>Reparación ID: {reparacion.id}</li>
+                        <li>Usuario: {reparacion.data.NombreUsu || reparacion.data.UsuarioRep || 'No asignado'}</li>
+                        <li>Drone: {reparacion.data.ModeloDroneNameRep || 'No asignado'}</li>
                         <li>Estado: {reparacion.data.EstadoRep}</li>
                         <li>Es Nueva: {isNew ? 'Sí' : 'No'}</li>
                         <li>Es Admin: {isAdmin ? 'Sí' : 'No'}</li>
                         <li>Tiene Cambios: {isDirty ? 'Sí' : 'No'}</li>
+                        <li>Intervenciones: {intervenciones.length}</li>
                     </ul>
                     <button 
                         className="btn btn-primary me-2"
@@ -379,11 +566,20 @@ export default function ReparacionContainer(): React.ReactElement | null {
                         {isSaving ? 'Guardando...' : 'Guardar'}
                     </button>
                     <button 
-                        className="btn btn-secondary"
-                        onClick={() => cancel()}
+                        className="btn btn-secondary me-2"
+                        onClick={handleCancel}
                     >
                         Cancelar
                     </button>
+                    {!isNew && (
+                        <button 
+                            className="btn btn-danger"
+                            onClick={handleDelete}
+                            disabled={isSaving}
+                        >
+                            Eliminar
+                        </button>
+                    )}
                 </div>
             </div>
         </ReparacionProvider>
