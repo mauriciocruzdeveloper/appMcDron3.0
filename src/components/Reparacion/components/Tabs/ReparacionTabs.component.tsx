@@ -8,10 +8,11 @@
  */
 
 import React from 'react';
-import { Tabs, Tab, Container } from 'react-bootstrap';
+import { Tabs, Tab } from 'react-bootstrap';
 import { GeneralTab } from '../../tabs/GeneralTab';
 import { WorkflowTab } from '../../tabs/WorkflowTab';
 import { ArchivosTab } from '../../tabs/ArchivosTab';
+import { RepuestosTab } from '../../tabs/RepuestosTab';
 
 interface ReparacionTabsProps {
     /** Tab activa actual */
@@ -47,16 +48,7 @@ export function ReparacionTabs({ activeTab, onTabChange }: ReparacionTabsProps):
             </Tab>
 
             <Tab eventKey="repuestos" title="Repuestos">
-                <Container fluid className="py-3">
-                    <div className="text-center text-muted py-5">
-                        <i className="bi bi-box-seam fs-1 mb-3 d-block"></i>
-                        <h5>Pestaña Repuestos</h5>
-                        <p>Se implementará en Phase 2 - Tab System</p>
-                        <small className="text-muted">
-                            Mostrará la gestión de repuestos asociados a esta reparación
-                        </small>
-                    </div>
-                </Container>
+                <RepuestosTab />
             </Tab>
 
             <Tab eventKey="archivos" title="Archivos">

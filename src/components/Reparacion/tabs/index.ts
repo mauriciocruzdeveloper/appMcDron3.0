@@ -7,3 +7,4 @@
 export * from './GeneralTab';
 export * from './WorkflowTab';
 export * from './ArchivosTab';
+export * from './RepuestosTab';
