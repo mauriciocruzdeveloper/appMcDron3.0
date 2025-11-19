@@ -32,9 +32,7 @@ import {
     selectDroneDeReparacion, 
     selectModeloDeReparacion 
 } from '../../redux-tool-kit/reparacion/reparacion.selectors';
-
-// TODO: Importar ReparacionLayout cuando esté creado
-// import { ReparacionLayout } from './ReparacionLayout.component';
+import { ReparacionLayout } from './ReparacionLayout.component';
 
 /**
  * Container component principal para reparaciones.
@@ -540,51 +538,7 @@ export default function ReparacionContainer(): React.ReactElement | null {
     
     return (
         <ReparacionProvider {...providerProps}>
-            {/* TODO: Reemplazar con ReparacionLayout cuando esté implementado */}
-            <div className="container mt-4">
-                <div className="alert alert-info">
-                    <h4>Container Component con Redux ✅</h4>
-                    <p><strong>Phase 3 - T3.3:</strong> Selectores optimizados implementados</p>
-                    <p>Datos cargados desde Redux con selectores O(1):</p>
-                    <ul>
-                        <li><strong>Reparación ID:</strong> {reparacion.id}</li>
-                        <li><strong>Usuario:</strong> {usuario?.data.NombreUsu} {usuario?.data.ApellidoUsu || ''}</li>
-                        <li><strong>Email:</strong> {usuario?.data.EmailUsu || 'No disponible'}</li>
-                        <li><strong>Teléfono:</strong> {usuario?.data.TelefonoUsu || 'No disponible'}</li>
-                        <li><strong>Drone:</strong> {drone?.data.Nombre || 'No asignado'}</li>
-                        <li><strong>Número Serie:</strong> {drone?.data.NumeroSerie || 'No disponible'}</li>
-                        <li><strong>Modelo:</strong> {modelo?.data.NombreModelo || 'No asignado'}</li>
-                        <li><strong>Fabricante:</strong> {modelo?.data.Fabricante || 'No disponible'}</li>
-                        <li><strong>Estado:</strong> {reparacion.data.EstadoRep}</li>
-                        <li><strong>Es Nueva:</strong> {isNew ? 'Sí' : 'No'}</li>
-                        <li><strong>Es Admin:</strong> {isAdmin ? 'Sí' : 'No'}</li>
-                        <li><strong>Tiene Cambios:</strong> {isDirty ? 'Sí' : 'No'}</li>
-                        <li><strong>Intervenciones:</strong> {intervenciones.length}</li>
-                    </ul>
-                    <button 
-                        className="btn btn-primary me-2"
-                        onClick={handleSave}
-                        disabled={!isDirty || isSaving}
-                    >
-                        {isSaving ? 'Guardando...' : 'Guardar'}
-                    </button>
-                    <button 
-                        className="btn btn-secondary me-2"
-                        onClick={handleCancel}
-                    >
-                        Cancelar
-                    </button>
-                    {!isNew && (
-                        <button 
-                            className="btn btn-danger"
-                            onClick={handleDelete}
-                            disabled={isSaving}
-                        >
-                            Eliminar
-                        </button>
-                    )}
-                </div>
-            </div>
+            <ReparacionLayout />
         </ReparacionProvider>
     );
 }
