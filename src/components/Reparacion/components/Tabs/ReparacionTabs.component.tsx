@@ -25,11 +25,11 @@ interface ReparacionTabsProps {
 /**
  * Sistema de pestañas para el módulo de reparación.
  * 
- * En Phase 2 se implementarán los contenidos de cada tab:
- * - general: Datos básicos del drone y reparación
- * - workflow: Timeline del flujo de estados
- * - repuestos: Gestión de repuestos
- * - archivos: Gestión de archivos adjuntos
+ * Tabs implementadas (Phase 2 COMPLETA ✅):
+ * - general: Datos básicos del drone y reparación (cliente, drone, detalles)
+ * - workflow: Timeline visual del flujo de estados con transiciones
+ * - repuestos: Gestión CRUD de repuestos con estados y precios
+ * - archivos: Gestión de fotos, videos y documentos adjuntos
  */
 export function ReparacionTabs({ activeTab, onTabChange }: ReparacionTabsProps): React.ReactElement {
     return (
