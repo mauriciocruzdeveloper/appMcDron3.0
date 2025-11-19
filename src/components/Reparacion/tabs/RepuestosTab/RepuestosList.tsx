@@ -4,19 +4,22 @@
  * Lista/tabla de repuestos con acciones de edición y eliminación.
  * Muestra información completa de cada repuesto y su estado.
  * 
+ * **Phase 3 - T3.5:** Adaptado para trabajar con RepuestoEnReparacion
+ * que contiene referencias a repuestos del inventario Redux.
+ * 
  * @module Reparacion/tabs/RepuestosTab
  */
 
 import React from 'react';
 import { Table, Badge, Button, Card } from 'react-bootstrap';
-import { Repuesto } from './RepuestosTab';
+import type { RepuestoEnReparacion } from './RepuestosTab';
 
 interface RepuestosListProps {
-    /** Lista de repuestos */
-    repuestos: Repuesto[];
+    /** Lista de repuestos en reparación */
+    repuestos: RepuestoEnReparacion[];
     
     /** Callback para editar repuesto */
-    onEdit: (repuesto: Repuesto) => void;
+    onEdit: (repuestoId: string) => void;
     
     /** Callback para eliminar repuesto */
     onDelete: (repuestoId: string) => void;
@@ -39,36 +42,10 @@ function getEstadoBadge(estado: string): { bg: string; icon: string } {
 }
 
 /**
- * Formatea una fecha en formato corto
- */
-function formatFecha(fecha?: string): string {
-    if (!fecha) return '-';
-    
-    return new Date(fecha).toLocaleDateString('es-AR', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric'
-    });
-}
-
-/**
  * Lista de repuestos en formato tabla.
+ * Muestra repuestos del inventario asociados a la reparación.
  */
-export function RepuestosList({ repuestos, onEdit, onDelete, isAdmin }: RepuestosListProps): React.ReactElement {
-    
-    if (repuestos.length === 0) {
-        return (
-            <Card>
-                <Card.Body>
-                    <div className="text-center py-5 text-muted">
-                        <i className="bi bi-box-seam fs-1 mb-3 d-block"></i>
-                        <h5>No hay repuestos registrados</h5>
-                        <p>Agrega repuestos necesarios para esta reparación</p>
-                    </div>
-                </Card.Body>
-            </Card>
-        );
-    }
+export function RepuestosList({ repuestos, onDelete, isAdmin }: RepuestosListProps): React.ReactElement {
     
     return (
         <Card>
@@ -76,71 +53,63 @@ export function RepuestosList({ repuestos, onEdit, onDelete, isAdmin }: Repuesto
                 <Table hover responsive className="mb-0">
                     <thead className="bg-light">
                         <tr>
-                            <th style={{ width: '30%' }}>Repuesto</th>
+                            <th style={{ width: '35%' }}>Repuesto</th>
                             <th style={{ width: '15%' }}>Estado</th>
                             <th style={{ width: '12%' }} className="text-end">Precio</th>
-                            <th style={{ width: '12%' }}>Solicitado</th>
-                            <th style={{ width: '12%' }}>Recibido</th>
-                            <th style={{ width: '12%' }}>Instalado</th>
+                            <th style={{ width: '12%' }}>Stock</th>
+                            <th style={{ width: '14%' }}>Proveedor</th>
                             {isAdmin && <th style={{ width: '120px' }} className="text-center">Acciones</th>}
                         </tr>
                     </thead>
                     <tbody>
-                        {repuestos.map((repuesto) => {
-                            const badge = getEstadoBadge(repuesto.estado);
+                        {repuestos.map((item) => {
+                            const badge = getEstadoBadge(item.estado);
+                            const repuesto = item.repuesto;
+                            
+                            // Si el repuesto no se encuentra en Redux, mostramos ID
+                            if (!repuesto) {
+                                return (
+                                    <tr key={item.repuestoId}>
+                                        <td colSpan={isAdmin ? 6 : 5} className="text-danger">
+                                            <i className="bi bi-exclamation-triangle me-2"></i>
+                                            Repuesto no encontrado (ID: {item.repuestoId})
+                                        </td>
+                                    </tr>
+                                );
+                            }
                             
                             return (
-                                <tr key={repuesto.id}>
+                                <tr key={item.repuestoId}>
                                     <td>
-                                        <div className="fw-bold">{repuesto.nombre}</div>
-                                        {repuesto.descripcion && (
-                                            <small className="text-muted">{repuesto.descripcion}</small>
-                                        )}
-                                        {repuesto.proveedor && (
-                                            <div>
-                                                <small className="text-muted">
-                                                    <i className="bi bi-building me-1"></i>
-                                                    {repuesto.proveedor}
-                                                </small>
-                                            </div>
-                                        )}
+                                        <div className="fw-bold">{repuesto.data.NombreRepu}</div>
+                                        <small className="text-muted">ID: {item.repuestoId}</small>
                                     </td>
                                     <td>
                                         <Badge bg={badge.bg}>
                                             <i className={`bi ${badge.icon} me-1`}></i>
-                                            {repuesto.estado}
+                                            {item.estado}
                                         </Badge>
                                     </td>
                                     <td className="text-end fw-bold">
-                                        ${repuesto.precio.toLocaleString('es-AR', { 
+                                        ${repuesto.data.PrecioRepu.toLocaleString('es-AR', { 
                                             minimumFractionDigits: 2 
                                         })}
                                     </td>
-                                    <td className="small text-muted">
-                                        {formatFecha(repuesto.fechaSolicitud)}
+                                    <td>
+                                        <span className={repuesto.data.StockRepu > 0 ? 'text-success' : 'text-danger'}>
+                                            {repuesto.data.StockRepu} unidades
+                                        </span>
                                     </td>
                                     <td className="small text-muted">
-                                        {formatFecha(repuesto.fechaRecepcion)}
-                                    </td>
-                                    <td className="small text-muted">
-                                        {formatFecha(repuesto.fechaInstalacion)}
+                                        {repuesto.data.ProveedorRepu || '-'}
                                     </td>
                                     {isAdmin && (
                                         <td className="text-center">
                                             <Button
-                                                variant="outline-primary"
-                                                size="sm"
-                                                onClick={() => onEdit(repuesto)}
-                                                className="me-1"
-                                                title="Editar"
-                                            >
-                                                <i className="bi bi-pencil"></i>
-                                            </Button>
-                                            <Button
                                                 variant="outline-danger"
                                                 size="sm"
-                                                onClick={() => onDelete(repuesto.id)}
-                                                title="Eliminar"
+                                                onClick={() => onDelete(item.repuestoId)}
+                                                title="Quitar de reparación"
                                             >
                                                 <i className="bi bi-trash"></i>
                                             </Button>
@@ -154,11 +123,13 @@ export function RepuestosList({ repuestos, onEdit, onDelete, isAdmin }: Repuesto
                         <tr>
                             <td colSpan={2} className="fw-bold">TOTAL</td>
                             <td className="text-end fw-bold text-success">
-                                ${repuestos.reduce((sum, r) => sum + r.precio, 0).toLocaleString('es-AR', {
+                                ${repuestos.reduce((sum, item) => 
+                                    sum + (item.repuesto?.data.PrecioRepu || 0), 0
+                                ).toLocaleString('es-AR', {
                                     minimumFractionDigits: 2
                                 })}
                             </td>
-                            <td colSpan={isAdmin ? 4 : 3}></td>
+                            <td colSpan={isAdmin ? 3 : 2}></td>
                         </tr>
                     </tfoot>
                 </Table>
