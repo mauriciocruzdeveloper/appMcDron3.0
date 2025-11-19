@@ -3,6 +3,9 @@ import { RootState } from '../store';
 import { ReparacionType, Reparaciones } from '../../types/reparacion';
 import { Filtro } from '../../types/Filtro';
 import { Intervencion } from '../../types/intervencion';
+import { Usuario } from '../../types/usuario';
+import { Drone } from '../../types/drone';
+import { ModeloDrone } from '../../types/modeloDrone';
 import { estados } from '../../datos/estados';
 
 // Constantes para filtros
@@ -248,14 +251,14 @@ export const selectReparacionesAccionInmediata = createSelector(
  * @param reparacionId - ID de la reparación
  * @returns Función selector que retorna el nombre del modelo o null
  */
-export const selectModeloNombreByReparacionId = (reparacionId: string) =>
+export const selectModeloNombreByReparacionId = (reparacionId: string): (state: RootState) => string | null =>
   createSelector(
     [
       (state: RootState) => selectReparacionById(reparacionId)(state),
       (state: RootState) => state.drone.coleccionDrones,
       (state: RootState) => state.modeloDrone.coleccionModelosDrone
     ],
-    (reparacion, drones, modelos) => {
+    (reparacion, drones, modelos): string | null => {
       if (!reparacion?.data.DroneId) return null;
       
       const drone = drones[reparacion.data.DroneId];
@@ -591,8 +594,117 @@ export const selectReparacionesDashboard = createSelector(
 );
 
 // ============================================================================
-// SELECTORES DE COMPATIBILIDAD Y MIGRACIÓN
+// SELECTORES PARA ENTIDADES RELACIONADAS (Phase 3 - T3.3)
 // ============================================================================
+
+/**
+ * Selector memoizado para obtener el usuario de una reparación
+ * Complejidad: O(1) - Acceso directo por ID en diccionarios
+ * 
+ * @param reparacionId - ID de la reparación
+ * @returns Usuario asociado a la reparación o null
+ * 
+ * @example
+ * ```typescript
+ * const usuario = useAppSelector(state => 
+ *   selectUsuarioDeReparacion(state, reparacionId)
+ * );
+ * ```
+ */
+export const selectUsuarioDeReparacion = (state: RootState, reparacionId: string): Usuario | null => {
+  const reparacion = selectReparacionById(reparacionId)(state);
+  if (!reparacion?.data.UsuarioRep) return null;
+  
+  const usuarioId = reparacion.data.UsuarioRep;
+  return state.usuario.coleccionUsuarios[usuarioId] || null;
+};
+
+/**
+ * Selector memoizado para obtener el drone de una reparación
+ * Complejidad: O(1) - Acceso directo por ID en diccionarios
+ * 
+ * @param reparacionId - ID de la reparación
+ * @returns Drone asociado a la reparación o null
+ * 
+ * @example
+ * ```typescript
+ * const drone = useAppSelector(state => 
+ *   selectDroneDeReparacion(state, reparacionId)
+ * );
+ * ```
+ */
+export const selectDroneDeReparacion = (state: RootState, reparacionId: string): Drone | null => {
+  const reparacion = selectReparacionById(reparacionId)(state);
+  if (!reparacion?.data.DroneId) return null;
+  
+  const droneId = reparacion.data.DroneId;
+  return state.drone.coleccionDrones[droneId] || null;
+};
+
+/**
+ * Selector memoizado para obtener el modelo del drone de una reparación
+ * Complejidad: O(1) - Accesos directos por ID en diccionarios
+ * 
+ * @param reparacionId - ID de la reparación
+ * @returns Modelo del drone asociado a la reparación o null
+ * 
+ * @example
+ * ```typescript
+ * const modelo = useAppSelector(state => 
+ *   selectModeloDeReparacion(state, reparacionId)
+ * );
+ * ```
+ */
+export const selectModeloDeReparacion = (state: RootState, reparacionId: string): ModeloDrone | null => {
+  const drone = selectDroneDeReparacion(state, reparacionId);
+  if (!drone?.data.ModeloDroneId) return null;
+  
+  const modeloId = drone.data.ModeloDroneId;
+  return state.modeloDrone.coleccionModelosDrone[modeloId] || null;
+};
+
+/**
+ * Selector memoizado con createSelector para obtener todas las entidades relacionadas
+ * de una reparación en una sola llamada.
+ * 
+ * Optimizado con memoization para evitar recalcular si no cambian las dependencias.
+ * Complejidad: O(1) - Todos son accesos directos
+ * 
+ * @param reparacionId - ID de la reparación
+ * @returns Objeto con reparacion, usuario, drone y modelo
+ * 
+ * @example
+ * ```typescript
+ * const { reparacion, usuario, drone, modelo } = useAppSelector(state =>
+ *   selectReparacionCompleta(reparacionId)(state)
+ * );
+ * ```
+ */
+export const selectReparacionCompleta = (reparacionId: string): (state: RootState) => {
+  reparacion: ReparacionType | undefined;
+  usuario: Usuario | null;
+  drone: Drone | null;
+  modelo: ModeloDrone | null;
+} =>
+  createSelector(
+    [
+      (state: RootState) => selectReparacionById(reparacionId)(state),
+      (state: RootState) => selectUsuarioDeReparacion(state, reparacionId),
+      (state: RootState) => selectDroneDeReparacion(state, reparacionId),
+      (state: RootState) => selectModeloDeReparacion(state, reparacionId)
+    ],
+    (reparacion, usuario, drone, modelo): {
+      reparacion: ReparacionType | undefined;
+      usuario: Usuario | null;
+      drone: Drone | null;
+      modelo: ModeloDrone | null;
+    } => ({
+      reparacion,
+      usuario,
+      drone,
+      modelo
+    })
+  );
 
 /**
  * Selector memoizado para reparaciones con estados legacy
