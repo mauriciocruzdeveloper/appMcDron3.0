@@ -4,51 +4,60 @@
  * Tab para gestión de repuestos de la reparación.
  * Permite agregar, editar y eliminar repuestos con sus estados y precios.
  * 
+ * **Phase 3 - T3.5:** Conectado a datos reales desde Context y Redux.
+ * Usa RepuestosSolicitados (array de IDs) y ObsRepuestos desde DataReparacion.
+ * 
  * @module Reparacion/tabs/RepuestosTab
  */
 
 import React, { useState } from 'react';
-import { Container, Row, Col, Card, Button, Alert } from 'react-bootstrap';
+import { Container, Row, Col, Card, Button, Alert, Form } from 'react-bootstrap';
 import { useReparacion } from '../../ReparacionContext';
+import { useAppSelector } from '../../../../redux-tool-kit/redux.hooks';
 import { RepuestosList } from './RepuestosList';
 import { RepuestoForm } from './RepuestoForm';
+import type { Repuesto } from '../../../../types/repuesto';
 
 /**
- * Interfaz para un repuesto
+ * Interfaz extendida para repuestos en reparación (incluye estado de instalación)
  */
-export interface Repuesto {
-    id: string;
-    nombre: string;
-    descripcion?: string;
-    precio: number;
+export interface RepuestoEnReparacion {
+    repuestoId: string;
+    repuesto: Repuesto | null;
     estado: 'Pendiente' | 'Recibido' | 'Instalado';
-    fechaSolicitud: string;
-    fechaRecepcion?: string;
-    fechaInstalacion?: string;
-    proveedor?: string;
-    notas?: string;
 }
 
 /**
  * Tab de gestión de repuestos.
- * Permite CRUD completo de repuestos asociados a la reparación.
+ * Conectado a RepuestosSolicitados del DataReparacion.
  */
 export function RepuestosTab(): React.ReactElement {
-    const { reparacion, isAdmin, isLoading } = useReparacion();
+    const { reparacion, isAdmin, isLoading, onChange } = useReparacion();
     const [showForm, setShowForm] = useState(false);
-    const [editingRepuesto, setEditingRepuesto] = useState<Repuesto | null>(null);
+    const [editingRepuesto, setEditingRepuesto] = useState<string | null>(null);
+    
+    // Obtiene todos los repuestos del estado Redux
+    const todosRepuestos = useAppSelector(state => state.repuesto.coleccionRepuestos);
+    
+    // Obtiene los IDs de repuestos solicitados
+    const repuestoIds: string[] = reparacion.data.RepuestosSolicitados || [];
     
     /**
-     * En una implementación real, los repuestos vendrían de Redux
-     * Por ahora usamos datos de ejemplo
+     * Mapea los IDs a objetos RepuestoEnReparacion con datos del Redux store
      */
-    const [repuestos, setRepuestos] = useState<Repuesto[]>([]);
+    const repuestosSolicitados: RepuestoEnReparacion[] = repuestoIds.map((id: string) => ({
+        repuestoId: id,
+        repuesto: todosRepuestos[id] || null,
+        estado: 'Pendiente' as const // TODO: guardar estado real en reparación
+    }));
     
     /**
      * Calcula el total de repuestos
      */
     const calcularTotal = (): number => {
-        return repuestos.reduce((sum, rep) => sum + rep.precio, 0);
+        return repuestosSolicitados.reduce((sum, item) => {
+            return sum + (item.repuesto?.data.PrecioRepu || 0);
+        }, 0);
     };
     
     /**
@@ -56,9 +65,9 @@ export function RepuestosTab(): React.ReactElement {
      */
     const contarPorEstado = () => {
         return {
-            pendientes: repuestos.filter(r => r.estado === 'Pendiente').length,
-            recibidos: repuestos.filter(r => r.estado === 'Recibido').length,
-            instalados: repuestos.filter(r => r.estado === 'Instalado').length
+            pendientes: repuestosSolicitados.filter(r => r.estado === 'Pendiente').length,
+            recibidos: repuestosSolicitados.filter(r => r.estado === 'Recibido').length,
+            instalados: repuestosSolicitados.filter(r => r.estado === 'Instalado').length
         };
     };
     
@@ -67,38 +76,32 @@ export function RepuestosTab(): React.ReactElement {
         setShowForm(true);
     };
     
-    const handleEditRepuesto = (repuesto: Repuesto) => {
-        setEditingRepuesto(repuesto);
+    const handleEditRepuesto = (repuestoId: string) => {
+        setEditingRepuesto(repuestoId);
         setShowForm(true);
     };
     
     const handleDeleteRepuesto = async (repuestoId: string) => {
-        const confirmed = window.confirm('¿Estás seguro de eliminar este repuesto?');
+        const confirmed = window.confirm('¿Estás seguro de quitar este repuesto de la reparación?');
         if (!confirmed) return;
         
         try {
-            // En implementación real, esto eliminaría del backend
-            setRepuestos(prev => prev.filter(r => r.id !== repuestoId));
+            // Remover del array RepuestosSolicitados
+            const nuevosIds: string[] = (reparacion.data.RepuestosSolicitados || [])
+                .filter((id: string) => id !== repuestoId);
+            
+            onChange('RepuestosSolicitados', nuevosIds);
         } catch (error) {
             console.error('Error al eliminar repuesto:', error);
         }
     };
     
-    const handleSaveRepuesto = async (repuesto: Repuesto) => {
+    const handleSaveRepuesto = async (repuestoId: string) => {
         try {
-            if (editingRepuesto) {
-                // Editar existente
-                setRepuestos(prev => prev.map(r => 
-                    r.id === repuesto.id ? repuesto : r
-                ));
-            } else {
-                // Agregar nuevo
-                const nuevoRepuesto: Repuesto = {
-                    ...repuesto,
-                    id: `rep_${Date.now()}`,
-                    fechaSolicitud: new Date().toISOString()
-                };
-                setRepuestos(prev => [...prev, nuevoRepuesto]);
+            // Agregar al array RepuestosSolicitados si no existe
+            const idsActuales = reparacion.data.RepuestosSolicitados || [];
+            if (!idsActuales.includes(repuestoId)) {
+                onChange('RepuestosSolicitados', [...idsActuales, repuestoId]);
             }
             
             setShowForm(false);
@@ -112,6 +115,13 @@ export function RepuestosTab(): React.ReactElement {
     const handleCloseForm = () => {
         setShowForm(false);
         setEditingRepuesto(null);
+    };
+    
+    /**
+     * Maneja cambios en las observaciones de repuestos
+     */
+    const handleObsRepuestosChange = (value: string) => {
+        onChange('ObsRepuestos', value);
     };
     
     const estadisticas = contarPorEstado();
@@ -135,7 +145,7 @@ export function RepuestosTab(): React.ReactElement {
                     <Card className="text-center h-100">
                         <Card.Body>
                             <div className="text-muted small mb-1">Total Repuestos</div>
-                            <h3 className="mb-0">{repuestos.length}</h3>
+                            <h3 className="mb-0">{repuestosSolicitados.length}</h3>
                         </Card.Body>
                     </Card>
                 </Col>
@@ -175,11 +185,35 @@ export function RepuestosTab(): React.ReactElement {
                 </Alert>
             )}
             
+            {/* Observaciones sobre repuestos */}
+            <Card className="mb-3">
+                <Card.Body>
+                    <Card.Title className="h6 mb-3">
+                        <i className="bi bi-journal-text me-2"></i>
+                        Observaciones sobre Repuestos
+                    </Card.Title>
+                    <Form.Group>
+                        <Form.Control
+                            as="textarea"
+                            rows={3}
+                            value={reparacion.data.ObsRepuestos || ''}
+                            onChange={(e) => handleObsRepuestosChange(e.target.value)}
+                            placeholder="Especifica qué repuestos se necesitan, detalles adicionales, etc..."
+                            disabled={!isAdmin}
+                            maxLength={2000}
+                        />
+                        <Form.Text className="text-muted">
+                            Campo de texto libre para especificar detalles sobre los repuestos necesarios.
+                        </Form.Text>
+                    </Form.Group>
+                </Card.Body>
+            </Card>
+            
             {/* Botón para agregar repuesto */}
             <div className="d-flex justify-content-between align-items-center mb-3">
                 <h5 className="mb-0">
                     <i className="bi bi-box-seam me-2"></i>
-                    Lista de Repuestos
+                    Repuestos del Inventario ({repuestosSolicitados.length})
                 </h5>
                 {isAdmin && (
                     <Button
@@ -188,23 +222,31 @@ export function RepuestosTab(): React.ReactElement {
                         onClick={handleAddRepuesto}
                     >
                         <i className="bi bi-plus-circle me-2"></i>
-                        Agregar Repuesto
+                        Agregar del Inventario
                     </Button>
                 )}
             </div>
             
             {/* Lista de repuestos */}
             <RepuestosList
-                repuestos={repuestos}
+                repuestos={repuestosSolicitados}
                 onEdit={handleEditRepuesto}
                 onDelete={handleDeleteRepuesto}
                 isAdmin={isAdmin}
             />
             
+            {repuestosSolicitados.length === 0 && (
+                <Alert variant="info" className="text-center">
+                    <i className="bi bi-info-circle me-2"></i>
+                    No hay repuestos agregados a esta reparación.
+                    {isAdmin && ' Usa el botón "Agregar del Inventario" para seleccionar repuestos.'}
+                </Alert>
+            )}
+            
             {/* Formulario modal */}
             <RepuestoForm
                 show={showForm}
-                repuesto={editingRepuesto}
+                repuestoId={editingRepuesto}
                 onSave={handleSaveRepuesto}
                 onClose={handleCloseForm}
             />
