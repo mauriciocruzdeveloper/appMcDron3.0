@@ -4,6 +4,12 @@
  * Tab de gestión de archivos adjuntos (fotos, videos, documentos).
  * Permite visualizar, subir y eliminar archivos de la reparación.
  * 
+ * **Phase 3 - T3.5:** Conectado a datos reales:
+ * - urlsFotos: string[] (URLs de fotos generales)
+ * - urlsDocumentos: string[] (URLs de documentos)
+ * - FotoAntes: string (URL de foto "antes" de reparación)
+ * - FotoDespues: string (URL de foto "después" de reparación)
+ * 
  * @module Reparacion/tabs/ArchivosTab
  */
 
@@ -18,16 +24,16 @@ import { SeccionCard } from '../../components/shared/SeccionCard.component';
 /**
  * Tipos de archivos soportados
  */
-type FileCategory = 'fotos' | 'videos' | 'documentos';
+type FileCategory = 'fotos' | 'documentos';
 
 /**
- * Tab de Archivos - Gestión de fotos, videos y documentos.
+ * Tab de Archivos - Gestión de fotos y documentos.
  * 
- * Secciones:
- * 1. Galería de imágenes (fotos antes/después)
- * 2. Lista de videos
- * 3. Lista de documentos
- * 4. Uploader de archivos
+ * Campos reales de DataReparacion:
+ * - urlsFotos: array de URLs de fotos generales
+ * - urlsDocumentos: array de URLs de documentos
+ * - FotoAntes: URL de la foto "antes" (estado inicial)
+ * - FotoDespues: URL de la foto "después" (estado final)
  * 
  * @example
  * ```tsx
@@ -35,7 +41,7 @@ type FileCategory = 'fotos' | 'videos' | 'documentos';
  * ```
  */
 export function ArchivosTab(): React.ReactElement {
-    const { reparacion, isLoading, onUploadFile, onDeleteFile } = useReparacion();
+    const { reparacion, isLoading, onChange } = useReparacion();
     
     const [activeCategory, setActiveCategory] = useState<FileCategory>('fotos');
     
@@ -69,17 +75,7 @@ export function ArchivosTab(): React.ReactElement {
                                     style={{ cursor: 'pointer' }}
                                 >
                                     <i className="bi bi-images me-2"></i>
-                                    Fotos
-                                </Nav.Link>
-                            </Nav.Item>
-                            <Nav.Item>
-                                <Nav.Link
-                                    active={activeCategory === 'videos'}
-                                    onClick={() => setActiveCategory('videos')}
-                                    style={{ cursor: 'pointer' }}
-                                >
-                                    <i className="bi bi-camera-video me-2"></i>
-                                    Videos
+                                    Fotos ({(reparacion.data.urlsFotos || []).length})
                                 </Nav.Link>
                             </Nav.Item>
                             <Nav.Item>
@@ -89,7 +85,7 @@ export function ArchivosTab(): React.ReactElement {
                                     style={{ cursor: 'pointer' }}
                                 >
                                     <i className="bi bi-file-earmark-text me-2"></i>
-                                    Documentos
+                                    Documentos ({(reparacion.data.urlsDocumentos || []).length})
                                 </Nav.Link>
                             </Nav.Item>
                         </Nav>
@@ -97,24 +93,16 @@ export function ArchivosTab(): React.ReactElement {
                         {/* Contenido según categoría activa */}
                         {activeCategory === 'fotos' && (
                             <ImageGallery 
-                                reparacionId={reparacion.id || ''}
-                                onDeleteFile={onDeleteFile}
-                            />
-                        )}
-                        
-                        {activeCategory === 'videos' && (
-                            <FileList
-                                category="videos"
-                                reparacionId={reparacion.id || ''}
-                                onDeleteFile={onDeleteFile}
+                                fotos={reparacion.data.urlsFotos || []}
+                                fotoAntes={reparacion.data.FotoAntes}
+                                fotoDespues={reparacion.data.FotoDespues}
                             />
                         )}
                         
                         {activeCategory === 'documentos' && (
                             <FileList
+                                files={reparacion.data.urlsDocumentos || []}
                                 category="documentos"
-                                reparacionId={reparacion.id || ''}
-                                onDeleteFile={onDeleteFile}
                             />
                         )}
                     </SeccionCard>
@@ -123,9 +111,7 @@ export function ArchivosTab(): React.ReactElement {
                 {/* Columna lateral: Upload de archivos */}
                 <Col lg={4}>
                     <FileUploader
-                        reparacionId={reparacion.id || ''}
                         category={activeCategory}
-                        onUploadFile={onUploadFile}
                     />
                     
                     {/* Información de uso */}
@@ -140,17 +126,16 @@ export function ArchivosTab(): React.ReactElement {
                             </div>
                             <ul className="mb-3">
                                 <li><strong>Fotos:</strong> JPG, PNG, GIF (max 5MB)</li>
-                                <li><strong>Videos:</strong> MP4, MOV, AVI (max 50MB)</li>
                                 <li><strong>Documentos:</strong> PDF, DOC, XLS (max 10MB)</li>
                             </ul>
                             
                             <div className="mb-2">
                                 <strong>Categorización de fotos:</strong>
                             </div>
-                            <ul>
-                                <li><strong>Antes:</strong> Estado inicial del drone</li>
-                                <li><strong>Después:</strong> Estado tras reparación</li>
-                                <li><strong>Proceso:</strong> Fotos durante reparación</li>
+                            <ul className="mb-0">
+                                <li><strong>Antes:</strong> Estado inicial del drone (FotoAntes)</li>
+                                <li><strong>Después:</strong> Estado tras reparación (FotoDespues)</li>
+                                <li><strong>Generales:</strong> Otras fotos del proceso (urlsFotos)</li>
                             </ul>
                         </div>
                     </SeccionCard>

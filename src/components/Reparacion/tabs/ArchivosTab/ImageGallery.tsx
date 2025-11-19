@@ -2,195 +2,133 @@
  * ImageGallery.tsx
  * 
  * Galería de imágenes para la reparación.
- * Muestra fotos categorizadas (antes, después, proceso).
+ * Muestra fotos categorizadas: antes, después y generales.
+ * 
+ * **Phase 3 - T3.5:** Conectado a datos reales desde DataReparacion.
  * 
  * @module Reparacion/tabs/ArchivosTab
  */
 
 import React, { useState } from 'react';
-import { Row, Col, Card, Badge, Button, Modal } from 'react-bootstrap';
-import { useReparacion } from '../../ReparacionContext';
+import { Row, Col, Card, Badge, Modal, Alert } from 'react-bootstrap';
 
 interface ImageGalleryProps {
-    /** ID de la reparación */
-    reparacionId: string;
+    /** Array de URLs de fotos generales */
+    fotos: string[];
     
-    /** Callback para eliminar archivo */
-    onDeleteFile?: (fileId: string, tipo: string) => Promise<void>;
+    /** URL de la foto "antes" */
+    fotoAntes?: string;
+    
+    /** URL de la foto "después" */
+    fotoDespues?: string;
 }
 
 /**
- * Interfaz para una imagen
+ * Galería de imágenes con preview modal.
  */
-interface ImageData {
-    id: string;
-    url: string;
-    categoria: 'antes' | 'despues' | 'proceso';
-    descripcion?: string;
-    fecha: string;
-}
-
-/**
- * Galería de imágenes con categorización y preview.
- */
-export function ImageGallery({ onDeleteFile }: ImageGalleryProps): React.ReactElement {
-    const { isAdmin } = useReparacion();
-    const [selectedImage, setSelectedImage] = useState<ImageData | null>(null);
-    const [showModal, setShowModal] = useState(false);
+export function ImageGallery({ fotos, fotoAntes, fotoDespues }: ImageGalleryProps): React.ReactElement {
+    const [selectedUrl, setSelectedUrl] = useState<string | null>(null);
     
-    /**
-     * En una implementación real, estas imágenes vendrían de Redux o API
-     * Por ahora usamos datos de ejemplo
-     */
-    const images: ImageData[] = [
-        // Placeholder - en implementación real vendría de la base de datos
-    ];
-    
-    const handleImageClick = (image: ImageData) => {
-        setSelectedImage(image);
-        setShowModal(true);
+    const handleImageClick = (url: string) => {
+        setSelectedUrl(url);
     };
     
-    const handleDelete = async (imageId: string) => {
-        if (!onDeleteFile) return;
-        
-        const confirmed = window.confirm('¿Estás seguro de eliminar esta imagen?');
-        if (!confirmed) return;
-        
-        try {
-            await onDeleteFile(imageId, 'foto');
-            setShowModal(false);
-        } catch (error) {
-            console.error('Error al eliminar imagen:', error);
-        }
-    };
+    const totalImages = fotos.length + (fotoAntes ? 1 : 0) + (fotoDespues ? 1 : 0);
     
-    /**
-     * Agrupa imágenes por categoría
-     */
-    const imagesByCategory = {
-        antes: images.filter(img => img.categoria === 'antes'),
-        despues: images.filter(img => img.categoria === 'despues'),
-        proceso: images.filter(img => img.categoria === 'proceso')
-    };
-    
-    const getCategoryBadge = (categoria: string) => {
-        const badges = {
-            antes: { bg: 'danger', text: 'Antes' },
-            despues: { bg: 'success', text: 'Después' },
-            proceso: { bg: 'primary', text: 'Proceso' }
-        };
-        const badge = badges[categoria as keyof typeof badges];
-        return <Badge bg={badge.bg}>{badge.text}</Badge>;
-    };
-    
-    if (images.length === 0) {
+    if (totalImages === 0) {
         return (
-            <div className="text-center py-5 text-muted">
+            <Alert variant="info" className="text-center">
                 <i className="bi bi-images fs-1 mb-3 d-block"></i>
                 <h5>No hay fotos adjuntas</h5>
-                <p>Sube fotos del drone antes y después de la reparación</p>
-            </div>
+                <p className="mb-0">Sube fotos del drone antes y después de la reparación usando el panel lateral.</p>
+            </Alert>
         );
     }
     
     return (
         <>
-            {/* Sección: Fotos Antes */}
-            {imagesByCategory.antes.length > 0 && (
+            {/* Sección: Foto Antes */}
+            {fotoAntes && (
                 <div className="mb-4">
                     <h6 className="mb-3">
                         <Badge bg="danger" className="me-2">Antes</Badge>
                         Estado inicial del drone
                     </h6>
-                    <Row xs={2} md={3} lg={4} className="g-3">
-                        {imagesByCategory.antes.map((image) => (
-                            <Col key={image.id}>
-                                <Card 
-                                    className="h-100 shadow-sm" 
-                                    style={{ cursor: 'pointer' }}
-                                    onClick={() => handleImageClick(image)}
-                                >
-                                    <Card.Img 
-                                        variant="top" 
-                                        src={image.url} 
-                                        style={{ height: '150px', objectFit: 'cover' }}
-                                    />
-                                    {image.descripcion && (
-                                        <Card.Body className="p-2">
-                                            <Card.Text className="small text-muted mb-0">
-                                                {image.descripcion}
-                                            </Card.Text>
-                                        </Card.Body>
-                                    )}
-                                </Card>
-                            </Col>
-                        ))}
+                    <Row>
+                        <Col md={6} lg={4}>
+                            <Card 
+                                className="shadow-sm hover-shadow" 
+                                style={{ cursor: 'pointer' }}
+                                onClick={() => handleImageClick(fotoAntes)}
+                            >
+                                <Card.Img 
+                                    variant="top" 
+                                    src={fotoAntes} 
+                                    style={{ height: '200px', objectFit: 'cover' }}
+                                    alt="Foto antes de la reparación"
+                                />
+                                <Card.Body className="p-2 text-center">
+                                    <small className="text-muted">Click para ampliar</small>
+                                </Card.Body>
+                            </Card>
+                        </Col>
                     </Row>
                 </div>
             )}
             
-            {/* Sección: Fotos Después */}
-            {imagesByCategory.despues.length > 0 && (
+            {/* Sección: Foto Después */}
+            {fotoDespues && (
                 <div className="mb-4">
                     <h6 className="mb-3">
                         <Badge bg="success" className="me-2">Después</Badge>
                         Estado tras reparación
                     </h6>
-                    <Row xs={2} md={3} lg={4} className="g-3">
-                        {imagesByCategory.despues.map((image) => (
-                            <Col key={image.id}>
-                                <Card 
-                                    className="h-100 shadow-sm" 
-                                    style={{ cursor: 'pointer' }}
-                                    onClick={() => handleImageClick(image)}
-                                >
-                                    <Card.Img 
-                                        variant="top" 
-                                        src={image.url} 
-                                        style={{ height: '150px', objectFit: 'cover' }}
-                                    />
-                                    {image.descripcion && (
-                                        <Card.Body className="p-2">
-                                            <Card.Text className="small text-muted mb-0">
-                                                {image.descripcion}
-                                            </Card.Text>
-                                        </Card.Body>
-                                    )}
-                                </Card>
-                            </Col>
-                        ))}
+                    <Row>
+                        <Col md={6} lg={4}>
+                            <Card 
+                                className="shadow-sm hover-shadow" 
+                                style={{ cursor: 'pointer' }}
+                                onClick={() => handleImageClick(fotoDespues)}
+                            >
+                                <Card.Img 
+                                    variant="top" 
+                                    src={fotoDespues} 
+                                    style={{ height: '200px', objectFit: 'cover' }}
+                                    alt="Foto después de la reparación"
+                                />
+                                <Card.Body className="p-2 text-center">
+                                    <small className="text-muted">Click para ampliar</small>
+                                </Card.Body>
+                            </Card>
+                        </Col>
                     </Row>
                 </div>
             )}
             
-            {/* Sección: Fotos del Proceso */}
-            {imagesByCategory.proceso.length > 0 && (
+            {/* Sección: Fotos Generales */}
+            {fotos.length > 0 && (
                 <div className="mb-4">
                     <h6 className="mb-3">
-                        <Badge bg="primary" className="me-2">Proceso</Badge>
-                        Durante la reparación
+                        <Badge bg="primary" className="me-2">Generales</Badge>
+                        Otras fotos del proceso ({fotos.length})
                     </h6>
                     <Row xs={2} md={3} lg={4} className="g-3">
-                        {imagesByCategory.proceso.map((image) => (
-                            <Col key={image.id}>
+                        {fotos.map((url, index) => (
+                            <Col key={index}>
                                 <Card 
-                                    className="h-100 shadow-sm" 
+                                    className="shadow-sm hover-shadow" 
                                     style={{ cursor: 'pointer' }}
-                                    onClick={() => handleImageClick(image)}
+                                    onClick={() => handleImageClick(url)}
                                 >
                                     <Card.Img 
                                         variant="top" 
-                                        src={image.url} 
+                                        src={url} 
                                         style={{ height: '150px', objectFit: 'cover' }}
+                                        alt={`Foto ${index + 1}`}
                                     />
-                                    {image.descripcion && (
-                                        <Card.Body className="p-2">
-                                            <Card.Text className="small text-muted mb-0">
-                                                {image.descripcion}
-                                            </Card.Text>
-                                        </Card.Body>
-                                    )}
+                                    <Card.Body className="p-2 text-center">
+                                        <small className="text-muted">Foto #{index + 1}</small>
+                                    </Card.Body>
                                 </Card>
                             </Col>
                         ))}
@@ -198,50 +136,25 @@ export function ImageGallery({ onDeleteFile }: ImageGalleryProps): React.ReactEl
                 </div>
             )}
             
-            {/* Modal de preview de imagen */}
+            {/* Modal para preview de imagen */}
             <Modal 
-                show={showModal} 
-                onHide={() => setShowModal(false)}
+                show={!!selectedUrl} 
+                onHide={() => setSelectedUrl(null)}
                 size="lg"
                 centered
             >
                 <Modal.Header closeButton>
-                    <Modal.Title>
-                        {selectedImage && getCategoryBadge(selectedImage.categoria)}
-                    </Modal.Title>
+                    <Modal.Title>Preview de Imagen</Modal.Title>
                 </Modal.Header>
-                <Modal.Body>
-                    {selectedImage && (
-                        <>
-                            <img 
-                                src={selectedImage.url} 
-                                alt="Preview"
-                                className="img-fluid w-100 mb-3"
-                            />
-                            {selectedImage.descripcion && (
-                                <p className="text-muted">{selectedImage.descripcion}</p>
-                            )}
-                            <small className="text-muted">
-                                <i className="bi bi-calendar3 me-1"></i>
-                                {new Date(selectedImage.fecha).toLocaleDateString('es-AR')}
-                            </small>
-                        </>
+                <Modal.Body className="text-center p-0">
+                    {selectedUrl && (
+                        <img 
+                            src={selectedUrl} 
+                            alt="Preview" 
+                            style={{ width: '100%', height: 'auto' }}
+                        />
                     )}
                 </Modal.Body>
-                <Modal.Footer>
-                    {isAdmin && selectedImage && (
-                        <Button 
-                            variant="danger" 
-                            onClick={() => handleDelete(selectedImage.id)}
-                        >
-                            <i className="bi bi-trash me-2"></i>
-                            Eliminar
-                        </Button>
-                    )}
-                    <Button variant="secondary" onClick={() => setShowModal(false)}>
-                        Cerrar
-                    </Button>
-                </Modal.Footer>
             </Modal>
         </>
     );
