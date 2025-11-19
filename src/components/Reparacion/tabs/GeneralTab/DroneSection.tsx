@@ -14,7 +14,10 @@ import { FormField } from '../../components/shared/FormField.component';
 
 /**
  * Sección de información del drone.
- * Muestra modelo, número de serie, accesorios y estado físico.
+ * Muestra modelo, número de serie y observaciones.
+ * 
+ * **Phase 3 - T3.5:** Conectado a datos reales desde Context.
+ * Modelo y drone vienen de Redux, número de serie de DataReparacion.
  */
 export function DroneSection(): React.ReactElement {
     const { 
@@ -33,11 +36,11 @@ export function DroneSection(): React.ReactElement {
     return (
         <SeccionCard
             title="Información del Drone"
-            subtitle={drone ? `ID: ${drone.id}` : undefined}
+            subtitle={drone ? `${drone.data.Nombre} (ID: ${drone.id})` : 'No asignado'}
             icon="disc"
         >
             <Row>
-                {/* Modelo (solo lectura desde la BD) */}
+                {/* Modelo (solo lectura desde Redux) */}
                 <Col md={6}>
                     <div className="mb-3">
                         <label className="form-label">
@@ -45,11 +48,11 @@ export function DroneSection(): React.ReactElement {
                         </label>
                         <div className="p-2 bg-light rounded">
                             <Badge bg="primary" className="me-2">
-                                {modelo?.data.NombreModelo || 'N/A'}
+                                {modelo?.data.NombreModelo || reparacion.data.ModeloDroneNameRep || 'N/A'}
                             </Badge>
                             {modelo && (
-                                <small className="text-muted">
-                                    {modelo.data.MarcaModelo || ''}
+                                <small className="text-muted d-block mt-1">
+                                    <strong>Fabricante:</strong> {modelo.data.Fabricante || 'N/A'}
                                 </small>
                             )}
                         </div>
@@ -61,63 +64,47 @@ export function DroneSection(): React.ReactElement {
                     <FormField
                         type="text"
                         label="Número de Serie"
-                        name="NumeroSerie"
-                        value={drone?.data.NumeroSerie || ''}
+                        name="NumeroSerieRep"
+                        value={reparacion.data.NumeroSerieRep || drone?.data.NumeroSerie || ''}
                         onChange={handleFieldChange}
-                        error={validationErrors.NumeroSerie}
+                        error={validationErrors.NumeroSerieRep}
                         disabled={!isAdmin}
                         placeholder="SN123456789"
                         helpText="Número de serie del drone"
                     />
                 </Col>
                 
-                {/* Accesorios incluidos */}
+                {/* Descripción del usuario sobre el problema */}
                 <Col md={12}>
                     <FormField
                         type="textarea"
-                        label="Accesorios Incluidos"
-                        name="AccesoriosRep"
-                        value={reparacion.data.AccesoriosRep || ''}
+                        label="Descripción del Problema (Cliente)"
+                        name="DescripcionUsuRep"
+                        value={reparacion.data.DescripcionUsuRep || ''}
                         onChange={handleFieldChange}
-                        error={validationErrors.AccesoriosRep}
+                        error={validationErrors.DescripcionUsuRep}
                         disabled={!isAdmin}
-                        placeholder="Ejemplo: Control, batería, cargador, estuche"
+                        placeholder="Descripción del problema según el cliente"
                         rows={3}
-                        helpText="Lista de accesorios que acompañan al drone"
-                    />
-                </Col>
-                
-                {/* Estado físico del drone */}
-                <Col md={12}>
-                    <FormField
-                        type="textarea"
-                        label="Estado Físico"
-                        name="EstadoFisicoRep"
-                        value={reparacion.data.EstadoFisicoRep || ''}
-                        onChange={handleFieldChange}
-                        error={validationErrors.EstadoFisicoRep}
-                        disabled={!isAdmin}
-                        placeholder="Descripción del estado físico: rayones, golpes, partes faltantes, etc."
-                        rows={3}
-                        helpText="Condición física del drone al momento del ingreso"
+                        helpText="Motivo de la consulta/reparación"
+                        required
                     />
                 </Col>
             </Row>
             
-            {/* Información adicional del drone (solo lectura) */}
+            {/* Información adicional del drone desde Redux (solo lectura) */}
             {drone && (
                 <div className="mt-3 p-3 bg-light rounded">
                     <small className="text-muted">
                         <div className="mb-1">
-                            <strong>Fecha de compra:</strong> {
-                                drone.data.FechaCompraDro 
-                                    ? new Date(drone.data.FechaCompraDro).toLocaleDateString('es-AR')
-                                    : 'No especificada'
-                            }
+                            <strong>Nombre en sistema:</strong> {drone.data.Nombre}
                         </div>
-                        {drone.data.ObservacionesDro && (
+                        <div className="mb-1">
+                            <strong>Número Serie (sistema):</strong> {drone.data.NumeroSerie || 'No especificado'}
+                        </div>
+                        {drone.data.Observaciones && (
                             <div>
-                                <strong>Observaciones del drone:</strong> {drone.data.ObservacionesDro}
+                                <strong>Observaciones:</strong> {drone.data.Observaciones}
                             </div>
                         )}
                     </small>

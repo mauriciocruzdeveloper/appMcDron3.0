@@ -14,7 +14,10 @@ import { FormField } from '../../components/shared/FormField.component';
 
 /**
  * Sección de información del cliente.
- * Muestra y permite editar nombre, email, teléfono y dirección.
+ * Muestra y permite editar nombre, email, teléfono.
+ * 
+ * **Phase 3 - T3.5:** Conectado a datos reales desde Context.
+ * Campos mapeados a DataReparacion: NombreUsu, EmailUsu, TelefonoUsu, ApellidoUsu
  */
 export function ClienteSection(): React.ReactElement {
     const { 
@@ -36,17 +39,30 @@ export function ClienteSection(): React.ReactElement {
             icon="person-circle"
         >
             <Row>
-                <Col md={12}>
+                <Col md={6}>
                     <FormField
                         type="text"
-                        label="Nombre Completo"
-                        name="NombreUsuRep"
-                        value={reparacion.data.NombreUsuRep || ''}
+                        label="Nombre"
+                        name="NombreUsu"
+                        value={reparacion.data.NombreUsu || ''}
                         onChange={handleFieldChange}
-                        error={validationErrors.NombreUsuRep}
+                        error={validationErrors.NombreUsu}
                         required
                         disabled={!isAdmin}
-                        placeholder="Ingrese el nombre del cliente"
+                        placeholder="Ingrese el nombre"
+                    />
+                </Col>
+                
+                <Col md={6}>
+                    <FormField
+                        type="text"
+                        label="Apellido"
+                        name="ApellidoUsu"
+                        value={reparacion.data.ApellidoUsu || ''}
+                        onChange={handleFieldChange}
+                        error={validationErrors.ApellidoUsu}
+                        disabled={!isAdmin}
+                        placeholder="Ingrese el apellido"
                     />
                 </Col>
                 
@@ -54,10 +70,10 @@ export function ClienteSection(): React.ReactElement {
                     <FormField
                         type="email"
                         label="Email"
-                        name="EmailUsuRep"
-                        value={reparacion.data.EmailUsuRep || ''}
+                        name="EmailUsu"
+                        value={reparacion.data.EmailUsu || ''}
                         onChange={handleFieldChange}
-                        error={validationErrors.EmailUsuRep}
+                        error={validationErrors.EmailUsu}
                         required
                         disabled={!isAdmin}
                         placeholder="cliente@ejemplo.com"
@@ -69,41 +85,34 @@ export function ClienteSection(): React.ReactElement {
                     <FormField
                         type="text"
                         label="Teléfono"
-                        name="TelefonoUsuRep"
-                        value={reparacion.data.TelefonoUsuRep || ''}
+                        name="TelefonoUsu"
+                        value={reparacion.data.TelefonoUsu || ''}
                         onChange={handleFieldChange}
-                        error={validationErrors.TelefonoUsuRep}
+                        error={validationErrors.TelefonoUsu}
                         disabled={!isAdmin}
                         placeholder="+54 9 11 1234-5678"
                         helpText="Número de contacto"
                     />
                 </Col>
-                
-                <Col md={12}>
-                    <FormField
-                        type="textarea"
-                        label="Dirección"
-                        name="DireccionUsuRep"
-                        value={reparacion.data.DireccionUsuRep || ''}
-                        onChange={handleFieldChange}
-                        error={validationErrors.DireccionUsuRep}
-                        disabled={!isAdmin}
-                        placeholder="Calle, número, piso, departamento"
-                        rows={2}
-                        helpText="Dirección para envío (opcional)"
-                    />
-                </Col>
             </Row>
             
-            {/* Información adicional del usuario (solo lectura) */}
+            {/* Información adicional del usuario desde Redux (solo lectura) */}
             {usuario && (
                 <div className="mt-3 p-3 bg-light rounded">
-                    <small className="text-muted">
-                        <strong>Usuario registrado:</strong> {usuario.data.NombreUsu || 'N/A'}
-                        {usuario.data.EmailUsu && (
-                            <> | <strong>Email registrado:</strong> {usuario.data.EmailUsu}</>
-                        )}
+                    <small className="text-muted d-block">
+                        <strong>Usuario en sistema:</strong> {usuario.data.NombreUsu}
+                        {usuario.data.ApellidoUsu && ` ${usuario.data.ApellidoUsu}`}
                     </small>
+                    {usuario.data.EmailUsu && (
+                        <small className="text-muted d-block">
+                            <strong>Email registrado:</strong> {usuario.data.EmailUsu}
+                        </small>
+                    )}
+                    {usuario.data.TelefonoUsu && (
+                        <small className="text-muted d-block">
+                            <strong>Teléfono registrado:</strong> {usuario.data.TelefonoUsu}
+                        </small>
+                    )}
                 </div>
             )}
         </SeccionCard>
