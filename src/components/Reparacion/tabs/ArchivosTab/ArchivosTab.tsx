@@ -111,7 +111,7 @@ export function ArchivosTab(): React.ReactElement {
                 {/* Columna lateral: Upload de archivos */}
                 <Col lg={4}>
                     <FileUploader
-                        category={activeCategory}
+                        categoria={activeCategory}
                     />
                     
                     {/* Información de uso */}
