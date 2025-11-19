@@ -27,6 +27,11 @@ import { useAppSelector } from '../../redux-tool-kit/hooks/useAppSelector';
 import { ReparacionProvider } from './ReparacionContext';
 import { useReparacionRedux } from './hooks/useReparacionRedux';
 import { ReparacionType } from '../../types/reparacion';
+import { 
+    selectUsuarioDeReparacion, 
+    selectDroneDeReparacion, 
+    selectModeloDeReparacion 
+} from '../../redux-tool-kit/reparacion/reparacion.selectors';
 
 // TODO: Importar ReparacionLayout cuando esté creado
 // import { ReparacionLayout } from './ReparacionLayout.component';
@@ -90,28 +95,20 @@ export default function ReparacionContainer(): React.ReactElement | null {
     }, [usuarioActual]);
     
     /**
-     * Cargar entidades relacionadas desde Redux
-     * TODO: Implementar selectores para usuario, drone, modelo
-     * Por ahora retornamos null, en T3.3 se optimizará
+     * Cargar entidades relacionadas desde Redux usando selectores optimizados
+     * Complejidad: O(1) - Acceso directo por ID en diccionarios
      */
-    const usuario = useAppSelector(() => {
-        // const usuarioId = reparacionFromRedux?.data.UsuarioRep;
-        // if (!usuarioId) return null;
-        // TODO: usar selectUsuarioById(usuarioId)
-        return null;
-    });
+    const usuario = useAppSelector(state => 
+        reparacionId ? selectUsuarioDeReparacion(state, reparacionId) : null
+    );
     
-    const drone = useAppSelector(() => {
-        // const droneId = reparacionFromRedux?.data.DroneId;
-        // if (!droneId) return null;
-        // TODO: usar selectDroneById(droneId)
-        return null;
-    });
+    const drone = useAppSelector(state => 
+        reparacionId ? selectDroneDeReparacion(state, reparacionId) : null
+    );
     
-    const modelo = useAppSelector(() => {
-        // TODO: obtener ModeloId desde drone y usar selectModeloById
-        return null;
-    });
+    const modelo = useAppSelector(state => 
+        reparacionId ? selectModeloDeReparacion(state, reparacionId) : null
+    );
     
     // ========================================================================
     // ESTADO LOCAL DEL FORMULARIO
@@ -547,16 +544,22 @@ export default function ReparacionContainer(): React.ReactElement | null {
             <div className="container mt-4">
                 <div className="alert alert-info">
                     <h4>Container Component con Redux ✅</h4>
-                    <p>Datos cargados desde Redux:</p>
+                    <p><strong>Phase 3 - T3.3:</strong> Selectores optimizados implementados</p>
+                    <p>Datos cargados desde Redux con selectores O(1):</p>
                     <ul>
-                        <li>Reparación ID: {reparacion.id}</li>
-                        <li>Usuario: {reparacion.data.NombreUsu || reparacion.data.UsuarioRep || 'No asignado'}</li>
-                        <li>Drone: {reparacion.data.ModeloDroneNameRep || 'No asignado'}</li>
-                        <li>Estado: {reparacion.data.EstadoRep}</li>
-                        <li>Es Nueva: {isNew ? 'Sí' : 'No'}</li>
-                        <li>Es Admin: {isAdmin ? 'Sí' : 'No'}</li>
-                        <li>Tiene Cambios: {isDirty ? 'Sí' : 'No'}</li>
-                        <li>Intervenciones: {intervenciones.length}</li>
+                        <li><strong>Reparación ID:</strong> {reparacion.id}</li>
+                        <li><strong>Usuario:</strong> {usuario?.data.NombreUsu} {usuario?.data.ApellidoUsu || ''}</li>
+                        <li><strong>Email:</strong> {usuario?.data.EmailUsu || 'No disponible'}</li>
+                        <li><strong>Teléfono:</strong> {usuario?.data.TelefonoUsu || 'No disponible'}</li>
+                        <li><strong>Drone:</strong> {drone?.data.Nombre || 'No asignado'}</li>
+                        <li><strong>Número Serie:</strong> {drone?.data.NumeroSerie || 'No disponible'}</li>
+                        <li><strong>Modelo:</strong> {modelo?.data.NombreModelo || 'No asignado'}</li>
+                        <li><strong>Fabricante:</strong> {modelo?.data.Fabricante || 'No disponible'}</li>
+                        <li><strong>Estado:</strong> {reparacion.data.EstadoRep}</li>
+                        <li><strong>Es Nueva:</strong> {isNew ? 'Sí' : 'No'}</li>
+                        <li><strong>Es Admin:</strong> {isAdmin ? 'Sí' : 'No'}</li>
+                        <li><strong>Tiene Cambios:</strong> {isDirty ? 'Sí' : 'No'}</li>
+                        <li><strong>Intervenciones:</strong> {intervenciones.length}</li>
                     </ul>
                     <button 
                         className="btn btn-primary me-2"
