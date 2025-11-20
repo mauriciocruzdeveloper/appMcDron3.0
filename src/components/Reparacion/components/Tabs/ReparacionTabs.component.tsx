@@ -13,6 +13,7 @@ import { GeneralTab } from '../../tabs/GeneralTab';
 import { WorkflowTab } from '../../tabs/WorkflowTab';
 import { ArchivosTab } from '../../tabs/ArchivosTab';
 import { RepuestosTab } from '../../tabs/RepuestosTab';
+import { DashboardTab } from '../../tabs/DashboardTab/DashboardTab';
 
 interface ReparacionTabsProps {
     /** Tab activa actual */
@@ -30,6 +31,7 @@ interface ReparacionTabsProps {
  * - workflow: Timeline visual del flujo de estados con transiciones
  * - repuestos: Gestión CRUD de repuestos con estados y precios
  * - archivos: Gestión de fotos, videos y documentos adjuntos
+ * - dashboard: Métricas y gráficos (Phase 4 - T4.2)
  */
 export function ReparacionTabs({ activeTab, onTabChange }: ReparacionTabsProps): React.ReactElement {
     return (
@@ -39,6 +41,10 @@ export function ReparacionTabs({ activeTab, onTabChange }: ReparacionTabsProps):
             id="reparacion-tabs"
             className="mb-3"
         >
+            <Tab eventKey="dashboard" title="Dashboard">
+                <DashboardTab />
+            </Tab>
+
             <Tab eventKey="general" title="Datos Generales">
                 <GeneralTab />
             </Tab>
