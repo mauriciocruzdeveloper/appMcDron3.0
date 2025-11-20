@@ -14,7 +14,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { Container, Row, Col, Card, Form, Button, Spinner, Badge } from 'react-bootstrap';
+import { Container, Row, Col, Card, Button, Spinner, Badge } from 'react-bootstrap';
 import { Chart as ChartJS, ArcElement, CategoryScale, LinearScale, PointElement, LineElement, BarElement, Title, Tooltip, Legend } from 'chart.js';
 import { Doughnut, Line, Bar } from 'react-chartjs-2';
 import { useReparacionList } from '../../../hooks/useReparacionList';
@@ -89,10 +89,10 @@ export function DashboardTab(): React.ReactElement {
     
     // Datos para gráfico de estados (Donut)
     const estadosChartData = {
-        labels: estados.data.map(d => d.label),
+        labels: estados.data.map((d: { label: string }) => d.label),
         datasets: [{
-            data: estados.data.map(d => d.value),
-            backgroundColor: estados.data.map(d => d.color),
+            data: estados.data.map((d: { value: number }) => d.value),
+            backgroundColor: estados.data.map((d: { color?: string }) => d.color),
             borderWidth: 2,
             borderColor: '#fff'
         }]
@@ -100,18 +100,18 @@ export function DashboardTab(): React.ReactElement {
     
     // Datos para gráfico de tendencias (Line)
     const tendenciasChartData = {
-        labels: tendencias.creadas.map(d => d.label),
+        labels: tendencias.creadas.map((d: { label: string }) => d.label),
         datasets: [
             {
                 label: 'Creadas',
-                data: tendencias.creadas.map(d => d.value),
+                data: tendencias.creadas.map((d: { value: number }) => d.value),
                 borderColor: '#0d6efd',
                 backgroundColor: 'rgba(13, 110, 253, 0.1)',
                 tension: 0.4
             },
             {
                 label: 'Finalizadas',
-                data: tendencias.finalizadas.map(d => d.value),
+                data: tendencias.finalizadas.map((d: { value: number }) => d.value),
                 borderColor: '#198754',
                 backgroundColor: 'rgba(25, 135, 84, 0.1)',
                 tension: 0.4
@@ -121,10 +121,10 @@ export function DashboardTab(): React.ReactElement {
     
     // Datos para gráfico de ingresos (Bar)
     const ingresosChartData = {
-        labels: ingresos.data.map(d => d.label),
+        labels: ingresos.data.map((d: { label: string }) => d.label),
         datasets: [{
             label: 'Ingresos ($)',
-            data: ingresos.data.map(d => d.value),
+            data: ingresos.data.map((d: { value: number }) => d.value),
             backgroundColor: '#198754',
             borderColor: '#146c43',
             borderWidth: 1
@@ -133,10 +133,10 @@ export function DashboardTab(): React.ReactElement {
     
     // Datos para gráfico de modelos top (Horizontal Bar)
     const modelosTopChartData = {
-        labels: modelosTop.data.map(d => d.label),
+        labels: modelosTop.data.map((d: { label: string }) => d.label),
         datasets: [{
             label: 'Reparaciones',
-            data: modelosTop.data.map(d => d.value),
+            data: modelosTop.data.map((d: { value: number }) => d.value),
             backgroundColor: '#0d6efd',
             borderColor: '#0a58ca',
             borderWidth: 1

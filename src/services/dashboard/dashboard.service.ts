@@ -48,6 +48,7 @@ export class DashboardService {
         }
     };
     
+    // eslint-disable-next-line @typescript-eslint/no-empty-function
     private constructor() {}
     
     /**
@@ -129,7 +130,7 @@ export class DashboardService {
     private getDateRange(filter: TimeFilter): DateRange {
         const now = new Date();
         let startDate: Date;
-        let endDate: Date = now;
+        const endDate: Date = now;
         
         switch (filter.period) {
             case 'today':
@@ -179,24 +180,22 @@ export class DashboardService {
     private calculateKPIs(reparaciones: ReparacionType[]): DashboardKPIs {
         const total = reparaciones.length;
         
-        // Contar por estado
+        // Contar por estado (EstadoRep)
         const porEstado = reparaciones.reduce((acc, rep) => {
-            const estado = rep.data.EstadoActual || 'Recepcionado';
+            const estado = rep.data.EstadoRep || 'recepcionado';
             acc[estado] = (acc[estado] || 0) + 1;
             return acc;
         }, {} as Record<string, number>);
         
-        const pendientes = (porEstado['Recepcionado'] || 0) + (porEstado['Diagnosticado'] || 0);
-        const enProgreso = (porEstado['En Reparación'] || 0) + (porEstado['Presupuestado'] || 0);
-        const finalizadas = (porEstado['Reparado'] || 0) + (porEstado['Entregado'] || 0);
+        const pendientes = (porEstado['recepcionado'] || 0) + (porEstado['diagnosticado'] || 0);
+        const enProgreso = (porEstado['presupuestado'] || 0) + (porEstado['pendiente_repuestos'] || 0);
+        const finalizadas = (porEstado['reparado'] || 0) + (porEstado['entregado'] || 0);
         
-        // Calcular tiempo promedio
+        // Calcular tiempo promedio usando timestamps (FeRecRep y FeEntRep)
         const tiemposReparacion: number[] = [];
         reparaciones.forEach(rep => {
-            if (rep.data.FechaRecepcion && rep.data.FechaEntrega) {
-                const inicio = new Date(rep.data.FechaRecepcion).getTime();
-                const fin = new Date(rep.data.FechaEntrega).getTime();
-                const dias = (fin - inicio) / (1000 * 60 * 60 * 24);
+            if (rep.data.FeRecRep && rep.data.FeEntRep) {
+                const dias = (rep.data.FeEntRep - rep.data.FeRecRep) / (1000 * 60 * 60 * 24);
                 tiemposReparacion.push(dias);
             }
         });
@@ -205,15 +204,15 @@ export class DashboardService {
             ? tiemposReparacion.reduce((a, b) => a + b, 0) / tiemposReparacion.length
             : 0;
         
-        // Calcular ingresos
+        // Calcular ingresos usando PresuFiRep (Presupuesto Final)
         const ingresosTotal = reparaciones.reduce((sum, rep) => {
-            return sum + (parseFloat(rep.data.CostoTotal?.toString() || '0') || 0);
+            return sum + (rep.data.PresuFiRep || 0);
         }, 0);
         
         const ingresosPendientes = reparaciones
-            .filter(rep => rep.data.EstadoPago !== 'Pagado')
+            .filter(rep => rep.data.EstadoRep !== 'entregado')
             .reduce((sum, rep) => {
-                return sum + (parseFloat(rep.data.CostoTotal?.toString() || '0') || 0);
+                return sum + (rep.data.PresuFiRep || 0);
             }, 0);
         
         // Tasa de satisfacción (simulada - en producción vendría de encuestas)
@@ -241,7 +240,7 @@ export class DashboardService {
         const estados: Record<string, number> = {};
         
         reparaciones.forEach(rep => {
-            const estado = rep.data.EstadoActual || 'Recepcionado';
+            const estado = rep.data.EstadoRep || 'recepcionado';
             estados[estado] = (estados[estado] || 0) + 1;
         });
         
@@ -273,7 +272,8 @@ export class DashboardService {
         const creadas: ChartDataPoint[] = points.map(label => ({
             label,
             value: reparaciones.filter(rep => {
-                const fecha = rep.data.FechaRecepcion || rep.data.FechaCreacion || '';
+                const timestamp = rep.data.FeRecRep || rep.data.FeConRep || 0;
+                const fecha = timestamp ? new Date(timestamp).toISOString() : '';
                 return this.dateMatchesLabel(fecha, label, filter);
             }).length
         }));
@@ -281,7 +281,8 @@ export class DashboardService {
         const finalizadas: ChartDataPoint[] = points.map(label => ({
             label,
             value: reparaciones.filter(rep => {
-                const fecha = rep.data.FechaEntrega || '';
+                const timestamp = rep.data.FeEntRep || 0;
+                const fecha = timestamp ? new Date(timestamp).toISOString() : '';
                 return fecha && this.dateMatchesLabel(fecha, label, filter);
             }).length
         }));
@@ -347,15 +348,15 @@ export class DashboardService {
      */
     private generateIngresosChart(
         reparaciones: ReparacionType[],
-        config: DashboardConfig
+        _config: DashboardConfig
     ): IngresosChartData {
         const ingresosPorMes: Record<string, number> = {};
         
         reparaciones.forEach(rep => {
-            const fecha = rep.data.FechaRecepcion || rep.data.FechaCreacion || '';
-            if (fecha) {
-                const mes = new Date(fecha).toLocaleDateString('es-AR', { month: 'short', year: '2-digit' });
-                const monto = parseFloat(rep.data.CostoTotal?.toString() || '0') || 0;
+            const timestamp = rep.data.FeRecRep || rep.data.FeConRep || 0;
+            if (timestamp) {
+                const mes = new Date(timestamp).toLocaleDateString('es-AR', { month: 'short', year: '2-digit' });
+                const monto = rep.data.PresuFiRep || 0;
                 ingresosPorMes[mes] = (ingresosPorMes[mes] || 0) + monto;
             }
         });
@@ -384,7 +385,7 @@ export class DashboardService {
         const modelosCount: Record<string, number> = {};
         
         reparaciones.forEach(rep => {
-            const modelo = rep.data.ModeloDrone || 'Sin especificar';
+            const modelo = rep.data.ModeloDroneNameRep || 'Sin especificar';
             modelosCount[modelo] = (modelosCount[modelo] || 0) + 1;
         });
         

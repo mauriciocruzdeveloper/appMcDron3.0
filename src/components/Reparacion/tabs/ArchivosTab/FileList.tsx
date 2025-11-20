@@ -95,7 +95,8 @@ export function FileList({ documentos, isAdmin, onDeleteFile }: FileListProps): 
         window.open(url, '_blank');
     };
     
-    if (documentos.length === 0) {
+    // Validar que documentos existe y es un array
+    if (!documentos || !Array.isArray(documentos) || documentos.length === 0) {
         return (
             <div className="text-center py-5 text-muted">
                 <i className="bi bi-file-earmark-text fs-1 mb-3 d-block"></i>
