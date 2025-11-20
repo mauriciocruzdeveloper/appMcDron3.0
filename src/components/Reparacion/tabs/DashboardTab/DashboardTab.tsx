@@ -17,10 +17,10 @@ import React, { useState, useEffect } from 'react';
 import { Container, Row, Col, Card, Button, Spinner, Badge } from 'react-bootstrap';
 import { Chart as ChartJS, ArcElement, CategoryScale, LinearScale, PointElement, LineElement, BarElement, Title, Tooltip, Legend } from 'chart.js';
 import { Doughnut, Line, Bar } from 'react-chartjs-2';
-import { useReparacionList } from '../../../hooks/useReparacionList';
-import { dashboardService } from '../../../services/dashboard/dashboard.service';
-import { DashboardData, TimeFilter, TimePeriod } from '../../../services/dashboard/dashboard.types';
-import { ExportButton } from '../../../shared/ExportButton';
+import { useReparacionList } from '../../../../hooks/useReparacionList';
+import { DashboardService } from '../../../../services/dashboard/dashboard.service';
+import { DashboardData, TimeFilter, TimePeriod } from '../../../../services/dashboard/dashboard.types';
+import { ExportButton } from '../../../shared/ExportButton/ExportButton';
 
 // Registrar componentes de Chart.js
 ChartJS.register(
@@ -34,6 +34,9 @@ ChartJS.register(
     Tooltip,
     Legend
 );
+
+// Instanciar el servicio de dashboard
+const dashboardService = DashboardService.getInstance();
 
 /**
  * Tab de Dashboard - Métricas y visualizaciones.
