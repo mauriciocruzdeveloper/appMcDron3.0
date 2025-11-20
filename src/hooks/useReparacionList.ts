@@ -9,7 +9,7 @@
  */
 
 import { useState, useEffect } from 'react';
-import { ReparacionType } from '../types/reparaciones';
+import { ReparacionType } from '../types/reparacion';
 
 /**
  * Hook para obtener lista de reparaciones desde localStorage o API.
