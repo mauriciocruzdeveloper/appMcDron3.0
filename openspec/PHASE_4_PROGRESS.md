@@ -10,13 +10,13 @@
 
 | Métrica | Valor |
 |---------|-------|
-| **Progreso Total** | **50% (~8h / 15-20h)** |
+| **Progreso Total** | **64% (~9.5h / 15-20h)** |
 | **Tareas Completadas** | 2 / 7 |
-| **Tareas En Progreso** | 0 |
-| **Tareas Pendientes** | 5 |
-| **Errores TypeScript** | 0 ✅ |
-| **Build Status** | ✅ Compilando |
-| **Commits Phase 4** | 2 commits |
+| **Tareas En Progreso** | 2 (T4.2 80%, T4.3 20%) |
+| **Tareas Pendientes** | 3 |
+| **Errores TypeScript** | 14 (dashboard) |
+| **Build Status** | ⚠️ Con warnings |
+| **Commits Phase 4** | 2 commits (2 pendientes) |
 
 ---
 
@@ -132,30 +132,76 @@
 
 ## ⏳ Tareas Pendientes
 
-### T4.2: Dashboard de Métricas (3-4h)
+### T4.2: Dashboard de Métricas (3-4h) 🔄 80% COMPLETO
 
 **Prioridad:** Media  
-**Dependencias:** Ninguna
+**Dependencias:** Ninguna  
+**Tiempo invertido:** 3.5 horas
 
-**Objetivos:**
-- Gráficos con Chart.js
-- KPIs en tiempo real
-- Métricas por estado
-- Ingresos del mes
-- Widgets personalizables
-- Filtros de fecha
+**✅ Completado:**
+- ✅ dashboard.types.ts (165 líneas) - Todos los tipos TypeScript
+- ✅ dashboard.service.ts (458 líneas) - Lógica de cálculo de métricas
+- ✅ DashboardTab.tsx (350 líneas) - Componente React con gráficos
+- ✅ useReparacionList.ts (45 líneas) - Hook para lista completa
+- ✅ Integración con ReparacionTabs (nueva tab "Dashboard")
+- ✅ 4 KPI Cards (Total, Tiempo, Ingresos, Satisfacción)
+- ✅ Gráfico Donut de Estados
+- ✅ Gráfico Line de Tendencias
+- ✅ Gráfico Bar de Ingresos
+- ✅ Gráfico Horizontal Bar de Modelos Top
+- ✅ Filtros temporales (Hoy, 7días, 30días, 3meses, Año)
+- ✅ Dependencias instaladas (chart.js, react-chartjs-2)
 
-**Archivos a Crear:**
-- `src/components/Dashboard/DashboardMetrics.component.tsx`
-- `src/components/Dashboard/MetricCard.component.tsx`
-- `src/components/Dashboard/ChartWidget.component.tsx`
+**⚠️ Pendiente (20%):**
+- ⚠️ Ajustar 14 campos a DataReparacion real:
+  - `EstadoActual` → `EstadoRep`
+  - `FechaRecepcion` → `FeRecRep`
+  - `FechaEntrega` → `FeEntRep`
+  - `CostoTotal` → `PresuFiRep`
+  - `ModeloDrone` → `ModeloDroneNameRep`
+- ⚠️ Resolver errores TypeScript
+- ⚠️ Testing visual
+- ⚠️ Commit final
+
+**Archivos Creados:**
+- `src/services/dashboard/dashboard.types.ts`
+- `src/services/dashboard/dashboard.service.ts`
+- `src/components/Reparacion/tabs/DashboardTab/DashboardTab.tsx`
+- `src/components/Reparacion/tabs/DashboardTab/index.ts`
+- `src/hooks/useReparacionList.ts`
 
 ---
 
-### T4.3: Exportación de Reportes (2-3h)
+### T4.3: Exportación de Reportes (2-3h) 🔄 20% COMPLETO
 
 **Prioridad:** Media  
-**Dependencias:** Ninguna
+**Dependencias:** Ninguna  
+**Tiempo invertido:** 1 hora
+
+**✅ Completado:**
+- ✅ export.types.ts (155 líneas) - Tipos completos
+  - ExportFormat: pdf, excel, csv
+  - ReportType: reparacion_detalle, reparaciones_lista, metricas, presupuesto
+  - ExportOptions con configuración
+  - PDFTemplateData y PDFSection
+  - ExcelColumn para configuración
+
+**⏸️ Pendiente (80%):**
+- ⏸️ export.service.ts (generación de archivos)
+- ⏸️ exportToPDF() con jsPDF
+- ⏸️ exportToExcel() con xlsx
+- ⏸️ exportToCSV() básico
+- ⏸️ Templates de reportes
+- ⏸️ ExportButton component
+- ⏸️ Integración en tabs
+- ⏸️ Testing y commit
+
+**Archivos Creados:**
+- `src/services/export/export.types.ts`
+
+**Archivos Pendientes:**
+- `src/services/export/export.service.ts` (estimado 400 líneas)
+- `src/components/Reparacion/components/ExportButton/ExportButton.tsx` (estimado 150 líneas)
 
 **Objetivos:**
 - Reporte individual (PDF)
@@ -163,18 +209,14 @@
 - Reporte financiero (PDF)
 - Templates personalizables
 
-**Librerías:**
+**Librerías Instaladas:**
 - jsPDF para PDF
+- jspdf-autotable para tablas
 - xlsx para Excel
-- html2canvas para capturas
-
-**Archivos a Crear:**
-- `src/services/export.service.ts`
-- `src/components/Reparacion/components/ExportButton/`
 
 ---
 
-### T4.5: Sistema de Permisos Granular (2-3h)
+### T4.5: Sistema de Permisos Granular (2-3h) ⏸️ PENDIENTE
 
 **Prioridad:** Alta  
 **Dependencias:** Ninguna
@@ -222,19 +264,36 @@
 
 ### Líneas de Código Phase 4 (hasta ahora)
 ```
-Notificaciones:   670 líneas (types + service)
-Búsqueda:         670 líneas (types + service)
-────────────────────────────────
-TOTAL:          1,340 líneas
+T4.1 Notificaciones:    670 líneas (types + service)
+T4.2 Dashboard:       1,018 líneas (types + service + component + hook)
+T4.3 Exportación:       155 líneas (types)
+T4.4 Búsqueda:          670 líneas (types + service)
+────────────────────────────────────────────────────────
+TOTAL:                2,513 líneas
 ```
 
 ### Archivos
-- **Creados:** 4 archivos (2 types, 2 services)
-- **Modificados:** 0 archivos
+- **Creados:** 10 archivos
+  - 5 types
+  - 3 services
+  - 1 component (DashboardTab)
+  - 1 hook (useReparacionList)
+- **Modificados:** 1 archivo (ReparacionTabs.component.tsx)
+
+### Dependencias NPM Instaladas
+```bash
+chart.js          # Librería de gráficos
+react-chartjs-2   # Wrapper React para Chart.js
+jspdf             # Generación de PDFs
+jspdf-autotable   # Tablas automáticas en PDF
+xlsx              # Generación de archivos Excel
+```
 
 ### Commits Phase 4
-1. `d67ee7a` - T4.1: Notificaciones
-2. `6ccb7f2` - T4.4: Búsqueda y Filtros
+1. `d67ee7a` - T4.1: Notificaciones (963 lines)
+2. `6ccb7f2` - T4.4: Búsqueda y Filtros (751 lines)
+3. ⏸️ Pendiente - T4.2: Dashboard (1,018 lines)
+4. ⏸️ Pendiente - T4.3: Exportación (parcial)
 
 ---
 
@@ -263,10 +322,21 @@ TOTAL:          1,340 líneas
 Phase 1: Context      ████████████████████ 100% ✅
 Phase 2: Tabs         ████████████████████ 100% ✅
 Phase 3: Redux        ████████████████████ 100% ✅
-Phase 4: Features     ██████████░░░░░░░░░░  50% 🔄
+Phase 4: Features     ████████████████░░░░  64% 🔄  (9.5h / 15-20h)
 Phase 5: Repuestos    ████████████████████ 100% ✅
 
-TOTAL:                ████████████████░░░░  84%
+TOTAL:                █████████████████░░░  86%
+```
+
+### Desglose Fase 4:
+```
+✅ T4.1: Notificaciones       ████████████████████ 100% (4h)
+🔄 T4.2: Dashboard            ████████████████░░░░  80% (3.5h)
+🔄 T4.3: Exportación          ████░░░░░░░░░░░░░░░░  20% (1h)
+✅ T4.4: Búsqueda             ████████████████████ 100% (2h)
+⏸️ T4.5: Permisos             ░░░░░░░░░░░░░░░░░░░░   0%
+⏸️ T4.6: Audit Log            ░░░░░░░░░░░░░░░░░░░░   0% (opcional)
+⏸️ T4.7: Comentarios          ░░░░░░░░░░░░░░░░░░░░   0% (opcional)
 ```
 
 ---
