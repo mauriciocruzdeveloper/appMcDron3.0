@@ -20,6 +20,7 @@ import { Doughnut, Line, Bar } from 'react-chartjs-2';
 import { useReparacionList } from '../../../hooks/useReparacionList';
 import { dashboardService } from '../../../services/dashboard/dashboard.service';
 import { DashboardData, TimeFilter, TimePeriod } from '../../../services/dashboard/dashboard.types';
+import { ExportButton } from '../../../shared/ExportButton';
 
 // Registrar componentes de Chart.js
 ChartJS.register(
@@ -157,6 +158,12 @@ export function DashboardTab(): React.ReactElement {
                                 </small>
                             </div>
                             <div className="d-flex gap-2">
+                                <ExportButton 
+                                    reparaciones={reparaciones} 
+                                    variant="outline-success" 
+                                    size="sm"
+                                    label="Exportar Dashboard"
+                                />
                                 <Button
                                     size="sm"
                                     variant={timeFilter.period === 'today' ? 'primary' : 'outline-primary'}
