@@ -181,7 +181,10 @@ export class AuditService {
             if (!grouped.has(date)) {
                 grouped.set(date, []);
             }
-            grouped.get(date)!.push(log);
+            const dateGroup = grouped.get(date);
+            if (dateGroup) {
+                dateGroup.push(log);
+            }
         });
         
         // Convertir a array de timeline items
@@ -424,11 +427,13 @@ export class AuditService {
         let filtered = [...logs];
         
         if (filter.dateFrom) {
-            filtered = filtered.filter(l => l.timestamp >= filter.dateFrom!);
+            const dateFrom = filter.dateFrom;
+            filtered = filtered.filter(l => l.timestamp >= dateFrom);
         }
         
         if (filter.dateTo) {
-            filtered = filtered.filter(l => l.timestamp <= filter.dateTo!);
+            const dateTo = filter.dateTo;
+            filtered = filtered.filter(l => l.timestamp <= dateTo);
         }
         
         if (filter.userId) {
@@ -436,15 +441,18 @@ export class AuditService {
         }
         
         if (filter.categories && filter.categories.length > 0) {
-            filtered = filtered.filter(l => filter.categories!.includes(l.category));
+            const categories = filter.categories;
+            filtered = filtered.filter(l => categories.includes(l.category));
         }
         
         if (filter.actions && filter.actions.length > 0) {
-            filtered = filtered.filter(l => filter.actions!.includes(l.action));
+            const actions = filter.actions;
+            filtered = filtered.filter(l => actions.includes(l.action));
         }
         
         if (filter.levels && filter.levels.length > 0) {
-            filtered = filtered.filter(l => filter.levels!.includes(l.level));
+            const levels = filter.levels;
+            filtered = filtered.filter(l => levels.includes(l.level));
         }
         
         if (filter.entityId) {
