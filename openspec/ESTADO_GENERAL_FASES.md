@@ -1,3 +1,14 @@
+# ⚠️ DOCUMENTO OBSOLETO - Ver REFACTORIZACION_COMPLETA.md
+
+**Este documento ha sido reemplazado por:**
+`openspec/REFACTORIZACION_COMPLETA.md`
+
+**Razón:** Refactorización completada, este documento ya no refleja el estado actual.
+
+**Fecha de obsolescencia:** 20 de noviembre de 2025
+
+---
+
 # Estado General del Proyecto - Todas las Fases
 
 **Proyecto:** appMcDron 3.0 - Módulo Reparación  
