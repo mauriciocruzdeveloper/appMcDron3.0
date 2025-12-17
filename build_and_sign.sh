@@ -55,6 +55,33 @@ export NVM_DIR="$HOME/.nvm"
 # Configura Node.js 16 usando NVM
 nvm use 16
 
+# Configurar variables de entorno de Android SDK
+if [ -d "$HOME/Android/Sdk" ]; then
+    export ANDROID_SDK_ROOT="$HOME/Android/Sdk"
+    export ANDROID_HOME="$HOME/Android/Sdk"
+elif [ -n "$ANDROID_HOME" ]; then
+    export ANDROID_SDK_ROOT="$ANDROID_HOME"
+else
+    echo -e "${RED}[ERROR]${NC} Android SDK no encontrado en $HOME/Android/Sdk"
+    echo -e "${RED}[ERROR]${NC} Por favor, instala Android SDK o configura ANDROID_HOME"
+    exit 1
+fi
+
+# Agregar herramientas de Android al PATH
+export PATH=$PATH:$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$ANDROID_SDK_ROOT/platform-tools
+
+# Buscar y agregar build-tools al PATH
+if [ -d "$ANDROID_SDK_ROOT/build-tools" ]; then
+    BUILD_TOOLS_VERSION=$(ls "$ANDROID_SDK_ROOT/build-tools" | sort -V | tail -n 1)
+    export PATH=$PATH:$ANDROID_SDK_ROOT/build-tools/$BUILD_TOOLS_VERSION
+fi
+
+# Configurar JAVA_HOME para Java 17
+if [ -d "/usr/lib/jvm/java-17-openjdk-amd64" ]; then
+    export JAVA_HOME="/usr/lib/jvm/java-17-openjdk-amd64"
+    export PATH=$JAVA_HOME/bin:$PATH
+fi
+
 # Variables configurables
 KEYSTORE="/home/mauricio/mauriciokey.keystore"
 KEY_ALIAS="mauriciokey"
@@ -74,6 +101,35 @@ ALIGNED_APK="$BUILD_DIR/aligned_$APK_NAME"
 
 # Crear directorio de compilación si no existe
 mkdir -p "$BUILD_DIR"
+
+# Crear carpetas base de Cordova
+mkdir -p platforms
+mkdir -p plugins
+
+# Verificar que existe www/, si no, compilar React
+if [ ! -d "www" ]; then
+  echo -e "${YELLOW}[WARN]${NC} Carpeta www/ no encontrada. Compilando proyecto React..."
+  npm run build
+  
+  if [ -d "build" ]; then
+    mv build www
+    echo -e "${GREEN}✓ Proyecto React compilado y movido a www/${NC}"
+  else
+    echo -e "${RED}[ERROR]${NC} Error: La compilación no generó la carpeta build/"
+    exit 1
+  fi
+fi
+
+# Verificar que la plataforma Android esté agregada
+if [ ! -d "platforms/android" ]; then
+  echo -e "${YELLOW}[WARN]${NC} Plataforma Android no encontrada. Agregando plataforma..."
+  cordova platform add android
+  if [ ! -d "platforms/android" ]; then
+    echo -e "${RED}[ERROR]${NC} Error: No se pudo agregar la plataforma Android de Cordova"
+    exit 1
+  fi
+  echo -e "${GREEN}✓ Plataforma Android agregada correctamente${NC}"
+fi
 
 echo ""
 echo -e "${BLUE}╔════════════════════════════════════════════════════════════╗${NC}"
