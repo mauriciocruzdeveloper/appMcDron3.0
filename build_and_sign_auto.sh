@@ -144,16 +144,30 @@ check_and_install_node() {
 check_and_install_java() {
     if command -v java &> /dev/null; then
         JAVA_VERSION=$(java -version 2>&1 | awk -F '"' '/version/ {print $2}')
-        log_info "Java ya está instalado: $JAVA_VERSION"
+        JAVA_MAJOR=$(echo $JAVA_VERSION | cut -d'.' -f1)
+        
+        if [ "$JAVA_MAJOR" -ge "17" ]; then
+            log_info "Java ya está instalado: $JAVA_VERSION"
+        else
+            log_warn "Java $JAVA_VERSION encontrado, pero se requiere Java 17 o superior"
+            log_warn "Instalando OpenJDK 17..."
+            sudo apt-get update
+            sudo apt-get install -y openjdk-17-jdk
+            log_info "Java 17 instalado correctamente"
+        fi
     else
-        log_warn "Java no encontrado. Instalando OpenJDK 11..."
+        log_warn "Java no encontrado. Instalando OpenJDK 17..."
         sudo apt-get update
-        sudo apt-get install -y openjdk-11-jdk
+        sudo apt-get install -y openjdk-17-jdk
         log_info "Java instalado correctamente"
     fi
     
-    # Configurar JAVA_HOME si no existe
-    if [ -z "$JAVA_HOME" ]; then
+    # Configurar JAVA_HOME para usar Java 17
+    if [ -d "/usr/lib/jvm/java-17-openjdk-amd64" ]; then
+        export JAVA_HOME="/usr/lib/jvm/java-17-openjdk-amd64"
+        export PATH=$JAVA_HOME/bin:$PATH
+        log_info "JAVA_HOME configurado: $JAVA_HOME"
+    elif [ -z "$JAVA_HOME" ]; then
         export JAVA_HOME=$(dirname $(dirname $(readlink -f $(which java))))
         log_info "JAVA_HOME configurado: $JAVA_HOME"
     fi
@@ -186,7 +200,7 @@ check_and_install_android_sdk() {
         
         # Instalar componentes necesarios
         yes | sdkmanager --licenses
-        sdkmanager "platform-tools" "platforms;android-33" "build-tools;33.0.0"
+        sdkmanager "platform-tools" "platforms;android-34" "build-tools;34.0.0"
         
         cd -
         log_info "Android SDK instalado correctamente"
@@ -194,6 +208,18 @@ check_and_install_android_sdk() {
     
     # Agregar herramientas al PATH
     export PATH=$PATH:$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$ANDROID_SDK_ROOT/platform-tools
+    
+    # Verificar que exista build-tools 34.0.0, si no, instalarlo
+    if [ ! -d "$ANDROID_SDK_ROOT/build-tools/34.0.0" ]; then
+        log_warn "Build tools 34.0.0 no encontrado. Instalando..."
+        if [ -d "$ANDROID_SDK_ROOT/cmdline-tools/latest/bin" ]; then
+            yes | $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --licenses 2>/dev/null || true
+            $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager "build-tools;34.0.0" "platforms;android-34"
+            log_info "Build tools 34.0.0 instalado"
+        else
+            log_warn "No se pudo instalar build-tools automáticamente"
+        fi
+    fi
     
     # Buscar build-tools
     if [ -d "$ANDROID_SDK_ROOT/build-tools" ]; then
@@ -276,6 +302,68 @@ install_npm_dependencies() {
     fi
 }
 
+# 10. Verificar plataforma Android de Cordova
+check_cordova_platform() {
+    # Crear carpetas base de Cordova si no existen
+    log_info "Verificando estructura base de Cordova..."
+    mkdir -p platforms
+    mkdir -p plugins
+    
+    # Primero verificar si existe www/, si no, compilar React
+    if [ ! -d "www" ]; then
+        log_warn "Carpeta www/ no encontrada. Compilando proyecto React..."
+        
+        # Compilar React usando npm
+        npm run build > /tmp/react_build_$$.log 2>&1
+        BUILD_EXIT=$?
+        
+        if [ $BUILD_EXIT -ne 0 ]; then
+            log_error "Error: La compilación de React falló"
+            log_error "Salida del build:"
+            cat /tmp/react_build_$$.log
+            rm -f /tmp/react_build_$$.log
+            exit 1
+        fi
+        
+        # Mover build/ a www/
+        if [ -d "build" ]; then
+            mv build www
+            log_info "Proyecto React compilado y movido a www/"
+        else
+            log_error "Error: La compilación no generó la carpeta build/"
+            cat /tmp/react_build_$$.log
+            rm -f /tmp/react_build_$$.log
+            exit 1
+        fi
+        
+        rm -f /tmp/react_build_$$.log
+    else
+        log_info "Carpeta www/ ya existe"
+    fi
+    
+    # Ahora verificar y agregar plataforma Android
+    if [ -d "platforms/android" ]; then
+        log_info "Plataforma Android de Cordova ya está agregada"
+    else
+        log_warn "Plataforma Android no encontrada. Agregando plataforma..."
+        
+        # Ejecutar cordova y capturar salida
+        cordova platform add android > /tmp/cordova_platform_$$.log 2>&1
+        CORDOVA_EXIT=$?
+        
+        if [ $CORDOVA_EXIT -ne 0 ] || [ ! -d "platforms/android" ]; then
+            log_error "Error: No se pudo agregar la plataforma Android de Cordova"
+            log_error "Salida de cordova:"
+            cat /tmp/cordova_platform_$$.log
+            rm -f /tmp/cordova_platform_$$.log
+            exit 1
+        fi
+        
+        rm -f /tmp/cordova_platform_$$.log
+        log_info "Plataforma Android agregada correctamente"
+    fi
+}
+
 # ==================== EJECUTAR VERIFICACIONES ====================
 
 log_info "╔════════════════════════════════════════════════════════════╗"
@@ -283,7 +371,7 @@ log_info "║   SCRIPT DE BUILD AUTOMÁTICO CON VERIFICACIÓN DE DEPS     ║"
 log_info "╚════════════════════════════════════════════════════════════╝"
 echo ""
 
-TOTAL_STEPS=9
+TOTAL_STEPS=10
 CURRENT_STEP=0
 
 CURRENT_STEP=$((CURRENT_STEP + 1))
@@ -321,6 +409,10 @@ check_keystore
 CURRENT_STEP=$((CURRENT_STEP + 1))
 progress_bar $CURRENT_STEP $TOTAL_STEPS "Instalando dependencias npm"
 install_npm_dependencies
+
+CURRENT_STEP=$((CURRENT_STEP + 1))
+progress_bar $CURRENT_STEP $TOTAL_STEPS "Verificando plataforma Cordova Android"
+check_cordova_platform
 
 echo ""
 log_info "╔════════════════════════════════════════════════════════════╗"
