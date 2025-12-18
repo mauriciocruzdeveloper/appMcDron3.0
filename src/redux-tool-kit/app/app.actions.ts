@@ -105,7 +105,7 @@ export const enviarDroneReparadoAsync = createAsyncThunk(
       const presuDi = reparacion.data.PresuDiRep;
       const presuRe = reparacion.data.PresuReRep;
       
-      if (!presuDi && !presuRe) {
+      if ((!presuDi || presuDi <= 0) && (!presuRe || presuRe <= 0)) {
         dispatch(isFetchingComplete());
         return rejectWithValue('Falta precio de diagnóstico o reparación');
       }
@@ -197,7 +197,7 @@ export const enviarDroneDiagnosticadoAsync = createAsyncThunk(
       const presuDi = reparacion.data.PresuDiRep;
       const presuRe = reparacion.data.PresuReRep;
       
-      if (!presuDi && !presuRe) {
+      if ((!presuDi || presuDi <= 0) && (!presuRe || presuRe <= 0)) {
         dispatch(isFetchingComplete());
         return rejectWithValue('Falta precio de diagnóstico o reparación');
       }

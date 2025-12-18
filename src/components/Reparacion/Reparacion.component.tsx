@@ -386,7 +386,7 @@ export default function ReparacionComponent(): React.ReactElement | null {
         const presuDi = data.PresuDiRep;
         const presuRe = data.PresuReRep;
         
-        if (!presuDi && !presuRe) {
+        if ((!presuDi || presuDi <= 0) && (!presuRe || presuRe <= 0)) {
             openModal({
                 mensaje: "Debe ingresar precio de diagnóstico o de reparación antes de finalizar.",
                 tipo: "warning",
@@ -429,7 +429,7 @@ export default function ReparacionComponent(): React.ReactElement | null {
         const presuDi = data.PresuDiRep;
         const presuRe = data.PresuReRep;
         
-        if (!presuDi && !presuRe) {
+        if ((!presuDi || presuDi <= 0) && (!presuRe || presuRe <= 0)) {
             openModal({
                 mensaje: "Debe ingresar precio de diagnóstico o de reparación antes de finalizar.",
                 tipo: "warning",
