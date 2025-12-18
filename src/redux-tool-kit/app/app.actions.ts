@@ -97,9 +97,18 @@ export const enviarReciboAsync = createAsyncThunk(
 // ENVIAR EMAIL DE FINALIZACIÓN
 export const enviarDroneReparadoAsync = createAsyncThunk(
   'app/enviarFinalizacion',
-  async (reparacion: ReparacionType, { dispatch, getState }) => {
+  async (reparacion: ReparacionType, { dispatch, getState, rejectWithValue }) => {
     try {
       dispatch(isFetchingStart());
+
+      // Validar que exista precio de diagnóstico o reparación
+      const presuDi = reparacion.data.PresuDiRep;
+      const presuRe = reparacion.data.PresuReRep;
+      
+      if ((!presuDi || presuDi <= 0) && (!presuRe || presuRe <= 0)) {
+        dispatch(isFetchingComplete());
+        return rejectWithValue('Falta precio de diagnóstico o reparación');
+      }
 
       // Obtener las intervenciones aplicadas a esta reparación
       const state = getState() as RootState;
@@ -180,9 +189,18 @@ export const enviarDroneReparadoAsync = createAsyncThunk(
 // ENVIAR EMAIL DE DIAGNÓSTICO
 export const enviarDroneDiagnosticadoAsync = createAsyncThunk(
   'app/enviarDiagnostico',
-  async (reparacion: ReparacionType, { dispatch }) => {
+  async (reparacion: ReparacionType, { dispatch, rejectWithValue }) => {
     try {
       dispatch(isFetchingStart());
+
+      // Validar que exista precio de diagnóstico o reparación
+      const presuDi = reparacion.data.PresuDiRep;
+      const presuRe = reparacion.data.PresuReRep;
+      
+      if ((!presuDi || presuDi <= 0) && (!presuRe || presuRe <= 0)) {
+        dispatch(isFetchingComplete());
+        return rejectWithValue('Falta precio de diagnóstico o reparación');
+      }
 
       const body = {
         cliente: reparacion.data.ApellidoUsu ? `${reparacion.data.NombreUsu} ${reparacion.data.ApellidoUsu}` : reparacion.data.NombreUsu,

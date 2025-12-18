@@ -381,6 +381,20 @@ export default function ReparacionComponent(): React.ReactElement | null {
     const avanzarARepuestos = () => setEstado(estados.Repuestos);
     
     const avanzarAReparado = async () => {
+        // Validar que exista precio de diagnóstico o reparación antes de avanzar
+        const data = reparacion?.data || {};
+        const presuDi = data.PresuDiRep;
+        const presuRe = data.PresuReRep;
+        
+        if ((!presuDi || presuDi <= 0) && (!presuRe || presuRe <= 0)) {
+            openModal({
+                mensaje: "Debe ingresar precio de diagnóstico o de reparación antes de finalizar.",
+                tipo: "warning",
+                titulo: "Falta precio",
+            });
+            return;
+        }
+
         await setEstado(estados.Reparado);
 
         // Enviar email de notificación de drone reparado
@@ -410,6 +424,20 @@ export default function ReparacionComponent(): React.ReactElement | null {
         }
     };
     const avanzarADiagnosticado = async () => {
+        // Validar que exista precio de diagnóstico o reparación antes de avanzar
+        const data = reparacion?.data || {};
+        const presuDi = data.PresuDiRep;
+        const presuRe = data.PresuReRep;
+        
+        if ((!presuDi || presuDi <= 0) && (!presuRe || presuRe <= 0)) {
+            openModal({
+                mensaje: "Debe ingresar precio de diagnóstico o de reparación antes de finalizar.",
+                tipo: "warning",
+                titulo: "Falta precio",
+            });
+            return;
+        }
+
         await setEstado(estados.Diagnosticado);
 
         // Enviar email de notificación de drone diagnosticado
