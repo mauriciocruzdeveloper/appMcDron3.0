@@ -1,5 +1,5 @@
 import { createAsyncThunk, Unsubscribe } from "@reduxjs/toolkit";
-import { ReparacionType } from "../../types/reparacion";
+import { ReparacionType, DataReparacion } from "../../types/reparacion";
 import { setReparaciones, setIntervencionesDeReparacionActual } from "./reparacion.slice";
 import {
   eliminarReparacionPersistencia,
@@ -489,6 +489,312 @@ export const migrarEstadoLegacyAsync = createAsyncThunk(
         }
       };
       
+      const reparacionGuardada = await guardarReparacionPersistencia(reparacionActualizada);
+      dispatch(isFetchingComplete());
+      return reparacionGuardada;
+    } catch (error: unknown) {
+      dispatch(isFetchingComplete());
+      return rejectWithValue(error);
+    }
+  }
+);
+
+// ============================================================================
+// NUEVAS ACCIONES PARA REFACTORIZACIÓN
+// ============================================================================
+
+/**
+ * Actualiza un campo específico de la reparación
+ * Esta acción encapsula la lógica de actualización de campos individuales
+ */
+export const actualizarCampoReparacionAsync = createAsyncThunk(
+  'reparacion/actualizarCampo',
+  async ({ 
+    reparacionId, 
+    campo, 
+    valor 
+  }: { 
+    reparacionId: string; 
+    campo: keyof DataReparacion; 
+    valor: any 
+  }, { dispatch, rejectWithValue, getState }) => {
+    try {
+      dispatch(isFetchingStart());
+      const state = getState() as RootState;
+      const reparacionActual = state.reparacion.coleccionReparaciones[reparacionId];
+      
+      if (!reparacionActual) {
+        throw new Error('Reparación no encontrada');
+      }
+
+      const reparacionActualizada = {
+        ...reparacionActual,
+        data: {
+          ...reparacionActual.data,
+          [campo]: valor
+        }
+      };
+
+      const reparacionGuardada = await guardarReparacionPersistencia(reparacionActualizada);
+      dispatch(isFetchingComplete());
+      return reparacionGuardada;
+    } catch (error: unknown) {
+      dispatch(isFetchingComplete());
+      return rejectWithValue(error);
+    }
+  }
+);
+
+/**
+ * Cambia el estado de una reparación con toda la lógica de negocio
+ * Incluye: validaciones, seteo automático de fechas, generación de diagnóstico, envío de emails
+ */
+export const cambiarEstadoReparacionAsync = createAsyncThunk(
+  'reparacion/cambiarEstado',
+  async ({ 
+    reparacionId, 
+    nuevoEstado,
+    enviarEmail = false
+  }: { 
+    reparacionId: string; 
+    nuevoEstado: string;
+    enviarEmail?: boolean;
+  }, { dispatch, rejectWithValue, getState }) => {
+    try {
+      dispatch(isFetchingStart());
+      const state = getState() as RootState;
+      const reparacionActual = state.reparacion.coleccionReparaciones[reparacionId];
+      
+      if (!reparacionActual) {
+        throw new Error('Reparación no encontrada');
+      }
+
+      const { estados } = await import('../../datos/estados');
+      const estadoDestino = estados[nuevoEstado];
+
+      if (!estadoDestino) {
+        throw new Error(`Estado desconocido: ${nuevoEstado}`);
+      }
+
+      // Determinar el campo de fecha a actualizar
+      type CampoFecha = 'FeConRep' | 'FeFinRep' | 'FeRecRep' | 'FeEntRep';
+      let campoFecha: CampoFecha | null = null;
+      
+      switch (nuevoEstado) {
+        case "Consulta":
+          campoFecha = "FeConRep";
+          break;
+        case "Recibido":
+          campoFecha = "FeRecRep";
+          break;
+        case "Reparado":
+          campoFecha = "FeFinRep";
+          break;
+        case "Finalizado":
+          campoFecha = "FeEntRep";
+          break;
+      }
+
+      // Preparar la actualización
+      const dataActualizada = {
+        ...reparacionActual.data,
+        EstadoRep: nuevoEstado,
+        PrioridadRep: estadoDestino.prioridad,
+      };
+
+      // Setear fecha si corresponde y no está ya seteada
+      if (campoFecha && !dataActualizada[campoFecha]) {
+        dataActualizada[campoFecha] = new Date().getTime();
+      }
+
+      let reparacionActualizada = {
+        ...reparacionActual,
+        data: dataActualizada
+      };
+
+      // Generar diagnóstico automático si es necesario
+      if (nuevoEstado === 'Recibido' && !reparacionActualizada.data.DiagnosticoRep) {
+        const diagnostico = await dispatch(generarAutoDiagnostico(reparacionActualizada));
+        reparacionActualizada = {
+          ...reparacionActualizada,
+          data: {
+            ...reparacionActualizada.data,
+            DiagnosticoRep: diagnostico as string
+          }
+        };
+      }
+
+      // Guardar la reparación
+      const reparacionGuardada = await guardarReparacionPersistencia(reparacionActualizada);
+
+      // Enviar emails según el estado si se solicita
+      if (enviarEmail) {
+        switch (nuevoEstado) {
+          case 'Recibido':
+            await dispatch(enviarReciboAsync(reparacionGuardada));
+            break;
+          case 'Reparado':
+            await dispatch(enviarDroneReparadoAsync(reparacionGuardada));
+            break;
+          case 'Diagnosticado':
+            await dispatch(enviarDroneDiagnosticadoAsync(reparacionGuardada));
+            break;
+        }
+      }
+
+      dispatch(isFetchingComplete());
+      return reparacionGuardada;
+    } catch (error: unknown) {
+      dispatch(isFetchingComplete());
+      return rejectWithValue(error);
+    }
+  }
+);
+
+/**
+ * Actualiza el precio final de la reparación basándose en las intervenciones
+ */
+export const actualizarPrecioFinalAsync = createAsyncThunk(
+  'reparacion/actualizarPrecioFinal',
+  async ({ 
+    reparacionId, 
+    totalIntervenciones 
+  }: { 
+    reparacionId: string; 
+    totalIntervenciones: number;
+  }, { dispatch, rejectWithValue, getState }) => {
+    try {
+      const state = getState() as RootState;
+      const reparacionActual = state.reparacion.coleccionReparaciones[reparacionId];
+      
+      if (!reparacionActual) {
+        throw new Error('Reparación no encontrada');
+      }
+
+      // Solo actualizar si no hay un precio manual establecido
+      if (reparacionActual.data.PresuFiRep && reparacionActual.data.PresuFiRep > 0) {
+        return reparacionActual; // Ya tiene un precio, no sobrescribir
+      }
+
+      const reparacionActualizada = {
+        ...reparacionActual,
+        data: {
+          ...reparacionActual.data,
+          PresuFiRep: totalIntervenciones
+        }
+      };
+
+      const reparacionGuardada = await guardarReparacionPersistencia(reparacionActualizada);
+      return reparacionGuardada;
+    } catch (error: unknown) {
+      return rejectWithValue(error);
+    }
+  }
+);
+
+/**
+ * Selecciona/deselecciona una foto como "Antes" de la reparación
+ */
+export const seleccionarFotoAntesAsync = createAsyncThunk(
+  'reparacion/seleccionarFotoAntes',
+  async ({ 
+    reparacionId, 
+    fotoUrl 
+  }: { 
+    reparacionId: string; 
+    fotoUrl: string;
+  }, { dispatch, rejectWithValue, getState }) => {
+    try {
+      dispatch(isFetchingStart());
+      const state = getState() as RootState;
+      const reparacionActual = state.reparacion.coleccionReparaciones[reparacionId];
+      
+      if (!reparacionActual) {
+        throw new Error('Reparación no encontrada');
+      }
+
+      const reparacionActualizada = {
+        ...reparacionActual,
+        data: {
+          ...reparacionActual.data,
+          FotoAntes: reparacionActual.data.FotoAntes === fotoUrl ? undefined : fotoUrl
+        }
+      };
+
+      const reparacionGuardada = await guardarReparacionPersistencia(reparacionActualizada);
+      dispatch(isFetchingComplete());
+      return reparacionGuardada;
+    } catch (error: unknown) {
+      dispatch(isFetchingComplete());
+      return rejectWithValue(error);
+    }
+  }
+);
+
+/**
+ * Selecciona/deselecciona una foto como "Después" de la reparación
+ */
+export const seleccionarFotoDespuesAsync = createAsyncThunk(
+  'reparacion/seleccionarFotoDespues',
+  async ({ 
+    reparacionId, 
+    fotoUrl 
+  }: { 
+    reparacionId: string; 
+    fotoUrl: string;
+  }, { dispatch, rejectWithValue, getState }) => {
+    try {
+      dispatch(isFetchingStart());
+      const state = getState() as RootState;
+      const reparacionActual = state.reparacion.coleccionReparaciones[reparacionId];
+      
+      if (!reparacionActual) {
+        throw new Error('Reparación no encontrada');
+      }
+
+      const reparacionActualizada = {
+        ...reparacionActual,
+        data: {
+          ...reparacionActual.data,
+          FotoDespues: reparacionActual.data.FotoDespues === fotoUrl ? undefined : fotoUrl
+        }
+      };
+
+      const reparacionGuardada = await guardarReparacionPersistencia(reparacionActualizada);
+      dispatch(isFetchingComplete());
+      return reparacionGuardada;
+    } catch (error: unknown) {
+      dispatch(isFetchingComplete());
+      return rejectWithValue(error);
+    }
+  }
+);
+
+/**
+ * Genera automáticamente el diagnóstico y lo guarda en la reparación
+ */
+export const generarYGuardarDiagnosticoAsync = createAsyncThunk(
+  'reparacion/generarYGuardarDiagnostico',
+  async (reparacionId: string, { dispatch, rejectWithValue, getState }) => {
+    try {
+      dispatch(isFetchingStart());
+      const state = getState() as RootState;
+      const reparacionActual = state.reparacion.coleccionReparaciones[reparacionId];
+      
+      if (!reparacionActual) {
+        throw new Error('Reparación no encontrada');
+      }
+
+      const diagnostico = await dispatch(generarAutoDiagnostico(reparacionActual));
+
+      const reparacionActualizada = {
+        ...reparacionActual,
+        data: {
+          ...reparacionActual.data,
+          DiagnosticoRep: diagnostico as string
+        }
+      };
+
       const reparacionGuardada = await guardarReparacionPersistencia(reparacionActualizada);
       dispatch(isFetchingComplete());
       return reparacionGuardada;

@@ -704,3 +704,172 @@ export const selectReparacionesEnRepuestosConObservaciones = createSelector(
       rep.data.ObsRepuestos && rep.data.ObsRepuestos.trim().length > 0
     )
 );
+
+// ============================================================================
+// SELECTORES DERIVADOS PARA LÓGICA DE NEGOCIO
+// ============================================================================
+
+/**
+ * Selector que verifica si una reparación puede avanzar a un estado específico
+ * Encapsula toda la lógica de transiciones de estado
+ */
+export const selectPuedeAvanzarA = (reparacionId: string, nombreEstadoDestino: string) =>
+  createSelector(
+    [
+      (state: RootState) => selectReparacionById(reparacionId)(state),
+    ],
+    (reparacion): boolean => {
+      if (!reparacion) return false;
+
+      const { obtenerEstadoSeguro } = require('../../utils/estadosHelper');
+      const estadoActual = obtenerEstadoSeguro(reparacion.data.EstadoRep);
+      const estadoDestino = estados[nombreEstadoDestino];
+
+      if (!estadoDestino) return false;
+
+      // Lógica especial para transiciones bidireccionales Repuestos ⇄ Aceptado
+      if (estadoActual.nombre === 'Aceptado' && nombreEstadoDestino === 'Repuestos') {
+        return true;
+      }
+      if (estadoActual.nombre === 'Repuestos' && nombreEstadoDestino === 'Aceptado') {
+        return true;
+      }
+
+      // Lógica especial para los flujos de Aceptado/Rechazado
+      if (nombreEstadoDestino === 'Reparado') {
+        return estadoActual.nombre === 'Aceptado';
+      }
+      if (nombreEstadoDestino === 'Diagnosticado') {
+        return estadoActual.nombre === 'Rechazado';
+      }
+
+      if (estadoActual.nombre === 'Aceptado' && nombreEstadoDestino === 'Rechazado') return false;
+      if (estadoActual.nombre === 'Rechazado' && nombreEstadoDestino === 'Aceptado') return false;
+
+      return estadoDestino.etapa > estadoActual.etapa;
+    }
+  );
+
+/**
+ * Selector que determina qué secciones del formulario mostrar según el estado
+ * Encapsula la lógica de visibilidad de secciones
+ */
+export const selectSeccionesVisibles = (reparacionId: string, isAdmin: boolean) =>
+  createSelector(
+    [(state: RootState) => selectReparacionById(reparacionId)(state)],
+    (reparacion) => {
+      if (!reparacion) {
+        return {
+          consulta: false,
+          recepcion: false,
+          revision: false,
+          presupuesto: false,
+          repuestos: false,
+          reparar: false,
+          entrega: false,
+          fotos: false,
+          documentos: false
+        };
+      }
+
+      const { obtenerEstadoSeguro } = require('../../utils/estadosHelper');
+      const estadoActual = obtenerEstadoSeguro(reparacion.data.EstadoRep);
+      const etapa = estadoActual.etapa;
+
+      // Si es admin, mostrar todo
+      if (isAdmin) {
+        return {
+          consulta: true,
+          recepcion: true,
+          revision: true,
+          presupuesto: true,
+          repuestos: true,
+          reparar: true,
+          entrega: true,
+          fotos: true,
+          documentos: true
+        };
+      }
+
+      // Para no-admin, mostrar según el estado
+      return {
+        consulta: etapa >= 1,
+        recepcion: etapa >= 3,
+        revision: etapa >= 4,
+        presupuesto: etapa >= 5,
+        repuestos: etapa >= 7,
+        reparar: etapa >= 7,
+        entrega: etapa >= 9,
+        fotos: etapa >= 1,
+        documentos: etapa >= 1
+      };
+    }
+  );
+
+/**
+ * Selector que calcula el total de intervenciones de una reparación
+ */
+export const selectTotalIntervenciones = createSelector(
+  [selectIntervencionesDeReparacionActual],
+  (intervenciones): number => {
+    return intervenciones.reduce((total, intervencion) =>
+      total + (intervencion.data.PrecioTotal || 0), 0);
+  }
+);
+
+/**
+ * Selector que verifica si el precio final difiere del total de intervenciones
+ */
+export const selectPrecioManualDifiere = (reparacionId: string) =>
+  createSelector(
+    [
+      (state: RootState) => selectReparacionById(reparacionId)(state),
+      selectTotalIntervenciones
+    ],
+    (reparacion, totalIntervenciones): boolean => {
+      if (!reparacion) return false;
+      const precioFinal = reparacion.data.PresuFiRep || 0;
+      return precioFinal !== totalIntervenciones && totalIntervenciones > 0;
+    }
+  );
+
+/**
+ * Selector que retorna información completa para el resumen de progreso
+ */
+export const selectResumenProgreso = (reparacionId: string) =>
+  createSelector(
+    [(state: RootState) => selectReparacionById(reparacionId)(state)],
+    (reparacion) => {
+      if (!reparacion) return null;
+
+      const { obtenerEstadoSeguro, esEstadoLegacy } = require('../../utils/estadosHelper');
+      const estadoActual = obtenerEstadoSeguro(reparacion.data.EstadoRep);
+      
+      const estadosOrdenados = [
+        'Consulta', 'Respondido', 'Transito', 'Recibido', 'Revisado',
+        'Presupuestado', 'Aceptado', 'Repuestos', 'Rechazado', 'Reparado', 
+        'Diagnosticado', 'Cobrado', 'Enviado', 'Finalizado', 'Abandonado', 'Cancelado'
+      ];
+
+      const progreso = estadosOrdenados.map(nombreEstado => {
+        const estado = estados[nombreEstado];
+        const completado = estado.etapa <= estadoActual.etapa && !esEstadoLegacy(reparacion.data.EstadoRep);
+        const esActual = estado.nombre === reparacion.data.EstadoRep;
+
+        return {
+          nombre: nombreEstado,
+          completado,
+          esActual,
+          color: estado.color,
+          etapa: estado.etapa
+        };
+      });
+
+      return {
+        estadoActual: estadoActual.nombre,
+        etapaActual: estadoActual.etapa,
+        esLegacy: esEstadoLegacy(reparacion.data.EstadoRep),
+        progreso
+      };
+    }
+  );
