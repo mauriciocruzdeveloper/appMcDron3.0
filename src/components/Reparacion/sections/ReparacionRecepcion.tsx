@@ -1,6 +1,7 @@
-import React, { ChangeEvent } from "react";
+import React from "react";
 import { useAppSelector } from "../../../redux-tool-kit/hooks/useAppSelector";
 import { useAppDispatch } from "../../../redux-tool-kit/hooks/useAppDispatch";
+import { useDebouncedField } from "../../../hooks/useDebouncedField";
 import { useModal } from "../../Modal/useModal";
 import { 
     selectReparacionById, 
@@ -8,7 +9,6 @@ import {
     selectPuedeAvanzarA,
 } from "../../../redux-tool-kit/reparacion";
 import { 
-    actualizarCampoReparacionAsync,
     cambiarEstadoReparacionAsync,
 } from "../../../redux-tool-kit/reparacion/reparacion.actions";
 import { enviarReciboAsync } from "../../../redux-tool-kit/app/app.actions";
@@ -34,26 +34,15 @@ export const ReparacionRecepcion: React.FC<ReparacionRecepcionProps> = ({
         selectPuedeAvanzarA(reparacionId, 'Recibido')(state)
     );
 
-    if (!seccionVisible || !reparacion) return null;
+    const fechaRecepcion = useDebouncedField({
+        reparacionId,
+        campo: 'FeRecRep',
+        valorInicial: reparacion?.data.FeRecRep || "",
+        delay: 500,
+        isDateField: true
+    });
 
-    const handleOnChange = (event: ChangeEvent<HTMLInputElement>) => {
-        const target = event.target;
-        let value = target.value;
-        
-        if (target.type === "date") {
-            const anio = Number(target.value.substr(0, 4));
-            const mes = Number(target.value.substr(5, 2)) - 1;
-            const dia = Number(target.value.substr(8, 2));
-            value = String(Number(new Date(anio, mes, dia).getTime()) + 10800001);
-        }
-        
-        const field = target.id;
-        dispatch(actualizarCampoReparacionAsync({ 
-            reparacionId, 
-            campo: field as any, 
-            valor: value 
-        }));
-    };
+    if (!seccionVisible || !reparacion) return null;
 
     const handleSendRecibo = async () => {
         if (!reparacion) return;
@@ -110,14 +99,17 @@ export const ReparacionRecepcion: React.FC<ReparacionRecepcionProps> = ({
                 )}
 
                 <div>
-                    <label className="form-label">Fecha de Recepción</label>
+                    <label className="form-label">
+                        Fecha de Recepción
+                        {fechaRecepcion.isSaving && <small className="text-muted ms-2">Guardando...</small>}
+                    </label>
                     <div className="d-flex w-100 justify-content-between">
                         <input
-                            onChange={handleOnChange}
+                            onChange={(e) => fechaRecepcion.onChange(e.target.value)}
                             type="date"
                             className="form-control"
                             id="FeRecRep"
-                            value={convertTimestampCORTO(reparacion.data.FeRecRep)}
+                            value={fechaRecepcion.value}
                             disabled={!isAdmin}
                         />
                         <button
