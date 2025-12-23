@@ -1,6 +1,7 @@
-import React, { ChangeEvent } from "react";
+import React from "react";
 import { useAppSelector } from "../../../redux-tool-kit/hooks/useAppSelector";
 import { useAppDispatch } from "../../../redux-tool-kit/hooks/useAppDispatch";
+import { useDebouncedField } from "../../../hooks/useDebouncedField";
 import { 
     selectReparacionById, 
     selectSeccionesVisibles,
@@ -10,7 +11,6 @@ import {
     selectPrecioManualDifiere,
 } from "../../../redux-tool-kit/reparacion";
 import { 
-    actualizarCampoReparacionAsync,
     cambiarEstadoReparacionAsync,
 } from "../../../redux-tool-kit/reparacion/reparacion.actions";
 import { selectDroneById } from "../../../redux-tool-kit/drone/drone.selectors";
@@ -49,19 +49,36 @@ export const ReparacionPresupuesto: React.FC<ReparacionPresupuestoProps> = ({
         selectPuedeAvanzarA(reparacionId, 'Rechazado')(state)
     );
 
-    if (!seccionVisible || !reparacion) return null;
+    // Usar debounce para campos numéricos
+    const presuMo = useDebouncedField({
+        reparacionId,
+        campo: 'PresuMoRep',
+        valorInicial: reparacion?.data.PresuMoRep || "",
+        delay: 800
+    });
 
-    const handleOnChange = (event: ChangeEvent<HTMLInputElement>) => {
-        const target = event.target;
-        const field = target.id;
-        const value = target.value;
-        
-        dispatch(actualizarCampoReparacionAsync({ 
-            reparacionId, 
-            campo: field as any, 
-            valor: value 
-        }));
-    };
+    const presuRe = useDebouncedField({
+        reparacionId,
+        campo: 'PresuReRep',
+        valorInicial: reparacion?.data.PresuReRep || "",
+        delay: 800
+    });
+
+    const presuFi = useDebouncedField({
+        reparacionId,
+        campo: 'PresuFiRep',
+        valorInicial: reparacion?.data.PresuFiRep || "",
+        delay: 800
+    });
+
+    const diagnostico = useDebouncedField({
+        reparacionId,
+        campo: 'DiagnosticoRep',
+        valorInicial: reparacion?.data.DiagnosticoRep || "",
+        delay: 800
+    });
+
+    if (!seccionVisible || !reparacion) return null;
 
     const formatPrice = (precio: number): string => {
         return precio.toLocaleString('es-AR', { style: 'currency', currency: 'ARS' });
@@ -103,35 +120,44 @@ export const ReparacionPresupuesto: React.FC<ReparacionPresupuestoProps> = ({
                 />
                 <h6 className="card-title bluemcdron">PRECIO</h6>
                 <div>
-                    <label className="form-label">Presupuesto Mano de Obra $</label>
+                    <label className="form-label">
+                        Presupuesto Mano de Obra $
+                        {presuMo.isSaving && <small className="text-muted ms-2">Guardando...</small>}
+                    </label>
                     <input
-                        onChange={handleOnChange}
+                        onChange={(e) => presuMo.onChange(e.target.value)}
                         type="number"
                         className="form-control"
                         id="PresuMoRep"
-                        value={reparacion.data.PresuMoRep || ""}
+                        value={presuMo.value}
                         disabled={!isAdmin}
                     />
                 </div>
                 <div>
-                    <label className="form-label">Presupuesto Repuestos $</label>
+                    <label className="form-label">
+                        Presupuesto Repuestos $
+                        {presuRe.isSaving && <small className="text-muted ms-2">Guardando...</small>}
+                    </label>
                     <input
-                        onChange={handleOnChange}
+                        onChange={(e) => presuRe.onChange(e.target.value)}
                         type="number"
                         className="form-control"
                         id="PresuReRep"
-                        value={reparacion.data.PresuReRep || ""}
+                        value={presuRe.value}
                         disabled={!isAdmin}
                     />
                 </div>
                 <div>
-                    <label className="form-label">Presupuesto Final $</label>
+                    <label className="form-label">
+                        Presupuesto Final $
+                        {presuFi.isSaving && <small className="text-muted ms-2">Guardando...</small>}
+                    </label>
                     <input
-                        onChange={handleOnChange}
+                        onChange={(e) => presuFi.onChange(e.target.value)}
                         type="number"
                         className="form-control"
                         id="PresuFiRep"
-                        value={reparacion.data.PresuFiRep || ""}
+                        value={presuFi.value}
                         disabled={!isAdmin}
                         title="El precio se calcula automáticamente en base a las intervenciones, o puede ingresar un valor manual"
                     />
@@ -144,13 +170,16 @@ export const ReparacionPresupuesto: React.FC<ReparacionPresupuestoProps> = ({
                     )}
                 </div>
                 <div>
-                    <label className="form-label">Diagnóstico $</label>
+                    <label className="form-label">
+                        Diagnóstico $
+                        {diagnostico.isSaving && <small className="text-muted ms-2">Guardando...</small>}
+                    </label>
                     <input
-                        onChange={handleOnChange}
+                        onChange={(e) => diagnostico.onChange(e.target.value)}
                         type="number"
                         className="form-control"
                         id="PresuDiRep"
-                        value={reparacion.data.PresuDiRep || ""}
+                        value={diagnostico.value}
                         disabled={!isAdmin}
                     />
                 </div>

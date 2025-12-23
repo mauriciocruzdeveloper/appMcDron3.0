@@ -1,4 +1,4 @@
-import React, { ChangeEvent } from "react";
+import React from "react";
 import { useAppSelector } from "../../../redux-tool-kit/hooks/useAppSelector";
 import { useAppDispatch } from "../../../redux-tool-kit/hooks/useAppDispatch";
 import { useDebouncedField } from "../../../hooks/useDebouncedField";
@@ -8,7 +8,6 @@ import {
     selectPuedeAvanzarA,
 } from "../../../redux-tool-kit/reparacion";
 import { 
-    actualizarCampoReparacionAsync,
     cambiarEstadoReparacionAsync,
 } from "../../../redux-tool-kit/reparacion/reparacion.actions";
 import { convertTimestampCORTO } from "../../../utils/utils";
@@ -57,26 +56,15 @@ export const ReparacionEntrega: React.FC<ReparacionEntregaProps> = ({
         delay: 1000
     });
 
-    if (!seccionVisible || !reparacion) return null;
+    const fechaEntrega = useDebouncedField({
+        reparacionId,
+        campo: 'FeEntRep',
+        valorInicial: reparacion?.data.FeEntRep || "",
+        delay: 500,
+        isDateField: true
+    });
 
-    const handleOnChange = (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-        const target = event.target;
-        let value = target.value;
-        
-        if ((target as HTMLInputElement).type === "date") {
-            const anio = Number(target.value.substr(0, 4));
-            const mes = Number(target.value.substr(5, 2)) - 1;
-            const dia = Number(target.value.substr(8, 2));
-            value = String(Number(new Date(anio, mes, dia).getTime()) + 10800001);
-        }
-        
-        const field = target.id;
-        dispatch(actualizarCampoReparacionAsync({ 
-            reparacionId, 
-            campo: field as any, 
-            valor: value 
-        }));
-    };
+    if (!seccionVisible || !reparacion) return null;
 
     const avanzarACobrado = () => {
         dispatch(cambiarEstadoReparacionAsync({
@@ -115,13 +103,16 @@ export const ReparacionEntrega: React.FC<ReparacionEntregaProps> = ({
             <div className="card-body">
                 <h5 className="card-title bluemcdron">ENTREGA</h5>
                 <div>
-                    <label className="form-label">Fecha Entrega</label>
+                    <label className="form-label">
+                        Fecha Entrega
+                        {fechaEntrega.isSaving && <small className="text-muted ms-2">Guardando...</small>}
+                    </label>
                     <input
-                        onChange={handleOnChange}
+                        onChange={(e) => fechaEntrega.onChange(e.target.value)}
                         type="date"
                         className="form-control"
                         id="FeEntRep"
-                        value={convertTimestampCORTO(reparacion.data.FeEntRep)}
+                        value={fechaEntrega.value}
                         disabled={!isAdmin}
                     />
                 </div>
