@@ -66,25 +66,6 @@ export const ReparacionConsulta: React.FC<ReparacionConsultaProps> = ({
 
     if (!seccionVisible || !reparacion) return null;
 
-    const handleOnChange = (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-        const target = event.target;
-        let value = target.value;
-        
-        if ((target as HTMLInputElement).type === "date") {
-            const anio = Number(target.value.substr(0, 4));
-            const mes = Number(target.value.substr(5, 2)) - 1;
-            const dia = Number(target.value.substr(8, 2));
-            value = String(Number(new Date(anio, mes, dia).getTime()) + 10800001);
-        }
-        
-        const field = target.id;
-        dispatch(actualizarCampoReparacionAsync({ 
-            reparacionId, 
-            campo: field as any, 
-            valor: value 
-        }));
-    };
-
     const handleDroneChange = (event: ChangeEvent<HTMLSelectElement>) => {
         const droneId = event.target.value;
         dispatch(actualizarCampoReparacionAsync({ 
