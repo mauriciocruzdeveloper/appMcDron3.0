@@ -1,6 +1,7 @@
-import React, { ChangeEvent } from "react";
+import React from "react";
 import { useAppSelector } from "../../../redux-tool-kit/hooks/useAppSelector";
 import { useAppDispatch } from "../../../redux-tool-kit/hooks/useAppDispatch";
+import { useDebouncedField } from "../../../hooks/useDebouncedField";
 import { 
     selectReparacionById, 
     selectSeccionesVisibles,
@@ -34,19 +35,22 @@ export const ReparacionRepuestos: React.FC<ReparacionRepuestosProps> = ({
         selectPuedeAvanzarA(reparacionId, 'Aceptado')(state)
     );
 
-    if (!seccionVisible || !reparacion || !isAdmin) return null;
+    // Usar debounce para campos de texto
+    const obsRepuestos = useDebouncedField({
+        reparacionId,
+        campo: 'ObsRepuestos',
+        valorInicial: reparacion?.data.ObsRepuestos || "",
+        delay: 1500
+    });
 
-    const handleOnChange = (event: ChangeEvent<HTMLTextAreaElement>) => {
-        const target = event.target;
-        const field = target.id;
-        const value = target.value;
-        
-        dispatch(actualizarCampoReparacionAsync({ 
-            reparacionId, 
-            campo: field as any, 
-            valor: value 
-        }));
-    };
+    const txtRepuestos = useDebouncedField({
+        reparacionId,
+        campo: 'TxtRepuestosRep',
+        valorInicial: reparacion?.data.TxtRepuestosRep || "",
+        delay: 1500
+    });
+
+    if (!seccionVisible || !reparacion || !isAdmin) return null;
 
     const avanzarARepuestos = () => {
         dispatch(cambiarEstadoReparacionAsync({
@@ -73,14 +77,15 @@ export const ReparacionRepuestos: React.FC<ReparacionRepuestosProps> = ({
                     <label className="form-label">
                         Observaciones de Repuestos 
                         <small className="text-muted ms-2">
-                            ({(reparacion.data.ObsRepuestos || "").length}/2000 caracteres)
+                            ({(obsRepuestos.value || "").length}/2000 caracteres)
                         </small>
+                        {obsRepuestos.isSaving && <small className="text-muted ms-2">Guardando...</small>}
                     </label>
                     <TextareaAutosize
-                        onChange={handleOnChange}
+                        onChange={(e) => obsRepuestos.onChange(e.target.value)}
                         className="form-control"
                         id="ObsRepuestos"
-                        value={reparacion.data.ObsRepuestos || ""}
+                        value={obsRepuestos.value}
                         rows={3}
                         maxLength={2000}
                         placeholder="Ej: Motor delantero izquierdo DJI Mini 3 Pro, tornillos M2x6 (x4)"
@@ -94,12 +99,13 @@ export const ReparacionRepuestos: React.FC<ReparacionRepuestosProps> = ({
                     <label className="form-label">
                         Seguimiento de Repuestos (Legacy)
                         <span className="badge bg-secondary ms-2">Opcional</span>
+                        {txtRepuestos.isSaving && <small className="text-muted ms-2">Guardando...</small>}
                     </label>
                     <TextareaAutosize
-                        onChange={handleOnChange}
+                        onChange={(e) => txtRepuestos.onChange(e.target.value)}
                         className="form-control"
                         id="TxtRepuestosRep"
-                        value={reparacion.data.TxtRepuestosRep || ""}
+                        value={txtRepuestos.value}
                         rows={3}
                         placeholder="Información de transportista, seguimiento, etc."
                     />

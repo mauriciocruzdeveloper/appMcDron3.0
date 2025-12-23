@@ -12,7 +12,7 @@ import {
 } from "../../persistencia/persistencia";
 import { AppState, isFetchingComplete, isFetchingStart } from "../app/app.slice";
 import { Usuario } from "../../types/usuario";
-import { enviarReciboAsync } from "../app/app.actions";
+import { enviarDroneDiagnosticadoAsync, enviarDroneReparadoAsync, enviarReciboAsync } from "../app/app.actions";
 import { generarAutoDiagnostico, generarNombreUnico } from "../../utils/utils";
 import { PresupuestoProps } from "../../components/Presupuesto.component";
 import { Drone } from "../../types/drone";

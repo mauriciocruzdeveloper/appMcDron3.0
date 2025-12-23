@@ -4,6 +4,7 @@ import { ReparacionType, Reparaciones } from '../../types/reparacion';
 import { Filtro } from '../../types/Filtro';
 import { Intervencion } from '../../types/intervencion';
 import { estados } from '../../datos/estados';
+import { obtenerEstadoSeguro, esEstadoLegacy } from '../../utils/estadosHelper';
 
 // Constantes para filtros
 /**
@@ -721,7 +722,6 @@ export const selectPuedeAvanzarA = (reparacionId: string, nombreEstadoDestino: s
     (reparacion): boolean => {
       if (!reparacion) return false;
 
-      const { obtenerEstadoSeguro } = require('../../utils/estadosHelper');
       const estadoActual = obtenerEstadoSeguro(reparacion.data.EstadoRep);
       const estadoDestino = estados[nombreEstadoDestino];
 
@@ -772,7 +772,6 @@ export const selectSeccionesVisibles = (reparacionId: string, isAdmin: boolean) 
         };
       }
 
-      const { obtenerEstadoSeguro } = require('../../utils/estadosHelper');
       const estadoActual = obtenerEstadoSeguro(reparacion.data.EstadoRep);
       const etapa = estadoActual.etapa;
 
@@ -842,7 +841,6 @@ export const selectResumenProgreso = (reparacionId: string) =>
     (reparacion) => {
       if (!reparacion) return null;
 
-      const { obtenerEstadoSeguro, esEstadoLegacy } = require('../../utils/estadosHelper');
       const estadoActual = obtenerEstadoSeguro(reparacion.data.EstadoRep);
       
       const estadosOrdenados = [

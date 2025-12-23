@@ -2,6 +2,7 @@ import React, { ChangeEvent } from "react";
 import { useAppSelector } from "../../../redux-tool-kit/hooks/useAppSelector";
 import { useAppDispatch } from "../../../redux-tool-kit/hooks/useAppDispatch";
 import { useHistory } from "../../../hooks/useHistory";
+import { useDebouncedField } from "../../../hooks/useDebouncedField";
 import { 
     selectReparacionById, 
     selectSeccionesVisibles,
@@ -47,6 +48,21 @@ export const ReparacionConsulta: React.FC<ReparacionConsultaProps> = ({
     const puedeAvanzarATransito = useAppSelector(state => 
         selectPuedeAvanzarA(reparacionId, 'Transito')(state)
     );
+
+    // Usar debounce para campos de texto
+    const modeloDrone = useDebouncedField({
+        reparacionId,
+        campo: 'ModeloDroneNameRep',
+        valorInicial: reparacion?.data.ModeloDroneNameRep || "",
+        delay: 1000
+    });
+
+    const descripcionUsu = useDebouncedField({
+        reparacionId,
+        campo: 'DescripcionUsuRep',
+        valorInicial: reparacion?.data.DescripcionUsuRep || "",
+        delay: 1500
+    });
 
     if (!seccionVisible || !reparacion) return null;
 
@@ -222,23 +238,29 @@ export const ReparacionConsulta: React.FC<ReparacionConsultaProps> = ({
                     )}
                 </div>
                 <div>
-                    <label className="form-label">Modelo del Drone</label>
+                    <label className="form-label">
+                        Modelo del Drone
+                        {modeloDrone.isSaving && <small className="text-muted ms-2">Guardando...</small>}
+                    </label>
                     <input
                         type="text"
                         className="form-control"
                         id="ModeloDroneNameRep"
-                        value={reparacion.data.ModeloDroneNameRep || ""}
-                        onChange={handleOnChange}
+                        value={modeloDrone.value}
+                        onChange={(e) => modeloDrone.onChange(e.target.value)}
                         disabled={!isAdmin}
                     />
                 </div>
                 <div>
-                    <label className="form-label">Desperfectos o Roturas</label>
+                    <label className="form-label">
+                        Desperfectos o Roturas
+                        {descripcionUsu.isSaving && <small className="text-muted ms-2">Guardando...</small>}
+                    </label>
                     <TextareaAutosize
-                        onChange={handleOnChange}
+                        onChange={(e) => descripcionUsu.onChange(e.target.value)}
                         className="form-control"
                         id="DescripcionUsuRep"
-                        value={reparacion.data.DescripcionUsuRep || ""}
+                        value={descripcionUsu.value}
                         disabled={!isAdmin}
                     />
                 </div>
