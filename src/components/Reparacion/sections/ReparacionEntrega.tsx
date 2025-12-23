@@ -1,6 +1,7 @@
 import React, { ChangeEvent } from "react";
 import { useAppSelector } from "../../../redux-tool-kit/hooks/useAppSelector";
 import { useAppDispatch } from "../../../redux-tool-kit/hooks/useAppDispatch";
+import { useDebouncedField } from "../../../hooks/useDebouncedField";
 import { 
     selectReparacionById, 
     selectSeccionesVisibles,
@@ -40,6 +41,21 @@ export const ReparacionEntrega: React.FC<ReparacionEntregaProps> = ({
     const puedeAvanzarAAbandonado = useAppSelector(state => 
         selectPuedeAvanzarA(reparacionId, 'Abandonado')(state)
     );
+
+    // Usar debounce para campos de texto
+    const txtEntrega = useDebouncedField({
+        reparacionId,
+        campo: 'TxtEntregaRep',
+        valorInicial: reparacion?.data.TxtEntregaRep || "",
+        delay: 1500
+    });
+
+    const seguimiento = useDebouncedField({
+        reparacionId,
+        campo: 'SeguimientoEntregaRep',
+        valorInicial: reparacion?.data.SeguimientoEntregaRep || "",
+        delay: 1000
+    });
 
     if (!seccionVisible || !reparacion) return null;
 
@@ -110,24 +126,30 @@ export const ReparacionEntrega: React.FC<ReparacionEntregaProps> = ({
                     />
                 </div>
                 <div>
-                    <label className="form-label">Cliente, Comisionista, Correo, Seguimiento</label>
+                    <label className="form-label">
+                        Cliente, Comisionista, Correo, Seguimiento
+                        {txtEntrega.isSaving && <small className="text-muted ms-2">Guardando...</small>}
+                    </label>
                     <TextareaAutosize
-                        onChange={handleOnChange}
+                        onChange={(e) => txtEntrega.onChange(e.target.value)}
                         className="form-control"
                         id="TxtEntregaRep"
-                        value={reparacion.data.TxtEntregaRep || ""}
+                        value={txtEntrega.value}
                         rows={5}
                         disabled={!isAdmin}
                     />
                 </div>
                 <div>
-                    <label className="form-label">Nro. de Seguimiento</label>
+                    <label className="form-label">
+                        Nro. de Seguimiento
+                        {seguimiento.isSaving && <small className="text-muted ms-2">Guardando...</small>}
+                    </label>
                     <input
-                        onChange={handleOnChange}
+                        onChange={(e) => seguimiento.onChange(e.target.value)}
                         type="text"
                         className="form-control"
                         id="SeguimientoEntregaRep"
-                        value={reparacion.data.SeguimientoEntregaRep || ""}
+                        value={seguimiento.value}
                         disabled={!isAdmin}
                     />
                 </div>

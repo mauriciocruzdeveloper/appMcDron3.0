@@ -2,6 +2,7 @@ import React, { ChangeEvent } from "react";
 import { useAppSelector } from "../../../redux-tool-kit/hooks/useAppSelector";
 import { useAppDispatch } from "../../../redux-tool-kit/hooks/useAppDispatch";
 import { useModal } from "../../Modal/useModal";
+import { useDebouncedField } from "../../../hooks/useDebouncedField";
 import { 
     selectReparacionById, 
     selectSeccionesVisibles,
@@ -36,6 +37,14 @@ export const ReparacionReparar: React.FC<ReparacionRepararProps> = ({
     const puedeAvanzarADiagnosticado = useAppSelector(state => 
         selectPuedeAvanzarA(reparacionId, 'Diagnosticado')(state)
     );
+
+    // Usar debounce para campo de texto
+    const descripcionTec = useDebouncedField({
+        reparacionId,
+        campo: 'DescripcionTecRep',
+        valorInicial: reparacion?.data.DescripcionTecRep || "",
+        delay: 2000 // 2 segundos para informes largos
+    });
 
     if (!seccionVisible || !reparacion) return null;
 
@@ -95,12 +104,15 @@ export const ReparacionReparar: React.FC<ReparacionRepararProps> = ({
             <div className="card-body">
                 <h5 className="card-title bluemcdron">REPARAR</h5>
                 <div>
-                    <label className="form-label">Informe de Reparación o Diagnóstico</label>
+                    <label className="form-label">
+                        Informe de Reparación o Diagnóstico
+                        {descripcionTec.isSaving && <small className="text-muted ms-2">Guardando...</small>}
+                    </label>
                     <TextareaAutosize
-                        onChange={handleOnChange}
+                        onChange={(e) => descripcionTec.onChange(e.target.value)}
                         className="form-control"
                         id="DescripcionTecRep"
-                        value={reparacion.data.DescripcionTecRep || ""}
+                        value={descripcionTec.value}
                         rows={5}
                         disabled={!isAdmin}
                     />

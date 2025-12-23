@@ -2,6 +2,7 @@ import React, { ChangeEvent } from "react";
 import { useAppSelector } from "../../../redux-tool-kit/hooks/useAppSelector";
 import { useAppDispatch } from "../../../redux-tool-kit/hooks/useAppDispatch";
 import { useModal } from "../../Modal/useModal";
+import { useDebouncedField } from "../../../hooks/useDebouncedField";
 import { 
     selectReparacionById, 
     selectSeccionesVisibles,
@@ -34,19 +35,22 @@ export const ReparacionRevision: React.FC<ReparacionRevisionProps> = ({
         selectPuedeAvanzarA(reparacionId, 'Revisado')(state)
     );
 
-    if (!seccionVisible || !reparacion) return null;
+    // Usar debounce para campos de texto
+    const numeroSerie = useDebouncedField({
+        reparacionId,
+        campo: 'NumeroSerieRep',
+        valorInicial: reparacion?.data.NumeroSerieRep || "",
+        delay: 1000 // 1 segundo después de dejar de escribir
+    });
 
-    const handleOnChange = (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-        const target = event.target;
-        const field = target.id;
-        const value = target.value;
-        
-        dispatch(actualizarCampoReparacionAsync({ 
-            reparacionId, 
-            campo: field as any, 
-            valor: value 
-        }));
-    };
+    const diagnostico = useDebouncedField({
+        reparacionId,
+        campo: 'DiagnosticoRep',
+        valorInicial: reparacion?.data.DiagnosticoRep || "",
+        delay: 1500 // 1.5 segundos para campos más largos
+    });
+
+    if (!seccionVisible || !reparacion) return null;
 
     const handleGenerarAutoDiagnostico = async () => {
         const response = await dispatch(generarYGuardarDiagnosticoAsync(reparacionId));
@@ -72,13 +76,16 @@ export const ReparacionRevision: React.FC<ReparacionRevisionProps> = ({
             <div className="card-body">
                 <h5 className="card-title bluemcdron">REVISIÓN</h5>
                 <div>
-                    <label className="form-label">Número de Serie</label>
+                    <label className="form-label">
+                        Número de Serie
+                        {numeroSerie.isSaving && <small className="text-muted ms-2">Guardando...</small>}
+                    </label>
                     <input
-                        onChange={handleOnChange}
+                        onChange={(e) => numeroSerie.onChange(e.target.value)}
                         type="text"
                         className="form-control"
                         id="NumeroSerieRep"
-                        value={reparacion.data.NumeroSerieRep || ""}
+                        value={numeroSerie.value}
                         disabled={!isAdmin}
                     />
                 </div>
@@ -95,12 +102,15 @@ export const ReparacionRevision: React.FC<ReparacionRevisionProps> = ({
                     )}
                 </div>
                 <div>
-                    <label className="form-label">Observaciones del Técnico</label>
+                    <label className="form-label">
+                        Observaciones del Técnico
+                        {diagnostico.isSaving && <small className="text-muted ms-2">Guardando...</small>}
+                    </label>
                     <TextareaAutosize
-                        onChange={handleOnChange}
+                        onChange={(e) => diagnostico.onChange(e.target.value)}
                         className="form-control"
                         id="DiagnosticoRep"
-                        value={reparacion.data.DiagnosticoRep || ""}
+                        value={diagnostico.value}
                         rows={5}
                         disabled={!isAdmin}
                     />
