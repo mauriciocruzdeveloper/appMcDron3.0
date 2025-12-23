@@ -96,19 +96,20 @@ export const ReparacionDocumentos: React.FC<ReparacionDocumentosProps> = ({
                                 return (
                                     <div
                                         key={idx}
-                                        className="list-group-item list-group-item-action d-flex justify-content-between align-items-center mb-2"
+                                        className="list-group-item list-group-item-action d-flex justify-content-between align-items-center mb-2 p-3"
                                     >
-                                        <div className="text-truncate" style={{ maxWidth: "70%" }}>
+                                        <div className="text-truncate me-3" style={{ flex: 1, minWidth: 0 }}>
                                             <i className="bi bi-file-earmark-text me-2"></i>
                                             <span className="text-truncate">{fileName}</span>
                                         </div>
-                                        <div>
+                                        <div className="d-flex gap-2 flex-shrink-0">
                                             <a
                                                 href={url}
                                                 target="_blank"
                                                 rel="noreferrer"
-                                                className="btn btn-sm btn-success me-3"
+                                                className="btn btn-sm btn-success"
                                                 download
+                                                title="Descargar"
                                             >
                                                 <i className="bi bi-cloud-download"></i>
                                             </a>
@@ -116,6 +117,7 @@ export const ReparacionDocumentos: React.FC<ReparacionDocumentosProps> = ({
                                                 <button
                                                     className="btn btn-sm btn-danger"
                                                     onClick={() => handleDeleteDocumento(url)}
+                                                    title="Eliminar"
                                                 >
                                                     <i className="bi bi-trash"></i>
                                                 </button>
