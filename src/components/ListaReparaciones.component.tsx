@@ -112,6 +112,11 @@ export default function ListaReparaciones(): JSX.Element {
             >
               <div className="d-flex w-100 justify-content-between">
                 <h5 className="mb-1">{modeloDroneName}</h5>
+                {reparacion.data.PresuFiRep && (
+                  <div className="text-end">
+                    <strong className="text-success">${reparacion.data.PresuFiRep.toLocaleString()}</strong>
+                  </div>
+                )}
               </div>
               <small>{reparacion.data?.NombreUsu || reparacion.data?.UsuarioRep}</small>
               {(() => {
