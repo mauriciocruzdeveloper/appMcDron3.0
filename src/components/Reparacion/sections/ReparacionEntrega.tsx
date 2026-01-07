@@ -1,6 +1,7 @@
 import React from "react";
 import { useAppSelector } from "../../../redux-tool-kit/hooks/useAppSelector";
 import { useAppDispatch } from "../../../redux-tool-kit/hooks/useAppDispatch";
+import { useModal } from "../../Modal/useModal";
 import { useDebouncedField } from "../../../hooks/useDebouncedField";
 import { 
     selectReparacionById, 
@@ -23,6 +24,7 @@ export const ReparacionEntrega: React.FC<ReparacionEntregaProps> = ({
     isAdmin 
 }) => {
     const dispatch = useAppDispatch();
+    const { openModal } = useModal();
     
     const reparacion = useAppSelector(state => selectReparacionById(reparacionId)(state));
     const seccionVisible = useAppSelector(state => 
@@ -82,12 +84,31 @@ export const ReparacionEntrega: React.FC<ReparacionEntregaProps> = ({
         }));
     };
 
-    const avanzarAFinalizado = () => {
-        dispatch(cambiarEstadoReparacionAsync({
+    const avanzarAFinalizado = async () => {
+        const response = await dispatch(cambiarEstadoReparacionAsync({
             reparacionId,
             nuevoEstado: 'Finalizado',
             enviarEmail: false
         }));
+
+        // Verificar si se usó la fecha de entrega como fallback para la fecha de finalización
+        if (response.meta.requestStatus === 'fulfilled') {
+            const payload = response.payload as { reparacion: any; usedDeliveryDateAsFallback: boolean };
+            
+            if (payload.usedDeliveryDateAsFallback) {
+                openModal({
+                    mensaje: "⚠️ La reparación no tenía fecha de finalización. Se ha usado la fecha de entrega como fecha de finalización automáticamente.",
+                    tipo: "warning",
+                    titulo: "Fecha de Finalización Ajustada",
+                });
+            } else {
+                openModal({
+                    mensaje: "Reparación finalizada correctamente.",
+                    tipo: "success",
+                    titulo: "Reparación Finalizada",
+                });
+            }
+        }
     };
 
     const avanzarAAbandonado = () => {

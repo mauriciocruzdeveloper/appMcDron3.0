@@ -579,6 +579,7 @@ export const cambiarEstadoReparacionAsync = createAsyncThunk(
       // Determinar el campo de fecha a actualizar
       type CampoFecha = 'FeConRep' | 'FeFinRep' | 'FeRecRep' | 'FeEntRep';
       let campoFecha: CampoFecha | null = null;
+      let usedDeliveryDateAsFallback = false;
       
       switch (nuevoEstado) {
         case "Consulta":
@@ -605,6 +606,25 @@ export const cambiarEstadoReparacionAsync = createAsyncThunk(
       // Setear fecha si corresponde y no está ya seteada
       if (campoFecha && !dataActualizada[campoFecha]) {
         dataActualizada[campoFecha] = new Date().getTime();
+      }
+
+      // ⚡ LÓGICA ESPECIAL PARA REPARADO: completion_date es OBLIGATORIA
+      if (nuevoEstado === 'Reparado' && !dataActualizada.FeFinRep) {
+        dataActualizada.FeFinRep = new Date().getTime();
+      }
+
+      // ⚡ LÓGICA ESPECIAL PARA FINALIZADO: completion_date y delivery_date son OBLIGATORIAS
+      if (nuevoEstado === 'Finalizado') {
+        // Asegurar que tiene delivery_date
+        if (!dataActualizada.FeEntRep) {
+          dataActualizada.FeEntRep = new Date().getTime();
+        }
+
+        // Si no tiene completion_date, usar delivery_date como fallback
+        if (!dataActualizada.FeFinRep) {
+          dataActualizada.FeFinRep = dataActualizada.FeEntRep;
+          usedDeliveryDateAsFallback = true;
+        }
       }
 
       let reparacionActualizada = {
@@ -643,7 +663,10 @@ export const cambiarEstadoReparacionAsync = createAsyncThunk(
       }
 
       dispatch(isFetchingComplete());
-      return reparacionGuardada;
+      return { 
+        reparacion: reparacionGuardada, 
+        usedDeliveryDateAsFallback 
+      };
     } catch (error: unknown) {
       dispatch(isFetchingComplete());
       return rejectWithValue(error);
