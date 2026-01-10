@@ -4,6 +4,7 @@ import { Provider } from "react-redux";
 
 import 'bootstrap/dist/css/bootstrap.min.css'
 import 'bootstrap/dist/js/bootstrap.min.js'
+import 'bootstrap-icons/font/bootstrap-icons.css'
 import './css/estilos.css';
 
 import dotenv from 'dotenv';
