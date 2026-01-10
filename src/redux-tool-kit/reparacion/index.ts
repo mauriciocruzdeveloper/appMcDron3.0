@@ -89,6 +89,13 @@ export {
   // Selectores para componentes específicos
   selectReparacionesPaginadas,
   selectReparacionesDashboard,
+  
+  // Nuevos selectores para lógica de negocio
+  selectTotalIntervenciones,
+  selectPuedeAvanzarA,
+  selectSeccionesVisibles,
+  selectPrecioManualDifiere,
+  selectResumenProgreso,
 } from './reparacion.selectors';
 
 // Re-exportar el reducer por defecto
