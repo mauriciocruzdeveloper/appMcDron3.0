@@ -21,6 +21,7 @@ import ListaIntervenciones from "../components/ListaIntervenciones.component";
 import IntervencionesReparacion from "../components/IntervencionesReparacion.component";
 import Intervencion from "../components/Intervencion.component";
 import Estadisticas from "../components/Estadisticas.component";
+import EstadisticasLocacion from "../components/EstadisticasLocacion.component";
 import EstadosLegacyManager from "../components/EstadosLegacyManager.component";
 import GaleriaReparaciones from "../components/GaleriaReparaciones.component";
 import AdminGuard from "../components/AdminGuard.component";
@@ -61,6 +62,7 @@ const InicioRoutes = ({ isLoggedIn, admin }) => {
                             <Route path="intervenciones/:id" element={<Intervencion />} />
                             <Route path="intervenciones-reparacion/:id" element={<IntervencionesReparacion />} />
                             <Route path="estadisticas" element={<Estadisticas />} />
+                            <Route path="estadisticas-locacion" element={<EstadisticasLocacion />} />
                             <Route path="galeria-reparaciones" element={<GaleriaReparaciones />} />
                             <Route path="estados-legacy" element={<EstadosLegacyManager />} />
                         </Routes>
