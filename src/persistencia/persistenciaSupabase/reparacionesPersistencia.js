@@ -342,6 +342,18 @@ export const getReparacionPersistencia = async (id) => {
       throw new Error('Reparación no encontrada');
     }
 
+    // Obtener las intervenciones asociadas a esta reparación
+    const { data: intervencionesData, error: intervencionesError } = await supabase
+      .from('repair_intervention')
+      .select('intervention_id')
+      .eq('repair_id', id);
+
+    if (intervencionesError) {
+      console.error('Error al obtener intervenciones de la reparación:', intervencionesError);
+    }
+
+    const intervencionesIds = intervencionesData ? intervencionesData.map(rel => String(rel.intervention_id)) : [];
+
     // Transformar al formato esperado por el frontend
     return {
       id: String(data.id),
@@ -374,7 +386,7 @@ export const getReparacionPersistencia = async (id) => {
         SeguimientoEntregaRep: data.delivery_tracking || '',
         urlsFotos: data.photo_urls || [],
         urlsDocumentos: data.document_urls || [],
-        IntervencionesIds: [],  // Obtendremos estos de otra consulta
+        IntervencionesIds: intervencionesIds,  // IDs de intervenciones asociadas
         FotoAntes: data.photo_before || undefined,  // Mapeo de BD a frontend
         FotoDespues: data.photo_after || undefined  // Mapeo de BD a frontend
       }

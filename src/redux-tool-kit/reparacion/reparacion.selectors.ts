@@ -153,10 +153,11 @@ export const selectReparacionesFiltradas = createSelector(
 );
 
 /**
- * Selector memoizado para reparaciones filtradas y ordenadas por prioridad de estado
+ * Selector memoizado para reparaciones filtradas y ordenadas por prioridad de estado y fecha
  * Combina filtrado y ordenamiento en una sola operación memoizada
+ * Primero ordena por prioridad, luego por fecha (más recientes primero) dentro de cada prioridad
  * Complejidad: O(n log n) solo cuando cambian las reparaciones, filtro o estados
- * @returns Array de reparaciones filtradas y ordenadas por prioridad de estado
+ * @returns Array de reparaciones filtradas y ordenadas por prioridad de estado y fecha
  */
 export const selectReparacionesFitradasYOrdenadas = createSelector(
   [selectReparacionesFiltradas],
@@ -164,7 +165,16 @@ export const selectReparacionesFitradasYOrdenadas = createSelector(
     return [...reparacionesFiltradas].sort((a, b) => {
       const prioridadA = estados[a.data.EstadoRep]?.prioridad || 999;
       const prioridadB = estados[b.data.EstadoRep]?.prioridad || 999;
-      return prioridadA - prioridadB;
+      
+      // Primero comparar por prioridad
+      if (prioridadA !== prioridadB) {
+        return prioridadA - prioridadB;
+      }
+      
+      // Si tienen la misma prioridad, ordenar por fecha (más recientes primero)
+      const fechaA = a.data.FeConRep || 0;
+      const fechaB = b.data.FeConRep || 0;
+      return fechaB - fechaA;
     });
   }
 );
