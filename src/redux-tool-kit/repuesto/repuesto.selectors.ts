@@ -227,11 +227,29 @@ export const selectRepuestosFaltantes = createSelector(
   [selectRepuestosArray, selectConteoUsoRepuestos],
   (repuestos, conteoUso) => {
     const repuestosFaltantes = repuestos.filter(repuesto => 
-      repuesto.data.StockRepu === 0 // Solo repuestos agotados
+      repuesto.data.StockRepu === 0 && (repuesto.data.UnidadesPedidas || 0) === 0 // Solo repuestos agotados (sin stock ni pedidos)
     );
     
     // Ordenar por cantidad de uso (de mayor a menor)
     return repuestosFaltantes
+      .map(repuesto => ({
+        ...repuesto,
+        vecesUsado: conteoUso[repuesto.id] || 0
+      }))
+      .sort((a, b) => b.vecesUsado - a.vecesUsado);
+  }
+);
+
+// Selector para repuestos en pedido ordenados por cantidad de uso
+export const selectRepuestosPedidos = createSelector(
+  [selectRepuestosArray, selectConteoUsoRepuestos],
+  (repuestos, conteoUso) => {
+    const repuestosPedidos = repuestos.filter(repuesto => 
+      (repuesto.data.UnidadesPedidas || 0) > 0 // Repuestos con unidades pedidas
+    );
+    
+    // Ordenar por cantidad de uso (de mayor a menor)
+    return repuestosPedidos
       .map(repuesto => ({
         ...repuesto,
         vecesUsado: conteoUso[repuesto.id] || 0
