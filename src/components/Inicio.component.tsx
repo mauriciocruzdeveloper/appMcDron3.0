@@ -9,7 +9,7 @@ import {
   selectReparacionesEnRepuestos,
   selectCantidadEnRepuestos
 } from '../redux-tool-kit/reparacion/reparacion.selectors';
-import { selectRepuestosFaltantes, selectModelosNombresByRepuestoId } from '../redux-tool-kit/repuesto/repuesto.selectors';
+import { selectRepuestosFaltantes, selectModelosNombresByRepuestoId, selectRepuestosPedidos } from '../redux-tool-kit/repuesto/repuesto.selectors';
 
 interface InicioProps {
   admin: boolean;
@@ -100,6 +100,53 @@ const RepuestoItem = ({ repuesto, onClick }: {
   );
 };
 
+// Componente para mostrar cada repuesto en pedido
+const RepuestoPedidoItem = ({ repuesto, onClick }: {
+  repuesto: any;
+  onClick: () => void;
+}) => {
+  const modelosNombres = useAppSelector(selectModelosNombresByRepuestoId(repuesto.id));
+  const vecesUsado = repuesto.vecesUsado || 0;
+
+  return (
+    <div
+      className='list-group-item list-group-item-action mb-2'
+      onClick={onClick}
+      style={{ cursor: 'pointer' }}
+    >
+      <div className='d-flex justify-content-between align-items-center'>
+        <div style={{ flex: 1 }}>
+          <h6 className='mb-1'>{repuesto.data.NombreRepu}</h6>
+          <p className='mb-1 text-muted'>{repuesto.data.ProveedorRepu}</p>
+          <small className='text-muted d-block'>
+            {modelosNombres.length > 0 ? modelosNombres.join(', ') : 'Sin modelos asignados'}
+          </small>
+          <div className='d-flex gap-2 mt-1'>
+            <small className='badge bg-warning text-dark'>
+              📦 {repuesto.data.UnidadesPedidas} {repuesto.data.UnidadesPedidas === 1 ? 'unidad pedida' : 'unidades pedidas'}
+            </small>
+            <small className={`badge ${vecesUsado > 0 ? 'bg-info text-dark' : 'bg-secondary'}`}>
+              {vecesUsado > 0 
+                ? `📊 Usado ${vecesUsado} ${vecesUsado === 1 ? 'vez' : 'veces'} en reparaciones`
+                : '⚪ No usado en reparaciones'
+              }
+            </small>
+          </div>
+        </div>
+        <span
+          className='badge ms-2'
+          style={{
+            backgroundColor: '#ffc107',
+            color: 'black'
+          }}
+        >
+          En Pedido
+        </span>
+      </div>
+    </div>
+  );
+};
+
 const Inicio = (props: InicioProps): React.ReactElement => {
   const { admin } = props;
   const history = useHistory();
@@ -109,7 +156,9 @@ const Inicio = (props: InicioProps): React.ReactElement => {
   const reparacionesEnRepuestos = useAppSelector(selectReparacionesEnRepuestos);
   const cantidadEnRepuestos = useAppSelector(selectCantidadEnRepuestos);
   const repuestosFaltantes = useAppSelector(selectRepuestosFaltantes);
+  const repuestosPedidos = useAppSelector(selectRepuestosPedidos);
   const [repuestosExpanded, setRepuestosExpanded] = React.useState(false);
+  const [repuestosPedidosExpanded, setRepuestosPedidosExpanded] = React.useState(false);
   const [repuestosReparacionExpanded, setRepuestosReparacionExpanded] = React.useState(false);
 
   console.log('INICIO');
@@ -140,14 +189,14 @@ const Inicio = (props: InicioProps): React.ReactElement => {
 
       {/* Sección de casos de uso */}
       <div className='mb-4'>
-        <h5 className='mb-3'>Casos de Uso</h5>
+        <h5 className='mb-3'>🎯 Casos de Uso</h5>
         {renderEstadoButton('Recibido', 'RECEPCIÓN')}
         {renderEstadoButton('Transito', 'DRONE EN TRÁNSITO')}
       </div>
 
       {/* Lista de reparaciones prioritarias */}
       <div className='mb-4'>
-        <h5 className='mb-3'>Reparaciones Prioritarias</h5>
+        <h5 className='mb-3'>⚡ Reparaciones Prioritarias</h5>
         {reparacionesPrioritarias.length > 0 ? (
           <div className='list-group'>
             {reparacionesPrioritarias.map(reparacion => {
@@ -235,13 +284,13 @@ const Inicio = (props: InicioProps): React.ReactElement => {
       </div>
 
       {/* Lista de repuestos agotados */}
-      <div>
+      <div className='mb-4'>
         <div
           className='d-flex justify-content-between align-items-center mb-3'
           onClick={() => setRepuestosExpanded(!repuestosExpanded)}
           style={{ cursor: 'pointer' }}
         >
-          <h5 className='mb-0'>Repuestos Agotados</h5>
+          <h5 className='mb-0'>🚫 Repuestos Agotados</h5>
           <div className='d-flex align-items-center'>
             {repuestosFaltantes.length > 0 && (
               <span className='badge bg-danger me-2'>{repuestosFaltantes.length}</span>
@@ -262,6 +311,38 @@ const Inicio = (props: InicioProps): React.ReactElement => {
             </div>
           ) : (
             <p className='text-muted'>No hay repuestos agotados</p>
+          )
+        )}
+      </div>
+
+      {/* Lista de repuestos en pedido */}
+      <div>
+        <div
+          className='d-flex justify-content-between align-items-center mb-3'
+          onClick={() => setRepuestosPedidosExpanded(!repuestosPedidosExpanded)}
+          style={{ cursor: 'pointer' }}
+        >
+          <h5 className='mb-0'>🚚 Repuestos en Pedido</h5>
+          <div className='d-flex align-items-center'>
+            {repuestosPedidos.length > 0 && (
+              <span className='badge bg-warning text-dark me-2'>{repuestosPedidos.length}</span>
+            )}
+            <i className={`bi bi-chevron-${repuestosPedidosExpanded ? 'up' : 'down'}`}></i>
+          </div>
+        </div>
+        {repuestosPedidosExpanded && (
+          repuestosPedidos.length > 0 ? (
+            <div className='list-group'>
+              {repuestosPedidos.map(repuesto => (
+                <RepuestoPedidoItem
+                  key={repuesto.id}
+                  repuesto={repuesto}
+                  onClick={() => history.push(`${match.path}/repuestos/${repuesto.id}`)}
+                />
+              ))}
+            </div>
+          ) : (
+            <p className='text-muted'>No hay repuestos en pedido</p>
           )
         )}
       </div>
