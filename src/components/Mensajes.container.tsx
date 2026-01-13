@@ -13,7 +13,7 @@ import { setEmailCliMessage, setEmailUsuMessage } from '../redux-tool-kit/mensaj
 export default function Mensajes(): JSX.Element {
   console.log('MENSAJES container');
   const dispatch = useAppDispatch();
-  const isAdmin = useAppSelector(state => state.app.usuario?.data.Admin);
+  const isAdmin = useAppSelector(state => state.app.usuario?.data.Role === 'admin');
   const coleccionMensajes = useAppSelector(state => state.mensaje.coleccionMensajes);
   const usuario = useAppSelector(state => state.app.usuario);
   const usuariosSelect = useAppSelector(state => state.usuario.usuariosSelect);

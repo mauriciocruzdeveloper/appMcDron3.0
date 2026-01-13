@@ -68,7 +68,7 @@ export const loginPersistencia = async (emailParametro, passwordParametro) => {
         DireccionUsu: '', // Este campo no existe en la tabla
         CiudadUsu: userData.city || '',
         ProvinciaUsu: userData.state || '',
-        Admin: userData.is_admin || false,
+        Role: userData.role || 'cliente',
         UrlPhotoUsu: userData.url_photo || ''
       }
     };

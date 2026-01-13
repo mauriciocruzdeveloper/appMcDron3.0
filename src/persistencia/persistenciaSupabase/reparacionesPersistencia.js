@@ -242,7 +242,7 @@ export const getReparacionesPersistencia = (setReparacionesToRedux, usuario) => 
       `);
 
       // Si el usuario no es administrador, filtrar por owner_id
-      if (!usuario?.data?.Admin) {
+      if (usuario?.data?.Role !== 'admin') {
         query = query.eq('owner_id', usuario.id);
       }
 

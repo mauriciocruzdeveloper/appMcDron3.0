@@ -9,7 +9,7 @@ export interface Registro {
     //   EmailUsu: string,
     //   ProvinciaUsu: string,
     //   CiudadUsu: string,
-    //   Admin: boolean,
+    //   Role: UserRole,
     //   Nick: string,
     //   TelefonoUsu: string,
     //   UrlFotoUsu: string

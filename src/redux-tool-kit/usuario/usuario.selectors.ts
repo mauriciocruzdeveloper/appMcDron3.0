@@ -191,13 +191,19 @@ export const selectUsuariosPorCiudad = createSelector(
 // Selector para usuarios administradores
 export const selectUsuariosAdmin = createSelector(
   [selectUsuariosArray],
-  (usuarios) => usuarios.filter(usuario => usuario.data.Admin === true)
+  (usuarios) => usuarios.filter(usuario => usuario.data.Role === 'admin')
 );
 
-// Selector para usuarios no administradores
+// Selector para usuarios no administradores (clientes + partners)
 export const selectUsuariosNoAdmin = createSelector(
   [selectUsuariosArray],
-  (usuarios) => usuarios.filter(usuario => usuario.data.Admin === false)
+  (usuarios) => usuarios.filter(usuario => usuario.data.Role !== 'admin')
+);
+
+// Selector para usuarios por rol
+export const selectUsuariosPorRole = createSelector(
+  [selectUsuariosArray, (state: RootState, role: string) => role],
+  (usuarios, role) => usuarios.filter(usuario => usuario.data.Role === role)
 );
 
 // Selector para estadísticas de usuarios
@@ -206,8 +212,10 @@ export const selectEstadisticasUsuarios = createSelector(
   (usuarios) => {
     const total = usuarios.length;
     
-    // Contar administradores
-    const administradores = usuarios.filter(u => u.data.Admin).length;
+    // Contar por rol
+    const administradores = usuarios.filter(u => u.data.Role === 'admin').length;
+    const clientes = usuarios.filter(u => u.data.Role === 'cliente').length;
+    const partners = usuarios.filter(u => u.data.Role === 'partner').length;
     const noAdministradores = total - administradores;
     
     // Agrupar por provincia
@@ -227,6 +235,8 @@ export const selectEstadisticasUsuarios = createSelector(
     return {
       total,
       administradores,
+      clientes,
+      partners,
       noAdministradores,
       porProvincia,
       porCiudad,

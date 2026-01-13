@@ -7,7 +7,7 @@ import { useAppSelector } from "../redux-tool-kit/hooks/useAppSelector";
 export default function Routes(): JSX.Element {
     console.log("ROUTES");
     const isLoggedIn = useAppSelector(state => state.app.isLoggedIn);
-    const isAdmin = useAppSelector(state => state.app.usuario?.data.Admin);
+    const isAdmin = useAppSelector(state => state.app.usuario?.data.Role === 'admin');
 
     return (<>
         <RouterRoutes>

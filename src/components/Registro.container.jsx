@@ -16,7 +16,7 @@ export default function Registro() {
   } = useModal();
 
   const INITIAL_REGISTRO_DATA = {
-    admin: false,
+    role: 'cliente',
     email: '',
     password: '',
     password2: '',
