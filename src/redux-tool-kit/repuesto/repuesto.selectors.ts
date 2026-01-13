@@ -201,21 +201,32 @@ export const selectRepuestosStockBajo = createSelector(
     )
 );
 
-// Selector para contar el uso de cada repuesto en las intervenciones de las reparaciones
+// Selector para contar el uso de cada repuesto en las reparaciones
+// Cuenta cuántas veces se usó cada repuesto en reparaciones reales (no solo en el catálogo de intervenciones)
 export const selectConteoUsoRepuestos = createSelector(
   [
+    (state: RootState) => state.reparacion.coleccionReparaciones,
     (state: RootState) => state.intervencion.coleccionIntervenciones,
   ],
-  (intervenciones) => {
+  (reparaciones, intervenciones) => {
     const conteoUso: { [repuestoId: string]: number } = {};
     
-    // Iterar sobre todas las intervenciones y contar los repuestos usados
-    Object.values(intervenciones).forEach((intervencion) => {
-      if (intervencion && intervencion.data.RepuestosIds) {
-        intervencion.data.RepuestosIds.forEach((repuestoId) => {
-          conteoUso[repuestoId] = (conteoUso[repuestoId] || 0) + 1;
-        });
-      }
+    // Iterar sobre todas las reparaciones
+    Object.values(reparaciones).forEach((reparacion) => {
+      const intervencionesIds = reparacion.data.IntervencionesIds || [];
+      
+      // Para cada intervención asociada a esta reparación
+      intervencionesIds.forEach((intervencionId) => {
+        const intervencion = intervenciones[intervencionId];
+        
+        // Si la intervención existe y tiene repuestos
+        if (intervencion && intervencion.data.RepuestosIds) {
+          // Contar cada repuesto usado en esta reparación
+          intervencion.data.RepuestosIds.forEach((repuestoId) => {
+            conteoUso[repuestoId] = (conteoUso[repuestoId] || 0) + 1;
+          });
+        }
+      });
     });
     
     return conteoUso;
@@ -227,11 +238,29 @@ export const selectRepuestosFaltantes = createSelector(
   [selectRepuestosArray, selectConteoUsoRepuestos],
   (repuestos, conteoUso) => {
     const repuestosFaltantes = repuestos.filter(repuesto => 
-      repuesto.data.StockRepu === 0 // Solo repuestos agotados
+      repuesto.data.StockRepu === 0 && (repuesto.data.UnidadesPedidas || 0) === 0 // Solo repuestos agotados (sin stock ni pedidos)
     );
     
     // Ordenar por cantidad de uso (de mayor a menor)
     return repuestosFaltantes
+      .map(repuesto => ({
+        ...repuesto,
+        vecesUsado: conteoUso[repuesto.id] || 0
+      }))
+      .sort((a, b) => b.vecesUsado - a.vecesUsado);
+  }
+);
+
+// Selector para repuestos en pedido ordenados por cantidad de uso
+export const selectRepuestosPedidos = createSelector(
+  [selectRepuestosArray, selectConteoUsoRepuestos],
+  (repuestos, conteoUso) => {
+    const repuestosPedidos = repuestos.filter(repuesto => 
+      (repuesto.data.UnidadesPedidas || 0) > 0 // Repuestos con unidades pedidas
+    );
+    
+    // Ordenar por cantidad de uso (de mayor a menor)
+    return repuestosPedidos
       .map(repuesto => ({
         ...repuesto,
         vecesUsado: conteoUso[repuesto.id] || 0
