@@ -17,6 +17,8 @@ export default function ListaUsuarios(): JSX.Element {
 
   return (
     <div className='p-4'>
+      <h2 className="mb-4">Usuarios</h2>
+
       <div className='card mb-3'>
         <div className='card-body'>
           <div className='form-group'>
@@ -31,8 +33,17 @@ export default function ListaUsuarios(): JSX.Element {
         </div>
       </div>
 
-      <div className="mb-2 text-muted">
-        {usuariosList.length} {usuariosList.length === 1 ? 'usuario' : 'usuarios'}
+      <div className="d-flex justify-content-between align-items-center mb-3">
+        <div className="text-muted">
+          {usuariosList.length} {usuariosList.length === 1 ? 'usuario' : 'usuarios'}
+        </div>
+
+        <button
+          className="btn w-auto bg-bluemcdron text-white"
+          onClick={() => history.push('/inicio/usuarios/new')}
+        >
+          + Nuevo Usuario
+        </button>
       </div>
 
       {usuariosList.length === 0 ? (
