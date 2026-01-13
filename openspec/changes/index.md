@@ -4,6 +4,25 @@ Este directorio contiene todas las propuestas de cambio estructuradas según el 
 
 ## 📋 Active Changes
 
+### `user-roles-system`
+**Status:** Draft  
+**Priority:** High  
+**Created:** 2026-01-13  
+**Estimated Effort:** 6-8 horas  
+
+Migrar de sistema binario Admin (boolean) a sistema de roles (admin, cliente, partner). Unifica nomenclatura Usuario/Cliente.
+
+- [📝 Proposal](./user-roles-system/proposal.md)
+- [🗄️ Database Spec](./user-roles-system/specs/database/spec.md)
+- [📊 SQL Migration](../../sql/migration_add_user_roles.sql)
+
+**Quick Actions:**
+- Revisar y aprobar propuesta
+- Ejecutar migración SQL en Supabase
+- Actualizar código TypeScript
+
+---
+
 ### `add-repuestos-state`
 **Status:** Draft  
 **Priority:** Medium  

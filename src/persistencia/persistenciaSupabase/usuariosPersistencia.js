@@ -16,7 +16,7 @@ export const getUsuariosPersistencia = async (setUsuariosToRedux) => {
           address,
           city,
           state,
-          is_admin
+          role
         `)
         .order('first_name');
 
@@ -33,7 +33,7 @@ export const getUsuariosPersistencia = async (setUsuariosToRedux) => {
           DireccionUsu: item?.address || '',
           CiudadUsu: item?.city || '',
           ProvinciaUsu: item?.state || '',
-          Admin: item?.is_admin || false
+          Role: item?.role || 'cliente'
         }
       }));
 
@@ -93,7 +93,7 @@ export const getClientePersistencia = async (id) => {
         DireccionUsu: data.address || '',
         CiudadUsu: data.city || '',
         ProvinciaUsu: data.state || '',
-        Admin: data.is_admin || false
+        Role: data.role || 'cliente'
       }
     };
   } catch (error) {
@@ -132,7 +132,7 @@ export const getClientePorEmailPersistencia = async (email) => {
         DireccionUsu: data.address || '',
         CiudadUsu: data.city || '',
         ProvinciaUsu: data.state || '',
-        Admin: data.is_admin || false
+        Role: data.role || 'cliente'
       }
     };
   } catch (error) {
@@ -153,7 +153,7 @@ export const guardarUsuarioPersistencia = async (usuario) => {
       address: usuario.data.DireccionUsu || '',
       city: usuario.data.CiudadUsu || '',
       state: usuario.data.ProvinciaUsu || '',
-      is_admin: usuario.data.Admin || false,
+      role: usuario.data.Role || 'cliente',
       nick: usuario.data.EmailUsu,
     };
 

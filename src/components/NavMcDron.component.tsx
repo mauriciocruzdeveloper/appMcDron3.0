@@ -14,7 +14,7 @@ export default function NavMcDron (): JSX.Element {
 
     const usuario = useAppSelector(state => state.app.usuario);
     const history = useHistory();
-    const admin = usuario?.data?.Admin;
+    const admin = usuario?.data?.Role === 'admin';
 
     const {
         openModal,

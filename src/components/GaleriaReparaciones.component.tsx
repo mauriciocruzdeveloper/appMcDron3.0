@@ -14,7 +14,7 @@ export default function GaleriaReparaciones(): JSX.Element {
     const [filtroEstado, setFiltroEstado] = useState<string>('todas');
     const [filtroFotos, setFiltroFotos] = useState<'todas' | 'sin-seleccion' | 'con-seleccion'>('todas');
     const reparaciones = useAppSelector(selectReparacionesArray);
-    const isAdmin = useAppSelector(state => state.app.usuario?.data.Admin) ?? false;
+    const isAdmin = useAppSelector(state => state.app.usuario?.data.Role === 'admin') ?? false;
     const navigate = useNavigate();
     const dispatch = useAppDispatch();
     const { openModal } = useModal();

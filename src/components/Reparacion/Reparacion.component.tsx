@@ -26,7 +26,7 @@ interface ParamTypes extends Record<string, string | undefined> {
 export default function ReparacionComponent(): React.ReactElement | null {
     console.log("REPARACION component");
 
-    const isAdmin = useAppSelector(state => state.app.usuario?.data.Admin) ?? false;
+    const isAdmin = useAppSelector(state => state.app.usuario?.data.Role === 'admin') ?? false;
     const { id } = useParams<ParamTypes>();
     const isNew = id === "new";
 
