@@ -29,16 +29,33 @@ export default function UsuarioComponent(): React.ReactElement | null {
 
     const { id } = useParams<ParamTypes>();
     
+    const isNew = id === 'new';
+    const usuarioStore = useAppSelector(state => 
+        isNew || !id ? null : selectUsuarioPorId(state, id || "")
+    );
+    
     const provinciasSelect = useAppSelector(state => state.usuario.provinciasSelect);
     const localidadesSelect = useAppSelector(state => state.usuario.localidadesSelect);
-    const usuarioStore = useAppSelector(state => selectUsuarioPorId(state, id || ""));
 
     // Obtener las reparaciones relacionadas con este usuario
     const reparacionesDelUsuario = useAppSelector(state => 
-        id ? selectReparacionesByUsuario(id)(state) : []
+        id && !isNew ? selectReparacionesByUsuario(id)(state) : []
     );
 
-    const [usuario, setUsuario] = useState<Usuario>();
+    const [usuario, setUsuario] = useState<Usuario>({
+        id: '',
+        data: {
+            NombreUsu: '',
+            TelefonoUsu: '',
+            ApellidoUsu: '',
+            EmailUsu: '',
+            ProvinciaUsu: '',
+            CiudadUsu: '',
+            Role: 'cliente',
+            Nick: '',
+            UrlFotoUsu: ''
+        }
+    });
 
     useEffect(() => {
         const inicializaFormulario = async () => {
@@ -51,8 +68,10 @@ export default function UsuarioComponent(): React.ReactElement | null {
                 }
             }
             
-            // Buscamos el usuario por ID directamente usando el selector
-            if (usuarioStore) {
+            // Si no es nuevo y hay un usuario en el store, lo cargamos
+            if (!isNew && id) {
+                if (!usuarioStore) return;
+                
                 setUsuario(usuarioStore);
                 
                 // Si el usuario tiene provincia, cargamos sus localidades
@@ -67,9 +86,7 @@ export default function UsuarioComponent(): React.ReactElement | null {
         };
 
         inicializaFormulario();
-    }, [dispatch, id, usuarioStore, provinciasSelect]);
-
-    if (!usuario) return null;
+    }, [dispatch, id, isNew, usuarioStore, provinciasSelect]);
 
     const changeInputUsu = (field: string, value: string) => {
         setUsuario({
@@ -294,6 +311,19 @@ export default function UsuarioComponent(): React.ReactElement | null {
                                <i className='bi bi-chat-left-text'></i>
                             </button>
                         </div>
+                    </div>
+                    <div>
+                        <label className='form-label'>Rol</label>
+                        <select 
+                            onChange={handleOnChange} 
+                            className='form-select' 
+                            id='Role'
+                            value={usuario?.data?.Role || 'cliente'}
+                        >
+                            <option value='cliente'>Cliente</option>
+                            <option value='partner'>Partner</option>
+                            <option value='admin'>Administrador</option>
+                        </select>
                     </div>
                     <div>
                         <label className='form-label'>Provincia</label>
