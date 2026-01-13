@@ -201,21 +201,32 @@ export const selectRepuestosStockBajo = createSelector(
     )
 );
 
-// Selector para contar el uso de cada repuesto en las intervenciones de las reparaciones
+// Selector para contar el uso de cada repuesto en las reparaciones
+// Cuenta cuántas veces se usó cada repuesto en reparaciones reales (no solo en el catálogo de intervenciones)
 export const selectConteoUsoRepuestos = createSelector(
   [
+    (state: RootState) => state.reparacion.coleccionReparaciones,
     (state: RootState) => state.intervencion.coleccionIntervenciones,
   ],
-  (intervenciones) => {
+  (reparaciones, intervenciones) => {
     const conteoUso: { [repuestoId: string]: number } = {};
     
-    // Iterar sobre todas las intervenciones y contar los repuestos usados
-    Object.values(intervenciones).forEach((intervencion) => {
-      if (intervencion && intervencion.data.RepuestosIds) {
-        intervencion.data.RepuestosIds.forEach((repuestoId) => {
-          conteoUso[repuestoId] = (conteoUso[repuestoId] || 0) + 1;
-        });
-      }
+    // Iterar sobre todas las reparaciones
+    Object.values(reparaciones).forEach((reparacion) => {
+      const intervencionesIds = reparacion.data.IntervencionesIds || [];
+      
+      // Para cada intervención asociada a esta reparación
+      intervencionesIds.forEach((intervencionId) => {
+        const intervencion = intervenciones[intervencionId];
+        
+        // Si la intervención existe y tiene repuestos
+        if (intervencion && intervencion.data.RepuestosIds) {
+          // Contar cada repuesto usado en esta reparación
+          intervencion.data.RepuestosIds.forEach((repuestoId) => {
+            conteoUso[repuestoId] = (conteoUso[repuestoId] || 0) + 1;
+          });
+        }
+      });
     });
     
     return conteoUso;

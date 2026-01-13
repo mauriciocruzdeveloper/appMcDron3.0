@@ -253,6 +253,29 @@ export const getReparacionesPersistencia = (setReparacionesToRedux, usuario) => 
 
       if (error) throw error;
 
+      // Obtener las intervenciones de todas las reparaciones en una sola consulta
+      const reparacionIds = data.map(item => item.id);
+      const { data: intervencionesData, error: intervencionesError } = await supabase
+        .from('repair_intervention')
+        .select('repair_id, intervention_id')
+        .in('repair_id', reparacionIds);
+
+      if (intervencionesError) {
+        console.error('Error al obtener intervenciones:', intervencionesError);
+      }
+
+      // Crear un mapa de reparación -> intervenciones
+      const intervencionesMap = {};
+      if (intervencionesData) {
+        intervencionesData.forEach(rel => {
+          const repairId = String(rel.repair_id);
+          if (!intervencionesMap[repairId]) {
+            intervencionesMap[repairId] = [];
+          }
+          intervencionesMap[repairId].push(String(rel.intervention_id));
+        });
+      }
+
       // Transformar los datos al formato esperado por el frontend
       const reparaciones = data.map(item => ({
         id: String(item.id),
@@ -285,7 +308,7 @@ export const getReparacionesPersistencia = (setReparacionesToRedux, usuario) => 
           SeguimientoEntregaRep: item.delivery_tracking || '',
           urlsFotos: item.photo_urls || [],
           urlsDocumentos: item.document_urls || [],
-          IntervencionesIds: [],  // Obtendremos estos de otra consulta
+          IntervencionesIds: intervencionesMap[String(item.id)] || [],  // IDs de intervenciones desde la tabla intermedia
           FotoAntes: item.photo_before || undefined,  // Mapeo de BD a frontend
           FotoDespues: item.photo_after || undefined,  // Mapeo de BD a frontend
           ObsRepuestos: item.parts_notes || undefined,  // Mapeo de BD a frontend - NUEVO
