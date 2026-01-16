@@ -41,8 +41,38 @@ export default function Registro() {
       });
       history.push("/login");
     } else {
+      // Extraer mensaje de error de forma segura
+      let errorMessage = 'Error desconocido en el registro';
+      
+      if (result.error) {
+        // Intentar extraer el mensaje del objeto de error
+        const errorObj = result.error.message;
+        
+        if (typeof errorObj === 'string') {
+          errorMessage = errorObj;
+        } else if (errorObj && typeof errorObj === 'object') {
+          // Si es un objeto, intentar extraer el mensaje
+          if (errorObj.error) {
+            errorMessage = errorObj.error;
+            // Si hay detalles, agregarlos
+            if (errorObj.details && errorObj.details.message) {
+              errorMessage += ': ' + errorObj.details.message;
+            }
+          } else if (errorObj.name) {
+            errorMessage = errorObj.name;
+          } else if (errorObj.message) {
+            errorMessage = errorObj.message;
+          } else {
+            // Como último recurso, convertir a JSON legible
+            errorMessage = JSON.stringify(errorObj, null, 2);
+          }
+        } else if (typeof result.error === 'string') {
+          errorMessage = result.error;
+        }
+      }
+      
       openModal({
-        mensaje: `Error de registro: ${result.error.message}`,
+        mensaje: `Error de registro:\n${errorMessage}`,
         titulo: 'Error',
         tipo: 'danger',
       });

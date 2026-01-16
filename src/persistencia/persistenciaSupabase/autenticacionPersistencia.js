@@ -85,23 +85,36 @@ export const loginPersistencia = async (emailParametro, passwordParametro) => {
 // Función para registrar usuario a través del endpoint API
 export const registroUsuarioEndpointPersistencia = async (registroData) => {
   try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 segundos
+    
     const response = await fetch(`${process.env.REACT_APP_API_URL}/registro_usuario`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(registroData)
+      body: JSON.stringify(registroData),
+      signal: controller.signal
     });
-
-    if (!response.ok) {
-      const errorData = await response.json();
-
-      throw new Error(errorData);
-    }
+    
+    clearTimeout(timeoutId);
 
     const data = await response.json();
+
+    // Validar si hay error en el JSON incluso con HTTP 200
+    if (!response.ok || data.error || data.code) {
+      const errorMessage = data.error || data.name || data.message || 'Error en el registro';
+      throw { 
+        code: data.code || 'registration_error',
+        message: errorMessage 
+      };
+    }
+
     return data;
   } catch (error) {
+    if (error.name === 'AbortError') {
+      throw { code: 'timeout', message: 'La solicitud ha excedido el tiempo de espera' };
+    }
     console.error('Error en registroUsuarioEndpointPersistencia:', error);
     throw error;
   }

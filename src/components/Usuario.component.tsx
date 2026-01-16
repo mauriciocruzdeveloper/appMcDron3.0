@@ -53,9 +53,12 @@ export default function UsuarioComponent(): React.ReactElement | null {
             CiudadUsu: '',
             Role: 'cliente',
             Nick: '',
-            UrlFotoUsu: ''
+            UrlFotoUsu: '',
+            PasswordUsu: ''
         }
     });
+    
+    const [confirmPassword, setConfirmPassword] = useState('');
 
     useEffect(() => {
         const inicializaFormulario = async () => {
@@ -98,11 +101,11 @@ export default function UsuarioComponent(): React.ReactElement | null {
         });
     };
 
-    const handleOnChange = (event: ChangeEvent<InputType>) => {
+    const handleOnChange = (event: ChangeEvent<InputType | HTMLSelectElement>) => {
         const target = event.target;
 
         let value = target.value;
-        if (target.type === 'date') {
+        if ('type' in target && target.type === 'date') {
             const anio = Number(target.value.substr(0, 4));
             const mes = Number(target.value.substr(5, 2)) - 1;
             const dia = Number(target.value.substr(8, 2));
@@ -113,13 +116,43 @@ export default function UsuarioComponent(): React.ReactElement | null {
     };
 
     const confirmaGuardarUsuario = async () => {
+        // Validar contraseñas para usuarios nuevos
+        if (isNew) {
+            if (!usuario.data.PasswordUsu || usuario.data.PasswordUsu.length < 6) {
+                openModal({
+                    mensaje: 'La contraseña debe tener al menos 6 caracteres',
+                    titulo: 'Error de validación',
+                    tipo: 'danger',
+                });
+                return;
+            }
+            
+            if (usuario.data.PasswordUsu !== confirmPassword) {
+                openModal({
+                    mensaje: 'Las contraseñas no coinciden',
+                    titulo: 'Error de validación',
+                    tipo: 'danger',
+                });
+                return;
+            }
+        }
+        
         const response = await dispatch(guardarUsuarioAsync(usuario));
         if (response.meta.requestStatus === 'fulfilled') {
+            const mensajeBase = isNew 
+                ? "Usuario creado correctamente.\n\nEl usuario puede iniciar sesión inmediatamente con las credenciales proporcionadas."
+                : "Usuario actualizado correctamente.";
+            
             openModal({
-                mensaje: "Usuario guardado correctamente.",
+                mensaje: mensajeBase,
                 tipo: "success",
-                titulo: "Guardar Usuario",
+                titulo: isNew ? "Crear Usuario" : "Actualizar Usuario",
             });
+            
+            if (isNew) {
+                // Redirigir a la lista de usuarios después de crear
+                setTimeout(() => history.goBack(), 2000);
+            }
         } else {
             openModal({
                 mensaje: "Error al guardar el usuario.",
@@ -273,6 +306,39 @@ export default function UsuarioComponent(): React.ReactElement | null {
                             </button>
                         </div>
                     </div>
+                    
+                    {isNew && (
+                        <>
+                            <div>
+                                <label className='form-label'>Contraseña</label>
+                                <input 
+                                    onChange={handleOnChange} 
+                                    type='password' 
+                                    className='form-control' 
+                                    id='PasswordUsu' 
+                                    value={usuario?.data?.PasswordUsu || ''}
+                                    placeholder='Mínimo 6 caracteres'
+                                    required
+                                />
+                                <small className='form-text text-muted'>
+                                    Mínimo 6 caracteres
+                                </small>
+                            </div>
+                            <div>
+                                <label className='form-label'>Confirmar Contraseña</label>
+                                <input 
+                                    onChange={(e) => setConfirmPassword(e.target.value)} 
+                                    type='password' 
+                                    className='form-control' 
+                                    id='ConfirmPasswordUsu' 
+                                    value={confirmPassword}
+                                    placeholder='Repita la contraseña'
+                                    required
+                                />
+                            </div>
+                        </>
+                    )}
+                    
                     <div>
                         <label className='form-label'>Nombre</label>
                         <input 
