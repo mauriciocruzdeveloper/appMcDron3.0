@@ -71,7 +71,7 @@ export default function Presupuesto(): JSX.Element {
     const provinciasSelect = useAppSelector(state => state.usuario.provinciasSelect);
     const usuariosSelect = useAppSelector(state => state.usuario.usuariosSelect);
     const modelosDroneSelect = useAppSelector(selectModelosDroneSelect);
-    const isAdmin = useMemo(() => usuario?.data?.Admin, [usuario]);
+    const isAdmin = useMemo(() => usuario?.data?.Role === 'admin', [usuario]);
     
     const dateNow = Date.now();
     
@@ -138,8 +138,11 @@ export default function Presupuesto(): JSX.Element {
     };
 
     const initForm = useCallback(async () => {
-        !usuario?.data?.Admin && usuario
-            ? setPresupuesto({
+        const userRole = usuario?.data?.Role;
+        const isCliente = userRole === 'cliente' || userRole === 'partner';
+        
+        if (isCliente && usuario) {
+            setPresupuesto({
                 ...presupuesto,
                 EmailUsu: usuario.data?.EmailUsu || "",
                 NombreUsu: usuario.data?.NombreUsu || "",
@@ -147,8 +150,8 @@ export default function Presupuesto(): JSX.Element {
                 TelefonoUsu: usuario.data?.TelefonoUsu || "",
                 ProvinciaUsu: usuario.data?.ProvinciaUsu || "",
                 CiudadUsu: usuario.data?.CiudadUsu || "",
-            })
-            : null;
+            });
+        }
         await dispatch(getProvinciasSelect());
     }, [usuario]);
 
