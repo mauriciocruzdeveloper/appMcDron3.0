@@ -4,6 +4,7 @@ import { ArrowLeftShort, List } from 'react-bootstrap-icons';
 import { useHistory } from '../hooks/useHistory';
 import { logout } from "../redux-tool-kit/app/app.slice";
 import { useAppSelector } from "../redux-tool-kit/hooks/useAppSelector";
+import { useAppDispatch } from "../redux-tool-kit/hooks/useAppDispatch";
 import { useModal } from './Modal/useModal';
 import { notificacionesPorMensajesPersistencia } from '../persistencia/persistencia';
 import '../styles/navbar.css'; // Importa el archivo CSS
@@ -13,6 +14,7 @@ export default function NavMcDron (): JSX.Element {
     console.log("NavMcDron");
 
     const usuario = useAppSelector(state => state.app.usuario);
+    const dispatch = useAppDispatch();
     const history = useHistory();
     const admin = usuario?.data?.Role === 'admin';
 
@@ -25,7 +27,7 @@ export default function NavMcDron (): JSX.Element {
 
     const confirmaDesloguearse = () => {
         localStorage.removeItem('loginData');
-        logout();
+        dispatch(logout());
     }
         
     const handleBack = () => {
