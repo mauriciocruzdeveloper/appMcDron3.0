@@ -62,6 +62,10 @@ export {
   selectReparacionesByUsuario,
   selectReparacionesByEmail,
   
+  // Control de acceso por rol
+  selectReparacionesByRole,
+  selectCanEditReparacion,
+  
   // Selectores de filtrado por drone
   selectReparacionesByDrone,
   selectReparacionesByNumeroSerie,

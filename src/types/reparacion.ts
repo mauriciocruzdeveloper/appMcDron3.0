@@ -5,7 +5,7 @@ export interface DataReparacion {
     FeConRep: number | null;
     ModeloDroneNameRep: string;
     DescripcionUsuRep: string;
-    UsuarioRep: string;
+    UsuarioRep: string; // ID del usuario propietario (owner_id en BD)
     NombreUsu?: string;
     EmailUsu?: string;
     TelefonoUsu?: string;

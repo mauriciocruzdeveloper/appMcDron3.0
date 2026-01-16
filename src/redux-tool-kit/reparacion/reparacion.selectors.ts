@@ -881,3 +881,56 @@ export const selectResumenProgreso = (reparacionId: string) =>
       };
     }
   );
+
+// ============================================================================
+// SELECTORES CON CONTROL DE ACCESO POR ROL
+// ============================================================================
+
+/**
+ * Selector para obtener reparaciones según el rol del usuario
+ * - ADMIN: Ve todas las reparaciones
+ * - PARTNER: Ve solo sus reparaciones (las que refirió)
+ * - CLIENTE: Ve solo sus reparaciones
+ * @returns Array de reparaciones según permisos del usuario
+ */
+export const selectReparacionesByRole = createSelector(
+  [
+    selectReparacionesArray,
+    (state: RootState) => state.app.usuario?.data.Role,
+    (state: RootState) => state.app.usuario?.id
+  ],
+  (reparaciones, role, userId): ReparacionType[] => {
+    // Admin ve todas las reparaciones
+    if (role === 'admin') {
+      return reparaciones;
+    }
+
+    console.log('User Role:', role, 'User ID:', userId);
+    
+    // Cliente y Partner solo ven sus propias reparaciones (filtradas por UsuarioRep)
+    if (userId) {
+      return reparaciones.filter(reparacion => reparacion.data.UsuarioRep === userId);
+    }
+    
+    return [];
+  }
+);
+
+/**
+ * Selector para verificar si el usuario tiene permisos para editar una reparación
+ * @param reparacionId - ID de la reparación
+ * @returns Función selector que retorna true si el usuario puede editar
+ */
+export const selectCanEditReparacion = (reparacionId: string) =>
+  createSelector(
+    [
+      (state: RootState) => selectReparacionById(reparacionId)(state),
+      (state: RootState) => state.app.usuario?.data.Role
+    ],
+    (reparacion, role): boolean => {
+      if (!reparacion) return false;
+      
+      // Solo admin puede editar
+      return role === 'admin';
+    }
+  );
