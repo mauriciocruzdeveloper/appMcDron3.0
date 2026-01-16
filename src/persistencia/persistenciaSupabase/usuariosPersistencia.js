@@ -1,4 +1,5 @@
 import { supabase } from './supabaseClient.js';
+import { registroUsuarioEndpointPersistencia } from './autenticacionPersistencia.js';
 
 // GET todos los usuarios con suscripción en tiempo real
 export const getUsuariosPersistencia = async (setUsuariosToRedux) => {
@@ -160,7 +161,7 @@ export const guardarUsuarioPersistencia = async (usuario) => {
     let result;
 
     if (usuario.id) {
-      // Actualización
+      // Actualización - Usuario existente
       const { data, error } = await supabase
         .from('user')
         .update(userData)
@@ -173,18 +174,35 @@ export const guardarUsuarioPersistencia = async (usuario) => {
       // En lugar de actualizar los datos en las reparaciones, confiar en las relaciones
       // y joins para obtener la información actualizada del usuario
     } else {
-      // Inserción
-      const { data, error } = await supabase
-        .from('user')
-        .insert({
-          ...userData,
-          // Adicional para nuevos usuarios
-          created_at: new Date()
-        })
-        .select();
+      // Inserción - Usuario nuevo: usar endpoint de registro
+      // Esto crea tanto la autenticación como el registro en la tabla user
+      
+      const registroData = {
+        email: usuario.data.EmailUsu,
+        password: usuario.data.PasswordUsu,
+        role: usuario.data.Role || 'cliente',
+        NombreUsu: usuario.data.NombreUsu || '',
+        ApellidoUsu: usuario.data.ApellidoUsu || '',
+        TelefonoUsu: usuario.data.TelefonoUsu || '',
+        ProvinciaUsu: usuario.data.ProvinciaUsu || '',
+        CiudadUsu: usuario.data.CiudadUsu || '',
+        UrlPhotoUsu: usuario.data.UrlFotoUsu || '',
+        created_by_admin: true // Indicar que lo crea un admin
+      };
 
-      if (error) throw error;
-      result = data[0];
+      // Llamar al endpoint de registro (devuelve el usuario creado con Prefer: return=representation)
+      await registroUsuarioEndpointPersistencia(registroData);
+      
+      // El backend ya devuelve el usuario creado, lo obtenemos para estar seguros
+      const { data: userCreated, error: getUserError } = await supabase
+        .from('user')
+        .select('*')
+        .eq('email', usuario.data.EmailUsu)
+        .single();
+
+      if (getUserError) throw getUserError;
+      
+      result = userCreated;
     }
 
     return {

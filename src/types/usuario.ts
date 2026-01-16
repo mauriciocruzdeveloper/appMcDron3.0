@@ -12,7 +12,8 @@ export interface Usuario {
       CiudadUsu?: string,     // city en Supabase
       Role: UserRole,         // role en Supabase
       Nick?: string,          // nick en Supabase
-      UrlFotoUsu?: string     // url_photo en Supabase
+      UrlFotoUsu?: string,    // url_photo en Supabase
+      PasswordUsu?: string    // Solo para crear nuevos usuarios
     };
 }
 
