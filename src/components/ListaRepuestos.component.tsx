@@ -99,10 +99,16 @@ export default function ListaRepuestos(): JSX.Element {
     };
 
     return (
-        <div className='p-4'>
-            <h2 className="mb-4">Repuestos</h2>
+        <div className='d-flex flex-column' style={{ height: '100vh' }}>
+            {/* Header fijo */}
+            <div className='p-4 pb-2 bg-white border-bottom' style={{ position: 'sticky', top: 0, zIndex: 100 }}>
+                <h3 className='mb-0'>Repuestos</h3>
+            </div>
 
-            <div className='card mb-3'>
+            {/* Contenido con scroll */}
+            <div className='flex-grow-1 overflow-auto'>
+                <div className='p-4 pt-3'>
+                    <div className='card mb-3'>
                 <div className='card-body'>
                     <div className='form-group'>
                         <input
@@ -242,6 +248,8 @@ export default function ListaRepuestos(): JSX.Element {
                     );
                 })
             )}
+                </div>
+            </div>
         </div>
     );
 }

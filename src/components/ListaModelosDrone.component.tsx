@@ -76,75 +76,83 @@ export default function ListaModelosDrone(): JSX.Element {
     };
 
     return (
-        <div className='p-4'>
-            <h2 className="mb-4">Modelos de Drone</h2>
-            
-            <div className='card mb-3'>
-                <div className='card-body'>
-                    <div className='form-group'>
-                        <input
-                            type='text'
-                            className='form-control'
-                            placeholder='Buscar modelos de drone...'
-                            value={filter}
-                            onChange={handleSearchChange}
-                        />
-                    </div>
-                </div>
+        <div className='d-flex flex-column' style={{ height: '100vh' }}>
+            {/* Header fijo */}
+            <div className='p-4 pb-2 bg-white border-bottom' style={{ position: 'sticky', top: 0, zIndex: 100 }}>
+                <h3 className='mb-0'>Modelos de Drone</h3>
             </div>
 
-            <div className="d-flex justify-content-between align-items-center mb-3">
-                <div className="text-muted">
-                    {mostrandoMock ?
-                        <span>Mostrando {modelosList.length} modelos de ejemplo <span className="badge bg-warning text-dark">DATOS DE EJEMPLO</span></span> :
-                        <span>{modelosList.length} {modelosList.length === 1 ? 'modelo' : 'modelos'}</span>
-                    }
-                </div>
-                
-                <button
-                    className="btn w-auto bg-bluemcdron text-white"
-                    onClick={() => history.push('/inicio/modelos-drone/new')}
-                >
-                    <i className="bi bi-plus-circle me-1"></i> Nuevo Modelo
-                </button>
-            </div>
-
-            {modelosList.length === 0 ? (
-                <div className="alert alert-info text-center" role="alert">
-                    No hay modelos disponibles. ¡Agregue un nuevo modelo!
-                </div>
-            ) : (
-                modelosList.map(modelo => (
-                    <div
-                        key={modelo.id}
-                        className={`card mb-3 ${mostrandoMock && modelo.id.startsWith('mock') ? 'bg-light' : ''}`}
-                        aria-current='true'
-                        onClick={() => history.push(`/inicio/modelos-drone/${modelo.id}`)}
-                        style={{ cursor: 'pointer' }}
-                    >
-                        <div className='card-body p-3'>
-                            <div className='d-flex w-100 justify-content-between'>
-                                <h5 className='mb-1'>{modelo.data.NombreModelo}</h5>
-                                <span className='badge bg-bluemcdron'>{formatPrice(modelo.data.PrecioReferencia)}</span>
+            {/* Contenido con scroll */}
+            <div className='flex-grow-1 overflow-auto'>
+                <div className='p-4 pt-3'>
+                    <div className='card mb-3'>
+                        <div className='card-body'>
+                            <div className='form-group'>
+                                <input
+                                    type='text'
+                                    className='form-control'
+                                    placeholder='Buscar modelos de drone...'
+                                    value={filter}
+                                    onChange={handleSearchChange}
+                                />
                             </div>
-                            <div>
-                                <small className='text-muted'>{modelo.data.Fabricante}</small>
-                                {modelo.data.code && (
-                                    <span className='badge bg-secondary ms-2'>{modelo.data.code}</span>
-                                )}
-                            </div>
-                            <div>
-                                <small className='text-muted'>{modelo.data.DescripcionModelo}</small>
-                            </div>
-                            {mostrandoMock && modelo.id.startsWith('mock') && (
-                                <div className="mt-2">
-                                    <span className="badge bg-secondary">Ejemplo</span>
-                                </div>
-                            )}
                         </div>
                     </div>
-                ))
-            )}
+
+                    <div className="d-flex justify-content-between align-items-center mb-3">
+                        <div className="text-muted">
+                            {mostrandoMock ?
+                                <span>Mostrando {modelosList.length} modelos de ejemplo <span className="badge bg-warning text-dark">DATOS DE EJEMPLO</span></span> :
+                                <span>{modelosList.length} {modelosList.length === 1 ? 'modelo' : 'modelos'}</span>
+                            }
+                        </div>
+                        
+                        <button
+                            className="btn w-auto bg-bluemcdron text-white"
+                            onClick={() => history.push('/inicio/modelos-drone/new')}
+                        >
+                            <i className="bi bi-plus-circle me-1"></i> Nuevo Modelo
+                        </button>
+                    </div>
+
+                    {modelosList.length === 0 ? (
+                        <div className="alert alert-info text-center" role="alert">
+                            No hay modelos disponibles. ¡Agregue un nuevo modelo!
+                        </div>
+                    ) : (
+                        modelosList.map(modelo => (
+                            <div
+                                key={modelo.id}
+                                className={`card mb-3 ${mostrandoMock && modelo.id.startsWith('mock') ? 'bg-light' : ''}`}
+                                aria-current='true'
+                                onClick={() => history.push(`/inicio/modelos-drone/${modelo.id}`)}
+                                style={{ cursor: 'pointer' }}
+                            >
+                                <div className='card-body p-3'>
+                                    <div className='d-flex w-100 justify-content-between'>
+                                        <h5 className='mb-1'>{modelo.data.NombreModelo}</h5>
+                                        <span className='badge bg-bluemcdron'>{formatPrice(modelo.data.PrecioReferencia)}</span>
+                                    </div>
+                                    <div>
+                                        <small className='text-muted'>{modelo.data.Fabricante}</small>
+                                        {modelo.data.code && (
+                                            <span className='badge bg-secondary ms-2'>{modelo.data.code}</span>
+                                        )}
+                                    </div>
+                                    <div>
+                                        <small className='text-muted'>{modelo.data.DescripcionModelo}</small>
+                                    </div>
+                                    {mostrandoMock && modelo.id.startsWith('mock') && (
+                                        <div className="mt-2">
+                                            <span className="badge bg-secondary">Ejemplo</span>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        ))
+                    )}
+                </div>
+            </div>
         </div>
     );
 }
