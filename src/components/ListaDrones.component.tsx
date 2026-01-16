@@ -30,53 +30,59 @@ export default function ListaDrones(): JSX.Element {
     };
 
     return (
-        <div className='p-4'>
-            <h2 className="mb-4">Drones</h2>
-            
-            <div className='card mb-3'>
-                <div className='card-body'>
-                    <div className='form-group'>
-                        <input
-                            type='text'
-                            className='form-control'
-                            placeholder='Buscar drones...'
-                            value={filter}
-                            onChange={handleSearchChange}
-                        />
-                    </div>
-                </div>
+        <div className='d-flex flex-column' style={{ height: '100vh' }}>
+            {/* Header fijo */}
+            <div className='p-4 pb-2 bg-white border-bottom' style={{ position: 'sticky', top: 0, zIndex: 100 }}>
+                <h3 className='mb-0'>Drones</h3>
             </div>
 
-            <div className="d-flex justify-content-between align-items-center mb-3">
-                <div className="text-muted">
-                    <span>{dronesList.length} {dronesList.length === 1 ? 'drone' : 'drones'}</span>
-                </div>
-                
-                <button
-                    className="btn w-auto bg-bluemcdron text-white"
-                    onClick={() => history.push('/inicio/drones/new')}
-                >
-                    <i className="bi bi-plus-circle me-1"></i> Nuevo Drone
-                </button>
-            </div>
-
-            {dronesList.length === 0 ? (
-                <div className="alert alert-info text-center" role="alert">
-                    No hay elementos en la lista.
-                </div>
-            ) : (
-                dronesList.map(drone => (
-                    <div
-                        key={drone.id}
-                        className='card mb-3'
-                        aria-current='true'
-                        onClick={() => history.push(`/inicio/drones/${drone.id}`)}
-                        style={{ cursor: 'pointer' }}
-                    >
-                        <div className='card-body p-3'>
-                            <div className='d-flex w-100 justify-content-between'>
-                                <h5 className='mb-1'>{getModeloDroneName(drone.data.ModeloDroneId)}</h5>
+            {/* Contenido con scroll */}
+            <div className='flex-grow-1 overflow-auto'>
+                <div className='p-4 pt-3'>
+                    <div className='card mb-3'>
+                        <div className='card-body'>
+                            <div className='form-group'>
+                                <input
+                                    type='text'
+                                    className='form-control'
+                                    placeholder='Buscar drones...'
+                                    value={filter}
+                                    onChange={handleSearchChange}
+                                />
                             </div>
+                        </div>
+                    </div>
+
+                    <div className="d-flex justify-content-between align-items-center mb-3">
+                        <div className="text-muted">
+                            <span>{dronesList.length} {dronesList.length === 1 ? 'drone' : 'drones'}</span>
+                        </div>
+                        
+                        <button
+                            className="btn w-auto bg-bluemcdron text-white"
+                            onClick={() => history.push('/inicio/drones/new')}
+                        >
+                            <i className="bi bi-plus-circle me-1"></i> Nuevo Drone
+                        </button>
+                    </div>
+
+                    {dronesList.length === 0 ? (
+                        <div className="alert alert-info text-center" role="alert">
+                            No hay elementos en la lista.
+                        </div>
+                    ) : (
+                        dronesList.map(drone => (
+                            <div
+                                key={drone.id}
+                                className='card mb-3'
+                                aria-current='true'
+                                onClick={() => history.push(`/inicio/drones/${drone.id}`)}
+                                style={{ cursor: 'pointer' }}
+                            >
+                                <div className='card-body p-3'>
+                                    <div className='d-flex w-100 justify-content-between'>
+                                        <h5 className='mb-1'>{getModeloDroneName(drone.data.ModeloDroneId)}</h5>
+                                    </div>
                             <div>
                                 <small className='text-muted'>
                                   {(() => {
@@ -95,6 +101,8 @@ export default function ListaDrones(): JSX.Element {
                     </div>
                 ))
             )}
+                </div>
+            </div>
         </div>
     );
 }
