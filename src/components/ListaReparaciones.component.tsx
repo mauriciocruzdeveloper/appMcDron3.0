@@ -5,6 +5,7 @@ import { useAppSelector } from "../redux-tool-kit/hooks/useAppSelector";
 import { useAppDispatch } from "../redux-tool-kit/hooks/useAppDispatch";
 import { 
   selectReparacionesFitradasYOrdenadas,
+  selectReparacionesByRole,
   selectReparacionFilter,
   setFilter 
 } from "../redux-tool-kit/reparacion";
@@ -15,7 +16,14 @@ export default function ListaReparaciones(): JSX.Element {
   const dispatch = useAppDispatch();
   const history = useHistory();
   
-  const reparacionesList = useAppSelector(selectReparacionesFitradasYOrdenadas);
+  const userRole = useAppSelector(state => state.app.usuario?.data.Role || 'cliente');
+  
+  // Si es admin, usa el selector filtrado normal, si no, usa el selector con control de acceso
+  const reparacionesByAccess = useAppSelector(selectReparacionesByRole);
+  const reparacionesFiltered = useAppSelector(selectReparacionesFitradasYOrdenadas);
+  
+  // Admin ve las filtradas (con filtros de prioridad, etc), cliente/partner ven solo las suyas
+  const reparacionesList = userRole === 'admin' ? reparacionesFiltered : reparacionesByAccess;
   const filter = useAppSelector(selectReparacionFilter);
   const modelosDrone = useAppSelector(selectModelosDroneArray);
   const modelosDroneDictionary = useAppSelector(selectColeccionModelosDrone);

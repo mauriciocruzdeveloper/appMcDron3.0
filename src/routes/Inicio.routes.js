@@ -24,11 +24,14 @@ import Estadisticas from "../components/Estadisticas.component";
 import EstadisticasLocacion from "../components/EstadisticasLocacion.component";
 import EstadosLegacyManager from "../components/EstadosLegacyManager.component";
 import GaleriaReparaciones from "../components/GaleriaReparaciones.component";
-import AdminGuard from "../components/AdminGuard.component";
+import RoleGuard from "../components/RoleGuard.component";
+import { useAppSelector } from "../redux-tool-kit/hooks/useAppSelector";
 
 const InicioRoutes = ({ isLoggedIn, admin }) => {
 
     console.log("INICIO ROUTES");
+    
+    const userRole = useAppSelector(state => state.app.usuario?.data.Role || 'cliente');
 
     // render renderiza una vez y luego queda en segundo plano
     // component instancia el componenete cada vez
@@ -38,35 +41,92 @@ const InicioRoutes = ({ isLoggedIn, admin }) => {
             {/* TODO: Verificar si Nav debe ir acá, quizás en App */}
             <NavMcDron /> 
             <Routes>
-                {/* Rutas públicas */}
+                {/* Rutas accesibles para todos los usuarios autenticados */}
+                <Route index element={<Inicio admin={admin}/>} />
+                <Route path="reparaciones" element={<ListaReparaciones admin={admin}/>} />
+                <Route path="reparaciones/:id" element={<Reparacion admin={admin}/>} />
+                <Route path="mensajes" element={<Mensajes admin={admin}/>} />
                 
-                
-                {/* Rutas protegidas con AdminGuard */}
-                <Route path="*" element={
-                    <AdminGuard admin={admin}>
-                        <Routes>
-                            <Route index element={<Inicio admin={admin}/>} />
-                            <Route path="presupuesto" element={<Presupuesto admin={admin}/>} />
-                            <Route path="reparaciones" element={<ListaReparaciones admin={admin}/>} />
-                            <Route path="reparaciones/:id" element={<Reparacion admin={admin}/>} />
-                            <Route path="usuarios" element={<ListaUsuarios />} />
-                            <Route path="usuarios/:id" element={<Usuario/>} />
-                            <Route path="mensajes" element={<Mensajes admin={admin}/>} />
-                            <Route path="repuestos" element={<ListaRepuestos admin={admin}/>} />
-                            <Route path="repuestos/:id" element={<Repuesto />} />
-                            <Route path="modelos-drone" element={<ListaModelosDrone />} />
-                            <Route path="modelos-drone/:id" element={<ModeloDrone />} />
-                            <Route path="drones" element={<ListaDrones />} />
-                            <Route path="drones/:id" element={<Drone />} />
-                            <Route path="intervenciones" element={<ListaIntervenciones />} />
-                            <Route path="intervenciones/:id" element={<Intervencion />} />
-                            <Route path="intervenciones-reparacion/:id" element={<IntervencionesReparacion />} />
-                            <Route path="estadisticas" element={<Estadisticas />} />
-                            <Route path="estadisticas-locacion" element={<EstadisticasLocacion />} />
-                            <Route path="galeria-reparaciones" element={<GaleriaReparaciones />} />
-                            <Route path="estados-legacy" element={<EstadosLegacyManager />} />
-                        </Routes>
-                    </AdminGuard>
+                {/* Rutas solo para ADMIN */}
+                <Route path="usuarios" element={
+                    <RoleGuard allowedRoles={['admin']} userRole={userRole}>
+                        <ListaUsuarios />
+                    </RoleGuard>
+                } />
+                <Route path="usuarios/:id" element={
+                    <RoleGuard allowedRoles={['admin']} userRole={userRole}>
+                        <Usuario/>
+                    </RoleGuard>
+                } />
+                <Route path="presupuesto" element={
+                    <RoleGuard allowedRoles={['admin']} userRole={userRole}>
+                        <Presupuesto admin={admin}/>
+                    </RoleGuard>
+                } />
+                <Route path="repuestos" element={
+                    <RoleGuard allowedRoles={['admin']} userRole={userRole}>
+                        <ListaRepuestos admin={admin}/>
+                    </RoleGuard>
+                } />
+                <Route path="repuestos/:id" element={
+                    <RoleGuard allowedRoles={['admin']} userRole={userRole}>
+                        <Repuesto />
+                    </RoleGuard>
+                } />
+                <Route path="modelos-drone" element={
+                    <RoleGuard allowedRoles={['admin']} userRole={userRole}>
+                        <ListaModelosDrone />
+                    </RoleGuard>
+                } />
+                <Route path="modelos-drone/:id" element={
+                    <RoleGuard allowedRoles={['admin']} userRole={userRole}>
+                        <ModeloDrone />
+                    </RoleGuard>
+                } />
+                <Route path="drones" element={
+                    <RoleGuard allowedRoles={['admin']} userRole={userRole}>
+                        <ListaDrones />
+                    </RoleGuard>
+                } />
+                <Route path="drones/:id" element={
+                    <RoleGuard allowedRoles={['admin']} userRole={userRole}>
+                        <Drone />
+                    </RoleGuard>
+                } />
+                <Route path="intervenciones" element={
+                    <RoleGuard allowedRoles={['admin']} userRole={userRole}>
+                        <ListaIntervenciones />
+                    </RoleGuard>
+                } />
+                <Route path="intervenciones/:id" element={
+                    <RoleGuard allowedRoles={['admin']} userRole={userRole}>
+                        <Intervencion />
+                    </RoleGuard>
+                } />
+                <Route path="intervenciones-reparacion/:id" element={
+                    <RoleGuard allowedRoles={['admin']} userRole={userRole}>
+                        <IntervencionesReparacion />
+                    </RoleGuard>
+                } />
+                <Route path="estadisticas" element={
+                    <RoleGuard allowedRoles={['admin']} userRole={userRole}>
+                        <Estadisticas />
+                    </RoleGuard>
+                } />
+                <Route path="estadisticas-locacion" element={
+                    <RoleGuard allowedRoles={['admin']} userRole={userRole}>
+                        <EstadisticasLocacion />
+                    </RoleGuard>
+                } />
+                <Route path="galeria-reparaciones" element={
+                    <RoleGuard allowedRoles={['admin']} userRole={userRole}>
+                        <GaleriaReparaciones />
+                    </RoleGuard>
+                } />
+                <Route path="estados-legacy" element={
+                    <RoleGuard allowedRoles={['admin']} userRole={userRole}>
+                        <EstadosLegacyManager />
+                    </RoleGuard>
                 } />
             </Routes>
         </DataManagerComponent>

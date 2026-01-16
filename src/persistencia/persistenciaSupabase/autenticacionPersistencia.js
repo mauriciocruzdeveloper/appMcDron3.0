@@ -59,7 +59,7 @@ export const loginPersistencia = async (emailParametro, passwordParametro) => {
 
     // Construir el objeto usuario como lo espera la aplicación
     const usuario = {
-      id: emailParametro, // Mantener el email como ID para compatibilidad con el frontend
+      id: String(userData.id), // Usar el ID real de la tabla user (bigint)
       data: {
         EmailUsu: userData.email,
         NombreUsu: userData.name || '',
