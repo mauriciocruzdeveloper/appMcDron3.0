@@ -1,30 +1,29 @@
 import React from 'react';
-import CasosDeUsoSection from './CasosDeUsoSection.component';
-import ReparacionesPrioritariasSection from './ReparacionesPrioritariasSection.component';
-import ReparacionesEsperandoRepuestosSection from './ReparacionesEsperandoRepuestosSection.component';
-import RepuestosAgotadosSection from './RepuestosAgotadosSection.component';
-import RepuestosPedidosSection from './RepuestosPedidosSection.component';
+import { usePermissions } from 'hooks/usePermissions';
+import InicioAdmin from './InicioAdmin.component';
+import InicioCliente from './InicioCliente.component';
 
 interface InicioProps {
   admin: boolean;
 }
 
+/**
+ * Componente orquestador de Inicio
+ * Decide qué vista mostrar según el rol del usuario
+ */
 const Inicio = (props: InicioProps): React.ReactElement => {
-  const { admin } = props;
+  const { currentRole } = usePermissions();
 
-  console.log('INICIO');
+  console.log('INICIO - Role:', currentRole);
 
-  return (
-    <div className='p-4'>
-      <img className='mb-4' src='./img/logo.png' alt='' width='100%' max-width='100px' />
-      
-      <CasosDeUsoSection />
-      <ReparacionesPrioritariasSection />
-      <ReparacionesEsperandoRepuestosSection />
-      <RepuestosAgotadosSection />
-      <RepuestosPedidosSection />
-    </div>
-  )
+  // Admin ve el dashboard operativo completo
+  if (currentRole === 'admin') {
+    return <InicioAdmin />;
+  }
+
+  // Cliente y Partner ven sus reparaciones en curso
+  // (Partner tendrá su propia vista en el futuro)
+  return <InicioCliente />;
 };
 
 export default Inicio;
