@@ -13,7 +13,7 @@ import {
 import { AppState, isFetchingComplete, isFetchingStart } from "../app/app.slice";
 import { Usuario } from "../../types/usuario";
 import { enviarDroneDiagnosticadoAsync, enviarDroneReparadoAsync, enviarReciboAsync } from "../app/app.actions";
-import { generarAutoDiagnostico, generarNombreUnico } from "../../utils/utils";
+import { generarAutoDiagnostico, generarNombreUnico, generarPasswordPorDefecto } from "../../utils/utils";
 import { PresupuestoProps } from "../../components/Presupuesto.component";
 import { Drone } from "../../types/drone";
 import { RootState } from "../store";
@@ -66,6 +66,8 @@ export const guardarReciboAsync = createAsyncThunk(
         TelefonoUsu: presupuesto.TelefonoUsu,
         ProvinciaUsu: presupuesto.ProvinciaUsu,
         CiudadUsu: presupuesto.CiudadUsu,
+        Role: 'cliente', // Por defecto, los usuarios creados desde recibo son clientes
+        PasswordUsu: generarPasswordPorDefecto(presupuesto.NombreUsu), // Contraseña generada automáticamente
       }
     }
     const drone: Drone = {
@@ -147,6 +149,8 @@ export const guardarTransitoAsync = createAsyncThunk(
         TelefonoUsu: presupuesto.TelefonoUsu,
         ProvinciaUsu: presupuesto.ProvinciaUsu,
         CiudadUsu: presupuesto.CiudadUsu,
+        Role: 'cliente', // Por defecto, los usuarios creados desde tránsito son clientes
+        PasswordUsu: generarPasswordPorDefecto(presupuesto.NombreUsu), // Contraseña generada automáticamente
       }
     }
     const drone: Drone = {
@@ -328,6 +332,8 @@ export const guardarPresupuestadoAsync = createAsyncThunk(
         TelefonoUsu: presupuesto.TelefonoUsu,
         ProvinciaUsu: presupuesto.ProvinciaUsu,
         CiudadUsu: presupuesto.CiudadUsu,
+        Role: 'cliente', // Por defecto, los usuarios creados desde presupuestado son clientes
+        PasswordUsu: generarPasswordPorDefecto(presupuesto.NombreUsu), // Contraseña generada automáticamente
       }
     }
     const drone: Drone = {

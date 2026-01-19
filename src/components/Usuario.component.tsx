@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { SingleValue } from 'react-select';
 import { useHistory } from "../hooks/useHistory";
-import { enviarEmail, enviarSms, getLocalidadesPorProvincia, getProvinciasSelect } from "../utils/utils";
+import { enviarEmail, enviarSms, getLocalidadesPorProvincia, getProvinciasSelect, generarPasswordPorDefecto } from "../utils/utils";
 import Select from 'react-select';
 import { ChangeEvent } from 'react';
 import { InputType, SelectType } from '../types/types';
@@ -113,34 +113,38 @@ export default function UsuarioComponent(): React.ReactElement | null {
         }
         const field = target.id;
         changeInputUsu(field, value);
+
+        // Si es un usuario nuevo y cambia el nombre, actualizar la contraseña automáticamente
+        if (isNew && field === 'NombreUsu') {
+            const nuevaPassword = generarPasswordPorDefecto(value);
+            changeInputUsu('PasswordUsu', nuevaPassword);
+            setConfirmPassword(nuevaPassword);
+        }
     };
 
     const confirmaGuardarUsuario = async () => {
-        // Validar contraseñas para usuarios nuevos
-        if (isNew) {
-            if (!usuario.data.PasswordUsu || usuario.data.PasswordUsu.length < 6) {
-                openModal({
-                    mensaje: 'La contraseña debe tener al menos 6 caracteres',
-                    titulo: 'Error de validación',
-                    tipo: 'danger',
-                });
-                return;
-            }
-            
-            if (usuario.data.PasswordUsu !== confirmPassword) {
-                openModal({
-                    mensaje: 'Las contraseñas no coinciden',
-                    titulo: 'Error de validación',
-                    tipo: 'danger',
-                });
-                return;
-            }
+        // Para usuarios nuevos, asegurar que tengan una contraseña
+        let usuarioAGuardar = usuario;
+        if (isNew && !usuario.data.PasswordUsu) {
+            const passwordGenerada = generarPasswordPorDefecto(usuario.data.NombreUsu);
+            usuarioAGuardar = {
+                ...usuario,
+                data: {
+                    ...usuario.data,
+                    PasswordUsu: passwordGenerada
+                }
+            };
+            setUsuario(usuarioAGuardar);
         }
         
-        const response = await dispatch(guardarUsuarioAsync(usuario));
+        const response = await dispatch(guardarUsuarioAsync(usuarioAGuardar));
         if (response.meta.requestStatus === 'fulfilled') {
+            const passwordInfo = isNew 
+                ? `\n\nContraseña generada: ${usuarioAGuardar.data.PasswordUsu}\n\nEl usuario puede cambiarla después de iniciar sesión.`
+                : "";
+            
             const mensajeBase = isNew 
-                ? "Usuario creado correctamente.\n\nEl usuario puede iniciar sesión inmediatamente con las credenciales proporcionadas."
+                ? `Usuario creado correctamente.${passwordInfo}\n\nEl usuario puede iniciar sesión inmediatamente.`
                 : "Usuario actualizado correctamente.";
             
             openModal({
@@ -151,7 +155,7 @@ export default function UsuarioComponent(): React.ReactElement | null {
             
             if (isNew) {
                 // Redirigir a la lista de usuarios después de crear
-                setTimeout(() => history.goBack(), 2000);
+                setTimeout(() => history.goBack(), 3000);
             }
         } else {
             openModal({
@@ -308,35 +312,12 @@ export default function UsuarioComponent(): React.ReactElement | null {
                     </div>
                     
                     {isNew && (
-                        <>
-                            <div>
-                                <label className='form-label'>Contraseña</label>
-                                <input 
-                                    onChange={handleOnChange} 
-                                    type='password' 
-                                    className='form-control' 
-                                    id='PasswordUsu' 
-                                    value={usuario?.data?.PasswordUsu || ''}
-                                    placeholder='Mínimo 6 caracteres'
-                                    required
-                                />
-                                <small className='form-text text-muted'>
-                                    Mínimo 6 caracteres
-                                </small>
-                            </div>
-                            <div>
-                                <label className='form-label'>Confirmar Contraseña</label>
-                                <input 
-                                    onChange={(e) => setConfirmPassword(e.target.value)} 
-                                    type='password' 
-                                    className='form-control' 
-                                    id='ConfirmPasswordUsu' 
-                                    value={confirmPassword}
-                                    placeholder='Repita la contraseña'
-                                    required
-                                />
-                            </div>
-                        </>
+                        <div className="alert alert-info">
+                            <i className="bi bi-info-circle me-2"></i>
+                            <strong>Contraseña automática:</strong> Se generará una contraseña con el formato: <code>nombre1234</code>
+                            <br />
+                            <small>El usuario podrá cambiarla después de iniciar sesión.</small>
+                        </div>
                     )}
                     
                     <div>
