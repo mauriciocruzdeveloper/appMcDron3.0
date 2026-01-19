@@ -113,13 +113,6 @@ export default function UsuarioComponent(): React.ReactElement | null {
         }
         const field = target.id;
         changeInputUsu(field, value);
-
-        // Si es un usuario nuevo y cambia el nombre, actualizar la contraseña automáticamente
-        if (isNew && field === 'NombreUsu') {
-            const nuevaPassword = generarPasswordPorDefecto(value);
-            changeInputUsu('PasswordUsu', nuevaPassword);
-            setConfirmPassword(nuevaPassword);
-        }
     };
 
     const confirmaGuardarUsuario = async () => {
