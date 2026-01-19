@@ -61,14 +61,22 @@ export const selectUsuarioPorId = createSelector(
 export const selectUsuariosFiltradosPorEstado = createSelector(
   [selectUsuariosArray, selectUsuarioFilter],
   (usuarios, filtro) => {
-    if (!filtro) return usuarios;
+    const usuariosFiltrados = filtro
+      ? usuarios.filter(usuario =>
+          (usuario.data.NombreUsu || '').toLowerCase().includes(filtro.toLowerCase()) ||
+          (usuario.data.ApellidoUsu || '').toLowerCase().includes(filtro.toLowerCase()) ||
+          (usuario.data.EmailUsu || '').toLowerCase().includes(filtro.toLowerCase()) ||
+          (usuario.data.Nick || '').toLowerCase().includes(filtro.toLowerCase())
+        )
+      : usuarios;
     
-    return usuarios.filter(usuario =>
-      (usuario.data.NombreUsu || '').toLowerCase().includes(filtro.toLowerCase()) ||
-      (usuario.data.ApellidoUsu || '').toLowerCase().includes(filtro.toLowerCase()) ||
-      (usuario.data.EmailUsu || '').toLowerCase().includes(filtro.toLowerCase()) ||
-      (usuario.data.Nick || '').toLowerCase().includes(filtro.toLowerCase())
-    );
+    // Ordenar por ID de forma descendente (más grande arriba)
+    return [...usuariosFiltrados].sort((a, b) => {
+      // Convertir IDs a números para comparación correcta
+      const idA = parseInt(a.id) || 0;
+      const idB = parseInt(b.id) || 0;
+      return idB - idA;
+    });
   }
 );
 
