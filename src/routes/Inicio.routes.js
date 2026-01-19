@@ -6,6 +6,7 @@ import Inicio from "../components/Inicio/Inicio.component";
 import ListaUsuarios from "../components/ListaUsuarios.component";
 import Reparacion from "../components/Reparacion/Reparacion.component";
 import Usuario from "../components/Usuario.component";
+import PerfilPropio from "../components/PerfilPropio.component";
 import Presupuesto from "../components/Presupuesto.component";
 import NavMcDron from "../components/NavMcDron.component";
 import Mensajes from "../components/Mensajes.container";
@@ -46,6 +47,10 @@ const InicioRoutes = ({ isLoggedIn, admin }) => {
                 <Route path="reparaciones" element={<ListaReparaciones admin={admin}/>} />
                 <Route path="reparaciones/:id" element={<Reparacion admin={admin}/>} />
                 <Route path="mensajes" element={<Mensajes admin={admin}/>} />
+                
+                {/* Perfil - accesible para todos */}
+                <Route path="perfil" element={<PerfilPropio />} />
+                <Route path="perfil/:id" element={<Usuario />} />
                 
                 {/* Rutas solo para ADMIN */}
                 <Route path="usuarios" element={

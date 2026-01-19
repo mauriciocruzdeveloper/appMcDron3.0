@@ -10,6 +10,7 @@ import * as backend from './persistenciaSupabase/index.js';
 
 // AUTENTICACIÓN
 export const loginPersistencia = backend.loginPersistencia;
+export const cambiarPasswordPersistencia = backend.cambiarPasswordPersistencia;
 export const registroUsuarioEndpointPersistencia = backend.registroUsuarioEndpointPersistencia;
 export const reenviarEmailVerificacionPersistencia = backend.reenviarEmailVerificacionPersistencia;
 

@@ -3,6 +3,7 @@ import { useParams } from "react-router-dom";
 import { SingleValue } from 'react-select';
 import { useHistory } from "../hooks/useHistory";
 import { enviarEmail, enviarSms, getLocalidadesPorProvincia, getProvinciasSelect, generarPasswordPorDefecto } from "../utils/utils";
+import { cambiarPasswordPersistencia } from "../persistencia/persistencia";
 import Select from 'react-select';
 import { ChangeEvent } from 'react';
 import { InputType, SelectType } from '../types/types';
@@ -28,8 +29,10 @@ export default function UsuarioComponent(): React.ReactElement | null {
     const { openModal } = useModal();
 
     const { id } = useParams<ParamTypes>();
+    const usuarioLogueado = useAppSelector(state => state.app.usuario);
     
     const isNew = id === 'new';
+    const esPropioPerfil = !isNew && id === usuarioLogueado?.id;
     const usuarioStore = useAppSelector(state => 
         isNew || !id ? null : selectUsuarioPorId(state, id || "")
     );
@@ -59,6 +62,9 @@ export default function UsuarioComponent(): React.ReactElement | null {
     });
     
     const [confirmPassword, setConfirmPassword] = useState('');
+    const [passwordActual, setPasswordActual] = useState('');
+    const [nuevaPassword, setNuevaPassword] = useState('');
+    const [confirmarNuevaPassword, setConfirmarNuevaPassword] = useState('');
 
     useEffect(() => {
         const inicializaFormulario = async () => {
@@ -124,6 +130,68 @@ export default function UsuarioComponent(): React.ReactElement | null {
                 titulo: "Validación",
             });
             return;
+        }
+        
+        // Si es el propio perfil y quiere cambiar la contraseña
+        if (esPropioPerfil && nuevaPassword) {
+            // Validar que se haya ingresado la contraseña actual
+            if (!passwordActual) {
+                openModal({
+                    mensaje: "Debe ingresar su contraseña actual para cambiarla.",
+                    tipo: "warning",
+                    titulo: "Validación",
+                });
+                return;
+            }
+            
+            // Validar que las nuevas contraseñas coincidan
+            if (nuevaPassword !== confirmarNuevaPassword) {
+                openModal({
+                    mensaje: "Las nuevas contraseñas no coinciden.",
+                    tipo: "warning",
+                    titulo: "Validación",
+                });
+                return;
+            }
+            
+            // Validar longitud mínima
+            if (nuevaPassword.length < 6) {
+                openModal({
+                    mensaje: "La nueva contraseña debe tener al menos 6 caracteres.",
+                    tipo: "warning",
+                    titulo: "Validación",
+                });
+                return;
+            }
+            
+            // Cambiar la contraseña usando Supabase Auth
+            try {
+                await cambiarPasswordPersistencia(passwordActual, nuevaPassword);
+                
+                openModal({
+                    mensaje: "Contraseña actualizada correctamente.",
+                    tipo: "success",
+                    titulo: "Cambio de Contraseña",
+                });
+                
+                // Limpiar los campos de contraseña
+                setPasswordActual('');
+                setNuevaPassword('');
+                setConfirmarNuevaPassword('');
+                
+                return; // No continuar con el guardado normal
+            } catch (error: any) {
+                const errorMessage = error.code === 'invalid_current_password'
+                    ? 'La contraseña actual es incorrecta.'
+                    : error.message || 'Error al cambiar la contraseña.';
+                
+                openModal({
+                    mensaje: errorMessage,
+                    tipo: "danger",
+                    titulo: "Error",
+                });
+                return;
+            }
         }
         
         // Para usuarios nuevos, asegurar que tengan una contraseña
@@ -402,6 +470,48 @@ export default function UsuarioComponent(): React.ReactElement | null {
                     </div>
                 </div>
             </div>
+
+            {esPropioPerfil && (
+                <div className='card mb-3'>
+                    <div className='card-body'>
+                        <h5 className='card-title bluemcdron'>CAMBIAR CONTRASEÑA</h5>
+                        <div className="alert alert-info">
+                            <i className="bi bi-info-circle me-2"></i>
+                            Complete estos campos solo si desea cambiar su contraseña.
+                        </div>
+                        <div>
+                            <label className='form-label'>Contraseña Actual</label>
+                            <input 
+                                onChange={(e) => setPasswordActual(e.target.value)} 
+                                type='password' 
+                                className='form-control' 
+                                value={passwordActual}
+                                placeholder='Ingrese su contraseña actual'
+                            />
+                        </div>
+                        <div>
+                            <label className='form-label'>Nueva Contraseña</label>
+                            <input 
+                                onChange={(e) => setNuevaPassword(e.target.value)} 
+                                type='password' 
+                                className='form-control' 
+                                value={nuevaPassword}
+                                placeholder='Mínimo 6 caracteres'
+                            />
+                        </div>
+                        <div>
+                            <label className='form-label'>Confirmar Nueva Contraseña</label>
+                            <input 
+                                onChange={(e) => setConfirmarNuevaPassword(e.target.value)} 
+                                type='password' 
+                                className='form-control' 
+                                value={confirmarNuevaPassword}
+                                placeholder='Repita la nueva contraseña'
+                            />
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {reparacionesDelUsuario.length > 0 && (
                 <div className="card mb-3">
