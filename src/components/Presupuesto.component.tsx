@@ -199,6 +199,25 @@ export default function Presupuesto(): JSX.Element {
     }
 
     const handleGuardarPresupuesto = () => {
+        // Validar campos requeridos
+        if (!presupuesto.EmailUsu || !presupuesto.NombreUsu || !presupuesto.ApellidoUsu) {
+            openModal({
+                mensaje: "Por favor complete los campos obligatorios: Email, Nombre y Apellido",
+                tipo: "danger",
+                titulo: `Registrar ${estadoInfo.nombre}`,
+            });
+            return;
+        }
+
+        if (!presupuesto.ModeloDroneIdRep || !presupuesto.ModeloDroneNameRep) {
+            openModal({
+                mensaje: "Por favor seleccione un modelo de drone",
+                tipo: "danger",
+                titulo: `Registrar ${estadoInfo.nombre}`,
+            });
+            return;
+        }
+
         openModal({
             mensaje: `¿Desea registrar este ${estadoInfo.nombre.toLowerCase()}?`,
             tipo: "warning",
