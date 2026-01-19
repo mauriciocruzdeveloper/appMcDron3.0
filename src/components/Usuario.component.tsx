@@ -116,6 +116,16 @@ export default function UsuarioComponent(): React.ReactElement | null {
     };
 
     const confirmaGuardarUsuario = async () => {
+        // Para usuarios nuevos, verificar que tengan nombre antes de generar contraseña
+        if (isNew && !usuario.data.NombreUsu?.trim()) {
+            openModal({
+                mensaje: "El nombre del usuario es obligatorio.",
+                tipo: "warning",
+                titulo: "Validación",
+            });
+            return;
+        }
+        
         // Para usuarios nuevos, asegurar que tengan una contraseña
         let usuarioAGuardar = usuario;
         if (isNew && !usuario.data.PasswordUsu) {

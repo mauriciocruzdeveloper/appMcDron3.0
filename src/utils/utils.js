@@ -228,21 +228,15 @@ export const getLocalidadesPorProvincia = (provincia) => (dispatch) => {
 /**
  * Genera una contraseña por defecto basada en el nombre del usuario
  * Formato: nombre_en_minúsculas + "1234"
- * Asegura mínimo 6 caracteres para cumplir validaciones
  * @param {string} nombreUsu - Nombre del usuario
- * @returns {string} Contraseña generada
+ * @returns {string} Contraseña generada (vacía si no hay nombre)
  */
 export const generarPasswordPorDefecto = (nombreUsu) => {
   if (!nombreUsu || nombreUsu.trim().length === 0) {
-    return 'user1234'; // 8 caracteres por defecto
+    return ''; // No generar contraseña sin nombre
   }
   const nombre = nombreUsu.toLowerCase().trim();
   const password = nombre + '1234';
-  
-  // Asegurar mínimo 6 caracteres
-  if (password.length < 6) {
-    return 'user1234';
-  }
   
   return password;
 };
