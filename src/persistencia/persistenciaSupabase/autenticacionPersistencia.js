@@ -119,3 +119,41 @@ export const registroUsuarioEndpointPersistencia = async (registroData) => {
     throw error;
   }
 };
+
+// Función para cambiar la contraseña del usuario autenticado
+export const cambiarPasswordPersistencia = async (passwordActual, nuevaPassword) => {
+  try {
+    // Primero verificar que la contraseña actual sea correcta
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (!user || !user.email) {
+      throw { code: 'no_authenticated_user', message: 'No hay un usuario autenticado' };
+    }
+
+    // Intentar hacer login con la contraseña actual para verificarla
+    const { error: verifyError } = await supabase.auth.signInWithPassword({
+      email: user.email,
+      password: passwordActual,
+    });
+
+    if (verifyError) {
+      throw { code: 'invalid_current_password', message: 'La contraseña actual es incorrecta' };
+    }
+
+    // Si la verificación fue exitosa, actualizar la contraseña
+    const { data, error } = await supabase.auth.updateUser({
+      password: nuevaPassword
+    });
+
+    if (error) {
+      console.error('Error al actualizar la contraseña:', error);
+      throw { code: error.code, message: error.message };
+    }
+
+    console.log('Contraseña actualizada correctamente');
+    return { success: true, user: data.user };
+  } catch (error) {
+    console.error('Error en cambiarPasswordPersistencia:', error);
+    throw error;
+  }
+};

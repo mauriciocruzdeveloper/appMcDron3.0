@@ -67,7 +67,7 @@ export default function NavMcDron (): JSX.Element {
                 drop="down"
                 align="end"
             >
-                <NavDropdown.Item onClick={() => history.push(`/inicio/usuarios/${usuario?.id}`)}>
+                <NavDropdown.Item onClick={() => history.push('/inicio/perfil')}>
                     Perfil
                 </NavDropdown.Item>
                 <NavDropdown.Divider />
