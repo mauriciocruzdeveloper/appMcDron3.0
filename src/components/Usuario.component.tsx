@@ -371,6 +371,7 @@ export default function UsuarioComponent(): React.ReactElement | null {
                                 className='form-control' 
                                 id='EmailUsu' 
                                 value={usuario?.data?.EmailUsu || ''}
+                                disabled={!isNew}
                             />
                             <button 
                                 type='submit' 
