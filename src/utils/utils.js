@@ -30,6 +30,17 @@ export const notificacionesPorMensajes = (EmailUsu) => {
     notificacionesPorMensajesPersistencia(EmailUsu);
 }
 
+/**
+ * Obtiene el email correcto para enviar notificaciones al usuario
+ * Prioriza EmailContacto si existe, sino usa EmailUsu
+ * @param {Object} usuario - Objeto usuario con data.EmailContacto y data.EmailUsu
+ * @returns {string} Email a usar para notificaciones
+ */
+export const getEmailForNotifications = (usuario) => {
+    if (!usuario?.data) return '';
+    return usuario.data.EmailContacto || usuario.data.EmailUsu || '';
+}
+
 export const enviarEmail = (data) => {
     // eslint-disable-next-line no-undef
     cordova.plugins.email.open({

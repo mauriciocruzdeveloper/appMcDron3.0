@@ -7,7 +7,8 @@ export interface Usuario {
       NombreUsu: string,     // name en Supabase (first_name)
       TelefonoUsu: string,   // tel en Supabase (telephone)
       ApellidoUsu?: string,   // last_name en Supabase
-      EmailUsu?: string,      // email en Supabase
+      EmailUsu?: string,      // email en Supabase (autenticación, inmutable)
+      EmailContacto?: string, // contact_email en Supabase (notificaciones, editable)
       ProvinciaUsu?: string,  // state en Supabase
       CiudadUsu?: string,     // city en Supabase
       Role: UserRole,         // role en Supabase
