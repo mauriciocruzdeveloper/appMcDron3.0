@@ -23,7 +23,7 @@ export default function NavMcDron (): JSX.Element {
     } = useModal();
 
     // Esto hay que ver donde lo ponemos...
-    notificacionesPorMensajesPersistencia(usuario?.data.EmailUsu);
+    notificacionesPorMensajesPersistencia(usuario?.id);
 
     const confirmaDesloguearse = () => {
         localStorage.removeItem('loginData');

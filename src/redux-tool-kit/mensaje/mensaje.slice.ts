@@ -4,15 +4,15 @@ import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 // Tipos para el estado inicial
 
 export interface AppState {
-    emailUsuMessage: string;
-    emailCliMessage: string;
+    usuarioIdMessage: string; // ID del usuario logueado
+    otherUserIdMessage: string; // ID del otro usuario en la conversación
     coleccionMensajes: any[];
 }
 
 // Estado inicial
 const initialState: AppState = {
-    emailUsuMessage: '',
-    emailCliMessage: '',
+    usuarioIdMessage: '',
+    otherUserIdMessage: '',
     coleccionMensajes: [],
 };
 
@@ -26,11 +26,11 @@ const mensajeSlice = createSlice({
         setMessages: (state, action: PayloadAction<any[]>) => {
             state.coleccionMensajes = action.payload;
         },
-        setEmailUsuMessage: (state, action: PayloadAction<string>) => {
-            state.emailUsuMessage = action.payload;
+        setUsuarioIdMessage: (state, action: PayloadAction<string>) => {
+            state.usuarioIdMessage = action.payload;
         },
-        setEmailCliMessage: (state, action: PayloadAction<string>) => {
-            state.emailCliMessage = action.payload;
+        setOtherUserIdMessage: (state, action: PayloadAction<string>) => {
+            state.otherUserIdMessage = action.payload;
         },
     },
 });
@@ -38,8 +38,8 @@ const mensajeSlice = createSlice({
 // Exportar acciones síncronas
 export const {
     setMessages,
-    setEmailUsuMessage,
-    setEmailCliMessage,
+    setUsuarioIdMessage,
+    setOtherUserIdMessage,
 } = mensajeSlice.actions;
 
 // Exportar el reducer por defecto

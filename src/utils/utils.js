@@ -26,8 +26,8 @@ export const actualizarLeidos = (mensajesLeidos) => {
     actualizarLeidosPersistencia(mensajesLeidos);
 }
 
-export const notificacionesPorMensajes = (EmailUsu) => {
-    notificacionesPorMensajesPersistencia(EmailUsu);
+export const notificacionesPorMensajes = (usuarioId) => {
+    notificacionesPorMensajesPersistencia(usuarioId);
 }
 
 /**

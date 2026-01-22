@@ -33,8 +33,8 @@ export interface DataManagerProps {
 export function DataManagerComponent({ children }: DataManagerProps): React.ReactElement {
     const dispatch = useAppDispatch();
     const usuario = useAppSelector(state => state.app.usuario);
-    const emailUsuMessage = useAppSelector(state => state.mensaje.emailUsuMessage);
-    const emailCliMessage = useAppSelector(state => state.mensaje.emailCliMessage);
+    const usuarioIdMessage = useAppSelector(state => state.mensaje.usuarioIdMessage);
+    const otherUserIdMessage = useAppSelector(state => state.mensaje.otherUserIdMessage);
     const [unsubscribeReparaciones, setUnsubscribeReparaciones] = useState<Unsubscribe>();
     const [unsubscribeUsuarios, setUnsubscribeUsuarios] = useState<Unsubscribe>();
     const [unsubscribeMessages, setUnsubscribeMessages] = useState<Unsubscribe>();
@@ -88,12 +88,12 @@ export function DataManagerComponent({ children }: DataManagerProps): React.Reac
     }, [usuario]);
 
     useEffect(() => {
-        if (!emailUsuMessage || !emailCliMessage) return;
+        if (!usuarioIdMessage || !otherUserIdMessage) return;
         getMensajes();
         return () => {
             unsubscribeMessages?.();
         };
-    }, [emailUsuMessage, emailCliMessage]);
+    }, [usuarioIdMessage, otherUserIdMessage]);
 
     useEffect(() => {
         getRepuestos();
@@ -167,8 +167,8 @@ export function DataManagerComponent({ children }: DataManagerProps): React.Reac
                 (mensajes: any) => { // TODO: Poner el tipo correcto
                     dispatch(setMessages(mensajes));
                 },
-                emailUsuMessage,
-                emailCliMessage,
+                usuarioIdMessage,
+                otherUserIdMessage,
             );
 
             setUnsubscribeMessages(() => unsubscribe);
