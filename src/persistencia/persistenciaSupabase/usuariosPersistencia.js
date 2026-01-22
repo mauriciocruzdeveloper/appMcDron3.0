@@ -11,6 +11,7 @@ export const getUsuariosPersistencia = async (setUsuariosToRedux) => {
         .select(`
           id,
           email,
+          contact_email,
           first_name,
           last_name,
           telephone,
@@ -28,6 +29,7 @@ export const getUsuariosPersistencia = async (setUsuariosToRedux) => {
         id: String(item.id),
         data: {
           EmailUsu: item.email,
+          EmailContacto: item.contact_email || '',
           NombreUsu: item.first_name || '',
           ApellidoUsu: item?.last_name || '',
           TelefonoUsu: item?.telephone || '',
@@ -88,6 +90,7 @@ export const getClientePersistencia = async (id) => {
       id: String(data.id),
       data: {
         EmailUsu: data.email,
+        EmailContacto: data.contact_email || '',
         NombreUsu: data.first_name || '',
         ApellidoUsu: data.last_name || '',
         TelefonoUsu: data.telephone || '',
@@ -127,6 +130,7 @@ export const getClientePorEmailPersistencia = async (email) => {
       id: String(data.id),
       data: {
         EmailUsu: data.email,
+        EmailContacto: data.contact_email || '',
         NombreUsu: data.first_name || '',
         ApellidoUsu: data.last_name || '',
         TelefonoUsu: data.telephone || '',
@@ -148,6 +152,7 @@ export const guardarUsuarioPersistencia = async (usuario) => {
     // Preparar datos para Supabase
     const userData = {
       email: usuario.data.EmailUsu,
+      contact_email: usuario.data.EmailContacto || null,
       first_name: usuario.data.NombreUsu || '',
       last_name: usuario.data.ApellidoUsu || '',
       telephone: usuario.data.TelefonoUsu || '',
@@ -184,6 +189,7 @@ export const guardarUsuarioPersistencia = async (usuario) => {
         NombreUsu: usuario.data.NombreUsu || '',
         ApellidoUsu: usuario.data.ApellidoUsu || '',
         TelefonoUsu: usuario.data.TelefonoUsu || '',
+        EmailContacto: usuario.data.EmailContacto || '',
         ProvinciaUsu: usuario.data.ProvinciaUsu || '',
         CiudadUsu: usuario.data.CiudadUsu || '',
         UrlPhotoUsu: usuario.data.UrlFotoUsu || '',

@@ -63,9 +63,15 @@ export const registroAsync = createAsyncThunk(
 // ENVIA RECIBO
 export const enviarReciboAsync = createAsyncThunk(
   'app/enviarRecibo',
-  async (reparacion: ReparacionType, { dispatch }) => {
+  async (reparacion: ReparacionType, { dispatch, getState }) => {
     try {
       dispatch(isFetchingStart());
+
+      // Obtener el usuario para usar su email de contacto si está disponible
+      const state = getState() as RootState;
+      const usuario = state.usuario.coleccionUsuarios[reparacion.data.UsuarioRep];
+      const emailDestino = usuario?.data?.EmailContacto || reparacion.data.EmailUsu;
+
       const body = {
         cliente: reparacion.data.ApellidoUsu ? `${reparacion.data.NombreUsu} ${reparacion.data.ApellidoUsu}` : reparacion.data.NombreUsu,
         nro_reparacion: reparacion.id,
@@ -73,7 +79,7 @@ export const enviarReciboAsync = createAsyncThunk(
         fecha_ingreso: new Date(Number(reparacion.data.FeRecRep)).toLocaleDateString(),
         observaciones: reparacion.data.DescripcionUsuRep,
         telefono: reparacion.data.TelefonoUsu,
-        email: reparacion.data.EmailUsu
+        email: emailDestino
       };
 
       const url = process.env.REACT_APP_API_URL + '/send_recibo';
@@ -105,6 +111,11 @@ export const enviarDroneReparadoAsync = createAsyncThunk(
       const state = getState() as RootState;
       const todasLasIntervenciones = state.intervencion.coleccionIntervenciones;
       const intervencionesIds = reparacion.data.IntervencionesIds || [];
+
+      // Obtener el usuario para usar su email de contacto si está disponible
+      const usuario = state.usuario.coleccionUsuarios[reparacion.data.UsuarioRep];
+      const emailDestino = usuario?.data?.EmailContacto || reparacion.data.EmailUsu;
+
       let equipo = reparacion.data.ModeloDroneNameRep;
       if (!equipo) {
         if (reparacion.data.DroneId) {
@@ -156,7 +167,7 @@ export const enviarDroneReparadoAsync = createAsyncThunk(
         monto_pagado: `$${montoPagado}`,
         monto_restante: `$${montoRestante}`,
         telefono: reparacion.data.TelefonoUsu,
-        email: reparacion.data.EmailUsu
+        email: emailDestino
       };
 
       const url = process.env.REACT_APP_API_URL + '/send_drone_reparado';
@@ -180,9 +191,14 @@ export const enviarDroneReparadoAsync = createAsyncThunk(
 // ENVIAR EMAIL DE DIAGNÓSTICO
 export const enviarDroneDiagnosticadoAsync = createAsyncThunk(
   'app/enviarDiagnostico',
-  async (reparacion: ReparacionType, { dispatch }) => {
+  async (reparacion: ReparacionType, { dispatch, getState }) => {
     try {
       dispatch(isFetchingStart());
+
+      // Obtener el usuario para usar su email de contacto si está disponible
+      const state = getState() as RootState;
+      const usuario = state.usuario.coleccionUsuarios[reparacion.data.UsuarioRep];
+      const emailDestino = usuario?.data?.EmailContacto || reparacion.data.EmailUsu;
 
       const body = {
         cliente: reparacion.data.ApellidoUsu ? `${reparacion.data.NombreUsu} ${reparacion.data.ApellidoUsu}` : reparacion.data.NombreUsu,
@@ -193,7 +209,7 @@ export const enviarDroneDiagnosticadoAsync = createAsyncThunk(
         diagnostico: reparacion.data.DescripcionTecRep || "Sin diagnóstico",
         costo_diagnostico: `$${reparacion.data.PresuDiRep ?? 0}`,
         telefono: reparacion.data.TelefonoUsu,
-        email: reparacion.data.EmailUsu
+        email: emailDestino
       };
 
       const url = process.env.REACT_APP_API_URL + '/send_drone_diagnosticado';

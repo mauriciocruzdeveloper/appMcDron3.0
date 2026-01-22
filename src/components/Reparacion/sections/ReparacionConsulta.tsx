@@ -81,8 +81,8 @@ export const ReparacionConsulta: React.FC<ReparacionConsultaProps> = ({
     };
 
     const handleSendEmail = () => {
-        if (!reparacion) return;
-        enviarEmailVacio(reparacion);
+        if (!reparacion || !usuario) return;
+        enviarEmailVacio(reparacion, usuario);
     };
 
     const handleSendSms = () => {

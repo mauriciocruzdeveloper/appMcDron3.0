@@ -2,7 +2,8 @@ import { EMAIL_REPARACIONES } from "../types/constantes";
 import { HttpMethod } from "../types/httpMethods";
 import { ReparacionType } from "../types/reparacion";
 import { Response } from "../types/response";
-import { callEndpoint, enviarEmail } from "./utils";
+import { Usuario } from "../types/usuario";
+import { callEndpoint, enviarEmail, getEmailForNotifications } from "./utils";
 
 // export const enviarRecibo = (reparacion: ReparacionType): void => {
 //     const datosEmail = {
@@ -39,10 +40,21 @@ import { callEndpoint, enviarEmail } from "./utils";
 //     return response;
 // }
 
-export const enviarEmailVacio = (reparacion: ReparacionType): void => {
+/**
+ * Envía un email vacío (plantilla) al usuario de una reparación
+ * @param reparacion - Datos de la reparación
+ * @param usuario - Datos del usuario (opcional, para obtener EmailContacto)
+ */
+export const enviarEmailVacio = (reparacion: ReparacionType, usuario?: Usuario): void => {
+    // Si tenemos el usuario, usamos getEmailForNotifications
+    // Si no, usamos UsuarioRep (que es el email de autenticación)
+    const emailDestino = usuario 
+        ? getEmailForNotifications(usuario)
+        : reparacion.data.UsuarioRep;
+
     const datosEmail = {
         from: EMAIL_REPARACIONES,
-        to: reparacion.data.UsuarioRep,
+        to: emailDestino,
         cc: EMAIL_REPARACIONES,
         bcc: [],
         subject: '',

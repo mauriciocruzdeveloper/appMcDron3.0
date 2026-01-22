@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { SingleValue } from 'react-select';
 import { useHistory } from "../hooks/useHistory";
-import { enviarEmail, enviarSms, getLocalidadesPorProvincia, getProvinciasSelect, generarPasswordPorDefecto } from "../utils/utils";
+import { enviarEmail, enviarSms, getLocalidadesPorProvincia, getProvinciasSelect, generarPasswordPorDefecto, getEmailForNotifications } from "../utils/utils";
 import { cambiarPasswordPersistencia } from "../persistencia/persistencia";
 import Select from 'react-select';
 import { ChangeEvent } from 'react';
@@ -52,6 +52,7 @@ export default function UsuarioComponent(): React.ReactElement | null {
             TelefonoUsu: '',
             ApellidoUsu: '',
             EmailUsu: '',
+            EmailContacto: '',
             ProvinciaUsu: '',
             CiudadUsu: '',
             Role: 'cliente',
@@ -308,7 +309,7 @@ export default function UsuarioComponent(): React.ReactElement | null {
 
     const handleSendEmail = () => {
         const data = {
-            to: usuario.data.EmailUsu,
+            to: getEmailForNotifications(usuario),
             cc: 'info@mauriciocruzdrones.com',
             bcc: [],
             subject: '',
@@ -363,7 +364,7 @@ export default function UsuarioComponent(): React.ReactElement | null {
                 <div className='card-body'>
                 <h5 className='card-title bluemcdron'>DATOS DEL USUARIO</h5>
                     <div>
-                        <label className='form-label'>E-mail</label>
+                        <label className='form-label'>E-mail (autenticación)</label>
                         <div className='d-flex w-100 justify-content-between'>
                             <input 
                                 onChange={handleOnChange} 
@@ -377,10 +378,36 @@ export default function UsuarioComponent(): React.ReactElement | null {
                                 type='submit' 
                                 className='btn btn-outline-secondary bg-bluemcdron text-white' 
                                 onClick={handleSendEmail}
+                                disabled={!isNew}
                             >
                                 <i className='bi bi-envelope'></i>
                             </button>
                         </div>
+                        {!isNew && (
+                            <small className='text-muted'>El email de autenticación no se puede modificar.</small>
+                        )}
+                    </div>
+                    
+                    <div>
+                        <label className='form-label'>Email de contacto (notificaciones)</label>
+                        <div className='d-flex w-100 justify-content-between'>
+                            <input 
+                                onChange={handleOnChange} 
+                                type='email' 
+                                className='form-control' 
+                                id='EmailContacto' 
+                                value={usuario?.data?.EmailContacto || ''}
+                                placeholder='Email donde recibirás notificaciones'
+                            />
+                            <button 
+                                type='submit' 
+                                className='btn btn-outline-secondary bg-bluemcdron text-white' 
+                                onClick={handleSendEmail}
+                            >
+                                <i className='bi bi-envelope'></i>
+                            </button>
+                        </div>
+                        <small className='text-muted'>Si está vacío, se usará el email de autenticación.</small>
                     </div>
                     
                     {isNew && (
