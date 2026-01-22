@@ -15,7 +15,7 @@ import {
 import { selectUsuarioPorId } from "../../../redux-tool-kit/usuario/usuario.selectors";
 import { selectDronesByPropietario } from "../../../redux-tool-kit/drone/drone.selectors";
 import { selectModeloDronePorId } from "../../../redux-tool-kit/modeloDrone/modeloDrone.selectors";
-import { enviarSms } from "../../../utils/utils";
+import { enviarSms, getEmailForNotifications } from "../../../utils/utils";
 import { enviarEmailVacio } from "../../../utils/sendEmails";
 import { convertTimestampCORTO } from "../../../utils/utils";
 import TextareaAutosize from "react-textarea-autosize";
@@ -145,7 +145,7 @@ export const ReparacionConsulta: React.FC<ReparacionConsultaProps> = ({
                             type="text"
                             className="form-control"
                             id="EmailUsu"
-                            value={usuario?.data?.EmailUsu || ''}
+                            value={getEmailForNotifications(usuario)}
                             disabled
                         />
                         <button
