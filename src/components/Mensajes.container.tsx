@@ -8,7 +8,7 @@ import { useAppDispatch } from '../redux-tool-kit/hooks/useAppDispatch';
 import { sendMessageAsync } from '../redux-tool-kit/mensaje/mensaje.actions';
 import { getClienteAsync } from '../redux-tool-kit/usuario/usuario.actions';
 import { useModal } from './Modal/useModal';
-import { setEmailCliMessage, setEmailUsuMessage } from '../redux-tool-kit/mensaje/mensaje.slice';
+import { setOtherUserIdMessage, setUsuarioIdMessage } from '../redux-tool-kit/mensaje/mensaje.slice';
 
 export default function Mensajes(): JSX.Element {
   console.log('MENSAJES container');
@@ -38,11 +38,11 @@ export default function Mensajes(): JSX.Element {
   }, [initForm]);
 
   useEffect(() => {
-    dispatch(setEmailCliMessage(cliente?.data.EmailUsu ?? usuario?.data.EmailUsu ?? ''));
+    dispatch(setOtherUserIdMessage(cliente?.id ?? usuario?.id ?? ''));
   }, [cliente]);
 
   useEffect(() => {
-    dispatch(setEmailUsuMessage(usuario?.data.EmailUsu ?? ''));
+    dispatch(setUsuarioIdMessage(usuario?.id ?? ''));
   }, [usuario]);
 
 
@@ -67,21 +67,20 @@ export default function Mensajes(): JSX.Element {
   const changeInputMessage = (target: any) => setMessageData(target.value);
 
   const handleSendMessage = async () => {
-    if (!usuario || !cliente) return;
+    if (!usuario?.id || !cliente?.id) return;
     const message = {
       id: '',
       data: {
         date: new Date().getTime(),
         content: messageData,
-        senderName: usuario?.data.NombreUsu,
-        from: usuario.data.EmailUsu,
-        // Si es admin, envío al invitado (PARA PROBAR). LUEGO HACER SELECT PARA ELEGIR EL CLIENTE
-        to: cliente.data.EmailUsu || 'admin@mauriciocruzdrones.com',
+        senderName: usuario.data.NombreUsu,
+        from: usuario.id, // Usar ID del usuario en lugar de email
+        to: cliente.id, // Usar ID del cliente en lugar de email
       }
     }
     setMessageData('');
     // Envía el mensaje si no está vacío, y si el remitente y el destinatario no es el mismo.
-    if (message.data.to != message.data.from && message.data.content) await dispatch(sendMessageAsync(message));
+    if (message.data.to !== message.data.from && message.data.content) await dispatch(sendMessageAsync(message));
   };
 
   // Actualiza mensajes leídos. Ver si acá es el mejor lugar.
