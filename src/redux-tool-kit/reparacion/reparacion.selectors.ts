@@ -2,7 +2,7 @@ import { createSelector } from '@reduxjs/toolkit';
 import { RootState } from '../store';
 import { ReparacionType, Reparaciones } from '../../types/reparacion';
 import { Filtro } from '../../types/Filtro';
-import { Intervencion } from '../../types/intervencion';
+import { AsignacionIntervencion } from '../../types/intervencion';
 import { estados } from '../../datos/estados';
 import { obtenerEstadoSeguro, esEstadoLegacy } from '../../utils/estadosHelper';
 
@@ -46,12 +46,12 @@ export const selectReparacionFilter = (state: RootState): Filtro =>
   state.reparacion.filter;
 
 /**
- * Selector base para obtener las intervenciones de la reparación actual
+ * Selector base para obtener las asignaciones de intervenciones de la reparación actual
  * Complejidad: O(1)
  * @param state - Estado global de Redux
- * @returns Array de intervenciones de la reparación actual
+ * @returns Array de asignaciones de intervenciones de la reparación actual
  */
-export const selectIntervencionesDeReparacionActual = (state: RootState): Intervencion[] =>
+export const selectIntervencionesDeReparacionActual = (state: RootState): AsignacionIntervencion[] =>
   state.reparacion.intervencionesDeReparacionActual;
 
 // ============================================================================

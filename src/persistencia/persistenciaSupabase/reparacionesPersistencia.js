@@ -1,6 +1,7 @@
 import { supabase } from './supabaseClient.js';
 
-// Agregar una intervención a una reparación
+// Agregar una asignación de intervención a una reparación
+// Se permiten múltiples asignaciones de la misma intervención
 export const agregarIntervencionAReparacionPersistencia = async (reparacionId, intervencionId) => {
   try {
     // 1. Verificar que la reparación existe
@@ -25,31 +26,44 @@ export const agregarIntervencionAReparacionPersistencia = async (reparacionId, i
       throw new Error('Intervención no encontrada');
     }
 
-    // 3. Verificar si la relación ya existe para evitar duplicados
-    const { data: relacionExistente, error: relacionError } = await supabase
-      .from('repair_intervention')
-      .select('*')
-      .eq('repair_id', reparacionId)
+    // 3. Obtener los repuestos asociados a esta intervención para calcular el costo
+    const { data: partInterventions, error: partsError } = await supabase
+      .from('part_intervention')
+      .select(`
+        part_id,
+        quantity,
+        part:part_id (price)
+      `)
       .eq('intervention_id', intervencionId);
 
-    if (relacionExistente && relacionExistente.length > 0) {
-      return { success: true, message: 'La intervención ya está asociada a esta reparación' };
+    if (partsError) {
+      console.error('Error al obtener repuestos de intervención:', partsError);
     }
 
-    if (relacionError) {
-      throw new Error(`Error al verificar relación existente: ${relacionError.message}`);
+    // 4. Calcular el costo de repuestos basándose en los precios ACTUALES
+    let parts_cost = 0;
+    if (partInterventions && partInterventions.length > 0) {
+      parts_cost = partInterventions.reduce((sum, item) => {
+        const precio = item.part?.price || 0;
+        const cantidad = item.quantity || 1;
+        return sum + (precio * cantidad);
+      }, 0);
     }
 
-    // 4. Insertar la nueva relación con los costos de la intervención
+    // 5. Calcular el costo total
+    const labor_cost = intervencion.labor_cost || 0;
+    const total_cost = labor_cost + parts_cost;
+
+    // 6. Insertar la nueva asignación de intervención con los costos calculados
     const { data: nuevaRelacion, error: insercionError } = await supabase
       .from('repair_intervention')
       .insert([
         {
           repair_id: reparacionId,
           intervention_id: intervencionId,
-          labor_cost: intervencion.labor_cost || 0,
-          parts_cost: intervencion.parts_cost || 0,
-          total_cost: intervencion.total_cost || 0
+          labor_cost: labor_cost,
+          parts_cost: parts_cost,
+          total_cost: total_cost
         }
       ])
       .select();
@@ -58,7 +72,7 @@ export const agregarIntervencionAReparacionPersistencia = async (reparacionId, i
       throw new Error(`Error al asociar la intervención: ${insercionError.message}`);
     }
 
-    // 5. Actualizar el precio total de la reparación sumando todos los costos
+    // 7. Actualizar el precio total de la reparación sumando todos los costos
     // Primero obtenemos todas las intervenciones de esta reparación
     const { data: todasIntervenciones, error: consultaError } = await supabase
       .from('repair_intervention')
@@ -79,19 +93,20 @@ export const agregarIntervencionAReparacionPersistencia = async (reparacionId, i
     return {
       success: true,
       data: nuevaRelacion[0],
-      message: 'Intervención asociada correctamente a la reparación'
+      message: 'Asignación de intervención creada correctamente'
     };
 
   } catch (error) {
     console.error('Error en agregarIntervencionAReparacionPersistencia:', error);
     return {
       success: false,
-      error: error.message || 'Error al asociar la intervención a la reparación'
+      error: error.message || 'Error al crear la asignación de intervención'
     };
   }
 };
 
-// GET Intervenciones por reparación
+// GET Asignaciones de intervenciones por reparación
+// Retorna cada asignación con su ID único (repair_intervention.id)
 export const getIntervencionesPorReparacionPersistencia = async (reparacionId) => {
   try {
     // Consultamos la tabla de relación y hacemos un join con la tabla de intervenciones
@@ -105,42 +120,19 @@ export const getIntervencionesPorReparacionPersistencia = async (reparacionId) =
 
     if (error) throw error;
 
-    // Para cada intervención, obtenemos los repuestos asociados
-    const intervenciones = await Promise.all(data.map(async (item) => {
-      // Obtenemos los repuestos asociados a esta intervención
-      const { data: partInterventions, error: partsError } = await supabase
-        .from('part_intervention')
-        .select('part_id')
-        .eq('intervention_id', item.intervention.id);
-
-      if (partsError) {
-        console.error('Error al obtener repuestos de intervención:', partsError);
-      }
-
-      // Extraemos los IDs de los repuestos
-      const repuestosIds = partInterventions ? partInterventions.map(rel => String(rel.part_id)) : [];
-
+    // Mapear las asignaciones tal cual están en la BD
+    const intervenciones = data.map((item) => {
       return {
-        id: String(item.intervention.id),
+        id: String(item.id), // ID de la asignación (repair_intervention.id)
         data: {
-          NombreInt: item.intervention.name,
-          DescripcionInt: item.intervention.description || '',
-          ModeloDroneId: item.intervention.drone_model_id ? String(item.intervention.drone_model_id) : '',
-          RepuestosIds: repuestosIds,
-          PrecioManoObra: item.labor_cost || item.intervention.labor_cost || 0,
-          // PrecioTotal: item.total_cost || item.intervention.total_cost || 0, // TODO: Verificar que en la relación no está el precio del costo de repuestos. REPARAR!!!
-          PrecioTotal: item.intervention.total_cost || 0,
-          DuracionEstimada: item.intervention.estimated_duration || 30
-        },
-        // Guardamos los datos de la relación por si son útiles
-        relationData: {
-          id: String(item.id),
-          labor_cost: item.labor_cost,
-          parts_cost: item.parts_cost,
-          total_cost: item.total_cost
+          reparacionId: String(reparacionId),
+          intervencionId: String(item.intervention.id),
+          PrecioManoObra: item.labor_cost || 0,
+          PrecioPiezas: item.parts_cost || 0, // 0 es válido para intervenciones sin repuestos
+          PrecioTotal: item.total_cost || 0
         }
       };
-    }));
+    });
 
     return intervenciones;
 
@@ -151,30 +143,21 @@ export const getIntervencionesPorReparacionPersistencia = async (reparacionId) =
 };
 
 // Eliminar intervención de reparación
-export const eliminarIntervencionDeReparacionPersistencia = async (reparacionId, intervencionId) => {
+// NOTA: asignacionId es el ID de la tabla repair_intervention, NO el ID de la intervención
+export const eliminarIntervencionDeReparacionPersistencia = async (reparacionId, asignacionId) => {
   try {
-    // 1. Encontrar el registro específico que queremos eliminar
-    const { data: relacion, error: consultaError } = await supabase
-      .from('repair_intervention')
-      .select('*')
-      .eq('repair_id', reparacionId)
-      .eq('intervention_id', intervencionId);
-
-    if (consultaError || !relacion || relacion.length === 0) {
-      throw new Error('Relación no encontrada');
-    }
-
-    // 2. Eliminar la relación
+    // 1. Eliminar la asignación específica por su ID único
     const { error: eliminacionError } = await supabase
       .from('repair_intervention')
       .delete()
-      .eq('id', relacion[0].id);
+      .eq('id', asignacionId)
+      .eq('repair_id', reparacionId); // Verificación adicional de seguridad
 
     if (eliminacionError) {
-      throw new Error(`Error al eliminar la relación: ${eliminacionError.message}`);
+      throw new Error(`Error al eliminar la asignación: ${eliminacionError.message}`);
     }
 
-    // 3. Recalcular el precio total de la reparación
+    // 2. Recalcular el precio total de la reparación
     const { data: todasIntervenciones, error: recalculoError } = await supabase
       .from('repair_intervention')
       .select('total_cost')
@@ -191,14 +174,14 @@ export const eliminarIntervencionDeReparacionPersistencia = async (reparacionId,
 
     return {
       success: true,
-      message: 'Intervención eliminada correctamente de la reparación'
+      message: 'Asignación de intervención eliminada correctamente'
     };
 
   } catch (error) {
     console.error('Error en eliminarIntervencionDeReparacionPersistencia:', error);
     return {
       success: false,
-      error: error.message || 'Error al eliminar la intervención de la reparación'
+      error: error.message || 'Error al eliminar la asignación de intervención'
     };
   }
 };

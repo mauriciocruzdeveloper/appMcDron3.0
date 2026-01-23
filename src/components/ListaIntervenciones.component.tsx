@@ -4,12 +4,12 @@ import { useAppSelector } from '../redux-tool-kit/hooks/useAppSelector';
 import { useAppDispatch } from '../redux-tool-kit/hooks/useAppDispatch';
 import { setFilter } from '../redux-tool-kit/intervencion/intervencion.slice';
 import { selectModelosDroneArray } from '../redux-tool-kit/modeloDrone/modeloDrone.selectors';
-import { selectIntervencionesArray } from '../redux-tool-kit/intervencion/intervencion.selectors';
+import { selectIntervencionesConPrecios } from '../redux-tool-kit/intervencion/intervencion.selectors';
 
 export default function ListaIntervenciones(): JSX.Element {
   const dispatch = useAppDispatch();
   const history = useHistory();
-  const intervenciones = useAppSelector(selectIntervencionesArray);
+  const intervenciones = useAppSelector(selectIntervencionesConPrecios);
   const filter = useAppSelector((state) => state.intervencion.filter);
   const modelosDrone = useAppSelector(selectModelosDroneArray);
 
@@ -112,8 +112,8 @@ export default function ListaIntervenciones(): JSX.Element {
               <div className='d-flex w-100 justify-content-between'>
                 <h5 className='mb-1'>{intervencion.data.NombreInt}</h5>
                 <div>
-                  <span className={`badge ${getPriceBadgeClass(intervencion.data.PrecioTotal)} me-2`}>
-                    {formatPrice(intervencion.data.PrecioTotal)}
+                  <span className={`badge ${getPriceBadgeClass(intervencion.precioCalculado)} me-2`}>
+                    {formatPrice(intervencion.precioCalculado)}
                   </span>
                 </div>
               </div>
