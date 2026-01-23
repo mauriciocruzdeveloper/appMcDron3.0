@@ -107,10 +107,17 @@ export const enviarDroneReparadoAsync = createAsyncThunk(
     try {
       dispatch(isFetchingStart());
 
-      // Obtener las intervenciones aplicadas a esta reparación
+      // Cargar las ASIGNACIONES de intervenciones para esta reparación
+      // (no solo los IDs del catálogo, sino las asignaciones con sus precios específicos)
+      await dispatch(getIntervencionesPorReparacionAsync(reparacion.id));
+
       const state = getState() as RootState;
-      const todasLasIntervenciones = state.intervencion.coleccionIntervenciones;
-      const intervencionesIds = reparacion.data.IntervencionesIds || [];
+      
+      // Obtener las asignaciones de intervenciones (pueden ser múltiples de la misma intervención)
+      const asignacionesIntervenciones = state.reparacion.intervencionesDeReparacionActual;
+      
+      // Obtener el catálogo de intervenciones para hacer lookup
+      const catalogoIntervenciones = state.intervencion.coleccionIntervenciones;
 
       // Obtener el usuario para usar su email de contacto si está disponible
       const usuario = state.usuario.coleccionUsuarios[reparacion.data.UsuarioRep];
@@ -130,22 +137,19 @@ export const enviarDroneReparadoAsync = createAsyncThunk(
         }
       }
 
-      // TODO: El problema es que la reparacion no tiene los ids de las intervenciones, no se por que. Arreglar en los mappers o donde sea.
-      console.log("Intervenciones IDs:", intervencionesIds);
-      console.log("Todas las intervenciones:", todasLasIntervenciones);
-      console.log('!!! state', state);
-
-      // Filtrar solo las intervenciones que están aplicadas a esta reparación
-      const intervencionesAplicadas = intervencionesIds
-        .map(id => todasLasIntervenciones[id])
-        .filter(Boolean); // Filtrar undefined en caso de que algún ID no exista
-
       // Construir la descripción del trabajo realizado
       let trabajoRealizado = reparacion.data.DescripcionTecRep || "Sin descripción";
 
-      if (intervencionesAplicadas.length > 0) {
-        const listaIntervenciones = intervencionesAplicadas
-          .map((intervencion) => `• ${intervencion.data.NombreInt}`)
+      // Listar TODAS las asignaciones (si hay 2 motores cambiados, aparecerán 2 veces)
+      if (asignacionesIntervenciones.length > 0) {
+        const listaIntervenciones = asignacionesIntervenciones
+          .map((asignacion) => {
+            // Hacer lookup al catálogo para obtener el nombre
+            const intervencion = catalogoIntervenciones[asignacion.data.intervencionId];
+            const nombreInt = intervencion?.data?.NombreInt || 'Intervención';
+            const precio = asignacion.data.PrecioTotal || 0;
+            return `• ${nombreInt} - $${precio.toLocaleString('es-AR')}`;
+          })
           .join('\n');
 
         trabajoRealizado = `${trabajoRealizado}\n\nIntervenciones realizadas:\n${listaIntervenciones}`;

@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useAppDispatch } from '../redux-tool-kit/hooks/useAppDispatch';
 import { useAppSelector } from '../redux-tool-kit/hooks/useAppSelector';
 import { getIntervencionesPorReparacionAsync, agregarIntervencionAReparacionAsync, eliminarIntervencionDeReparacionAsync } from '../redux-tool-kit/reparacion/reparacion.actions';
-import { Intervencion } from '../types/intervencion';
+import { AsignacionIntervencion } from '../types/intervencion';
 import { useModal } from './Modal/useModal';
 import Select from 'react-select';
 import { setIntervencionesDeReparacionActual } from '../redux-tool-kit/reparacion/reparacion.slice';
@@ -33,8 +33,8 @@ export default function IntervencionesReparacion({ reparacionId, readOnly = fals
   const [totalGeneral, setTotalGeneral] = useState<number>(0);
 
   // Opciones para el selector de intervenciones - filtrado por modelo de drone
+  // Se permiten múltiples asignaciones de la misma intervención
   const opcionesIntervenciones = Object.values(todasLasIntervenciones)
-    .filter(intervencion => !intervenciones.some(i => i.id === intervencion.id)) // Filtrar las ya asociadas
     .filter(intervencion => {
       // Si no hay modeloDroneId, mostrar todas las intervenciones
       if (!modeloDroneId) return true;
@@ -59,17 +59,16 @@ export default function IntervencionesReparacion({ reparacionId, readOnly = fals
   }, [dispatch, reparacionId]);
 
   useEffect(() => {
-    // Calcular los totales cuando cambian las intervenciones
+    // Calcular los totales cuando cambian las asignaciones
     let manoObra = 0;
     let repuestos = 0;
     let total = 0;
 
-    intervenciones.forEach(intervencion => {
-      manoObra += intervencion.data.PrecioManoObra;
-      total += intervencion.data.PrecioTotal;
+    intervenciones.forEach(asignacion => {
+      manoObra += asignacion.data.PrecioManoObra;
+      repuestos += asignacion.data.PrecioPiezas;
+      total += asignacion.data.PrecioTotal;
     });
-
-    repuestos = total - manoObra;
 
     setTotalManoObra(manoObra);
     setTotalRepuestos(repuestos);
@@ -88,7 +87,7 @@ export default function IntervencionesReparacion({ reparacionId, readOnly = fals
       setIntervencionSeleccionada(null);
 
       openModal({
-        mensaje: "Intervención agregada correctamente.",
+        mensaje: "Asignación de intervención agregada correctamente.",
         tipo: "success",
         titulo: "Agregar Intervención",
       });
@@ -101,22 +100,22 @@ export default function IntervencionesReparacion({ reparacionId, readOnly = fals
     }
   };
 
-  const handleEliminarIntervencion = async (intervencionId: string) => {
+  const handleEliminarIntervencion = async (asignacionId: string, nombreIntervencion: string) => {
     openModal({
-      mensaje: "¿Está seguro de que desea eliminar esta intervención de la reparación?",
+      mensaje: `¿Está seguro de que desea eliminar esta asignación de "${nombreIntervencion}"?`,
       tipo: "danger",
-      titulo: "Eliminar Intervención",
+      titulo: "Eliminar Asignación",
       confirmCallback: async () => {
         try {
           await dispatch(eliminarIntervencionDeReparacionAsync({
             reparacionId,
-            intervencionId
+            intervencionId: asignacionId // Este es el ID de la asignación (repair_intervention.id)
           })).unwrap();
 
           openModal({
-            mensaje: "Intervención eliminada correctamente.",
+            mensaje: "Asignación eliminada correctamente.",
             tipo: "success",
-            titulo: "Eliminar Intervención",
+            titulo: "Eliminar Asignación",
           });
         } catch (error: unknown) { // TODO: Hacer tipo de dato para el error
           openModal({
@@ -127,6 +126,11 @@ export default function IntervencionesReparacion({ reparacionId, readOnly = fals
         }
       }
     });
+  };
+
+  // Helper para contar cuántas veces está asignada una intervención
+  const contarAsignaciones = (intervencionIdBuscado: string): number => {
+    return intervenciones.filter(a => a.data.intervencionId === intervencionIdBuscado).length;
   };
 
   const formatPrice = (precio: number): string => {
@@ -184,17 +188,29 @@ export default function IntervencionesReparacion({ reparacionId, readOnly = fals
       ) : (
         <>
           <div>
-            {intervenciones.map((intervencion: Intervencion) => (
+            {intervenciones.map((asignacion: AsignacionIntervencion) => {
+              // Hacer lookup de la intervención del catálogo
+              const intervencion = todasLasIntervenciones[asignacion.data.intervencionId];
+              if (!intervencion) return null; // Por si acaso la intervención fue eliminada
+              
+              return (
               <div
-                key={intervencion.id}
+                key={asignacion.id}
                 className="card mb-3"
               >
                 <div className="card-body">
                   <div className="d-flex w-100 justify-content-between mb-2">
-                    <h6 className="mb-1">{intervencion.data.NombreInt}</h6>
+                    <h6 className="mb-1">
+                      {intervencion.data.NombreInt}
+                      {contarAsignaciones(asignacion.data.intervencionId) > 1 && (
+                        <span className="badge bg-info ms-2" style={{fontSize: '0.7rem'}}>
+                          x{contarAsignaciones(asignacion.data.intervencionId)}
+                        </span>
+                      )}
+                    </h6>
                     <div>
                       <span className="badge bg-bluemcdron">
-                        {formatPrice(intervencion.data.PrecioTotal)}
+                        {formatPrice(asignacion.data.PrecioTotal)}
                       </span>
                     </div>
                   </div>
@@ -227,17 +243,17 @@ export default function IntervencionesReparacion({ reparacionId, readOnly = fals
                   <div className="d-flex justify-content-between align-items-center mt-2">
                     <div>
                       <span className="badge bg-secondary me-2">
-                        Mano de obra: {formatPrice(intervencion.data.PrecioManoObra)}
+                        Mano de obra: {formatPrice(asignacion.data.PrecioManoObra)}
                       </span>
                       <span className="badge bg-secondary">
-                        Repuestos: {formatPrice(intervencion.data.PrecioTotal - intervencion.data.PrecioManoObra)}
+                        Repuestos: {formatPrice(asignacion.data.PrecioPiezas)}
                       </span>
                     </div>
 
                     {!readOnly && (
                       <button
                         className="btn btn-sm btn-danger"
-                        onClick={() => handleEliminarIntervencion(intervencion.id)}
+                        onClick={() => handleEliminarIntervencion(asignacion.id, intervencion.data.NombreInt)}
                       >
                         <i className="bi bi-trash"></i> Eliminar
                       </button>
@@ -245,7 +261,7 @@ export default function IntervencionesReparacion({ reparacionId, readOnly = fals
                   </div>
                 </div>
               </div>
-            ))}
+            );})}
           </div>
 
           <div className="card bg-light">

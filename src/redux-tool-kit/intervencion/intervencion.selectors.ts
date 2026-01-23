@@ -1,6 +1,6 @@
 import { createSelector } from '@reduxjs/toolkit';
 import { RootState } from '../store';
-import { Intervenciones } from '../../types/intervencion';
+import { Intervenciones, Intervencion } from '../../types/intervencion';
 
 // Selector base para el estado de intervenciones
 const selectIntervencionState = (state: RootState) => state.intervencion;
@@ -37,11 +37,39 @@ export const selectColeccionIntervenciones = createSelector(
   (intervencionState) => intervencionState.coleccionIntervenciones
 );
 
-// Selector para la colección como array
-export const selectIntervencionesArray = createSelector(
-  [selectColeccionIntervenciones],
-  (coleccionIntervenciones: Intervenciones) => Object.values(coleccionIntervenciones)
+// ---------------------------------------------------------
+// SELECTOR CON PRECIOS CALCULADOS
+// ---------------------------------------------------------
+
+// Tipo extendido para intervenciones con precio calculado
+export interface IntervencionConPrecio extends Intervencion {
+  precioCalculado: number; // PrecioTotal calculado desde repuestos actuales
+}
+
+// Selector que enriquece intervenciones con precio total calculado
+export const selectIntervencionesConPrecios = createSelector(
+  [selectColeccionIntervenciones, (state: RootState) => state.repuesto.coleccionRepuestos],
+  (intervenciones, repuestos): IntervencionConPrecio[] => {
+    return Object.values(intervenciones).map(intervencion => {
+      // Calcular precio de repuestos desde Redux
+      const precioRepuestos = (intervencion.data.RepuestosIds || []).reduce((total, repuestoId) => {
+        const repuesto = repuestos[repuestoId];
+        const precio = repuesto?.data?.PrecioRepu || 0;
+        return total + precio;
+      }, 0);
+      
+      const precioCalculado = (intervencion.data.PrecioManoObra || 0) + precioRepuestos;
+      
+      return {
+        ...intervencion,
+        precioCalculado
+      };
+    });
+  }
 );
+
+// Selector para la colección como array (mantiene compatibilidad)
+export const selectIntervencionesArray = selectIntervencionesConPrecios;
 
 // Selector para obtener una intervención por ID
 export const selectIntervencionPorId = createSelector(
@@ -87,7 +115,7 @@ export const selectIntervencionesOrdenadas = createSelector(
 export const selectIntervencionesOrdendasPorPrecio = createSelector(
   [selectIntervencionesArray],
   (intervenciones) => 
-    [...intervenciones].sort((a, b) => a.data.PrecioTotal - b.data.PrecioTotal)
+    [...intervenciones].sort((a, b) => a.precioCalculado - b.precioCalculado)
 );
 
 // Selector para intervenciones ordenadas por duración
@@ -103,7 +131,7 @@ export const selectIntervencionesSelectOptions = createSelector(
   (intervenciones) => 
     intervenciones.map(intervencion => ({
       value: intervencion.id,
-      label: `${intervencion.data.NombreInt} - $${intervencion.data.PrecioTotal}`
+      label: `${intervencion.data.NombreInt} - $${intervencion.precioCalculado}`
     }))
 );
 
@@ -150,8 +178,8 @@ export const selectIntervencionesPorRangoPrecio = createSelector(
   [selectIntervencionesArray, (state: RootState, minPrecio: number, maxPrecio: number) => ({ minPrecio, maxPrecio })],
   (intervenciones, { minPrecio, maxPrecio }) => {
     return intervenciones.filter(intervencion => 
-      intervencion.data.PrecioTotal >= minPrecio && 
-      intervencion.data.PrecioTotal <= maxPrecio
+      intervencion.precioCalculado >= minPrecio && 
+      intervencion.precioCalculado <= maxPrecio
     );
   }
 );
