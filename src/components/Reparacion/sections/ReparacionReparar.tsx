@@ -132,7 +132,9 @@ export const ReparacionReparar: React.FC<ReparacionRepararProps> = ({
                     <div className="mb-4">
                         <h6 className="mb-3">Tareas a Realizar</h6>
                         <div className="list-group">
-                            {asignaciones.map((asignacion, index) => {
+                            {[...asignaciones]
+                                .sort((a, b) => a.id.localeCompare(b.id))
+                                .map((asignacion) => {
                                 const intervencion = catalogoIntervenciones[asignacion.data.intervencionId];
                                 const estaCompletada = asignacion.data.estado === EstadoAsignacion.COMPLETADA;
                                 
@@ -141,9 +143,6 @@ export const ReparacionReparar: React.FC<ReparacionRepararProps> = ({
                                         key={asignacion.id} 
                                         className="list-group-item d-flex align-items-center py-2"
                                     >
-                                        <span className="me-3 text-muted" style={{minWidth: '30px', fontWeight: '500'}}>
-                                            {index + 1}.
-                                        </span>
                                         <div className="form-check flex-grow-1">
                                             <input
                                                 className="form-check-input"
