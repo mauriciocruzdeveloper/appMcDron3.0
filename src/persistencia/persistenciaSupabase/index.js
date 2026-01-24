@@ -10,6 +10,7 @@ export {
   agregarIntervencionAReparacionPersistencia,
   getIntervencionesPorReparacionPersistencia,
   eliminarIntervencionDeReparacionPersistencia,
+  actualizarEstadoAsignacionPersistencia,
   getReparacionesPersistencia,
   getReparacionPersistencia,
   guardarReparacionPersistencia,
