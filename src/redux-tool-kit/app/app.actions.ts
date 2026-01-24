@@ -12,7 +12,7 @@ import { Intervenciones } from "../../types/intervencion";
 import { isFetchingComplete, isFetchingStart } from "./app.slice";
 import { callEndpoint } from "../../utils/utils";
 import { HttpMethod } from "../../types/httpMethods";
-import { guardarReparacionAsync } from '../reparacion/reparacion.actions';
+import { guardarReparacionAsync, getIntervencionesPorReparacionAsync } from '../reparacion/reparacion.actions';
 import { supabaseAuthErrors } from "../../persistencia/persistenciaSupabase/supabaseAuthErrors";
 import { RootState } from "../store";
 
@@ -137,23 +137,17 @@ export const enviarDroneReparadoAsync = createAsyncThunk(
         }
       }
 
-      // Construir la descripción del trabajo realizado
-      let trabajoRealizado = reparacion.data.DescripcionTecRep || "Sin descripción";
+      // Construir array de intervenciones para el email
+      const intervenciones = asignacionesIntervenciones.map((asignacion) => {
+        const intervencion = catalogoIntervenciones[asignacion.data.intervencionId];
+        return {
+          nombre: intervencion?.data?.NombreInt || 'Intervención',
+          precio: asignacion.data.PrecioTotal || 0
+        };
+      });
 
-      // Listar TODAS las asignaciones (si hay 2 motores cambiados, aparecerán 2 veces)
-      if (asignacionesIntervenciones.length > 0) {
-        const listaIntervenciones = asignacionesIntervenciones
-          .map((asignacion) => {
-            // Hacer lookup al catálogo para obtener el nombre
-            const intervencion = catalogoIntervenciones[asignacion.data.intervencionId];
-            const nombreInt = intervencion?.data?.NombreInt || 'Intervención';
-            const precio = asignacion.data.PrecioTotal || 0;
-            return `• ${nombreInt} - $${precio.toLocaleString('es-AR')}`;
-          })
-          .join('\n');
-
-        trabajoRealizado = `${trabajoRealizado}\n\nIntervenciones realizadas:\n${listaIntervenciones}`;
-      }
+      // Los comentarios del técnico van por separado
+      const comentariosTecnico = reparacion.data.DescripcionTecRep || "";
 
       // Cálculo correcto de los montos
       const montoTotal = reparacion.data.PresuFiRep || 0;
@@ -166,7 +160,8 @@ export const enviarDroneReparadoAsync = createAsyncThunk(
         equipo,
         fecha_ingreso: new Date(Number(reparacion.data.FeRecRep)).toLocaleDateString(),
         fecha_finalizacion: new Date().toLocaleDateString(),
-        trabajo_realizado: trabajoRealizado,
+        intervenciones: intervenciones, // Array de intervenciones
+        comentarios_tecnico: comentariosTecnico, // Comentarios aparte
         monto_total: `$${montoTotal}`,
         monto_pagado: `$${montoPagado}`,
         monto_restante: `$${montoRestante}`,
@@ -175,6 +170,8 @@ export const enviarDroneReparadoAsync = createAsyncThunk(
       };
 
       const url = process.env.REACT_APP_API_URL + '/send_drone_reparado';
+
+      console.log("Cuerpo del email de drone reparado:", body);
 
       const response = await callEndpoint({
         url,
