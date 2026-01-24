@@ -303,6 +303,38 @@ export const eliminarIntervencionDeReparacionAsync = createAsyncThunk(
   },
 );
 
+// Cambiar estado de una asignación de intervención
+export const cambiarEstadoAsignacionAsync = createAsyncThunk(
+  'reparacion/cambiarEstadoAsignacion',
+  async ({ asignacionId, nuevoEstado }: { asignacionId: string, nuevoEstado: string }, { dispatch, getState }) => {
+    try {
+      dispatch(isFetchingStart());
+      
+      const { actualizarEstadoAsignacionPersistencia } = await import('../../persistencia/persistencia');
+      const resultado = await actualizarEstadoAsignacionPersistencia(asignacionId, nuevoEstado);
+      
+      if (!resultado.success) {
+        throw new Error(resultado.error);
+      }
+
+      // Obtener la reparación actual para recargar sus intervenciones
+      const state = getState() as RootState;
+      const asignaciones = state.reparacion.intervencionesDeReparacionActual;
+      const asignacion = asignaciones.find(a => a.id === asignacionId);
+      
+      if (asignacion) {
+        await dispatch(getIntervencionesPorReparacionAsync(asignacion.data.reparacionId));
+      }
+      
+      dispatch(isFetchingComplete());
+      return resultado.data;
+    } catch (error: unknown) {
+      dispatch(isFetchingComplete());
+      throw error;
+    }
+  },
+);
+
 // GUARDA Presupuestado (nuevo estado)
 export const guardarPresupuestadoAsync = createAsyncThunk(
   'app/guardarPresupuestado',
