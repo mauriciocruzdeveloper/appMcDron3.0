@@ -23,10 +23,19 @@ export type Intervenciones = { [id: string]: Intervencion };
 // ASIGNACIÓN DE INTERVENCIÓN (INSTANCIA EN REPARACIÓN)
 // ============================================================================
 
+// Estado de una asignación de intervención
+export enum EstadoAsignacion {
+  PENDIENTE = 'pendiente',
+  COMPLETADA = 'completada'
+}
+
 export interface AsignacionIntervencionData {
   // IDs de relación
   reparacionId: string; // ID de la reparación a la que pertenece
   intervencionId: string; // ID de la intervención del catálogo
+  
+  // Estado de la tarea
+  estado: EstadoAsignacion; // Estado actual de la asignación
   
   // Precios congelados al momento de la asignación
   PrecioManoObra: number; // Labor cost congelado

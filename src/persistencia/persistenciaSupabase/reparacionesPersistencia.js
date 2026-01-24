@@ -63,7 +63,8 @@ export const agregarIntervencionAReparacionPersistencia = async (reparacionId, i
           intervention_id: intervencionId,
           labor_cost: labor_cost,
           parts_cost: parts_cost,
-          total_cost: total_cost
+          total_cost: total_cost,
+          status: 'pendiente' // Nueva asignación comienza como pendiente
         }
       ])
       .select();
@@ -127,6 +128,7 @@ export const getIntervencionesPorReparacionPersistencia = async (reparacionId) =
         data: {
           reparacionId: String(reparacionId),
           intervencionId: String(item.intervention.id),
+          estado: item.status || 'pendiente', // Estado de la asignación
           PrecioManoObra: item.labor_cost || 0,
           PrecioPiezas: item.parts_cost || 0, // 0 es válido para intervenciones sin repuestos
           PrecioTotal: item.total_cost || 0
@@ -182,6 +184,35 @@ export const eliminarIntervencionDeReparacionPersistencia = async (reparacionId,
     return {
       success: false,
       error: error.message || 'Error al eliminar la asignación de intervención'
+    };
+  }
+};
+
+// ACTUALIZAR ESTADO DE ASIGNACIÓN
+export const actualizarEstadoAsignacionPersistencia = async (asignacionId, nuevoEstado) => {
+  try {
+    const { data, error } = await supabase
+      .from('repair_intervention')
+      .update({ status: nuevoEstado })
+      .eq('id', asignacionId)
+      .select()
+      .single();
+
+    if (error) {
+      throw new Error(`Error al actualizar estado: ${error.message}`);
+    }
+
+    return {
+      success: true,
+      data: data,
+      message: 'Estado actualizado correctamente'
+    };
+
+  } catch (error) {
+    console.error('Error en actualizarEstadoAsignacionPersistencia:', error);
+    return {
+      success: false,
+      error: error.message || 'Error al actualizar el estado de la asignación'
     };
   }
 };

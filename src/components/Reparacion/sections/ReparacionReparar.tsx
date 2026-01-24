@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { useAppSelector } from "../../../redux-tool-kit/hooks/useAppSelector";
 import { useAppDispatch } from "../../../redux-tool-kit/hooks/useAppDispatch";
 import { useModal } from "../../Modal/useModal";
@@ -7,10 +7,15 @@ import {
     selectReparacionById, 
     selectSeccionesVisibles,
     selectPuedeAvanzarA,
+    selectIntervencionesDeReparacionActual,
 } from "../../../redux-tool-kit/reparacion";
 import { 
     cambiarEstadoReparacionAsync,
+    getIntervencionesPorReparacionAsync,
+    cambiarEstadoAsignacionAsync,
 } from "../../../redux-tool-kit/reparacion/reparacion.actions";
+import { selectColeccionIntervenciones } from "../../../redux-tool-kit/intervencion/intervencion.selectors";
+import { EstadoAsignacion } from "../../../types/intervencion";
 import { convertTimestampCORTO } from "../../../utils/utils";
 import TextareaAutosize from "react-textarea-autosize";
 
@@ -36,6 +41,17 @@ export const ReparacionReparar: React.FC<ReparacionRepararProps> = ({
     const puedeAvanzarADiagnosticado = useAppSelector(state => 
         selectPuedeAvanzarA(reparacionId, 'Diagnosticado')(state)
     );
+
+    // Obtener asignaciones de intervenciones
+    const asignaciones = useAppSelector(selectIntervencionesDeReparacionActual);
+    const catalogoIntervenciones = useAppSelector(selectColeccionIntervenciones);
+
+    // Cargar asignaciones al montar
+    useEffect(() => {
+        if (seccionVisible) {
+            dispatch(getIntervencionesPorReparacionAsync(reparacionId));
+        }
+    }, [dispatch, reparacionId, seccionVisible]);
 
     // Usar debounce para campo de texto
     const descripcionTec = useDebouncedField({
@@ -87,10 +103,72 @@ export const ReparacionReparar: React.FC<ReparacionRepararProps> = ({
         }
     };
 
+    const handleCambiarEstado = async (asignacionId: string, estadoActual: string) => {
+        const nuevoEstado = estadoActual === EstadoAsignacion.COMPLETADA 
+            ? EstadoAsignacion.PENDIENTE 
+            : EstadoAsignacion.COMPLETADA;
+
+        try {
+            await dispatch(cambiarEstadoAsignacionAsync({
+                asignacionId,
+                nuevoEstado
+            })).unwrap();
+        } catch (error: unknown) {
+            openModal({
+                mensaje: (error as { message?: string })?.message || "Error al cambiar el estado.",
+                tipo: "danger",
+                titulo: "Error",
+            });
+        }
+    };
+
     return (
         <div className="card mb-3" id="seccion-reparar">
             <div className="card-body">
                 <h5 className="card-title bluemcdron">REPARAR</h5>
+                
+                {/* Lista simplificada de intervenciones con checks */}
+                {asignaciones.length > 0 && (
+                    <div className="mb-4">
+                        <h6 className="mb-3">Tareas a Realizar</h6>
+                        <div className="list-group">
+                            {asignaciones.map((asignacion, index) => {
+                                const intervencion = catalogoIntervenciones[asignacion.data.intervencionId];
+                                const estaCompletada = asignacion.data.estado === EstadoAsignacion.COMPLETADA;
+                                
+                                return (
+                                    <div 
+                                        key={asignacion.id} 
+                                        className="list-group-item d-flex align-items-center py-2"
+                                    >
+                                        <span className="me-3 text-muted" style={{minWidth: '30px', fontWeight: '500'}}>
+                                            {index + 1}.
+                                        </span>
+                                        <div className="form-check flex-grow-1">
+                                            <input
+                                                className="form-check-input"
+                                                type="checkbox"
+                                                checked={estaCompletada}
+                                                onChange={() => handleCambiarEstado(asignacion.id, asignacion.data.estado)}
+                                                id={`tarea-${asignacion.id}`}
+                                                disabled={!isAdmin}
+                                                style={{ cursor: isAdmin ? 'pointer' : 'default' }}
+                                            />
+                                            <label 
+                                                className={`form-check-label ms-2 ${estaCompletada ? 'text-decoration-line-through text-muted' : ''}`}
+                                                htmlFor={`tarea-${asignacion.id}`}
+                                                style={{ cursor: isAdmin ? 'pointer' : 'default' }}
+                                            >
+                                                {intervencion?.data?.NombreInt || 'Intervención'}
+                                            </label>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
+                )}
+
                 <div>
                     <label className="form-label">
                         Informe de Reparación o Diagnóstico
