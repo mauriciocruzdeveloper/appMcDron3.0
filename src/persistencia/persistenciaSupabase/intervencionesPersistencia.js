@@ -43,7 +43,7 @@ export const getIntervencionPersistencia = async (id) => {
         ModeloDroneId: data.drone_model_id ? String(data.drone_model_id) : '',
         RepuestosIds: repuestosIds,
         PrecioManoObra: data.labor_cost || 0,
-        PrecioTotal: data.total_cost || 0,
+        // PrecioTotal se calcula dinámicamente en el frontend, no se guarda en catálogo
         DuracionEstimada: data.estimated_duration || 30,
         // Datos adicionales sobre los repuestos
         _partsRelations: partInterventions
@@ -93,7 +93,7 @@ export const getIntervencionesPorModeloDronePersistencia = async (modeloDroneId)
           ModeloDroneId: intervencion.drone_model_id ? String(intervencion.drone_model_id) : '',
           RepuestosIds: repuestosIds,
           PrecioManoObra: intervencion.labor_cost || 0,
-          PrecioTotal: intervencion.total_cost || 0,
+          // PrecioTotal se calcula dinámicamente, no se guarda en catálogo
           DuracionEstimada: intervencion.estimated_duration || 30
         }
       });
@@ -112,12 +112,12 @@ export const guardarIntervencionPersistencia = async (intervencion) => {
     // Iniciar una transacción para asegurar la integridad de los datos
     // (Simulamos transacción con múltiples operaciones secuenciales)
     // 1. Preparar datos para la tabla intervention
+    // El catálogo solo guarda labor_cost, NO precios totales (se calculan dinámicamente)
     const intervencionData = {
       name: intervencion.data.NombreInt,
       description: intervencion.data.DescripcionInt || '',
       drone_model_id: intervencion.data.ModeloDroneId || null,
       labor_cost: intervencion.data.PrecioManoObra || 0,
-      total_cost: intervencion.data.PrecioTotal || 0,
       estimated_duration: intervencion.data.DuracionEstimada || 30
     };
 
@@ -229,7 +229,7 @@ export const guardarIntervencionPersistencia = async (intervencion) => {
         RepuestosIds: intervencion.data.RepuestosIds ?
           intervencion.data.RepuestosIds.map(id => String(id)) : [],
         PrecioManoObra: intervencionResult.labor_cost || 0,
-        PrecioTotal: intervencionResult.total_cost || 0,
+        // PrecioTotal se calcula dinámicamente, no se retorna del catálogo
         DuracionEstimada: intervencionResult.estimated_duration || 30
       }
     };
@@ -310,7 +310,7 @@ export const getIntervencionesPersistencia = async (setIntervencionesToRedux) =>
           ModeloDroneId: intervencion.drone_model_id ? String(intervencion.drone_model_id) : '',
           RepuestosIds: intervencion.part_intervention.map(rel => String(rel.part.id)),
           PrecioManoObra: intervencion.labor_cost || 0,
-          PrecioTotal: intervencion.total_cost || 0,
+          // PrecioTotal se calcula dinámicamente, no se guarda en catálogo
           DuracionEstimada: intervencion.estimated_duration || 30
         }
       }));

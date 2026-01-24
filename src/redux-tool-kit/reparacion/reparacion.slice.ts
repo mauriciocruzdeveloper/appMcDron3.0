@@ -2,14 +2,14 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { ReparacionType, Reparaciones } from '../../types/reparacion';
 import { Filtro } from '../../types/Filtro';
-import { Intervencion } from '../../types/intervencion';
+import { AsignacionIntervencion } from '../../types/intervencion';
 import { guardarReparacionAsync, eliminarReparacionAsync } from './reparacion.actions';
 
 // Tipos para el estado inicial
 interface ReparacionState {
   coleccionReparaciones: Reparaciones;
   filter: Filtro;
-  intervencionesDeReparacionActual: Intervencion[];
+  intervencionesDeReparacionActual: AsignacionIntervencion[]; // Asignaciones, no intervenciones
 }
 
 // Estado inicial
@@ -42,7 +42,7 @@ const reparacionSlice = createSlice({
     setFilter: (state, action: PayloadAction<Filtro>) => {
       state.filter = action.payload;
     },
-    setIntervencionesDeReparacionActual: (state, action: PayloadAction<Intervencion[]>) => {
+    setIntervencionesDeReparacionActual: (state, action: PayloadAction<AsignacionIntervencion[]>) => {
       state.intervencionesDeReparacionActual = action.payload;
     },
     addReparacion: (state, action: PayloadAction<ReparacionType>) => {

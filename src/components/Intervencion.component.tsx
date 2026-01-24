@@ -38,7 +38,7 @@ export default function IntervencionComponent(): JSX.Element {
       ModeloDroneId: '',
       RepuestosIds: [],
       PrecioManoObra: 0,
-      PrecioTotal: 0,
+      // PrecioTotal se calcula dinámicamente, no se guarda
       DuracionEstimada: 30
     }
   });
@@ -128,20 +128,9 @@ export default function IntervencionComponent(): JSX.Element {
     }
   }, [intervencion.data.ModeloDroneId, repuestosArray, selectedRepuestos]);
 
-  // Actualizar el precio total cuando cambian los valores
-  useEffect(() => {
-    // Calcular el precio total sumando mano de obra + repuestos
-    const precioRepuestos = selectedRepuestos.reduce((total, rep) => total + rep.precio, 0);
-    const precioTotal = intervencion.data.PrecioManoObra + precioRepuestos;
-    
-    setIntervencion(prev => ({
-      ...prev,
-      data: {
-        ...prev.data,
-        PrecioTotal: precioTotal
-      }
-    }));
-  }, [intervencion.data.PrecioManoObra, selectedRepuestos]);
+  // Calcular el precio total dinámicamente (no se guarda en BD)
+  const precioRepuestos = selectedRepuestos.reduce((total, rep) => total + rep.precio, 0);
+  const precioTotal = intervencion.data.PrecioManoObra + precioRepuestos;
   
   // Manejador para campos de texto comunes
   const handleTextInputChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -404,8 +393,8 @@ export default function IntervencionComponent(): JSX.Element {
                 </div>
                 <div className="col-auto text-end">
                   <div className="mb-2">{formatPrice(intervencion.data.PrecioManoObra)}</div>
-                  <div className="mb-2">{formatPrice(intervencion.data.PrecioTotal - intervencion.data.PrecioManoObra)}</div>
-                  <div className="fw-bold">{formatPrice(intervencion.data.PrecioTotal)}</div>
+                  <div className="mb-2">{formatPrice(precioRepuestos)}</div>
+                  <div className="fw-bold">{formatPrice(precioTotal)}</div>
                 </div>
               </div>
             </div>
