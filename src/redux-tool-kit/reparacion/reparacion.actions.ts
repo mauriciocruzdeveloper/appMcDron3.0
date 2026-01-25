@@ -335,6 +335,70 @@ export const cambiarEstadoAsignacionAsync = createAsyncThunk(
   },
 );
 
+// Actualizar descripción de una asignación de intervención
+export const actualizarDescripcionAsignacionAsync = createAsyncThunk(
+  'reparacion/actualizarDescripcionAsignacion',
+  async ({ asignacionId, descripcion }: { asignacionId: string, descripcion: string }, { dispatch, getState }) => {
+    try {
+      dispatch(isFetchingStart());
+      
+      const { actualizarDescripcionAsignacionPersistencia } = await import('../../persistencia/persistencia');
+      const resultado = await actualizarDescripcionAsignacionPersistencia(asignacionId, descripcion);
+      
+      if (!resultado.success) {
+        throw new Error(resultado.error);
+      }
+
+      // Recargar las intervenciones de la reparación
+      const state = getState() as RootState;
+      const asignaciones = state.reparacion.intervencionesDeReparacionActual;
+      const asignacion = asignaciones.find(a => a.id === asignacionId);
+      
+      if (asignacion) {
+        await dispatch(getIntervencionesPorReparacionAsync(asignacion.data.reparacionId));
+      }
+      
+      dispatch(isFetchingComplete());
+      return resultado.data;
+    } catch (error: unknown) {
+      dispatch(isFetchingComplete());
+      throw error;
+    }
+  },
+);
+
+// Actualizar fotos de una asignación de intervención
+export const actualizarFotosAsignacionAsync = createAsyncThunk(
+  'reparacion/actualizarFotosAsignacion',
+  async ({ asignacionId, fotos }: { asignacionId: string, fotos: string[] }, { dispatch, getState }) => {
+    try {
+      dispatch(isFetchingStart());
+      
+      const { actualizarFotosAsignacionPersistencia } = await import('../../persistencia/persistencia');
+      const resultado = await actualizarFotosAsignacionPersistencia(asignacionId, fotos);
+      
+      if (!resultado.success) {
+        throw new Error(resultado.error);
+      }
+
+      // Recargar las intervenciones de la reparación
+      const state = getState() as RootState;
+      const asignaciones = state.reparacion.intervencionesDeReparacionActual;
+      const asignacion = asignaciones.find(a => a.id === asignacionId);
+      
+      if (asignacion) {
+        await dispatch(getIntervencionesPorReparacionAsync(asignacion.data.reparacionId));
+      }
+      
+      dispatch(isFetchingComplete());
+      return resultado.data;
+    } catch (error: unknown) {
+      dispatch(isFetchingComplete());
+      throw error;
+    }
+  },
+);
+
 // GUARDA Presupuestado (nuevo estado)
 export const guardarPresupuestadoAsync = createAsyncThunk(
   'app/guardarPresupuestado',

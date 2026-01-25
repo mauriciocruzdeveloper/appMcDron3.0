@@ -13,8 +13,10 @@ import {
 import { 
     cambiarEstadoReparacionAsync,
 } from "../../../redux-tool-kit/reparacion/reparacion.actions";
+import { enviarPresupuestoAsync } from "../../../redux-tool-kit/app/app.actions";
 import { selectDroneById } from "../../../redux-tool-kit/drone/drone.selectors";
 import IntervencionesReparacion from '../../IntervencionesReparacion.component';
+import { useModal } from "../../Modal/useModal";
 
 interface ReparacionPresupuestoProps {
     reparacionId: string;
@@ -26,6 +28,7 @@ export const ReparacionPresupuesto: React.FC<ReparacionPresupuestoProps> = ({
     isAdmin 
 }) => {
     const dispatch = useAppDispatch();
+    const { openModal } = useModal();
     
     const reparacion = useAppSelector(state => selectReparacionById(reparacionId)(state));
     const drone = useAppSelector(state => 
@@ -108,6 +111,25 @@ export const ReparacionPresupuesto: React.FC<ReparacionPresupuestoProps> = ({
         }));
     };
 
+    const enviarPresupuesto = async () => {
+        if (!reparacion) return;
+
+        try {
+            await dispatch(enviarPresupuestoAsync(reparacion)).unwrap();
+            openModal({
+                mensaje: "Presupuesto enviado correctamente por email.",
+                tipo: "success",
+                titulo: "Presupuesto Enviado",
+            });
+        } catch (error: unknown) {
+            openModal({
+                mensaje: (error as { message?: string })?.message || "Error al enviar el presupuesto.",
+                tipo: "danger",
+                titulo: "Error",
+            });
+        }
+    };
+
     return (
         <div className="card mb-3" id="seccion-presupuesto">
             <div className="card-body">
@@ -186,6 +208,23 @@ export const ReparacionPresupuesto: React.FC<ReparacionPresupuestoProps> = ({
 
                 {isAdmin && (
                     <div className="mt-3">
+                        {/* Botón para enviar presupuesto por email */}
+                        {intervencionesAplicadas.length > 0 && (
+                            <div className="mb-3">
+                                <button
+                                    type="button"
+                                    className="btn btn-primary"
+                                    onClick={enviarPresupuesto}
+                                >
+                                    <i className="bi bi-envelope me-2"></i>
+                                    Enviar Presupuesto por Email
+                                </button>
+                                <small className="form-text text-muted d-block mt-1">
+                                    Se enviará el presupuesto con el detalle de todas las intervenciones
+                                </small>
+                            </div>
+                        )}
+
                         {puedeAvanzarAPresupuestado && (
                             <div className="mb-2">
                                 <button

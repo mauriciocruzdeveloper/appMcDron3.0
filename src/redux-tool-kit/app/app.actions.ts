@@ -100,6 +100,89 @@ export const enviarReciboAsync = createAsyncThunk(
   },
 );
 
+// ENVIAR EMAIL DE PRESUPUESTO
+export const enviarPresupuestoAsync = createAsyncThunk(
+  'app/enviarPresupuesto',
+  async (reparacion: ReparacionType, { dispatch, getState }) => {
+    try {
+      dispatch(isFetchingStart());
+
+      const state = getState() as RootState;
+      
+      // Obtener las asignaciones de intervenciones desde el state
+      // Si no están cargadas, cargarlas primero
+      let asignacionesIntervenciones = state.reparacion.intervencionesDeReparacionActual;
+      
+      // Verificar si necesitamos cargar las intervenciones
+      if (asignacionesIntervenciones.length === 0 || 
+          asignacionesIntervenciones[0]?.data.reparacionId !== reparacion.id) {
+        // Cargar sin dispatchar isFetching para no interrumpir nuestro loading
+        const { getIntervencionesPorReparacionPersistencia } = await import('../../persistencia/persistencia');
+        asignacionesIntervenciones = await getIntervencionesPorReparacionPersistencia(reparacion.id);
+      }
+      
+      // Obtener el catálogo de intervenciones
+      const catalogoIntervenciones = state.intervencion.coleccionIntervenciones;
+
+      // Obtener el usuario
+      const usuario = state.usuario.coleccionUsuarios[reparacion.data.UsuarioRep];
+      const emailDestino = usuario?.data?.EmailContacto || reparacion.data.EmailUsu;
+
+      let equipo = reparacion.data.ModeloDroneNameRep;
+      if (!equipo) {
+        if (reparacion.data.DroneId) {
+          const drone = state.drone.coleccionDrones[reparacion.data.DroneId];
+          if (drone) {
+            equipo = state.modeloDrone.coleccionModelosDrone[drone.data.ModeloDroneId].data.NombreModelo;
+          } else {
+            equipo = 'Drone no encontrado';
+          }
+        } else {
+          equipo = 'Drone no asignado';
+        }
+      }
+
+      // Construir array de intervenciones con descripción y fotos
+      const intervenciones = asignacionesIntervenciones.map((asignacion) => {
+        const intervencion = catalogoIntervenciones[asignacion.data.intervencionId];
+        return {
+          nombre: intervencion?.data?.NombreInt || 'Intervención',
+          descripcion: asignacion.data.descripcion || '',
+          fotos: asignacion.data.fotos || []
+        };
+      });
+
+      const montoTotal = reparacion.data.PresuFiRep || 0;
+
+      const body = {
+        cliente: reparacion.data.ApellidoUsu ? `${reparacion.data.NombreUsu} ${reparacion.data.ApellidoUsu}` : reparacion.data.NombreUsu,
+        nro_reparacion: reparacion.id,
+        equipo,
+        fecha_ingreso: new Date(Number(reparacion.data.FeRecRep)).toLocaleDateString(),
+        intervenciones: intervenciones,
+        monto_total: `${montoTotal}`,
+        telefono: reparacion.data.TelefonoUsu,
+        email: emailDestino
+      };
+
+      const url = process.env.REACT_APP_API_URL + '/send_repair_budget';
+
+      const response = await callEndpoint({
+        url,
+        method: HttpMethod.POST,
+        body,
+      });
+
+      dispatch(isFetchingComplete());
+
+      return response;
+    } catch (error: any) {
+      dispatch(isFetchingComplete());
+      throw error;
+    }
+  },
+);
+
 // ENVIAR EMAIL DE FINALIZACIÓN
 export const enviarDroneReparadoAsync = createAsyncThunk(
   'app/enviarFinalizacion',
