@@ -131,7 +131,9 @@ export const getIntervencionesPorReparacionPersistencia = async (reparacionId) =
           estado: item.status || 'pendiente', // Estado de la asignación
           PrecioManoObra: item.labor_cost || 0,
           PrecioPiezas: item.parts_cost || 0, // 0 es válido para intervenciones sin repuestos
-          PrecioTotal: item.total_cost || 0
+          PrecioTotal: item.total_cost || 0,
+          descripcion: item.description || '', // Descripción del problema
+          fotos: item.photos || [] // Array de URLs de fotos
         }
       };
     });
@@ -213,6 +215,69 @@ export const actualizarEstadoAsignacionPersistencia = async (asignacionId, nuevo
     return {
       success: false,
       error: error.message || 'Error al actualizar el estado de la asignación'
+    };
+  }
+};
+
+// ACTUALIZAR DESCRIPCIÓN DE ASIGNACIÓN
+export const actualizarDescripcionAsignacionPersistencia = async (asignacionId, descripcion) => {
+  try {
+    const { data, error } = await supabase
+      .from('repair_intervention')
+      .update({ description: descripcion })
+      .eq('id', asignacionId)
+      .select()
+      .single();
+
+    if (error) {
+      throw new Error(`Error al actualizar descripción: ${error.message}`);
+    }
+
+    return {
+      success: true,
+      data: data,
+      message: 'Descripción actualizada correctamente'
+    };
+
+  } catch (error) {
+    console.error('Error en actualizarDescripcionAsignacionPersistencia:', error);
+    return {
+      success: false,
+      error: error.message || 'Error al actualizar la descripción de la asignación'
+    };
+  }
+};
+
+// ACTUALIZAR FOTOS DE ASIGNACIÓN
+export const actualizarFotosAsignacionPersistencia = async (asignacionId, fotos) => {
+  try {
+    // fotos debe ser un array de URLs
+    if (!Array.isArray(fotos)) {
+      throw new Error('El parámetro fotos debe ser un array');
+    }
+
+    const { data, error } = await supabase
+      .from('repair_intervention')
+      .update({ photos: fotos })
+      .eq('id', asignacionId)
+      .select()
+      .single();
+
+    if (error) {
+      throw new Error(`Error al actualizar fotos: ${error.message}`);
+    }
+
+    return {
+      success: true,
+      data: data,
+      message: 'Fotos actualizadas correctamente'
+    };
+
+  } catch (error) {
+    console.error('Error en actualizarFotosAsignacionPersistencia:', error);
+    return {
+      success: false,
+      error: error.message || 'Error al actualizar las fotos de la asignación'
     };
   }
 };

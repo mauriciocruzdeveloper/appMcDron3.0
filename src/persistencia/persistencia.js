@@ -25,6 +25,8 @@ export const getIntervencionesPorReparacionPersistencia = backend.getIntervencio
 export const agregarIntervencionAReparacionPersistencia = backend.agregarIntervencionAReparacionPersistencia;
 export const eliminarIntervencionDeReparacionPersistencia = backend.eliminarIntervencionDeReparacionPersistencia;
 export const actualizarEstadoAsignacionPersistencia = backend.actualizarEstadoAsignacionPersistencia;
+export const actualizarDescripcionAsignacionPersistencia = backend.actualizarDescripcionAsignacionPersistencia;
+export const actualizarFotosAsignacionPersistencia = backend.actualizarFotosAsignacionPersistencia;
 
 // USUARIOS / CLIENTES
 export const getUsuariosPersistencia = backend.getUsuariosPersistencia;
