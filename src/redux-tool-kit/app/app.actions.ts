@@ -246,21 +246,68 @@ export const generarPDFPresupuestoAsync = createAsyncThunk(
         email: emailDestino
       };
 
-      // Crear un formulario invisible para enviar la petición y descargar el PDF
-      const form = document.createElement('form');
-      form.method = 'POST';
-      form.action = `${process.env.REACT_APP_API_URL}/generate_budget_pdf.php`;
-      form.target = '_blank';
-      
-      const input = document.createElement('input');
-      input.type = 'hidden';
-      input.name = 'data';
-      input.value = JSON.stringify(datosPresupuesto);
-      
-      form.appendChild(input);
-      document.body.appendChild(form);
-      form.submit();
-      document.body.removeChild(form);
+      // Detectar si estamos en Cordova
+      const isCordova = typeof (window as any).cordova !== 'undefined';
+
+      const apiUrl = process.env.REACT_APP_API_URL;
+      if (!apiUrl) {
+        throw new Error('REACT_APP_API_URL no está configurada');
+      }
+
+      if (isCordova) {
+        // En Cordova, guardar el PDF en el servidor y abrir la URL
+        console.log('Generando PDF en Cordova, URL:', `${apiUrl}/generate_budget_pdf?saveToServer=1`);
+        console.log('Datos a enviar:', datosPresupuesto);
+        
+        const response = await fetch(`${apiUrl}/generate_budget_pdf?saveToServer=1`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+          },
+          body: JSON.stringify(datosPresupuesto)
+        });
+
+        console.log('Respuesta recibida, status:', response.status);
+        
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error('Error del servidor:', errorText);
+          throw new Error(`Error del servidor: ${response.status} - ${errorText}`);
+        }
+
+        const result = await response.json();
+        console.log('Resultado parseado:', result);
+        
+        if (!result.success) {
+          throw new Error(result.error || 'Error al generar el PDF');
+        }
+
+        // Construir la URL completa del PDF
+        const baseUrl = apiUrl.replace('/api', '');
+        const pdfUrl = `${baseUrl}${result.url}`;
+        
+        console.log('Abriendo PDF:', pdfUrl);
+        
+        // En Cordova, asignar directamente para que el navegador del sistema maneje el PDF
+        window.location.href = pdfUrl;
+      } else {
+        // En navegador web, usar el método del formulario
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = `${apiUrl}/generate_budget_pdf`;
+        form.target = '_blank';
+        
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = 'data';
+        input.value = JSON.stringify(datosPresupuesto);
+        
+        form.appendChild(input);
+        document.body.appendChild(form);
+        form.submit();
+        document.body.removeChild(form);
+      }
 
       dispatch(isFetchingComplete());
       return { success: true };
