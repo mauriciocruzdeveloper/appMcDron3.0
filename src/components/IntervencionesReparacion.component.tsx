@@ -189,7 +189,9 @@ export default function IntervencionesReparacion({ reparacionId, readOnly = fals
       ) : (
         <>
           <div>
-            {intervenciones.map((asignacion: AsignacionIntervencion) => {
+            {[...intervenciones]
+              .sort((a, b) => a.id.localeCompare(b.id))
+              .map((asignacion: AsignacionIntervencion) => {
               // Hacer lookup de la intervención del catálogo
               const intervencion = todasLasIntervenciones[asignacion.data.intervencionId];
               if (!intervencion) return null; // Por si acaso la intervención fue eliminada
@@ -267,7 +269,7 @@ export default function IntervencionesReparacion({ reparacionId, readOnly = fals
                     descripcionInicial={asignacion.data.descripcion || ''}
                     fotosIniciales={asignacion.data.fotos || []}
                     readOnly={readOnly}
-                    collapsed={true}
+                    collapsed={!(asignacion.data.descripcion || (asignacion.data.fotos && asignacion.data.fotos.length > 0))}
                   />
                 </div>
               </div>
