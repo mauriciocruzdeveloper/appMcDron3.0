@@ -19,15 +19,13 @@ export const ReparacionDriveYAnotaciones: React.FC<ReparacionDriveYAnotacionesPr
     const driveLink = useDebouncedField({
         reparacionId,
         campo: 'DriveRep',
-        valorInicial: reparacion?.data.DriveRep || "",
-        delay: 3000
+        valorInicial: reparacion?.data.DriveRep || ""
     });
 
     const anotaciones = useDebouncedField({
         reparacionId,
         campo: 'AnotacionesRep',
-        valorInicial: reparacion?.data.AnotacionesRep || "",
-        delay: 3000
+        valorInicial: reparacion?.data.AnotacionesRep || ""
     });
 
     if (!isAdmin || !reparacion) return null;

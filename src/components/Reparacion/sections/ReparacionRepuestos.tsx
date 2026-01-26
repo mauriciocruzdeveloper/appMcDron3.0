@@ -39,15 +39,13 @@ export const ReparacionRepuestos: React.FC<ReparacionRepuestosProps> = ({
     const obsRepuestos = useDebouncedField({
         reparacionId,
         campo: 'ObsRepuestos',
-        valorInicial: reparacion?.data.ObsRepuestos || "",
-        delay: 3000
+        valorInicial: reparacion?.data.ObsRepuestos || ""
     });
 
     const txtRepuestos = useDebouncedField({
         reparacionId,
         campo: 'TxtRepuestosRep',
-        valorInicial: reparacion?.data.TxtRepuestosRep || "",
-        delay: 3000
+        valorInicial: reparacion?.data.TxtRepuestosRep || ""
     });
 
     if (!seccionVisible || !reparacion || !isAdmin) return null;
