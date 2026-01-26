@@ -51,10 +51,10 @@ export const ReparacionEntrega: React.FC<ReparacionEntregaProps> = ({
         delay: 3000
     });
 
-    const descripcionEntrega = useDebouncedField({
+    const seguimiento = useDebouncedField({
         reparacionId,
-        campo: 'DescripcionEntregaRep',
-        valorInicial: reparacion?.data.DescripcionEntregaRep || "",
+        campo: 'SeguimientoEntregaRep',
+        valorInicial: reparacion?.data.SeguimientoEntregaRep || "",
         delay: 3000
     });
 
