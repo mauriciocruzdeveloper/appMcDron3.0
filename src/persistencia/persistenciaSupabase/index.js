@@ -11,6 +11,8 @@ export {
   getIntervencionesPorReparacionPersistencia,
   eliminarIntervencionDeReparacionPersistencia,
   actualizarEstadoAsignacionPersistencia,
+  actualizarDescripcionAsignacionPersistencia,
+  actualizarFotosAsignacionPersistencia,
   getReparacionesPersistencia,
   getReparacionPersistencia,
   guardarReparacionPersistencia,
