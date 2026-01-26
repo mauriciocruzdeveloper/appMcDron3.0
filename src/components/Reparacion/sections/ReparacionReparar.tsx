@@ -58,7 +58,7 @@ export const ReparacionReparar: React.FC<ReparacionRepararProps> = ({
         reparacionId,
         campo: 'DescripcionTecRep',
         valorInicial: reparacion?.data.DescripcionTecRep || "",
-        delay: 2000 // 2 segundos para informes largos
+        delay: 3000 // 3 segundos para informes largos
     });
 
     const fechaFin = useDebouncedField({

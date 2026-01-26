@@ -20,14 +20,14 @@ export const ReparacionDriveYAnotaciones: React.FC<ReparacionDriveYAnotacionesPr
         reparacionId,
         campo: 'DriveRep',
         valorInicial: reparacion?.data.DriveRep || "",
-        delay: 1000
+        delay: 3000
     });
 
     const anotaciones = useDebouncedField({
         reparacionId,
         campo: 'AnotacionesRep',
         valorInicial: reparacion?.data.AnotacionesRep || "",
-        delay: 1500
+        delay: 3000
     });
 
     if (!isAdmin || !reparacion) return null;

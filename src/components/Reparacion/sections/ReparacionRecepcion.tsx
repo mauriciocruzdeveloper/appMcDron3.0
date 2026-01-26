@@ -38,7 +38,7 @@ export const ReparacionRecepcion: React.FC<ReparacionRecepcionProps> = ({
         reparacionId,
         campo: 'FeRecRep',
         valorInicial: reparacion?.data.FeRecRep || "",
-        delay: 500,
+        delay: 3000,
         isDateField: true
     });
 
