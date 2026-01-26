@@ -183,6 +183,96 @@ export const enviarPresupuestoAsync = createAsyncThunk(
   },
 );
 
+// GENERAR PDF PRESUPUESTO
+export const generarPDFPresupuestoAsync = createAsyncThunk(
+  'app/generarPDFPresupuesto',
+  async (reparacion: ReparacionType, { dispatch, getState, rejectWithValue }) => {
+    try {
+      dispatch(isFetchingStart());
+
+      const state = getState() as RootState;
+      
+      // Obtener las asignaciones de intervenciones desde el state
+      let asignacionesIntervenciones = state.reparacion.intervencionesDeReparacionActual;
+      
+      // Verificar si necesitamos cargar las intervenciones
+      if (asignacionesIntervenciones.length === 0 || 
+          asignacionesIntervenciones[0]?.data.reparacionId !== reparacion.id) {
+        const { getIntervencionesPorReparacionPersistencia } = await import('../../persistencia/persistencia');
+        asignacionesIntervenciones = await getIntervencionesPorReparacionPersistencia(reparacion.id);
+      }
+      
+      // Obtener el catálogo de intervenciones
+      const catalogoIntervenciones = state.intervencion.coleccionIntervenciones;
+
+      // Obtener el usuario
+      const usuario = state.usuario.coleccionUsuarios[reparacion.data.UsuarioRep];
+      const emailDestino = usuario?.data?.EmailContacto || reparacion.data.EmailUsu;
+
+      let equipo = reparacion.data.ModeloDroneNameRep;
+      if (!equipo) {
+        if (reparacion.data.DroneId) {
+          const drone = state.drone.coleccionDrones[reparacion.data.DroneId];
+          if (drone) {
+            equipo = state.modeloDrone.coleccionModelosDrone[drone.data.ModeloDroneId].data.NombreModelo;
+          } else {
+            equipo = 'Drone no encontrado';
+          }
+        } else {
+          equipo = 'Drone no asignado';
+        }
+      }
+
+      // Construir array de intervenciones con descripción y fotos
+      const intervenciones = asignacionesIntervenciones.map((asignacion) => {
+        const intervencion = catalogoIntervenciones[asignacion.data.intervencionId];
+        return {
+          nombre: intervencion?.data?.NombreInt || 'Intervención',
+          descripcion: asignacion.data.descripcion || '',
+          fotos: asignacion.data.fotos || []
+        };
+      });
+
+      const montoTotal = reparacion.data.PresuFiRep || 0;
+
+      const datosPresupuesto = {
+        cliente: reparacion.data.ApellidoUsu ? `${reparacion.data.NombreUsu} ${reparacion.data.ApellidoUsu}` : reparacion.data.NombreUsu,
+        nro_reparacion: reparacion.id,
+        equipo,
+        fecha_ingreso: new Date(Number(reparacion.data.FeRecRep)).toLocaleDateString(),
+        intervenciones: intervenciones,
+        monto_total: montoTotal,
+        telefono: reparacion.data.TelefonoUsu,
+        email: emailDestino
+      };
+
+      // Crear un formulario invisible para enviar la petición y descargar el PDF
+      const form = document.createElement('form');
+      form.method = 'POST';
+      form.action = `${process.env.REACT_APP_API_URL}/generate_budget_pdf.php`;
+      form.target = '_blank';
+      
+      const input = document.createElement('input');
+      input.type = 'hidden';
+      input.name = 'data';
+      input.value = JSON.stringify(datosPresupuesto);
+      
+      form.appendChild(input);
+      document.body.appendChild(form);
+      form.submit();
+      document.body.removeChild(form);
+
+      dispatch(isFetchingComplete());
+      return { success: true };
+    } catch (error: any) {
+      dispatch(isFetchingComplete());
+      return rejectWithValue({
+        message: error.message || "Error al generar el PDF del presupuesto."
+      });
+    }
+  }
+);
+
 // ENVIAR EMAIL DE FINALIZACIÓN
 export const enviarDroneReparadoAsync = createAsyncThunk(
   'app/enviarFinalizacion',

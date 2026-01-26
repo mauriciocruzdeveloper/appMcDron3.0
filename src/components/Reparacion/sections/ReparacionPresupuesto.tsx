@@ -13,7 +13,7 @@ import {
 import { 
     cambiarEstadoReparacionAsync,
 } from "../../../redux-tool-kit/reparacion/reparacion.actions";
-import { enviarPresupuestoAsync } from "../../../redux-tool-kit/app/app.actions";
+import { enviarPresupuestoAsync, generarPDFPresupuestoAsync } from "../../../redux-tool-kit/app/app.actions";
 import { selectDroneById } from "../../../redux-tool-kit/drone/drone.selectors";
 import IntervencionesReparacion from '../../IntervencionesReparacion.component';
 import { useModal } from "../../Modal/useModal";
@@ -130,6 +130,25 @@ export const ReparacionPresupuesto: React.FC<ReparacionPresupuestoProps> = ({
         }
     };
 
+    const generarPDF = async () => {
+        if (!reparacion) return;
+
+        try {
+            await dispatch(generarPDFPresupuestoAsync(reparacion)).unwrap();
+            openModal({
+                mensaje: "PDF del presupuesto generado. Se abrirá en una nueva pestaña.",
+                tipo: "success",
+                titulo: "PDF Generado",
+            });
+        } catch (error: unknown) {
+            openModal({
+                mensaje: (error as { message?: string })?.message || "Error al generar el PDF del presupuesto.",
+                tipo: "danger",
+                titulo: "Error",
+            });
+        }
+    };
+
     return (
         <div className="card mb-3" id="seccion-presupuesto">
             <div className="card-body">
@@ -208,19 +227,29 @@ export const ReparacionPresupuesto: React.FC<ReparacionPresupuestoProps> = ({
 
                 {isAdmin && (
                     <div className="mt-3">
-                        {/* Botón para enviar presupuesto por email */}
+                        {/* Botones para enviar presupuesto por email o generar PDF */}
                         {intervencionesAplicadas.length > 0 && (
                             <div className="mb-3">
-                                <button
-                                    type="button"
-                                    className="btn btn-primary"
-                                    onClick={enviarPresupuesto}
-                                >
-                                    <i className="bi bi-envelope me-2"></i>
-                                    Enviar Presupuesto por Email
-                                </button>
+                                <div className="d-flex flex-wrap gap-2">
+                                    <button
+                                        type="button"
+                                        className="btn btn-primary"
+                                        onClick={enviarPresupuesto}
+                                    >
+                                        <i className="bi bi-envelope me-2"></i>
+                                        Enviar por Email
+                                    </button>
+                                    <button
+                                        type="button"
+                                        className="btn btn-secondary"
+                                        onClick={generarPDF}
+                                    >
+                                        <i className="bi bi-file-pdf me-2"></i>
+                                        Descargar PDF
+                                    </button>
+                                </div>
                                 <small className="form-text text-muted d-block mt-1">
-                                    Se enviará el presupuesto con el detalle de todas las intervenciones
+                                    Enviar el presupuesto por email o descargar como PDF
                                 </small>
                             </div>
                         )}
