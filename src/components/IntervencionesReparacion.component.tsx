@@ -10,6 +10,7 @@ import { selectColeccionModelosDrone } from '../redux-tool-kit/modeloDrone/model
 import { selectColeccionRepuestos } from '../redux-tool-kit/repuesto/repuesto.selectors';
 import { selectColeccionIntervenciones } from '../redux-tool-kit/intervencion/intervencion.selectors';
 import { selectIntervencionesDeReparacionActual } from '../redux-tool-kit/reparacion';
+import { AsignacionIntervencionDetalle } from './AsignacionIntervencionDetalle.component';
 
 interface IntervencionesReparacionProps {
   reparacionId: string;
@@ -188,7 +189,9 @@ export default function IntervencionesReparacion({ reparacionId, readOnly = fals
       ) : (
         <>
           <div>
-            {intervenciones.map((asignacion: AsignacionIntervencion) => {
+            {[...intervenciones]
+              .sort((a, b) => a.id.localeCompare(b.id))
+              .map((asignacion: AsignacionIntervencion) => {
               // Hacer lookup de la intervención del catálogo
               const intervencion = todasLasIntervenciones[asignacion.data.intervencionId];
               if (!intervencion) return null; // Por si acaso la intervención fue eliminada
@@ -259,6 +262,15 @@ export default function IntervencionesReparacion({ reparacionId, readOnly = fals
                       </button>
                     )}
                   </div>
+
+                  {/* Detalles de la asignación para el presupuesto */}
+                  <AsignacionIntervencionDetalle
+                    asignacionId={asignacion.id}
+                    descripcionInicial={asignacion.data.descripcion || ''}
+                    fotosIniciales={asignacion.data.fotos || []}
+                    readOnly={readOnly}
+                    collapsed={!(asignacion.data.descripcion || (asignacion.data.fotos && asignacion.data.fotos.length > 0))}
+                  />
                 </div>
               </div>
             );})}

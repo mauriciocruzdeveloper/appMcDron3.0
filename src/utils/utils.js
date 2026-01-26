@@ -57,6 +57,8 @@ export const callEndpoint = async (params) => {
         apiKey = process.env.REACT_APP_ENDPOINT_API_KEY
     } = params;
 
+    console.log(`Llamando al endpoint: ${url} con método ${method}`);
+
     try {
         // Configuración básica de los headers
         const headers = {
@@ -83,6 +85,8 @@ export const callEndpoint = async (params) => {
             const errorData = await response.json();
             throw new Error(errorData.error || 'Error al llamar al endpoint');
         }
+
+        console.log(`Respuesta recibida del endpoint: ${url}`);
 
         // Retornamos los datos en formato JSON
         return await response.json();

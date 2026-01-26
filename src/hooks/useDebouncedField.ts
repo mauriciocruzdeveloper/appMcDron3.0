@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useAppDispatch } from '../redux-tool-kit/hooks/useAppDispatch';
 import { actualizarCampoReparacionAsync } from '../redux-tool-kit/reparacion/reparacion.actions';
 import { DataReparacion } from '../types/reparacion';
@@ -18,14 +18,14 @@ interface UseDebouncedFieldProps {
  * @param reparacionId - ID de la reparación
  * @param campo - Campo de DataReparacion a actualizar
  * @param valorInicial - Valor inicial del campo
- * @param delay - Milisegundos de espera antes de guardar (default: 1000ms)
+ * @param delay - Milisegundos de espera antes de guardar (default: 1500ms)
  * @param isDateField - Si es un campo de fecha, se convierte a timestamp antes de guardar
  */
 export const useDebouncedField = ({ 
     reparacionId, 
     campo, 
     valorInicial,
-    delay = 1000,
+    delay = 1500,
     isDateField = false
 }: UseDebouncedFieldProps) => {
     const dispatch = useAppDispatch();
@@ -44,10 +44,21 @@ export const useDebouncedField = ({
     
     const [localValue, setLocalValue] = useState(getInitialValue());
     const [isSaving, setIsSaving] = useState(false);
+    
+    // Ref para trackear el último valor que nosotros guardamos
+    // Esto evita sobrescribir cambios del usuario mientras se está guardando
+    const lastSavedValue = useRef(getInitialValue());
 
     // Actualizar valor local cuando cambia el valor inicial (ej: cambio de reparación)
+    // Solo actualizar si el cambio viene de afuera (no de nuestro propio guardado)
     useEffect(() => {
-        setLocalValue(getInitialValue());
+        const newValue = getInitialValue();
+        // Solo actualizar si es diferente al último valor que guardamos
+        // Esto previene sobrescribir lo que el usuario escribió mientras se guardaba
+        if (newValue !== lastSavedValue.current) {
+            setLocalValue(newValue);
+            lastSavedValue.current = newValue;
+        }
     }, [valorInicial]);
 
     // Efecto de debounce para guardar
@@ -78,7 +89,13 @@ export const useDebouncedField = ({
                 reparacionId,
                 campo,
                 valor: valorAGuardar
-            })).finally(() => {
+            }))
+            .then(() => {
+                // Actualizar el ref con el valor que acabamos de guardar
+                // Esto previene que se sobrescriba cuando Redux actualice
+                lastSavedValue.current = localValue;
+            })
+            .finally(() => {
                 setIsSaving(false);
             });
         }, delay);

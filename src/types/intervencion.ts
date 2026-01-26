@@ -41,6 +41,10 @@ export interface AsignacionIntervencionData {
   PrecioManoObra: number; // Labor cost congelado
   PrecioPiezas: number; // Parts cost congelado (puede ser 0 si no tiene repuestos)
   PrecioTotal: number; // Total cost congelado
+  
+  // Información del presupuesto
+  descripcion?: string; // Descripción detallada del problema específico
+  fotos?: string[]; // Array de URLs de fotos del problema
 }
 
 export interface AsignacionIntervencion {

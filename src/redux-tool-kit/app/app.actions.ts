@@ -12,7 +12,7 @@ import { Intervenciones } from "../../types/intervencion";
 import { isFetchingComplete, isFetchingStart } from "./app.slice";
 import { callEndpoint } from "../../utils/utils";
 import { HttpMethod } from "../../types/httpMethods";
-import { guardarReparacionAsync } from '../reparacion/reparacion.actions';
+import { guardarReparacionAsync, getIntervencionesPorReparacionAsync } from '../reparacion/reparacion.actions';
 import { supabaseAuthErrors } from "../../persistencia/persistenciaSupabase/supabaseAuthErrors";
 import { RootState } from "../store";
 
@@ -100,6 +100,226 @@ export const enviarReciboAsync = createAsyncThunk(
   },
 );
 
+// ENVIAR EMAIL DE PRESUPUESTO
+export const enviarPresupuestoAsync = createAsyncThunk(
+  'app/enviarPresupuesto',
+  async (reparacion: ReparacionType, { dispatch, getState }) => {
+    try {
+      dispatch(isFetchingStart());
+
+      const state = getState() as RootState;
+      
+      // Obtener las asignaciones de intervenciones desde el state
+      // Si no están cargadas, cargarlas primero
+      let asignacionesIntervenciones = state.reparacion.intervencionesDeReparacionActual;
+      
+      // Verificar si necesitamos cargar las intervenciones
+      if (asignacionesIntervenciones.length === 0 || 
+          asignacionesIntervenciones[0]?.data.reparacionId !== reparacion.id) {
+        // Cargar sin dispatchar isFetching para no interrumpir nuestro loading
+        const { getIntervencionesPorReparacionPersistencia } = await import('../../persistencia/persistencia');
+        asignacionesIntervenciones = await getIntervencionesPorReparacionPersistencia(reparacion.id);
+      }
+      
+      // Obtener el catálogo de intervenciones
+      const catalogoIntervenciones = state.intervencion.coleccionIntervenciones;
+
+      // Obtener el usuario
+      const usuario = state.usuario.coleccionUsuarios[reparacion.data.UsuarioRep];
+      const emailDestino = usuario?.data?.EmailContacto || reparacion.data.EmailUsu;
+
+      let equipo = reparacion.data.ModeloDroneNameRep;
+      if (!equipo) {
+        if (reparacion.data.DroneId) {
+          const drone = state.drone.coleccionDrones[reparacion.data.DroneId];
+          if (drone) {
+            equipo = state.modeloDrone.coleccionModelosDrone[drone.data.ModeloDroneId].data.NombreModelo;
+          } else {
+            equipo = 'Drone no encontrado';
+          }
+        } else {
+          equipo = 'Drone no asignado';
+        }
+      }
+
+      // Construir array de intervenciones con descripción y fotos
+      const intervenciones = asignacionesIntervenciones.map((asignacion) => {
+        const intervencion = catalogoIntervenciones[asignacion.data.intervencionId];
+        return {
+          nombre: intervencion?.data?.NombreInt || 'Intervención',
+          descripcion: asignacion.data.descripcion || '',
+          fotos: asignacion.data.fotos || []
+        };
+      });
+
+      const montoTotal = reparacion.data.PresuFiRep || 0;
+
+      const body = {
+        cliente: reparacion.data.ApellidoUsu ? `${reparacion.data.NombreUsu} ${reparacion.data.ApellidoUsu}` : reparacion.data.NombreUsu,
+        nro_reparacion: reparacion.id,
+        equipo,
+        fecha_ingreso: new Date(Number(reparacion.data.FeRecRep)).toLocaleDateString(),
+        intervenciones: intervenciones,
+        monto_total: `${montoTotal}`,
+        telefono: reparacion.data.TelefonoUsu,
+        email: emailDestino
+      };
+
+      const url = process.env.REACT_APP_API_URL + '/send_repair_budget';
+
+      const response = await callEndpoint({
+        url,
+        method: HttpMethod.POST,
+        body,
+      });
+
+      dispatch(isFetchingComplete());
+
+      return response;
+    } catch (error: any) {
+      dispatch(isFetchingComplete());
+      throw error;
+    }
+  },
+);
+
+// GENERAR PDF PRESUPUESTO
+export const generarPDFPresupuestoAsync = createAsyncThunk(
+  'app/generarPDFPresupuesto',
+  async (reparacion: ReparacionType, { dispatch, getState, rejectWithValue }) => {
+    try {
+      dispatch(isFetchingStart());
+
+      const state = getState() as RootState;
+      
+      // Obtener las asignaciones de intervenciones desde el state
+      let asignacionesIntervenciones = state.reparacion.intervencionesDeReparacionActual;
+      
+      // Verificar si necesitamos cargar las intervenciones
+      if (asignacionesIntervenciones.length === 0 || 
+          asignacionesIntervenciones[0]?.data.reparacionId !== reparacion.id) {
+        const { getIntervencionesPorReparacionPersistencia } = await import('../../persistencia/persistencia');
+        asignacionesIntervenciones = await getIntervencionesPorReparacionPersistencia(reparacion.id);
+      }
+      
+      // Obtener el catálogo de intervenciones
+      const catalogoIntervenciones = state.intervencion.coleccionIntervenciones;
+
+      // Obtener el usuario
+      const usuario = state.usuario.coleccionUsuarios[reparacion.data.UsuarioRep];
+      const emailDestino = usuario?.data?.EmailContacto || reparacion.data.EmailUsu;
+
+      let equipo = reparacion.data.ModeloDroneNameRep;
+      if (!equipo) {
+        if (reparacion.data.DroneId) {
+          const drone = state.drone.coleccionDrones[reparacion.data.DroneId];
+          if (drone) {
+            equipo = state.modeloDrone.coleccionModelosDrone[drone.data.ModeloDroneId].data.NombreModelo;
+          } else {
+            equipo = 'Drone no encontrado';
+          }
+        } else {
+          equipo = 'Drone no asignado';
+        }
+      }
+
+      // Construir array de intervenciones con descripción y fotos
+      const intervenciones = asignacionesIntervenciones.map((asignacion) => {
+        const intervencion = catalogoIntervenciones[asignacion.data.intervencionId];
+        return {
+          nombre: intervencion?.data?.NombreInt || 'Intervención',
+          descripcion: asignacion.data.descripcion || '',
+          fotos: asignacion.data.fotos || []
+        };
+      });
+
+      const montoTotal = reparacion.data.PresuFiRep || 0;
+
+      const datosPresupuesto = {
+        cliente: reparacion.data.ApellidoUsu ? `${reparacion.data.NombreUsu} ${reparacion.data.ApellidoUsu}` : reparacion.data.NombreUsu,
+        nro_reparacion: reparacion.id,
+        equipo,
+        fecha_ingreso: new Date(Number(reparacion.data.FeRecRep)).toLocaleDateString(),
+        intervenciones: intervenciones,
+        monto_total: montoTotal,
+        telefono: reparacion.data.TelefonoUsu,
+        email: emailDestino
+      };
+
+      // Detectar si estamos en Cordova
+      const isCordova = typeof (window as any).cordova !== 'undefined';
+
+      const apiUrl = process.env.REACT_APP_API_URL;
+      if (!apiUrl) {
+        throw new Error('REACT_APP_API_URL no está configurada');
+      }
+
+      if (isCordova) {
+        // En Cordova, guardar el PDF en el servidor y abrir la URL
+        console.log('Generando PDF en Cordova, URL:', `${apiUrl}/generate_budget_pdf?saveToServer=1`);
+        console.log('Datos a enviar:', datosPresupuesto);
+        
+        const response = await fetch(`${apiUrl}/generate_budget_pdf?saveToServer=1`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+          },
+          body: JSON.stringify(datosPresupuesto)
+        });
+
+        console.log('Respuesta recibida, status:', response.status);
+        
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error('Error del servidor:', errorText);
+          throw new Error(`Error del servidor: ${response.status} - ${errorText}`);
+        }
+
+        const result = await response.json();
+        console.log('Resultado parseado:', result);
+        
+        if (!result.success) {
+          throw new Error(result.error || 'Error al generar el PDF');
+        }
+
+        // Construir la URL completa del PDF
+        const baseUrl = apiUrl.replace('/api', '');
+        const pdfUrl = `${baseUrl}${result.url}`;
+        
+        console.log('Abriendo PDF:', pdfUrl);
+        
+        // En Cordova, asignar directamente para que el navegador del sistema maneje el PDF
+        window.location.href = pdfUrl;
+      } else {
+        // En navegador web, usar el método del formulario
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = `${apiUrl}/generate_budget_pdf`;
+        form.target = '_blank';
+        
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = 'data';
+        input.value = JSON.stringify(datosPresupuesto);
+        
+        form.appendChild(input);
+        document.body.appendChild(form);
+        form.submit();
+        document.body.removeChild(form);
+      }
+
+      dispatch(isFetchingComplete());
+      return { success: true };
+    } catch (error: any) {
+      dispatch(isFetchingComplete());
+      return rejectWithValue({
+        message: error.message || "Error al generar el PDF del presupuesto."
+      });
+    }
+  }
+);
+
 // ENVIAR EMAIL DE FINALIZACIÓN
 export const enviarDroneReparadoAsync = createAsyncThunk(
   'app/enviarFinalizacion',
@@ -137,23 +357,17 @@ export const enviarDroneReparadoAsync = createAsyncThunk(
         }
       }
 
-      // Construir la descripción del trabajo realizado
-      let trabajoRealizado = reparacion.data.DescripcionTecRep || "Sin descripción";
+      // Construir array de intervenciones para el email
+      const intervenciones = asignacionesIntervenciones.map((asignacion) => {
+        const intervencion = catalogoIntervenciones[asignacion.data.intervencionId];
+        return {
+          nombre: intervencion?.data?.NombreInt || 'Intervención',
+          precio: asignacion.data.PrecioTotal || 0
+        };
+      });
 
-      // Listar TODAS las asignaciones (si hay 2 motores cambiados, aparecerán 2 veces)
-      if (asignacionesIntervenciones.length > 0) {
-        const listaIntervenciones = asignacionesIntervenciones
-          .map((asignacion) => {
-            // Hacer lookup al catálogo para obtener el nombre
-            const intervencion = catalogoIntervenciones[asignacion.data.intervencionId];
-            const nombreInt = intervencion?.data?.NombreInt || 'Intervención';
-            const precio = asignacion.data.PrecioTotal || 0;
-            return `• ${nombreInt} - $${precio.toLocaleString('es-AR')}`;
-          })
-          .join('\n');
-
-        trabajoRealizado = `${trabajoRealizado}\n\nIntervenciones realizadas:\n${listaIntervenciones}`;
-      }
+      // Los comentarios del técnico van por separado
+      const comentariosTecnico = reparacion.data.DescripcionTecRep || "";
 
       // Cálculo correcto de los montos
       const montoTotal = reparacion.data.PresuFiRep || 0;
@@ -166,7 +380,8 @@ export const enviarDroneReparadoAsync = createAsyncThunk(
         equipo,
         fecha_ingreso: new Date(Number(reparacion.data.FeRecRep)).toLocaleDateString(),
         fecha_finalizacion: new Date().toLocaleDateString(),
-        trabajo_realizado: trabajoRealizado,
+        intervenciones: intervenciones, // Array de intervenciones
+        comentarios_tecnico: comentariosTecnico, // Comentarios aparte
         monto_total: `$${montoTotal}`,
         monto_pagado: `$${montoPagado}`,
         monto_restante: `$${montoRestante}`,
@@ -175,6 +390,8 @@ export const enviarDroneReparadoAsync = createAsyncThunk(
       };
 
       const url = process.env.REACT_APP_API_URL + '/send_drone_reparado';
+
+      console.log("Cuerpo del email de drone reparado:", body);
 
       const response = await callEndpoint({
         url,
