@@ -40,14 +40,14 @@ export const ReparacionRevision: React.FC<ReparacionRevisionProps> = ({
         reparacionId,
         campo: 'NumeroSerieRep',
         valorInicial: reparacion?.data.NumeroSerieRep || "",
-        delay: 1000 // 1 segundo después de dejar de escribir
+        delay: 3000 // 3 segundos después de dejar de escribir
     });
 
     const diagnostico = useDebouncedField({
         reparacionId,
         campo: 'DiagnosticoRep',
         valorInicial: reparacion?.data.DiagnosticoRep || "",
-        delay: 1500 // 1.5 segundos para campos más largos
+        delay: 3000 // 3 segundos para campos más largos
     });
 
     if (!seccionVisible || !reparacion) return null;

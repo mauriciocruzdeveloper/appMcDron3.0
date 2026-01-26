@@ -57,28 +57,28 @@ export const ReparacionPresupuesto: React.FC<ReparacionPresupuestoProps> = ({
         reparacionId,
         campo: 'PresuMoRep',
         valorInicial: reparacion?.data.PresuMoRep || "",
-        delay: 800
+        delay: 3000
     });
 
     const presuRe = useDebouncedField({
         reparacionId,
         campo: 'PresuReRep',
         valorInicial: reparacion?.data.PresuReRep || "",
-        delay: 800
+        delay: 3000
     });
 
     const presuFi = useDebouncedField({
         reparacionId,
         campo: 'PresuFiRep',
         valorInicial: reparacion?.data.PresuFiRep || "",
-        delay: 800
+        delay: 3000
     });
 
     const diagnostico = useDebouncedField({
         reparacionId,
         campo: 'DiagnosticoRep',
         valorInicial: reparacion?.data.DiagnosticoRep || "",
-        delay: 800
+        delay: 3000
     });
 
     if (!seccionVisible || !reparacion) return null;

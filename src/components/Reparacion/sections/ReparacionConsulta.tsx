@@ -54,14 +54,14 @@ export const ReparacionConsulta: React.FC<ReparacionConsultaProps> = ({
         reparacionId,
         campo: 'ModeloDroneNameRep',
         valorInicial: reparacion?.data.ModeloDroneNameRep || "",
-        delay: 1000
+        delay: 3000
     });
 
     const descripcionUsu = useDebouncedField({
         reparacionId,
         campo: 'DescripcionUsuRep',
         valorInicial: reparacion?.data.DescripcionUsuRep || "",
-        delay: 1500
+        delay: 3000
     });
 
     if (!seccionVisible || !reparacion) return null;

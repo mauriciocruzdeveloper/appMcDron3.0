@@ -48,21 +48,21 @@ export const ReparacionEntrega: React.FC<ReparacionEntregaProps> = ({
         reparacionId,
         campo: 'TxtEntregaRep',
         valorInicial: reparacion?.data.TxtEntregaRep || "",
-        delay: 1500
+        delay: 3000
     });
 
-    const seguimiento = useDebouncedField({
+    const descripcionEntrega = useDebouncedField({
         reparacionId,
-        campo: 'SeguimientoEntregaRep',
-        valorInicial: reparacion?.data.SeguimientoEntregaRep || "",
-        delay: 1000
+        campo: 'DescripcionEntregaRep',
+        valorInicial: reparacion?.data.DescripcionEntregaRep || "",
+        delay: 3000
     });
 
     const fechaEntrega = useDebouncedField({
         reparacionId,
         campo: 'FeEntRep',
         valorInicial: reparacion?.data.FeEntRep || "",
-        delay: 500,
+        delay: 3000,
         isDateField: true
     });
 
