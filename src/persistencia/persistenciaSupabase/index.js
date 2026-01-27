@@ -65,6 +65,7 @@ export {
 // === ARCHIVOS ===
 export {
   subirArchivoPersistencia,
+  subirImagenConMiniaturaPersistencia,
   eliminarArchivoPersistencia
 } from './archivosPersistencia.js';
 
