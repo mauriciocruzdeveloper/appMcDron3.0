@@ -4,6 +4,7 @@ import {
   registroUsuarioEndpointPersistencia,
   reenviarEmailVerificacionPersistencia,
   subirArchivoPersistencia,
+  subirImagenConMiniaturaPersistencia,
   eliminarArchivoPersistencia,
   verificarConexionWebSocket
 } from "../../persistencia/persistencia"; // Actualizado para usar la importación centralizada
@@ -451,29 +452,27 @@ export const enviarDroneDiagnosticadoAsync = createAsyncThunk(
   },
 );
 
-// SUBIR FOTO
+// SUBIR FOTO (con compresión y miniatura)
 export const subirFotoAsync = createAsyncThunk(
   'app/subirFoto',
   async ({ reparacionId, file }: { reparacionId: string, file: File }, { dispatch }) => {
     try {
       dispatch(isFetchingStart());
 
-      // Crear un Blob a partir del archivo para evitar problemas de referencia
-      const fileBlob = new Blob([await file.arrayBuffer()], { type: file.type });
-
-      // Generar un nombre único para el archivo usando timestamp y manteniendo la extensión
+      // Generar un nombre único para el archivo usando timestamp
       const extIndex = file.name.lastIndexOf('.');
       const baseName = extIndex !== -1 ? file.name.substring(0, extIndex) : file.name;
-      const ext = extIndex !== -1 ? file.name.substring(extIndex) : '';
       const timestamp = Date.now();
-      const fileName = `${baseName.replace(/[^a-zA-Z0-9]/g, '_')}_${timestamp}${ext}`;
+      const fileName = `${baseName.replace(/[^a-zA-Z0-9]/g, '_')}_${timestamp}`;
       const path = `REPARACIONES/${reparacionId}/fotos/${fileName}`;
 
-      // Subir el Blob en lugar del archivo original
-      const urlFoto = await subirArchivoPersistencia(path, fileBlob);
+      // Subir con compresión y generación de miniatura automática
+      // Retorna { originalUrl, thumbnailUrl }
+      const { originalUrl } = await subirImagenConMiniaturaPersistencia(path, file);
 
       dispatch(isFetchingComplete());
-      return urlFoto;
+      // Retornamos solo la URL original, la miniatura se puede obtener con getThumbnailUrl()
+      return originalUrl;
     } catch (error: any) {
       console.error("Error al subir foto:", error);
       dispatch(isFetchingComplete());
@@ -520,11 +519,39 @@ export const borrarFotoAsync = createAsyncThunk(
     try {
       dispatch(isFetchingStart());
 
-      // Eliminar el archivo de Storage
+      // 1. Obtener la reparación actual del estado
+      const state = getState() as RootState;
+      const reparacionActual = state.reparacion.coleccionReparaciones[reparacionId];
+      
+      if (!reparacionActual) {
+        throw new Error('Reparación no encontrada');
+      }
+
+      // 2. Eliminar el archivo de Storage
       await eliminarArchivoPersistencia(fotoUrl);
 
+      // 3. Actualizar el array de fotos eliminando la URL
+      const nuevasUrlsFotos = (reparacionActual.data.urlsFotos || []).filter(url => url !== fotoUrl);
+
+      // 4. Limpiar FotoAntes o FotoDespues si la foto eliminada era una de esas
+      const reparacionActualizada = {
+        ...reparacionActual,
+        data: {
+          ...reparacionActual.data,
+          urlsFotos: nuevasUrlsFotos,
+          FotoAntes: reparacionActual.data.FotoAntes === fotoUrl ? undefined : reparacionActual.data.FotoAntes,
+          FotoDespues: reparacionActual.data.FotoDespues === fotoUrl ? undefined : reparacionActual.data.FotoDespues,
+        }
+      };
+
+      // 5. Guardar la reparación actualizada
+      const guardarResponse = await dispatch(guardarReparacionAsync(reparacionActualizada));
+      if (guardarResponse.meta.requestStatus !== 'fulfilled') {
+        throw new Error("Error al actualizar la reparación");
+      }
+
       dispatch(isFetchingComplete());
-      return fotoUrl;
+      return reparacionActualizada;
     } catch (error: any) {
       console.error("Error al borrar foto:", error);
       dispatch(isFetchingComplete());

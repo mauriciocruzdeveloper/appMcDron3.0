@@ -77,6 +77,7 @@ export const getIntervencionesPersistencia = backend.getIntervencionesPersistenc
 
 // ARCHIVOS
 export const subirArchivoPersistencia = backend.subirArchivoPersistencia;
+export const subirImagenConMiniaturaPersistencia = backend.subirImagenConMiniaturaPersistencia;
 export const eliminarArchivoPersistencia = backend.eliminarArchivoPersistencia;
 
 // WEBSOCKETS
