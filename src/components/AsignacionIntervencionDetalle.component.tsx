@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useAppDispatch } from '../redux-tool-kit/hooks/useAppDispatch';
 import { actualizarDescripcionAsignacionAsync, actualizarFotosAsignacionAsync } from '../redux-tool-kit/reparacion/reparacion.actions';
-import { subirArchivoPersistencia, eliminarArchivoPersistencia } from '../persistencia/persistencia';
+import { subirImagenConMiniaturaPersistencia, eliminarArchivoPersistencia } from '../persistencia/persistencia';
 import { useModal } from './Modal/useModal';
+import { getThumbnailUrl } from '../utils/imageUtils';
 
 interface AsignacionIntervencionDetalleProps {
   asignacionId: string;
@@ -84,12 +85,12 @@ export const AsignacionIntervencionDetalle: React.FC<AsignacionIntervencionDetal
 
     setIsUploadingFoto(true);
     try {
-      // Subir archivo a Supabase Storage
-      const ruta = `asignaciones/${asignacionId}/${Date.now()}_${file.name}`;
-      const url = await subirArchivoPersistencia(ruta, file);
+      // Subir archivo con compresión y miniatura
+      const ruta = `asignaciones/${asignacionId}/${Date.now()}_${file.name.replace(/\.[^.]+$/, '')}`;
+      const { originalUrl } = await subirImagenConMiniaturaPersistencia(ruta, file);
 
       // Agregar la URL al array de fotos
-      const nuevasFotos = [...fotos, url];
+      const nuevasFotos = [...fotos, originalUrl];
       setFotos(nuevasFotos);
 
       // Guardar en la BD
@@ -192,10 +193,18 @@ export const AsignacionIntervencionDetalle: React.FC<AsignacionIntervencionDetal
                   <div key={index} className="col-6 col-md-4 col-lg-3">
                     <div className="position-relative">
                       <img
-                        src={url}
+                        src={getThumbnailUrl(url)}
                         alt={`Foto ${index + 1}`}
                         className="img-fluid rounded"
-                        style={{ width: '100%', height: '120px', objectFit: 'cover' }}
+                        style={{ width: '100%', height: '120px', objectFit: 'cover', cursor: 'pointer' }}
+                        onClick={() => window.open(url, '_blank')}
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          if (target.src !== url) {
+                            target.src = url;
+                          }
+                        }}
+                        title="Click para ver en tamaño completo"
                       />
                       {!readOnly && (
                         <button
