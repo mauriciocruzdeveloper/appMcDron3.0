@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import './ImageGallery.styles.css';
+import { getThumbnailUrl } from '../../utils/imageUtils';
 
 interface ImageGalleryProps {
     images: string[];
@@ -161,9 +162,16 @@ export const ImageGallery: React.FC<ImageGalleryProps> = ({
                                 }}
                             >
                                 <img
-                                    src={url}
+                                    src={getThumbnailUrl(url)}
                                     alt={`Imagen ${idx + 1}`}
                                     loading="lazy"
+                                    onError={(e) => {
+                                        // Fallback a original si miniatura no existe
+                                        const target = e.target as HTMLImageElement;
+                                        if (target.src !== url) {
+                                            target.src = url;
+                                        }
+                                    }}
                                 />
                                 <div className="image-gallery-overlay">
                                     <i className="bi bi-zoom-in"></i>
@@ -318,7 +326,16 @@ export const ImageGallery: React.FC<ImageGalleryProps> = ({
                                         setZoomLevel(1);
                                     }}
                                 >
-                                    <img src={url} alt={`Miniatura ${idx + 1}`} />
+                                    <img 
+                                        src={getThumbnailUrl(url)} 
+                                        alt={`Miniatura ${idx + 1}`}
+                                        onError={(e) => {
+                                            const target = e.target as HTMLImageElement;
+                                            if (target.src !== url) {
+                                                target.src = url;
+                                            }
+                                        }}
+                                    />
                                 </div>
                             ))}
                         </div>
