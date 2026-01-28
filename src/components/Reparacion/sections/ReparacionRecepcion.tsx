@@ -19,13 +19,9 @@ interface ReparacionRecepcionProps {
     isAdmin: boolean;
 }
 
-export const ReparacionRecepcion: React.FC<ReparacionRecepcionProps> = ({ 
-    reparacionId, 
-    isAdmin 
-}) => {
+export const ReparacionRecepcion: React.FC<ReparacionRecepcionProps> = ({ reparacionId, isAdmin }) => {
     const dispatch = useAppDispatch();
     const { openModal } = useModal();
-    
     const reparacion = useAppSelector(state => selectReparacionById(reparacionId)(state));
     const seccionVisible = useAppSelector(state => 
         selectSeccionesVisibles(reparacionId, isAdmin)(state).recepcion
@@ -34,6 +30,26 @@ export const ReparacionRecepcion: React.FC<ReparacionRecepcionProps> = ({
         selectPuedeAvanzarA(reparacionId, 'Recibido')(state)
     );
 
+    // Mostrar botón de reenviar email solo si el estado es 'Recibido'
+    const estadoEsRecibido = reparacion?.data.EstadoRep === 'Recibido';
+
+    const handleReenviarEmailRecibido = async () => {
+        if (!reparacion) return;
+        const response = await dispatch(enviarReciboAsync(reparacion));
+        if (response.meta.requestStatus === 'fulfilled') {
+            openModal({
+                mensaje: 'Email de drone recibido reenviado correctamente.',
+                tipo: 'success',
+                titulo: 'Reenvío de Email',
+            });
+        } else {
+            openModal({
+                mensaje: 'Error al reenviar el email de drone recibido.',
+                tipo: 'danger',
+                titulo: 'Reenvío de Email',
+            });
+        }
+    };
     const fechaRecepcion = useDebouncedField({
         reparacionId,
         campo: 'FeRecRep',
@@ -135,11 +151,20 @@ export const ReparacionRecepcion: React.FC<ReparacionRecepcionProps> = ({
                                 Marcar como Recibido
                             </button>
                         )}
-                        {reparacion.data.EstadoRep === 'Recibido' && (
-                            <div className="alert alert-success mt-2 mb-0">
-                                <i className="bi bi-check-circle-fill me-2"></i>
-                                Equipo recibido correctamente
-                            </div>
+                        {estadoEsRecibido && (
+                            <>
+                                <div className="alert alert-success mt-2 mb-0">
+                                    <i className="bi bi-check-circle-fill me-2"></i>
+                                    Equipo recibido correctamente
+                                </div>
+                                <button
+                                    type="button"
+                                    className="btn btn-warning mt-2"
+                                    onClick={handleReenviarEmailRecibido}
+                                >
+                                    <i className="bi bi-envelope"></i> Reenviar email de drone recibido
+                                </button>
+                            </>
                         )}
                     </div>
                 )}
