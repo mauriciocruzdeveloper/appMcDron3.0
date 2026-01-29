@@ -9,11 +9,11 @@ import {
   verificarConexionWebSocket
 } from "../../persistencia/persistencia"; // Actualizado para usar la importación centralizada
 import { ReparacionType } from "../../types/reparacion";
-import { Intervenciones } from "../../types/intervencion";
 import { isFetchingComplete, isFetchingStart } from "./app.slice";
 import { callEndpoint } from "../../utils/utils";
 import { HttpMethod } from "../../types/httpMethods";
-import { guardarReparacionAsync, getIntervencionesPorReparacionAsync } from '../reparacion/reparacion.actions';
+import { guardarReparacionAsync, getIntervencionesPorReparacionAsync, actualizarFotosAsignacionAsync } from '../reparacion/reparacion.actions';
+import { sanitizeBaseName, buildUploadPath, addTimestampToBase } from '../../utils/fileUtils';
 import { supabaseAuthErrors } from "../../persistencia/persistenciaSupabase/supabaseAuthErrors";
 import { RootState } from "../store";
 
@@ -257,8 +257,7 @@ export const generarPDFPresupuestoAsync = createAsyncThunk(
 
       if (isCordova) {
         // En Cordova, guardar el PDF en el servidor y abrir la URL
-        console.log('Generando PDF en Cordova, URL:', `${apiUrl}/generate_budget_pdf?saveToServer=1`);
-        console.log('Datos a enviar:', datosPresupuesto);
+
         
         const response = await fetch(`${apiUrl}/generate_budget_pdf?saveToServer=1`, {
           method: 'POST',
@@ -267,10 +266,7 @@ export const generarPDFPresupuestoAsync = createAsyncThunk(
             'Accept': 'application/json',
           },
           body: JSON.stringify(datosPresupuesto)
-        });
-
-        console.log('Respuesta recibida, status:', response.status);
-        
+        });        
         if (!response.ok) {
           const errorText = await response.text();
           console.error('Error del servidor:', errorText);
@@ -460,11 +456,9 @@ export const subirFotoAsync = createAsyncThunk(
       dispatch(isFetchingStart());
 
       // Generar un nombre único para el archivo usando timestamp
-      const extIndex = file.name.lastIndexOf('.');
-      const baseName = extIndex !== -1 ? file.name.substring(0, extIndex) : file.name;
-      const timestamp = Date.now();
-      const fileName = `${baseName.replace(/[^a-zA-Z0-9]/g, '_')}_${timestamp}`;
-      const path = `REPARACIONES/${reparacionId}/fotos/${fileName}`;
+      const safeBase = sanitizeBaseName(file.name);
+      const fileName = addTimestampToBase(safeBase);
+      const path = buildUploadPath({ entityType: 'REPARACIONES', entityId: reparacionId, folder: 'fotos', fileName });
 
       // Subir con compresión y generación de miniatura automática
       // Retorna { originalUrl, thumbnailUrl }
@@ -492,12 +486,11 @@ export const subirDocumentoAsync = createAsyncThunk(
       const fileBlob = new Blob([await file.arrayBuffer()], { type: file.type });
 
       // Generar un nombre único para el archivo usando timestamp y manteniendo la extensión
+      const safeBaseDoc = sanitizeBaseName(file.name);
       const extIndexDoc = file.name.lastIndexOf('.');
-      const baseNameDoc = extIndexDoc !== -1 ? file.name.substring(0, extIndexDoc) : file.name;
       const extDoc = extIndexDoc !== -1 ? file.name.substring(extIndexDoc) : '';
-      const timestampDoc = Date.now();
-      const fileNameDoc = `${baseNameDoc.replace(/[^a-zA-Z0-9]/g, '_')}_${timestampDoc}${extDoc}`;
-      const pathDoc = `REPARACIONES/${reparacionId}/documentos/${fileNameDoc}`;
+      const fileNameDoc = addTimestampToBase(safeBaseDoc) + extDoc;
+      const pathDoc = buildUploadPath({ entityType: 'REPARACIONES', entityId: reparacionId, folder: 'documentos', fileName: fileNameDoc });
 
       // Subir el Blob en lugar del archivo original
       const urlDocumento = await subirArchivoPersistencia(pathDoc, fileBlob);
@@ -508,6 +501,52 @@ export const subirDocumentoAsync = createAsyncThunk(
       console.error("Error al subir documento:", error);
       dispatch(isFetchingComplete());
       throw error;
+    }
+  }
+);
+
+// SUBIR FOTO DE ASIGNACIÓN (sube la imagen y actualiza las fotos de la asignación)
+// app.actions.ts
+
+export const subirFotoAsignacionAsync = createAsyncThunk(
+  'app/subirFotoAsignacion',
+  async ({ asignacionId, file }: { asignacionId: string, file: File }, { dispatch, getState, rejectWithValue }) => {
+    try {
+      // --- PASO CRÍTICO PARA ANDROID ---
+      // Leemos los bytes inmediatamente. Si hacemos un await de otra cosa antes,
+      // perdemos el acceso al archivo en WebViews móviles.
+      const arrayBuffer = await file.arrayBuffer();
+      const stableBlob = new Blob([arrayBuffer], { type: file.type });
+      // ---------------------------------
+
+      dispatch(isFetchingStart());
+
+      const state = getState() as RootState;
+      const asignaciones = state.reparacion.intervencionesDeReparacionActual;
+      const asignacion = asignaciones.find(a => a.id === asignacionId);
+      const fotosActuales: string[] = asignacion?.data?.fotos || [];
+
+      const safeBase = sanitizeBaseName(file.name);
+      const fileName = addTimestampToBase(safeBase);
+      const path = buildUploadPath({ entityType: 'ASIGNACIONES', entityId: asignacionId, folder: 'fotos', fileName });
+
+      // Usamos el stableBlob en lugar del file original
+      const { originalUrl } = await subirImagenConMiniaturaPersistencia(path, stableBlob);
+
+      const nuevasFotos = [...fotosActuales, originalUrl];
+      const resultado = await dispatch(actualizarFotosAsignacionAsync({ asignacionId, fotos: nuevasFotos }));
+
+      if (resultado.meta.requestStatus !== 'fulfilled') {
+        throw new Error('Error al actualizar fotos en la base de datos');
+      }
+
+      dispatch(isFetchingComplete());
+      return nuevasFotos; // Esto llega al .payload
+    } catch (error: any) {
+      console.error('Error en subirFotoAsignacionAsync:', error);
+      dispatch(isFetchingComplete());
+      // Importante: rejectWithValue para que el error sea controlado
+      return rejectWithValue(error.message || 'Error al subir la foto');
     }
   }
 );

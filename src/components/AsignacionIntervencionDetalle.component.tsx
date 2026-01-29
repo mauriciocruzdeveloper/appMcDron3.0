@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useAppDispatch } from '../redux-tool-kit/hooks/useAppDispatch';
 import { actualizarDescripcionAsignacionAsync, actualizarFotosAsignacionAsync } from '../redux-tool-kit/reparacion/reparacion.actions';
 import { subirImagenConMiniaturaPersistencia, eliminarArchivoPersistencia } from '../persistencia/persistencia';
+import { sanitizeBaseName, addTimestampToBase, buildUploadPath } from '../utils/fileUtils';
+import { subirFotoAsignacionAsync } from '../redux-tool-kit/app/app.actions';
 import { useModal } from './Modal/useModal';
 import { getThumbnailUrl } from '../utils/imageUtils';
 
@@ -60,60 +62,35 @@ export const AsignacionIntervencionDetalle: React.FC<AsignacionIntervencionDetal
   };
 
   const handleAgregarFoto = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    // Validar tipo de archivo
-    if (!file.type.startsWith('image/')) {
-      openModal({
-        mensaje: 'Solo se permiten archivos de imagen',
-        tipo: 'danger',
-        titulo: 'Error'
-      });
-      return;
-    }
-
-    // Validar tamaño (máximo 5MB)
-    if (file.size > 5 * 1024 * 1024) {
-      openModal({
-        mensaje: 'La imagen no debe superar los 5MB',
-        tipo: 'danger',
-        titulo: 'Error'
-      });
-      return;
-    }
+    if (!e.target.files?.length) return;
+    const file = e.target.files[0];
 
     setIsUploadingFoto(true);
     try {
-      // Subir archivo con compresión y miniatura
-      const ruta = `asignaciones/${asignacionId}/${Date.now()}_${file.name.replace(/\.[^.]+$/, '')}`;
-      const { originalUrl } = await subirImagenConMiniaturaPersistencia(ruta, file);
-
-      // Agregar la URL al array de fotos
-      const nuevasFotos = [...fotos, originalUrl];
-      setFotos(nuevasFotos);
-
-      // Guardar en la BD
-      await dispatch(actualizarFotosAsignacionAsync({
+      const response = await dispatch(subirFotoAsignacionAsync({
         asignacionId,
-        fotos: nuevasFotos
-      })).unwrap();
+        file
+      }));
 
+      // SOLO si fue exitoso actualizamos el estado local
+      if (response.meta.requestStatus === 'fulfilled') {
+        const nuevasFotos = response.payload as string[];
+        // Protección extra: si por alguna razón el payload no es array, usamos el anterior o vacío
+        setFotos(Array.isArray(nuevasFotos) ? nuevasFotos : fotos);
+        openModal({ mensaje: 'Foto agregada correctamente', tipo: 'success', titulo: 'Éxito' });
+      } else {
+        // Si llegamos acá, es porque el Thunk falló
+        throw new Error("Fallo en la respuesta");
+      }
+    } catch (error: any) {
       openModal({
-        mensaje: 'Foto agregada correctamente',
-        tipo: 'success',
-        titulo: 'Éxito'
-      });
-    } catch (error) {
-      openModal({
-        mensaje: 'Error al subir la foto',
-        tipo: 'danger',
-        titulo: 'Error'
+        mensaje: "No se pudo subir la foto. Intente de nuevo.",
+        tipo: "danger",
+        titulo: "Error de Subida",
       });
     } finally {
       setIsUploadingFoto(false);
-      // Limpiar el input
-      e.target.value = '';
+      e.target.value = ''; // Limpiar el input al final de todo
     }
   };
 
@@ -186,7 +163,7 @@ export const AsignacionIntervencionDetalle: React.FC<AsignacionIntervencionDetal
             <label className="form-label small fw-bold">
               Fotos del problema
             </label>
-            
+
             {fotos.length > 0 && (
               <div className="row g-2 mb-2">
                 {fotos.map((url, index) => (
@@ -223,14 +200,16 @@ export const AsignacionIntervencionDetalle: React.FC<AsignacionIntervencionDetal
 
             {!readOnly && (
               <div>
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleAgregarFoto}
-                  disabled={isUploadingFoto}
-                  className="form-control form-control-sm"
-                  id={`foto-input-${asignacionId}`}
-                />
+                <label className="btn btn-outline-secondary">
+                  Subir Foto
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleAgregarFoto}
+                    disabled={isUploadingFoto}
+                    style={{ display: 'none' }}
+                  />
+                </label>
                 {isUploadingFoto && (
                   <small className="text-muted">Subiendo imagen...</small>
                 )}

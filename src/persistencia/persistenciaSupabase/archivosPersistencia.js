@@ -36,13 +36,13 @@ export const subirArchivoPersistencia = async (path, file) => {
  */
 export const subirImagenConMiniaturaPersistencia = async (path, file) => {
   try {
-    console.log('📸 Procesando imagen para subida con miniatura...');
-    
-    // Procesar la imagen: comprimir y generar miniatura
-    const { original, thumbnail } = await processImageForUpload(file);
-    
-    console.log(`📦 Original: ${(original.size / 1024).toFixed(1)}KB, Miniatura: ${(thumbnail.size / 1024).toFixed(1)}KB`);
+    // En algunos WebViews (Android) el objeto File puede cambiar mientras se procesa
+    // -> Generar un Blob estable a partir del arrayBuffer para evitar net::ERR_UPLOAD_FILE_CHANGED
+    const fileBlob = new Blob([await file.arrayBuffer()], { type: file.type });
 
+    // Procesar la imagen: comprimir y generar miniatura usando el Blob estable
+    const { original, thumbnail } = await processImageForUpload(fileBlob);
+    
     // Generar paths para ambos archivos
     // Asegurar que el path termina en .jpg ya que convertimos a JPEG
     const basePath = path.replace(/\.[^.]+$/, '');
@@ -84,8 +84,6 @@ export const subirImagenConMiniaturaPersistencia = async (path, file) => {
     if (!originalUrl) {
       throw new Error('No se pudo obtener la URL pública del archivo');
     }
-
-    console.log('✅ Imagen subida correctamente con miniatura');
     
     return { originalUrl, thumbnailUrl };
   } catch (error) {
@@ -112,10 +110,8 @@ export const eliminarArchivoPersistencia = async (url) => {
     if (thumbPath !== path) {
       try {
         await supabase.storage.from(bucket).remove([thumbPath]);
-        console.log('🗑️ Miniatura eliminada:', thumbPath);
       } catch (thumbError) {
         // No fallar si la miniatura no existe
-        console.log('ℹ️ No se encontró miniatura para eliminar');
       }
     }
     
