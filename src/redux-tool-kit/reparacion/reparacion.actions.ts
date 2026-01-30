@@ -309,10 +309,10 @@ export const cambiarEstadoAsignacionAsync = createAsyncThunk(
   async ({ asignacionId, nuevoEstado }: { asignacionId: string, nuevoEstado: string }, { dispatch, getState }) => {
     try {
       dispatch(isFetchingStart());
-      
+
       const { actualizarEstadoAsignacionPersistencia } = await import('../../persistencia/persistencia');
       const resultado = await actualizarEstadoAsignacionPersistencia(asignacionId, nuevoEstado);
-      
+
       if (!resultado.success) {
         throw new Error(resultado.error);
       }
@@ -321,11 +321,11 @@ export const cambiarEstadoAsignacionAsync = createAsyncThunk(
       const state = getState() as RootState;
       const asignaciones = state.reparacion.intervencionesDeReparacionActual;
       const asignacion = asignaciones.find(a => a.id === asignacionId);
-      
+
       if (asignacion) {
         await dispatch(getIntervencionesPorReparacionAsync(asignacion.data.reparacionId));
       }
-      
+
       dispatch(isFetchingComplete());
       return resultado.data;
     } catch (error: unknown) {
@@ -341,10 +341,10 @@ export const actualizarDescripcionAsignacionAsync = createAsyncThunk(
   async ({ asignacionId, descripcion }: { asignacionId: string, descripcion: string }, { dispatch, getState }) => {
     try {
       dispatch(isFetchingStart());
-      
+
       const { actualizarDescripcionAsignacionPersistencia } = await import('../../persistencia/persistencia');
       const resultado = await actualizarDescripcionAsignacionPersistencia(asignacionId, descripcion);
-      
+
       if (!resultado.success) {
         throw new Error(resultado.error);
       }
@@ -353,11 +353,11 @@ export const actualizarDescripcionAsignacionAsync = createAsyncThunk(
       const state = getState() as RootState;
       const asignaciones = state.reparacion.intervencionesDeReparacionActual;
       const asignacion = asignaciones.find(a => a.id === asignacionId);
-      
+
       if (asignacion) {
         await dispatch(getIntervencionesPorReparacionAsync(asignacion.data.reparacionId));
       }
-      
+
       dispatch(isFetchingComplete());
       return resultado.data;
     } catch (error: unknown) {
@@ -373,10 +373,10 @@ export const actualizarFotosAsignacionAsync = createAsyncThunk(
   async ({ asignacionId, fotos }: { asignacionId: string, fotos: string[] }, { dispatch, getState }) => {
     try {
       dispatch(isFetchingStart());
-      
+
       const { actualizarFotosAsignacionPersistencia } = await import('../../persistencia/persistencia');
       const resultado = await actualizarFotosAsignacionPersistencia(asignacionId, fotos);
-      
+
       if (!resultado.success) {
         throw new Error(resultado.error);
       }
@@ -385,11 +385,11 @@ export const actualizarFotosAsignacionAsync = createAsyncThunk(
       const state = getState() as RootState;
       const asignaciones = state.reparacion.intervencionesDeReparacionActual;
       const asignacion = asignaciones.find(a => a.id === asignacionId);
-      
+
       if (asignacion) {
         await dispatch(getIntervencionesPorReparacionAsync(asignacion.data.reparacionId));
       }
-      
+
       dispatch(isFetchingComplete());
       return resultado.data;
     } catch (error: unknown) {
@@ -482,7 +482,7 @@ export const aceptarPresupuestoAsync = createAsyncThunk(
           PrioridadRep: 1,
         }
       };
-      
+
       const reparacionGuardada = await guardarReparacionPersistencia(reparacionActualizada);
       dispatch(isFetchingComplete());
       return reparacionGuardada;
@@ -507,7 +507,7 @@ export const rechazarPresupuestoAsync = createAsyncThunk(
           PrioridadRep: 1,
         }
       };
-      
+
       const reparacionGuardada = await guardarReparacionPersistencia(reparacionActualizada);
       dispatch(isFetchingComplete());
       return reparacionGuardada;
@@ -532,7 +532,7 @@ export const diagnosticarAsync = createAsyncThunk(
           PrioridadRep: 3,
         }
       };
-      
+
       const reparacionGuardada = await guardarReparacionPersistencia(reparacionActualizada);
       dispatch(isFetchingComplete());
       return reparacionGuardada;
@@ -557,7 +557,7 @@ export const cobrarReparacionAsync = createAsyncThunk(
           PrioridadRep: 4,
         }
       };
-      
+
       const reparacionGuardada = await guardarReparacionPersistencia(reparacionActualizada);
       dispatch(isFetchingComplete());
       return reparacionGuardada;
@@ -576,21 +576,21 @@ export const migrarEstadoLegacyAsync = createAsyncThunk(
     try {
       // Primero obtener la reparación actual
       const reparacionActual = await getReparacionPersistencia(reparacionId);
-      
+
       const reparacionActualizada = {
         ...reparacionActual,
         data: {
           ...reparacionActual.data,
           EstadoRep: nuevoEstado,
           // Ajustar prioridad según el nuevo estado
-          PrioridadRep: nuevoEstado === "Aceptado" ? 1 : 
-                        nuevoEstado === "Reparado" ? 3 :
-                        nuevoEstado === "Finalizado" ? 10 :
-                        nuevoEstado === "Cancelado" ? 10 :
-                        nuevoEstado === "Abandonado" ? 10 : 5,
+          PrioridadRep: nuevoEstado === "Aceptado" ? 1 :
+            nuevoEstado === "Reparado" ? 3 :
+              nuevoEstado === "Finalizado" ? 10 :
+                nuevoEstado === "Cancelado" ? 10 :
+                  nuevoEstado === "Abandonado" ? 10 : 5,
         }
       };
-      
+
       const reparacionGuardada = await guardarReparacionPersistencia(reparacionActualizada);
       dispatch(isFetchingComplete());
       return reparacionGuardada;
@@ -611,20 +611,20 @@ export const migrarEstadoLegacyAsync = createAsyncThunk(
  */
 export const actualizarCampoReparacionAsync = createAsyncThunk(
   'reparacion/actualizarCampo',
-  async ({ 
-    reparacionId, 
-    campo, 
-    valor 
-  }: { 
-    reparacionId: string; 
-    campo: keyof DataReparacion; 
-    valor: any 
+  async ({
+    reparacionId,
+    campo,
+    valor
+  }: {
+    reparacionId: string;
+    campo: keyof DataReparacion;
+    valor: any
   }, { dispatch, rejectWithValue, getState }) => {
     try {
       dispatch(isFetchingStart());
       const state = getState() as RootState;
       const reparacionActual = state.reparacion.coleccionReparaciones[reparacionId];
-      
+
       if (!reparacionActual) {
         throw new Error('Reparación no encontrada');
       }
@@ -653,12 +653,12 @@ export const actualizarCampoReparacionAsync = createAsyncThunk(
  */
 export const cambiarEstadoReparacionAsync = createAsyncThunk(
   'reparacion/cambiarEstado',
-  async ({ 
-    reparacionId, 
+  async ({
+    reparacionId,
     nuevoEstado,
     enviarEmail = false
-  }: { 
-    reparacionId: string; 
+  }: {
+    reparacionId: string;
     nuevoEstado: string;
     enviarEmail?: boolean;
   }, { dispatch, rejectWithValue, getState }) => {
@@ -666,7 +666,7 @@ export const cambiarEstadoReparacionAsync = createAsyncThunk(
       dispatch(isFetchingStart());
       const state = getState() as RootState;
       const reparacionActual = state.reparacion.coleccionReparaciones[reparacionId];
-      
+
       if (!reparacionActual) {
         throw new Error('Reparación no encontrada');
       }
@@ -682,7 +682,7 @@ export const cambiarEstadoReparacionAsync = createAsyncThunk(
       type CampoFecha = 'FeConRep' | 'FeFinRep' | 'FeRecRep' | 'FeEntRep';
       let campoFecha: CampoFecha | null = null;
       let usedDeliveryDateAsFallback = false;
-      
+
       switch (nuevoEstado) {
         case "Consulta":
           campoFecha = "FeConRep";
@@ -751,27 +751,31 @@ export const cambiarEstadoReparacionAsync = createAsyncThunk(
 
       // Enviar emails según el estado si se solicita
       if (enviarEmail) {
-        switch (nuevoEstado) {
-          case 'Recibido':
-            await dispatch(enviarReciboAsync(reparacionGuardada));
-            break;
-          case 'Reparado':
-            await dispatch(enviarDroneReparadoAsync(reparacionGuardada));
-            break;
-          case 'Diagnosticado':
-            await dispatch(enviarDroneDiagnosticadoAsync(reparacionGuardada));
-            break;
+        try {
+          switch (nuevoEstado) {
+            case 'Recibido':
+              await dispatch(enviarReciboAsync(reparacionGuardada)).unwrap();
+              break;
+            case 'Reparado':
+              await dispatch(enviarDroneReparadoAsync(reparacionGuardada)).unwrap();
+              break;
+            case 'Diagnosticado':
+              await dispatch(enviarDroneDiagnosticadoAsync(reparacionGuardada)).unwrap();
+              break;
+          }
+        } catch (err) {
+          return rejectWithValue(err);
         }
       }
 
-      dispatch(isFetchingComplete());
-      return { 
-        reparacion: reparacionGuardada, 
-        usedDeliveryDateAsFallback 
+      return {
+        reparacion: reparacionGuardada,
+        usedDeliveryDateAsFallback
       };
     } catch (error: unknown) {
-      dispatch(isFetchingComplete());
       return rejectWithValue(error);
+    } finally {
+      dispatch(isFetchingComplete());
     }
   }
 );
@@ -781,17 +785,17 @@ export const cambiarEstadoReparacionAsync = createAsyncThunk(
  */
 export const actualizarPrecioFinalAsync = createAsyncThunk(
   'reparacion/actualizarPrecioFinal',
-  async ({ 
-    reparacionId, 
-    totalIntervenciones 
-  }: { 
-    reparacionId: string; 
+  async ({
+    reparacionId,
+    totalIntervenciones
+  }: {
+    reparacionId: string;
     totalIntervenciones: number;
   }, { dispatch, rejectWithValue, getState }) => {
     try {
       const state = getState() as RootState;
       const reparacionActual = state.reparacion.coleccionReparaciones[reparacionId];
-      
+
       if (!reparacionActual) {
         throw new Error('Reparación no encontrada');
       }
@@ -822,18 +826,18 @@ export const actualizarPrecioFinalAsync = createAsyncThunk(
  */
 export const seleccionarFotoAntesAsync = createAsyncThunk(
   'reparacion/seleccionarFotoAntes',
-  async ({ 
-    reparacionId, 
-    fotoUrl 
-  }: { 
-    reparacionId: string; 
+  async ({
+    reparacionId,
+    fotoUrl
+  }: {
+    reparacionId: string;
     fotoUrl: string;
   }, { dispatch, rejectWithValue, getState }) => {
     try {
       dispatch(isFetchingStart());
       const state = getState() as RootState;
       const reparacionActual = state.reparacion.coleccionReparaciones[reparacionId];
-      
+
       if (!reparacionActual) {
         throw new Error('Reparación no encontrada');
       }
@@ -861,18 +865,18 @@ export const seleccionarFotoAntesAsync = createAsyncThunk(
  */
 export const seleccionarFotoDespuesAsync = createAsyncThunk(
   'reparacion/seleccionarFotoDespues',
-  async ({ 
-    reparacionId, 
-    fotoUrl 
-  }: { 
-    reparacionId: string; 
+  async ({
+    reparacionId,
+    fotoUrl
+  }: {
+    reparacionId: string;
     fotoUrl: string;
   }, { dispatch, rejectWithValue, getState }) => {
     try {
       dispatch(isFetchingStart());
       const state = getState() as RootState;
       const reparacionActual = state.reparacion.coleccionReparaciones[reparacionId];
-      
+
       if (!reparacionActual) {
         throw new Error('Reparación no encontrada');
       }
@@ -905,7 +909,7 @@ export const generarYGuardarDiagnosticoAsync = createAsyncThunk(
       dispatch(isFetchingStart());
       const state = getState() as RootState;
       const reparacionActual = state.reparacion.coleccionReparaciones[reparacionId];
-      
+
       if (!reparacionActual) {
         throw new Error('Reparación no encontrada');
       }

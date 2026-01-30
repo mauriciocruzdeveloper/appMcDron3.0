@@ -77,11 +77,16 @@ export const callEndpoint = async (params) => {
             options.body = JSON.stringify(body);
         }
 
+        console.log(`callEndpoint Enviando solicitud al endpoint:`, { url, options });
+
         // Realizamos la solicitud
         const response = await fetch(url, options);
 
+        console.log(`callEndpoint Respuesta recibida del endpoint:`, response);
+
         // Comprobamos si la respuesta es exitosa
         if (!response.ok) {
+            console.error(`callEndpoint Error en la respuesta del endpoint:`, response);
             const errorData = await response.json();
             throw new Error(errorData.error || 'Error al llamar al endpoint');
         }
