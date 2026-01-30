@@ -91,6 +91,10 @@ export const enviarReciboAsync = createAsyncThunk(
         body,
       });
 
+      if (!response.success) {
+        throw new Error('Error al enviar el recibo: ' + (response.error || 'Error desconocido'));
+      }
+
       dispatch(isFetchingComplete());
 
       return response;
@@ -396,10 +400,13 @@ export const enviarDroneReparadoAsync = createAsyncThunk(
         body,
       });
 
+      console.log("Respuesta del endpoint de drone reparado:", response);
+      
       dispatch(isFetchingComplete());
 
       return response;
     } catch (error: any) { // TODO: Hacer tipo de dato para el error
+      console.error("Error en enviarDroneReparadoAsync:", error);
       dispatch(isFetchingComplete());
       throw error;
     }

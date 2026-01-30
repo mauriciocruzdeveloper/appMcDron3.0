@@ -82,6 +82,12 @@ export const ReparacionReparar: React.FC<ReparacionRepararProps> = ({
                 tipo: "success",
                 titulo: "Drone Reparado",
             });
+        } else {
+            openModal({
+                mensaje: "Error al marcar el drone como reparado o enviar el email.",
+                tipo: "danger",
+                titulo: "Error",
+            });
         }
     };
 
@@ -97,6 +103,12 @@ export const ReparacionReparar: React.FC<ReparacionRepararProps> = ({
                 mensaje: "Drone marcado como diagnosticado y email enviado correctamente.",
                 tipo: "success",
                 titulo: "Drone Diagnosticado",
+            });
+        } else {
+            openModal({
+                mensaje: "Error al marcar el drone como diagnosticado o enviar el email.",
+                tipo: "danger",
+                titulo: "Error",
             });
         }
     };
