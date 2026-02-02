@@ -91,10 +91,6 @@ export const enviarReciboAsync = createAsyncThunk(
         body,
       });
 
-      if (!response.success) {
-        throw new Error('Error al enviar el recibo: ' + (response.error || 'Error desconocido'));
-      }
-
       dispatch(isFetchingComplete());
 
       return response;
