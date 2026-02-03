@@ -143,15 +143,19 @@ export const enviarPresupuestoAsync = createAsyncThunk(
         }
       }
 
-      // Construir array de intervenciones con descripción y fotos
+      // Construir array de intervenciones con descripción, fotos y precio
       const intervenciones = asignacionesIntervenciones.map((asignacion) => {
         const intervencion = catalogoIntervenciones[asignacion.data.intervencionId];
         return {
           nombre: intervencion?.data?.NombreInt || 'Intervención',
-          descripcion: asignacion.data.descripcion || '',
-          fotos: asignacion.data.fotos || []
+          descripcionIntervencion: intervencion?.data?.DescripcionInt || '',
+          comentarios: asignacion.data.descripcion || '',
+          fotos: asignacion.data.fotos || [],
+          precio: asignacion.data.PrecioTotal || 0
         };
-      });
+      })
+      // Ordenar de mayor a menor precio
+      .sort((a, b) => b.precio - a.precio);
 
       const montoTotal = reparacion.data.PresuFiRep || 0;
 
@@ -224,15 +228,19 @@ export const generarPDFPresupuestoAsync = createAsyncThunk(
         }
       }
 
-      // Construir array de intervenciones con descripción y fotos
+      // Construir array de intervenciones con descripción, fotos y precio
       const intervenciones = asignacionesIntervenciones.map((asignacion) => {
         const intervencion = catalogoIntervenciones[asignacion.data.intervencionId];
         return {
           nombre: intervencion?.data?.NombreInt || 'Intervención',
-          descripcion: asignacion.data.descripcion || '',
-          fotos: asignacion.data.fotos || []
+          descripcionIntervencion: intervencion?.data?.DescripcionInt || '',
+          comentarios: asignacion.data.descripcion || '',
+          fotos: asignacion.data.fotos || [],
+          precio: asignacion.data.PrecioTotal || 0
         };
-      });
+      })
+      // Ordenar de mayor a menor precio
+      .sort((a, b) => b.precio - a.precio);
 
       const montoTotal = reparacion.data.PresuFiRep || 0;
 
@@ -280,9 +288,10 @@ export const generarPDFPresupuestoAsync = createAsyncThunk(
           throw new Error(result.error || 'Error al generar el PDF');
         }
 
-        // Construir la URL completa del PDF
+        // Construir la URL completa del PDF con timestamp para evitar caché
         const baseUrl = apiUrl.replace('/api', '');
-        const pdfUrl = `${baseUrl}${result.url}`;
+        const timestamp = new Date().getTime();
+        const pdfUrl = `${baseUrl}${result.url}?v=${timestamp}`;
         
         console.log('Abriendo PDF:', pdfUrl);
         
