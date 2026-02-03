@@ -46,7 +46,7 @@ const ReparacionesEsperandoRepuestosSection = (): React.ReactElement => {
                         {reparacion.data.ModeloDroneNameRep || 'Modelo no especificado'}
                       </h6>
                       <p className='mb-1 text-muted'>
-                        {reparacion.data.NombreUsu} {reparacion.data.ApellidoUsu}
+                        {reparacion.data.NombreUsu}{reparacion.data.ApellidoUsu ? ` ${reparacion.data.ApellidoUsu}` : ''}
                       </p>
                       {reparacion.data.ObsRepuestos && (
                         <small className='text-muted'>

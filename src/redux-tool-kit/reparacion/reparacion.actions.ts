@@ -98,11 +98,14 @@ export const guardarReciboAsync = createAsyncThunk(
       const reparacionGuardada = await guardarReparacionPersistencia(reparacion);
 
       // 4. Enviar el recibo
+      const nombreCompleto = presupuesto.ApellidoUsu 
+        ? `${presupuesto.NombreUsu} ${presupuesto.ApellidoUsu}` 
+        : presupuesto.NombreUsu;
       const response = await dispatch(enviarReciboAsync({
         ...reparacionGuardada,
         data: {
           ...reparacionGuardada.data,
-          NombreUsu: `${presupuesto.NombreUsu} ${presupuesto.ApellidoUsu}`,
+          NombreUsu: nombreCompleto,
           TelefonoUsu: presupuesto.TelefonoUsu,
           EmailUsu: presupuesto.EmailUsu,
         },

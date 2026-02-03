@@ -1,11 +1,17 @@
 import { ReparacionType } from "../types/reparacion";
 
 export const bodyRecibo = (reparacion: ReparacionType): string => {
+    const clienteNombre = reparacion.data.ApellidoUsu 
+        ? `${reparacion.data.NombreUsu} ${reparacion.data.ApellidoUsu}` 
+        : reparacion.data.NombreUsu;
+    
+    const fechaIngreso = reparacion.data.FeRecRep ? new Date(reparacion.data.FeRecRep).toLocaleDateString() : 'No especificada';
+    
     return `Nro. de reparación: ${reparacion.id}
 Recibo de equipo: ${reparacion.data.ModeloDroneNameRep}
-Fecha de ingreso: ${new Date(reparacion.data.FeRecRep).toLocaleDateString()}
+Fecha de ingreso: ${fechaIngreso}
 Observaciones: ${reparacion.data.DescripcionUsuRep}
-Cliente: ${reparacion.data.NombreUsu} ${reparacion.data.ApellidoUsu}
+Cliente: ${clienteNombre}
 Teléfono: ${reparacion.data.TelefonoUsu}
 
 IMPORTANTE:

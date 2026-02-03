@@ -31,8 +31,10 @@ export default function Estadisticas(): JSX.Element {
 
     // Filtrar reparaciones completadas del año seleccionado
     const reparacionesCompletadas = reparaciones.filter(rep => {
-        const fecha = new Date(rep.data.FeFinRep || rep.data.FeConRep);
-        const tieneIngresos = rep.data.PresuDiRep > 0 || rep.data.PresuFiRep > 0;
+        const fechaValue = rep.data.FeFinRep || rep.data.FeConRep;
+        if (!fechaValue) return false;
+        const fecha = new Date(fechaValue);
+        const tieneIngresos = (rep.data.PresuDiRep || 0) > 0 || (rep.data.PresuFiRep || 0) > 0;
         return tieneIngresos && fecha.getFullYear() === filtroAno;
     });
 
@@ -40,19 +42,25 @@ export default function Estadisticas(): JSX.Element {
     const estadisticasPorMes = Array.from({ length: 12 }, (_, i) => {
         const mes = i + 1;
         const reparacionesDelMes = reparacionesCompletadas.filter(rep => {
-            const fecha = new Date(rep.data.FeFinRep || rep.data.FeConRep);
+            const fechaValue = rep.data.FeFinRep || rep.data.FeConRep;
+            if (!fechaValue) return false;
+            const fecha = new Date(fechaValue);
             return fecha.getMonth() + 1 === mes;
         });
         
         const ingresos = reparacionesDelMes.reduce((total, rep) => {
             // Si tiene PresuDiRep, ese es el monto. Si no, PresuFiRep.
-            if (rep.data.PresuDiRep > 0) {
-                return total + rep.data.PresuDiRep;
-            } else if (rep.data.PresuFiRep > 0) {
+            const presuDi = rep.data.PresuDiRep || 0;
+            const presuFi = rep.data.PresuFiRep || 0;
+            const presuRe = rep.data.PresuReRep || 0;
+            
+            if (presuDi > 0) {
+                return total + presuDi;
+            } else if (presuFi > 0) {
                 if (rep.data.EstadoRep === 'Finalizado' || rep.data.EstadoRep === 'Enviado' || rep.data.EstadoRep === 'Cobrado') {
-                    return total + rep.data.PresuFiRep;
+                    return total + presuFi;
                 } else {
-                    return total + rep.data.PresuReRep;
+                    return total + presuRe;
                 }
             }
             return total;
@@ -83,7 +91,9 @@ export default function Estadisticas(): JSX.Element {
 
     // Calcular estadísticas por año para el gráfico
     const estadisticasPorAno = reparaciones.reduce((acc, rep) => {
-        const fecha = new Date(rep.data.FeFinRep || rep.data.FeConRep);
+        const fechaValue = rep.data.FeFinRep || rep.data.FeConRep;
+        if (!fechaValue) return acc;
+        const fecha = new Date(fechaValue);
         const ano = fecha.getFullYear();
         if (!acc[ano]) {
             acc[ano] = 0;
@@ -197,25 +207,29 @@ export default function Estadisticas(): JSX.Element {
                                         let ingreso = 0;
                                         let tipoIngreso = '';
                                         
-                                        if (rep.data.PresuDiRep > 0) {
-                                            ingreso = rep.data.PresuDiRep;
+                                        const presuDi = rep.data.PresuDiRep || 0;
+                                        const presuFi = rep.data.PresuFiRep || 0;
+                                        const presuRe = rep.data.PresuReRep || 0;
+                                        
+                                        if (presuDi > 0) {
+                                            ingreso = presuDi;
                                             tipoIngreso = 'Diagnóstico';
-                                        } else if (rep.data.PresuFiRep > 0) {
+                                        } else if (presuFi > 0) {
                                             if (rep.data.EstadoRep === 'Finalizado' || rep.data.EstadoRep === 'Enviado' || rep.data.EstadoRep === 'Cobrado') {
-                                                ingreso = rep.data.PresuFiRep;
+                                                ingreso = presuFi;
                                                 tipoIngreso = 'Presupuesto Final';
                                             } else {
-                                                ingreso = rep.data.PresuReRep;
+                                                ingreso = presuRe;
                                                 tipoIngreso = 'Presupuesto Reparación';
                                             }
                                         }
                                         
-                                        const fecha = new Date(rep.data.FeFinRep || rep.data.FeConRep || rep.data.FechaCreacion);
+                                        const fecha = new Date(rep.data.FeFinRep || rep.data.FeConRep || rep.data.FeRecRep || Date.now());
                                         return (
                                             <div key={rep.id} className="d-flex justify-content-between py-1 border-bottom"
                                                  onClick={() => navigate(`/inicio/reparaciones/${rep.id}`)} style={{ cursor: 'pointer' }}>
                                                 <div>
-                                                    <small><strong>{rep.data.NombreUsu} {rep.data.ApellidoUsu}</strong></small>
+                                                    <small><strong>{rep.data.NombreUsu}{rep.data.ApellidoUsu ? ` ${rep.data.ApellidoUsu}` : ''}</strong></small>
                                                     <br />
                                                     <small className="text-muted">Reparación #{rep.id.substring(0, 6)}</small>
                                                     <br />

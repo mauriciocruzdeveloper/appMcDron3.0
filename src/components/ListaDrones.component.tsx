@@ -88,7 +88,8 @@ export default function ListaDrones(): JSX.Element {
                                   {(() => {
                                     const propietarioId = drone.data.Propietario;
                                     const usuario = usuarios[propietarioId];
-                                    return usuario ? `${usuario.data.NombreUsu} ${usuario.data.ApellidoUsu}` : propietarioId;
+                                    if (!usuario) return propietarioId;
+                                    return usuario.data.ApellidoUsu ? `${usuario.data.NombreUsu} ${usuario.data.ApellidoUsu}` : usuario.data.NombreUsu;
                                   })()}
                                 </small>
                             </div>

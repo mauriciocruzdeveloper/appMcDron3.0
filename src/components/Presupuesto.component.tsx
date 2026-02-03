@@ -200,9 +200,9 @@ export default function Presupuesto(): JSX.Element {
 
     const handleGuardarPresupuesto = () => {
         // Validar campos requeridos
-        if (!presupuesto.EmailUsu || !presupuesto.NombreUsu || !presupuesto.ApellidoUsu) {
+        if (!presupuesto.EmailUsu || !presupuesto.NombreUsu) {
             openModal({
-                mensaje: "Por favor complete los campos obligatorios: Email, Nombre y Apellido",
+                mensaje: "Por favor complete los campos obligatorios: Email y Nombre",
                 tipo: "danger",
                 titulo: `Registrar ${estadoInfo.nombre}`,
             });
