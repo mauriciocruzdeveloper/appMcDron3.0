@@ -6,6 +6,7 @@ import { sanitizeBaseName, addTimestampToBase, buildUploadPath } from '../utils/
 import { subirFotoAsignacionAsync } from '../redux-tool-kit/app/app.actions';
 import { useModal } from './Modal/useModal';
 import { getThumbnailUrl } from '../utils/imageUtils';
+import { useDebounce } from '../hooks/useDebounce';
 
 interface AsignacionIntervencionDetalleProps {
   asignacionId: string;
@@ -25,41 +26,26 @@ export const AsignacionIntervencionDetalle: React.FC<AsignacionIntervencionDetal
   const dispatch = useAppDispatch();
   const { openModal } = useModal();
 
-  const [descripcion, setDescripcion] = useState(descripcionInicial);
+  // Usar hook de debounce para la descripción
+  const descripcion = useDebounce({
+    valorInicial: descripcionInicial,
+    onSave: async (valor) => {
+      await dispatch(actualizarDescripcionAsignacionAsync({
+        asignacionId,
+        descripcion: valor
+      })).unwrap();
+    },
+    delay: 1500
+  });
+
   const [fotos, setFotos] = useState<string[]>(fotosIniciales);
-  const [isSavingDescripcion, setIsSavingDescripcion] = useState(false);
   const [isUploadingFoto, setIsUploadingFoto] = useState(false);
   const [isExpanded, setIsExpanded] = useState(!collapsed);
 
-  // Sincronizar cuando cambia desde el store
-  useEffect(() => {
-    setDescripcion(descripcionInicial);
-  }, [descripcionInicial]);
-
+  // Sincronizar fotos cuando cambian desde el store
   useEffect(() => {
     setFotos(fotosIniciales);
   }, [fotosIniciales]);
-
-  const handleDescripcionBlur = async () => {
-    // Solo guardar si cambió
-    if (descripcion === descripcionInicial) return;
-
-    setIsSavingDescripcion(true);
-    try {
-      await dispatch(actualizarDescripcionAsignacionAsync({
-        asignacionId,
-        descripcion
-      })).unwrap();
-    } catch (error) {
-      openModal({
-        mensaje: 'Error al guardar la descripción',
-        tipo: 'danger',
-        titulo: 'Error'
-      });
-    } finally {
-      setIsSavingDescripcion(false);
-    }
-  };
 
   const handleAgregarFoto = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files?.length) return;
@@ -146,14 +132,13 @@ export const AsignacionIntervencionDetalle: React.FC<AsignacionIntervencionDetal
           <div className="mb-3">
             <label className="form-label small fw-bold">
               Descripción del problema
-              {isSavingDescripcion && <small className="text-muted ms-2">Guardando...</small>}
+              {descripcion.isSaving && <small className="text-muted ms-2">Guardando...</small>}
             </label>
             <textarea
               className="form-control form-control-sm"
               rows={3}
-              value={descripcion}
-              onChange={(e) => setDescripcion(e.target.value)}
-              onBlur={handleDescripcionBlur}
+              value={descripcion.value}
+              onChange={(e) => descripcion.onChange(e.target.value)}
               disabled={readOnly}
               placeholder="Ej: Articulación delantera derecha quebrada. Se requiere reemplazar la pieza..."
             />
