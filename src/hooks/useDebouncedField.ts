@@ -1,7 +1,7 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
 import { useAppDispatch } from '../redux-tool-kit/hooks/useAppDispatch';
 import { actualizarCampoReparacionAsync } from '../redux-tool-kit/reparacion/reparacion.actions';
 import { DataReparacion } from '../types/reparacion';
+import { useDebounce } from './useDebounce';
 
 interface UseDebouncedFieldProps {
     reparacionId: string;
@@ -12,8 +12,8 @@ interface UseDebouncedFieldProps {
 }
 
 /**
- * Hook para campos de texto con debounce
- * Mantiene el valor local para UI inmediata y guarda a Redux/Firestore con delay
+ * Hook para campos de reparación con debounce
+ * Wrapper sobre useDebounce que configura automáticamente el guardado en reparaciones
  * 
  * @param reparacionId - ID de la reparación
  * @param campo - Campo de DataReparacion a actualizar
@@ -42,77 +42,30 @@ export const useDebouncedField = ({
         return valorInicial;
     };
     
-    const [localValue, setLocalValue] = useState(getInitialValue());
-    const [isSaving, setIsSaving] = useState(false);
-    
-    // Ref para trackear el último valor que nosotros guardamos
-    // Esto evita sobrescribir cambios del usuario mientras se está guardando
-    const lastSavedValue = useRef(getInitialValue());
-
-    // Actualizar valor local cuando cambia el valor inicial (ej: cambio de reparación)
-    // Solo actualizar si el cambio viene de afuera (no de nuestro propio guardado)
-    useEffect(() => {
-        const newValue = getInitialValue();
-        // Solo actualizar si es diferente al último valor que guardamos
-        // Esto previene sobrescribir lo que el usuario escribió mientras se guardaba
-        if (newValue !== lastSavedValue.current) {
-            setLocalValue(newValue);
-            lastSavedValue.current = newValue;
-        }
-    }, [valorInicial]);
-
-    // Efecto de debounce para guardar
-    useEffect(() => {
-        // Comparar con el valor inicial apropiado
-        const valorInicialComparable = isDateField ? getInitialValue() : valorInicial;
-        
-        // Si el valor local es igual al inicial, no hacer nada
-        if (localValue === valorInicialComparable) {
-            setIsSaving(false);
-            return;
-        }
-
-        // Marcar como "guardando" solo después del delay
-        const timeoutId = setTimeout(() => {
-            setIsSaving(true);
-            let valorAGuardar = localValue;
-            
-            // Si es un campo de fecha, convertir a timestamp
-            if (isDateField && typeof localValue === 'string' && localValue) {
+    // Transformación para campos de fecha
+    const transformBeforeSave = isDateField 
+        ? (localValue: any) => {
+            if (typeof localValue === 'string' && localValue) {
                 const anio = Number(localValue.substr(0, 4));
                 const mes = Number(localValue.substr(5, 2)) - 1;
                 const dia = Number(localValue.substr(8, 2));
-                valorAGuardar = String(Number(new Date(anio, mes, dia).getTime()) + 10800001);
+                return String(Number(new Date(anio, mes, dia).getTime()) + 10800001);
             }
-            
-            dispatch(actualizarCampoReparacionAsync({
+            return localValue;
+          }
+        : undefined;
+    
+    // Usar el hook genérico con la configuración específica para reparaciones
+    return useDebounce({
+        valorInicial: getInitialValue(),
+        onSave: async (valor) => {
+            await dispatch(actualizarCampoReparacionAsync({
                 reparacionId,
                 campo,
-                valor: valorAGuardar
-            }))
-            .then(() => {
-                // Actualizar el ref con el valor que acabamos de guardar
-                // Esto previene que se sobrescriba cuando Redux actualice
-                lastSavedValue.current = localValue;
-            })
-            .finally(() => {
-                setIsSaving(false);
-            });
-        }, delay);
-
-        return () => {
-            clearTimeout(timeoutId);
-            setIsSaving(false); // Limpiar el estado al cancelar
-        };
-    }, [localValue, reparacionId, campo, delay, dispatch, valorInicial, isDateField]);
-
-    const handleChange = useCallback((value: any) => {
-        setLocalValue(value);
-    }, []);
-
-    return {
-        value: localValue,
-        onChange: handleChange,
-        isSaving
-    };
+                valor
+            })).unwrap();
+        },
+        delay,
+        transformBeforeSave
+    });
 };
