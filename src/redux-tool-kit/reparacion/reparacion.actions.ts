@@ -273,12 +273,25 @@ export const getIntervencionesPorReparacionAsync = createAsyncThunk(
 // Agregar Intervención a una Reparación
 export const agregarIntervencionAReparacionAsync = createAsyncThunk(
   'app/agregarIntervencionAReparacion',
-  async ({ reparacionId, intervencionId }: { reparacionId: string, intervencionId: string }, { dispatch }) => {
+  async ({ reparacionId, intervencionId }: { reparacionId: string, intervencionId: string }, { dispatch, getState }) => {
     try {
       dispatch(isFetchingStart());
       await agregarIntervencionAReparacionPersistencia(reparacionId, intervencionId);
       // Recargar intervenciones
       await dispatch(getIntervencionesPorReparacionAsync(reparacionId));
+      
+      // Calcular el nuevo total de intervenciones y actualizar el precio final
+      const state = getState() as RootState;
+      const asignaciones = state.reparacion.intervencionesDeReparacionActual;
+      const totalIntervenciones = asignaciones.reduce((sum, a) => sum + (a.data.PrecioTotal || 0), 0);
+      
+      // Actualizar el precio final en la reparación
+      await dispatch(actualizarCampoReparacionAsync({
+        reparacionId,
+        campo: 'PresuFiRep',
+        valor: totalIntervenciones
+      }));
+      
       dispatch(isFetchingComplete());
       return true;
     } catch (error: unknown) { // TODO: Hacer tipo de dato para el error
@@ -291,12 +304,25 @@ export const agregarIntervencionAReparacionAsync = createAsyncThunk(
 // Eliminar Intervención de una Reparación
 export const eliminarIntervencionDeReparacionAsync = createAsyncThunk(
   'app/eliminarIntervencionDeReparacion',
-  async ({ reparacionId, intervencionId }: { reparacionId: string, intervencionId: string }, { dispatch }) => {
+  async ({ reparacionId, intervencionId }: { reparacionId: string, intervencionId: string }, { dispatch, getState }) => {
     try {
       dispatch(isFetchingStart());
       await eliminarIntervencionDeReparacionPersistencia(reparacionId, intervencionId);
       // Recargar intervenciones
       await dispatch(getIntervencionesPorReparacionAsync(reparacionId));
+      
+      // Calcular el nuevo total de intervenciones y actualizar el precio final
+      const state = getState() as RootState;
+      const asignaciones = state.reparacion.intervencionesDeReparacionActual;
+      const totalIntervenciones = asignaciones.reduce((sum, a) => sum + (a.data.PrecioTotal || 0), 0);
+      
+      // Actualizar el precio final en la reparación
+      await dispatch(actualizarCampoReparacionAsync({
+        reparacionId,
+        campo: 'PresuFiRep',
+        valor: totalIntervenciones
+      }));
+      
       dispatch(isFetchingComplete());
       return true;
     } catch (error: unknown) { // TODO: Hacer tipo de dato para el error
