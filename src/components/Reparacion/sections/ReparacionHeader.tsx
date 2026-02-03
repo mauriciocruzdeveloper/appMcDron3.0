@@ -43,7 +43,7 @@ export const ReparacionHeader: React.FC<ReparacionHeaderProps> = ({ reparacionId
                 <div>id: {reparacion.id}</div>
                 <div>Drone: {drone?.data?.Nombre || 'Sin nombre'}</div>
                 <div>Modelo: {modeloDrone?.data?.NombreModelo || reparacion.data.ModeloDroneNameRep || 'Modelo no disponible'}</div>
-                <div>Cliente: {usuario?.data?.NombreUsu} {usuario?.data?.ApellidoUsu}</div>
+                <div>Cliente: {usuario?.data?.NombreUsu}{usuario?.data?.ApellidoUsu ? ` ${usuario?.data?.ApellidoUsu}` : ''}</div>
             </div>
         </div>
     );

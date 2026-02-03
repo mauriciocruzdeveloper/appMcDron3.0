@@ -20,7 +20,7 @@ const ReparacionItem = ({ reparacion, estado, onClick }: ReparacionItemProps): R
       <div className='d-flex justify-content-between align-items-center'>
         <div>
           <h6 className='mb-1'>{modeloNombre || reparacion.data.ModeloDroneNameRep || 'Modelo no especificado'}</h6>
-          <p className='mb-1 text-muted'>{reparacion.data.NombreUsu} {reparacion.data.ApellidoUsu}</p>
+          <p className='mb-1 text-muted'>{reparacion.data.NombreUsu}{reparacion.data.ApellidoUsu ? ` ${reparacion.data.ApellidoUsu}` : ''}</p>
         </div>
         <div className='d-flex flex-column align-items-end'>
           <span

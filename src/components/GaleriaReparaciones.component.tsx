@@ -249,7 +249,7 @@ export default function GaleriaReparaciones(): JSX.Element {
                                             </div>
                                             <div className="text-muted small">
                                                 <div>
-                                                    <strong>Cliente:</strong> {reparacion.data.NombreUsu} {reparacion.data.ApellidoUsu}
+                                                    <strong>Cliente:</strong> {reparacion.data.NombreUsu}{reparacion.data.ApellidoUsu ? ` ${reparacion.data.ApellidoUsu}` : ''}
                                                 </div>
                                                 <div>
                                                     <strong>Drone:</strong> {reparacion.data.ModeloDroneNameRep || 'No especificado'}

@@ -66,7 +66,7 @@ export default function ListaUsuarios(): JSX.Element {
                 style={{ cursor: 'pointer' }}
               >
                 <div className='d-flex w-100 justify-content-between'>
-                  <h5 className='mb-1'>{usuario.data.NombreUsu} {usuario.data.ApellidoUsu}</h5>
+                  <h5 className='mb-1'>{usuario.data.NombreUsu}{usuario.data.ApellidoUsu ? ` ${usuario.data.ApellidoUsu}` : ''}</h5>
                 </div>
                 <small>{usuario?.data?.EmailUsu}</small>
               </div>

@@ -355,7 +355,7 @@ export default function UsuarioComponent(): React.ReactElement | null {
                     <h3 className='card-title'>
                         USUARIO
                     </h3>
-                    <div>Nombre: {usuario?.data?.NombreUsu} {usuario?.data?.ApellidoUsu}</div>
+                    <div>Nombre: {usuario?.data?.NombreUsu}{usuario?.data?.ApellidoUsu ? ` ${usuario?.data?.ApellidoUsu}` : ''}</div>
                     <div>Email: {usuario?.data?.EmailUsu}</div>
                 </div>
             </div>

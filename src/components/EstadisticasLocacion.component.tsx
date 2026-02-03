@@ -548,7 +548,7 @@ export default function EstadisticasLocacion(): JSX.Element {
                                                 style={{ cursor: 'pointer' }}
                                             >
                                                 <div>
-                                                    <small><strong>{rep.data.NombreUsu} {rep.data.ApellidoUsu}</strong></small>
+                                                    <small><strong>{rep.data.NombreUsu}{rep.data.ApellidoUsu ? ` ${rep.data.ApellidoUsu}` : ''}</strong></small>
                                                     <br />
                                                     <small className="text-muted">Reparación #{rep.id.substring(0, 6)}</small>
                                                     <br />
