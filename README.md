@@ -182,76 +182,99 @@ Falta implementarlo en algunos componentes. La idea es poder cambiar la capa de 
 USUAIRO --estadoSeleccionadoId--> SISTEMA FRONT --estadoSeleccionadId+Fecha--> PERSISTENCIA
 
 
-## COMPILAR APK
+## COMPILAR Y DESPLEGAR
 
+### 🚀 Script Unificado Completo (RECOMENDADO)
+
+El proyecto incluye un script automatizado todo-en-uno que compila Android, Browser y despliega automáticamente:
+
+```bash
+chmod +x build_and_deploy.sh
+./build_and_deploy.sh
+```
+
+**Este script hace TODO automáticamente:**
+- ✅ Verifica e instala todas las dependencias faltantes
+- ✅ Compila APK Android firmada y lista para instalar
+- ✅ Compila versión web/browser
+- ✅ Despliega automáticamente a http://mauriciocruzdrones.com/app
+- ✅ Sin preguntas ni confirmaciones - totalmente automatizado
+- ✅ Contraseñas ya incluidas en el script
+
+**Dependencias que instala automáticamente:**
+- NVM y Node.js 16
+- Java JDK 17
+- Android SDK (command line tools)
+- Gradle
+- Cordova
+- Build tools (zipalign, apksigner)
+- lftp (para despliegue FTP)
+- Dependencias npm del proyecto
+- Plataformas Android y Browser de Cordova
+
+**Proceso completo:**
+1. Verifica e instala dependencias (NVM, Node, Java, Android SDK, Gradle, Cordova, lftp)
+2. Compila proyecto React
+3. Construye APK Android en modo release
+4. Alinea y firma APK con keystore
+5. Verifica firma del APK
+6. Compila versión Browser/Web
+7. Despliega automáticamente al servidor Ferozo
+
+**Requisitos previos:**
+- Archivo keystore en `/home/mauricio/mauriciokey.keystore`
+- Git, curl, wget básicos instalados en Linux
+
+**Salidas:**
+- 📱 APK firmada: `./tmp_build/signed_appmcdron.apk`
+- 🌐 Web desplegada: http://mauriciocruzdrones.com/app
+
+---
+
+### Scripts Individuales
+
+Todos los scripts están en la raíz del proyecto y en `scripts/sh/`:
+
+- **`build_and_deploy.sh`** ⭐ (RECOMENDADO): Script completo unificado - compila Android + Web + despliega
+- **`build_and_sign_auto.sh`**: Solo Android con verificación e instalación automática de dependencias
+- **`build_and_sign.sh`**: Solo Android, versión simple (asume dependencias instaladas)
+- **`build_and_deploy_browser.sh`**: Solo Web - compila y despliega versión browser
+
+---
+
+### Compilación Manual (si prefieres instalar dependencias por separado)
+
+#### 1. Construir la APK (Release)
+```bash
 nvm use 16
-
-cordova build android --release -- --packageType=apk (para que genere una apk y no una aab)
-
-La versión de Gradle tiene que ser la 7.6: https://askubuntu.com/questions/1307132/how-to-upgrade-gradle-to-6-7-1
-
-### Instalar SDKs
-
-1. Descargar Android Studio: https://developer.android.com/studio?hl=es-419
-2. cd ~/Descargas
-3. tar -xzvf android-studio-2024.2.1.12-linux.tar.gz -C ~/Android
-4. mkdir ~/Android
-5. cd ~/Android/android-studio/bin
-6. ./studio.sh
-Instalar herramientas de línea de comandos
-7. sudo apt install google-android-cmdline-tools-1.0-installer
-8. sudo apt install google-android-platform-tools-installer
-Instalar JDk8 (Probablemente tiene que ser la 17)
-9. sudo apt update
-10. sudo apt install openjdk-8-jdk
-Seleccionar la versión correcta de java
-11. sudo update-alternatives --config javac
-Instalar gradle (Quizás hay que instalar la 8.3, al final termina instalando esa...)
-12. sudo apt remove gradle
-13. wget https://services.gradle.org/distributions/gradle-7.6-bin.zip
-14. sudo mkdir /opt/gradle
-15. sudo unzip gradle-7.6-bin.zip -d /opt/gradle
-16. sudo nano ~/.bashrc
-17. Copiar
-export GRADLE_HOME=/opt/gradle/gradle-7.6
-export PATH=$PATH:$GRADLE_HOME/bin
-18. source ~/.bashrc
-19. gradle -v
-Tiene que decir 7.6
-
-Script hecho en bash para instalar todo esto:
-https://chatgpt.com/c/676a081f-df28-8007-b653-a2978c623858
-Probar!!!
-
-### PASOS
-
-#### Con sh
-(No va a funcionar porque falta la contraseña para firmar, se hará una versión sin firma, pero no se podrá instalar en el teléfono)
-sh ./build_and_sign.sh
-
-### Sin sh
-
-1. Construir la APK (Release)
-Ejecuta el siguiente comando para compilar tu aplicación en modo release:
-
 cordova build android --release -- --packageType=apk
+```
 
-2. Alinear el APK
-Usa zipalign para optimizar el APK:
+#### 2. Alinear el APK
+```bash
+zipalign -v -p 4 platforms/android/app/build/outputs/apk/release/app-release-unsigned.apk appmcdron-aligned.apk
+```
 
-zipalign -v -p 4 appmcdron.apk appmcdron-aligned.apk
+#### 3. Firmar el APK
+```bash
+apksigner sign --ks mauriciokey.keystore --ks-key-alias mauriciokey --out appmcdron-signed.apk appmcdron-aligned.apk
+```
 
-3. Firmar el APK
-Firma el APK con apksigner:
+#### 4. Verificar la firma
+```bash
+apksigner verify --verbose appmcdron-signed.apk
+```
 
-apksigner sign --ks mauriciokey.keystore appmcdron-aligned.apk
+#### 5. Instalar en el dispositivo
+```bash
+adb install appmcdron-signed.apk
+```
 
-4. Verificar la firma
-Verifica que el APK esté correctamente firmado:
+---
 
-apksigner verify --verbose appmcdron-aligned.apk
+### Notas sobre versiones
 
-5. Instalar en el dispositivo
-Finalmente, instala el APK en tu dispositivo Android:
-
-adb install appmcdron-aligned.apk
+- **Node.js:** Versión 16 (gestionado por NVM)
+- **Java:** JDK 17 o superior
+- **Gradle:** Se instala automáticamente via apt-get
+- **Android SDK:** API level 34, Build tools 34.0.0
