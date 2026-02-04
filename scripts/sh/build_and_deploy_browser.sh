@@ -157,43 +157,10 @@ else
     echo ""
 fi
 
-# Listar estructura de carpetas en la raíz y en public_html
-echo -e "${CYAN}Listando estructura de carpetas en la raíz del FTP...${NC}"
-lftp -u ${SERVER_USER},${PASSWORD} ${SERVER_HOST} << EOF
-set ftp:ssl-force true
-set ftp:ssl-protect-data true
-set ssl:verify-certificate no
-set ftp:passive-mode true
-ls
-ls public_html
-bye
-EOF
+# Destino fijo
+DESTINO="public_html/app"
 
-echo -e "${YELLOW}¿Dónde querés subir la app?${NC}"
-echo -e "1) public_html/app (recomendado)"
-echo -e "2) public_html (directo en la raíz web)"
-echo -e "3) Cancelar"
-read -p "Elegí una opción [1-3]: " opcion
-
-case $opcion in
-    1)
-        DESTINO="public_html/app"
-        ;;
-    2)
-        DESTINO="public_html"
-        ;;
-    *)
-        echo -e "${YELLOW}Cancelado por el usuario. No se subió nada.${NC}"
-        exit 0
-        ;;
-esac
-
-echo -e "${CYAN}Vas a subir el contenido de platforms/browser/www/ a: $DESTINO${NC}"
-read -p "¿Confirmás el deploy? (s/n): " confirmacion
-if [[ ! "$confirmacion" =~ ^([sS]|[yY])$ ]]; then
-    echo -e "${YELLOW}Cancelado por el usuario. No se subió nada.${NC}"
-    exit 0
-fi
+echo -e "${CYAN}Desplegando en: $DESTINO${NC}"
 
 # Subir archivos sin borrar nada remoto
 lftp -u ${SERVER_USER},${PASSWORD} ${SERVER_HOST} << EOF
