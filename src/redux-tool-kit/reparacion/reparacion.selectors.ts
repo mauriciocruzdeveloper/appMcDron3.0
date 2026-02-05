@@ -13,6 +13,16 @@ import { obtenerEstadoSeguro, esEstadoLegacy } from '../../utils/estadosHelper';
  */
 const ESTADOS_NO_PRIORITARIOS = ["Entregado", "Liquidación", "Abandonado", "Respondido", "Finalizado", "Cancelado"];
 
+/**
+ * Normaliza un string removiendo tildes y diacríticos
+ * @param str - String a normalizar
+ * @returns String sin tildes ni diacríticos
+ */
+const normalizeString = (str: string | undefined): string => {
+  if (!str) return '';
+  return str.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+};
+
 // Tipos para los selectores
 type ReparacionSelector = (state: RootState) => ReparacionType | undefined;
 type ReparacionArraySelector = (state: RootState) => ReparacionType[];
@@ -123,29 +133,30 @@ export const selectReparacionesFiltradas = createSelector(
   (reparaciones, filtro): ReparacionType[] => {
     let reparacionesFiltradas = [...reparaciones];
 
-    // Filtro por estados prioritarios
-    if (filtro.estadosPrioritarios) {
-      reparacionesFiltradas = reparacionesFiltradas.filter(reparacion =>
-        !ESTADOS_NO_PRIORITARIOS.includes(reparacion.data.EstadoRep)
-      );
-    }
-
     // Filtro por búsqueda de texto
     if (filtro.search && filtro.search.trim() !== '') {
-      const searchTerm = filtro.search.toLowerCase();
+      // Cuando hay búsqueda activa, buscar en TODAS las reparaciones (ignorar filtro de prioritarias)
+      const searchTerm = normalizeString(filtro.search);
       reparacionesFiltradas = reparacionesFiltradas.filter(reparacion => {
         const data = reparacion.data;
         return (
-          data.ModeloDroneNameRep?.toLowerCase().includes(searchTerm) ||
-          data.NombreUsu?.toLowerCase().includes(searchTerm) ||
-          data.ApellidoUsu?.toLowerCase().includes(searchTerm) ||
-          data.EmailUsu?.toLowerCase().includes(searchTerm) ||
-          data.NumeroSerieRep?.toLowerCase().includes(searchTerm) ||
-          data.DescripcionUsuRep?.toLowerCase().includes(searchTerm) ||
-          data.DiagnosticoRep?.toLowerCase().includes(searchTerm) ||
-          data.EstadoRep?.toLowerCase().includes(searchTerm)
+          normalizeString(data.ModeloDroneNameRep).includes(searchTerm) ||
+          normalizeString(data.NombreUsu).includes(searchTerm) ||
+          normalizeString(data.ApellidoUsu).includes(searchTerm) ||
+          normalizeString(data.EmailUsu).includes(searchTerm) ||
+          normalizeString(data.NumeroSerieRep).includes(searchTerm) ||
+          normalizeString(data.DescripcionUsuRep).includes(searchTerm) ||
+          normalizeString(data.DiagnosticoRep).includes(searchTerm) ||
+          normalizeString(data.EstadoRep).includes(searchTerm)
         );
       });
+    } else {
+      // Solo aplicar filtro de estados prioritarios cuando NO hay búsqueda activa
+      if (filtro.estadosPrioritarios) {
+        reparacionesFiltradas = reparacionesFiltradas.filter(reparacion =>
+          !ESTADOS_NO_PRIORITARIOS.includes(reparacion.data.EstadoRep)
+        );
+      }
     }
 
     return reparacionesFiltradas;
