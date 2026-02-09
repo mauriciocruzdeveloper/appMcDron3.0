@@ -140,14 +140,29 @@ export const selectReparacionesFiltradas = createSelector(
       reparacionesFiltradas = reparacionesFiltradas.filter(reparacion => {
         const data = reparacion.data;
         return (
+          // Campos de identificación
           normalizeString(data.ModeloDroneNameRep).includes(searchTerm) ||
+          normalizeString(data.NumeroSerieRep).includes(searchTerm) ||
+          normalizeString(data.EstadoRep).includes(searchTerm) ||
+          // Campos de usuario
           normalizeString(data.NombreUsu).includes(searchTerm) ||
           normalizeString(data.ApellidoUsu).includes(searchTerm) ||
           normalizeString(data.EmailUsu).includes(searchTerm) ||
-          normalizeString(data.NumeroSerieRep).includes(searchTerm) ||
+          normalizeString(data.TelefonoUsu).includes(searchTerm) ||
+          // Campos de descripción y diagnóstico
           normalizeString(data.DescripcionUsuRep).includes(searchTerm) ||
           normalizeString(data.DiagnosticoRep).includes(searchTerm) ||
-          normalizeString(data.EstadoRep).includes(searchTerm)
+          normalizeString(data.DescripcionTecRep).includes(searchTerm) ||
+          // Campos de notas y observaciones
+          normalizeString(data.AnotacionesRep).includes(searchTerm) ||
+          normalizeString(data.DriveRep).includes(searchTerm) ||
+          normalizeString(data.InformeRep).includes(searchTerm) ||
+          // Campos de repuestos
+          normalizeString(data.TxtRepuestosRep).includes(searchTerm) ||
+          normalizeString(data.ObsRepuestos).includes(searchTerm) ||
+          // Campos de entrega
+          normalizeString(data.TxtEntregaRep).includes(searchTerm) ||
+          normalizeString(data.SeguimientoEntregaRep).includes(searchTerm)
         );
       });
     } else {
@@ -200,19 +215,34 @@ export const selectReparacionesBySearch = (searchTerm: string): ReparacionArrayS
     [selectReparacionesArray],
     (reparaciones): ReparacionType[] => {
       if (!searchTerm || searchTerm.trim() === '') return reparaciones;
-      
+
       const term = searchTerm.toLowerCase();
       return reparaciones.filter(reparacion => {
         const data = reparacion.data;
         return (
+          // Campos de identificación
           data.ModeloDroneNameRep?.toLowerCase().includes(term) ||
+          data.NumeroSerieRep?.toLowerCase().includes(term) ||
+          data.EstadoRep?.toLowerCase().includes(term) ||
+          // Campos de usuario
           data.NombreUsu?.toLowerCase().includes(term) ||
           data.ApellidoUsu?.toLowerCase().includes(term) ||
           data.EmailUsu?.toLowerCase().includes(term) ||
-          data.NumeroSerieRep?.toLowerCase().includes(term) ||
+          data.TelefonoUsu?.toLowerCase().includes(term) ||
+          // Campos de descripción y diagnóstico
           data.DescripcionUsuRep?.toLowerCase().includes(term) ||
           data.DiagnosticoRep?.toLowerCase().includes(term) ||
-          data.EstadoRep?.toLowerCase().includes(term)
+          data.DescripcionTecRep?.toLowerCase().includes(term) ||
+          // Campos de notas y observaciones
+          data.AnotacionesRep?.toLowerCase().includes(term) ||
+          data.DriveRep?.toLowerCase().includes(term) ||
+          data.InformeRep?.toLowerCase().includes(term) ||
+          // Campos de repuestos
+          data.TxtRepuestosRep?.toLowerCase().includes(term) ||
+          data.ObsRepuestos?.toLowerCase().includes(term) ||
+          // Campos de entrega
+          data.TxtEntregaRep?.toLowerCase().includes(term) ||
+          data.SeguimientoEntregaRep?.toLowerCase().includes(term)
         );
       });
     }
