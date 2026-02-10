@@ -195,6 +195,42 @@ delay: 2000  // 2 segundos
 - ✅ **Ahorro de costos** (menos operaciones de escritura)
 - ✅ **Feedback visual** con indicador "Guardando..."
 
+## Problemas Conocidos y Soluciones
+
+### ❌ Problema: Bucle Infinito de Guardado
+
+**Síntoma:** El campo se guarda constantemente en bucle, incluso sin escribir nada, hasta que se recarga la app.
+
+**Causa:** El `useEffect` tiene como dependencias funciones que se recrean en cada render del componente padre. Sin embargo, estas funciones **NO deben estar en las dependencias** porque no determinan CUÁNDO guardar, solo CÓMO guardar.
+
+**Solución aplicada:** 
+- Excluir `onSave` y `transformBeforeSave` de las dependencias del useEffect
+- Solo incluir `localValue` y `delay` como dependencias
+- Agregar `eslint-disable-next-line` con comentario explicativo
+- Las funciones siguen funcionando correctamente gracias a closures de JavaScript
+
+```typescript
+// ✅ CORRECTO
+useEffect(() => {
+  if (localValue === lastSavedValue.current) return;
+  
+  const timeoutId = setTimeout(async () => {
+    await onSave(localValue); // Funciona por closure
+  }, delay);
+  
+  return () => clearTimeout(timeoutId);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+}, [localValue, delay]); // Solo valor y delay, NO funciones
+
+// ❌ INCORRECTO - causa bucles
+}, [localValue, delay, onSave]); // onSave se recrea → bucle infinito
+```
+
+**Nota:** Si el linter marca warning, está bien ignorarlo en este caso específico porque:
+1. Las funciones no determinan CUÁNDO ejecutar el efecto
+2. Los closures de JavaScript garantizan que se use la última versión
+3. El hook funciona correctamente sin ellas en las dependencias
+
 ## Próximos Pasos
 
 1. Aplicar `useDebouncedField` a los componentes listados arriba

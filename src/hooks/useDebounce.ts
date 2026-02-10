@@ -69,13 +69,12 @@ export const useDebounce = <T = string>({
 
     // Efecto de debounce para guardar
     useEffect(() => {
-        // Si el valor local es igual al inicial, no hacer nada
-        if (localValue === valorInicial) {
-            setIsSaving(false);
+        // Solo guardar si el valor cambió respecto al último guardado
+        if (localValue === lastSavedValue.current) {
             return;
         }
 
-        // Marcar como "guardando" solo después del delay
+        // Aplicar debounce antes de guardar
         const timeoutId = setTimeout(async () => {
             setIsSaving(true);
             setError(null);
@@ -89,7 +88,6 @@ export const useDebounce = <T = string>({
                 await onSave(valorAGuardar);
                 
                 // Actualizar el ref con el valor que acabamos de guardar
-                // Esto previene que se sobrescriba cuando Redux actualice
                 lastSavedValue.current = localValue;
             } catch (err) {
                 setError(err instanceof Error ? err.message : 'Error al guardar');
@@ -101,9 +99,11 @@ export const useDebounce = <T = string>({
 
         return () => {
             clearTimeout(timeoutId);
-            setIsSaving(false); // Limpiar el estado al cancelar
+            setIsSaving(false);
         };
-    }, [localValue, valorInicial, delay, onSave, transformBeforeSave]);
+        // Solo depender de localValue y delay
+        // onSave y transformBeforeSave NO deben estar aquí para evitar bucles infinitos
+    }, [localValue, delay]);
 
     const handleChange = useCallback((value: T) => {
         setLocalValue(value);
