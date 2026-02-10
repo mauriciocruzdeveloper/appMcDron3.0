@@ -2,7 +2,7 @@ import { createSelector } from '@reduxjs/toolkit';
 import { RootState } from '../store';
 import { ReparacionType, Reparaciones } from '../../types/reparacion';
 import { Filtro } from '../../types/Filtro';
-import { AsignacionIntervencion } from '../../types/intervencion';
+import { AsignacionIntervencion, EstadoAsignacion } from '../../types/intervencion';
 import { estados } from '../../datos/estados';
 import { obtenerEstadoSeguro, esEstadoLegacy } from '../../utils/estadosHelper';
 
@@ -762,15 +762,49 @@ export const selectReparacionesEnRepuestosConObservaciones = createSelector(
 // ============================================================================
 
 /**
+ * Selector que verifica si todas las asignaciones de una reparación están completadas
+ * @param reparacionId - ID de la reparación
+ * @returns Función selector que retorna true si todas las asignaciones están completadas
+ */
+export const selectTodasAsignacionesCompletadas = (reparacionId: string) =>
+  createSelector(
+    [selectIntervencionesDeReparacionActual],
+    (asignaciones): boolean => {
+      // Si no hay asignaciones, consideramos que no hay nada que completar
+      // por lo que devolvemos true (no hay impedimento)
+      if (!asignaciones || asignaciones.length === 0) {
+        return true;
+      }
+      
+      // Verificar que la reparación actual corresponde al reparacionId solicitado
+      const perteneceAReparacion = asignaciones.every(
+        asignacion => asignacion.data.reparacionId === reparacionId
+      );
+      
+      if (!perteneceAReparacion) {
+        // Si las asignaciones no pertenecen a esta reparación, asumir que no hay asignaciones
+        return true;
+      }
+      
+      // Todas las asignaciones deben estar completadas
+      return asignaciones.every(
+        asignacion => asignacion.data.estado === EstadoAsignacion.COMPLETADA
+      );
+    }
+  );
+
+/**
  * Selector que verifica si una reparación puede avanzar a un estado específico
- * Encapsula toda la lógica de transiciones de estado
+ * Encapsula toda la lógica de transiciones de estado, incluyendo reglas de negocio
+ * como la verificación de asignaciones completadas para el estado "Reparado"
  */
 export const selectPuedeAvanzarA = (reparacionId: string, nombreEstadoDestino: string) =>
   createSelector(
     [
       (state: RootState) => selectReparacionById(reparacionId)(state),
+      (state: RootState) => selectTodasAsignacionesCompletadas(reparacionId)(state),
     ],
-    (reparacion): boolean => {
+    (reparacion, todasAsignacionesCompletadas): boolean => {
       if (!reparacion) return false;
 
       const estadoActual = obtenerEstadoSeguro(reparacion.data.EstadoRep);
@@ -788,7 +822,9 @@ export const selectPuedeAvanzarA = (reparacionId: string, nombreEstadoDestino: s
 
       // Lógica especial para los flujos de Aceptado/Rechazado
       if (nombreEstadoDestino === 'Reparado') {
-        return estadoActual.nombre === 'Aceptado';
+        // REGLA DE NEGOCIO: Para marcar como Reparado, además de estar en Aceptado,
+        // todas las asignaciones deben estar completadas
+        return estadoActual.nombre === 'Aceptado' && todasAsignacionesCompletadas;
       }
       if (nombreEstadoDestino === 'Diagnosticado') {
         return estadoActual.nombre === 'Rechazado';
