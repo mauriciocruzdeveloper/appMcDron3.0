@@ -190,7 +190,7 @@ export default function IntervencionesReparacion({ reparacionId, readOnly = fals
         <>
           <div>
             {[...intervenciones]
-              .sort((a, b) => a.id.localeCompare(b.id))
+              .sort((a, b) => (b.data.PrecioTotal || 0) - (a.data.PrecioTotal || 0))
               .map((asignacion: AsignacionIntervencion) => {
               // Hacer lookup de la intervención del catálogo
               const intervencion = todasLasIntervenciones[asignacion.data.intervencionId];
