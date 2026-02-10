@@ -96,6 +96,7 @@ export {
   
   // Nuevos selectores para lógica de negocio
   selectTotalIntervenciones,
+  selectTodasAsignacionesCompletadas,
   selectPuedeAvanzarA,
   selectSeccionesVisibles,
   selectPrecioManualDifiere,
