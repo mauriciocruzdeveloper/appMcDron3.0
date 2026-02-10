@@ -143,7 +143,7 @@ export const ReparacionReparar: React.FC<ReparacionRepararProps> = ({
                         <h6 className="mb-3">Tareas a Realizar</h6>
                         <div className="list-group">
                             {[...asignaciones]
-                                .sort((a, b) => a.id.localeCompare(b.id))
+                                .sort((a, b) => (b.data.PrecioTotal || 0) - (a.data.PrecioTotal || 0))
                                 .map((asignacion) => {
                                 const intervencion = catalogoIntervenciones[asignacion.data.intervencionId];
                                 const estaCompletada = asignacion.data.estado === EstadoAsignacion.COMPLETADA;
