@@ -12,7 +12,7 @@ import {
     cambiarEstadoReparacionAsync,
 } from "../../../redux-tool-kit/reparacion/reparacion.actions";
 import { enviarReciboAsync } from "../../../redux-tool-kit/app/app.actions";
-import { convertTimestampCORTO } from "../../../utils/utils";
+import { estados } from "../../../datos/estados";
 
 interface ReparacionRecepcionProps {
     reparacionId: string;
@@ -32,6 +32,11 @@ export const ReparacionRecepcion: React.FC<ReparacionRecepcionProps> = ({ repara
 
     // Mostrar botón de reenviar email solo si el estado es 'Recibido'
     const estadoEsRecibido = reparacion?.data.EstadoRep === 'Recibido';
+    
+    // Verificar si está antes de la etapa de Recibido (etapa < 4)
+    const estadoActual = reparacion?.data.EstadoRep;
+    const etapaActual = estadoActual ? estados[estadoActual]?.etapa : null;
+    const estaPendienteDeRecepcion = etapaActual !== null && etapaActual < 4;
 
     const handleReenviarEmailRecibido = async () => {
         if (!reparacion) return;
@@ -105,7 +110,7 @@ export const ReparacionRecepcion: React.FC<ReparacionRecepcionProps> = ({ repara
             <div className="card-body">
                 <h5 className="card-title bluemcdron">RECEPCIÓN</h5>
 
-                {reparacion.data.EstadoRep !== 'Recibido' && (
+                {estaPendienteDeRecepcion && (
                     <div className="alert alert-info mb-3">
                         <strong>Estado actual:</strong> {reparacion.data.EstadoRep}
                         <br />
