@@ -82,3 +82,10 @@ export const eliminarArchivoPersistencia = backend.eliminarArchivoPersistencia;
 
 // WEBSOCKETS
 export const verificarConexionWebSocket = backend.verificarConexionWebSocket;
+
+// WEBSOCKET MANAGER
+export const initWebSocketManager = backend.initWebSocketManager;
+export const stopWebSocketManager = backend.stopWebSocketManager;
+export const verifyAndReconnectChannels = backend.verifyAndReconnectChannels;
+export const getChannelStats = backend.getChannelStats;
+export const logChannelStats = backend.logChannelStats;
