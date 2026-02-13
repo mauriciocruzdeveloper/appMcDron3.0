@@ -6,7 +6,10 @@ import {
     getUsuariosPersistencia,
     getModelosDronePersistencia,
     getDronesPersistencia,
-    getIntervencionesPersistencia
+    getIntervencionesPersistencia,
+    initWebSocketManager,
+    stopWebSocketManager,
+    verifyAndReconnectChannels
 } from "../persistencia/persistencia"; // Actualizado para usar la importación centralizada
 import { useAppDispatch } from "../redux-tool-kit/hooks/useAppDispatch";
 import { setReparaciones } from "../redux-tool-kit/reparacion/reparacion.slice";
@@ -43,24 +46,48 @@ export function DataManagerComponent({ children }: DataManagerProps): React.Reac
     const [unsubscribeDrones, setUnsubscribeDrones] = useState<Unsubscribe>();
     const [unsubscribeIntervenciones, setUnsubscribeIntervenciones] = useState<Unsubscribe>();
 
+    // 🚀 Inicializar WebSocket Manager al montar el componente
+    useEffect(() => {
+        console.log('🔧 Inicializando WebSocket Manager...');
+        initWebSocketManager();
+
+        return () => {
+            console.log('🔧 Deteniendo WebSocket Manager...');
+            stopWebSocketManager();
+        };
+    }, []);
+
     useEffect(() => {
         const handleVisibilityChange = async () => {
+            if (document.hidden) {
+                console.log("📱 App en segundo plano");
+                return;
+            }
+
+            console.log("📱 App en primer plano - Verificando conexión...");
+            
             try {
-                const conectado = await dispatch(verificarConexionWebSocketAsync()).unwrap();
-                if (conectado) {
-                    console.log("Conexión al websocket activa");
-                    getUsuarios();
-                    getReparaciones();
-                    // getMensajes();
-                    getRepuestos();
-                    getModelosDrone();
-                    getDrones();
-                    getIntervenciones();
+                // Usar el nuevo WebSocket Manager para verificar y reconectar
+                const result = await verifyAndReconnectChannels();
+                
+                if (result.success) {
+                    console.log(`✅ Verificación completada: ${result.reconnected}/${result.total} canales reconectados`);
+                    
+                    // Solo recargar datos si hubo reconexiones
+                    if (result.reconnected > 0) {
+                        console.log("🔄 Recargando datos después de reconexión...");
+                        getUsuarios();
+                        getReparaciones();
+                        getRepuestos();
+                        getModelosDrone();
+                        getDrones();
+                        getIntervenciones();
+                    }
                 } else {
-                    console.log("No hay conexión al websocket");
+                    console.log("⚠️ No se pudo verificar la conexión WebSocket");
                 }
             } catch (error) {
-                console.error("Error al verificar conexión al websocket:", error);
+                console.error("❌ Error al verificar conexión al websocket:", error);
             }
         };
 

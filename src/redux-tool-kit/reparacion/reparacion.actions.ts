@@ -209,6 +209,11 @@ export const guardarReparacionAsync = createAsyncThunk(
           DiagnosticoRep: diagnostico || reparacion.data.DiagnosticoRep,
         },
       }
+      
+      // 🚀 ACTUALIZACIÓN OPTIMISTA: Actualizar Redux antes de guardar en BD
+      const { updateReparacion } = await import('./reparacion.slice');
+      dispatch(updateReparacion(newReparacion));
+      
       const reparacionGuardada = await guardarReparacionPersistencia(newReparacion);
       dispatch(isFetchingComplete());
       return reparacionGuardada;
@@ -666,6 +671,10 @@ export const actualizarCampoReparacionAsync = createAsyncThunk(
         }
       };
 
+      // 🚀 ACTUALIZACIÓN OPTIMISTA: Actualizar Redux antes de guardar en BD
+      const { updateReparacion } = await import('./reparacion.slice');
+      dispatch(updateReparacion(reparacionActualizada));
+
       const reparacionGuardada = await guardarReparacionPersistencia(reparacionActualizada);
       dispatch(isFetchingComplete());
       return reparacionGuardada;
@@ -722,6 +731,7 @@ export const cambiarEstadoReparacionAsync = createAsyncThunk(
         case "Reparado":
           campoFecha = "FeFinRep";
           break;
+        case "Enviado":
         case "Finalizado":
           campoFecha = "FeEntRep";
           break;
@@ -774,6 +784,10 @@ export const cambiarEstadoReparacionAsync = createAsyncThunk(
           }
         };
       }
+
+      // 🚀 ACTUALIZACIÓN OPTIMISTA: Actualizar Redux antes de guardar en BD
+      const { updateReparacion } = await import('./reparacion.slice');
+      dispatch(updateReparacion(reparacionActualizada));
 
       // Guardar la reparación
       const reparacionGuardada = await guardarReparacionPersistencia(reparacionActualizada);
