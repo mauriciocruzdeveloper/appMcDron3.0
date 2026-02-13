@@ -99,3 +99,12 @@ export {
   obtenerEstadisticasCanales,
   reconectarCanalesCerrados
 } from './websocketDiagnostico.js';
+
+// === WEBSOCKET MANAGER ===
+export {
+  initWebSocketManager,
+  stopWebSocketManager,
+  verifyAndReconnectChannels,
+  getChannelStats,
+  logChannelStats
+} from './websocketManager.js';
