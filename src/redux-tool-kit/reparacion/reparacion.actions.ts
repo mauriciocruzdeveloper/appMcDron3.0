@@ -731,6 +731,7 @@ export const cambiarEstadoReparacionAsync = createAsyncThunk(
         case "Reparado":
           campoFecha = "FeFinRep";
           break;
+        case "Enviado":
         case "Finalizado":
           campoFecha = "FeEntRep";
           break;
