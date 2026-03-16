@@ -237,7 +237,7 @@ export default function GaleriaReparaciones(): JSX.Element {
                                             <div className="d-flex align-items-center mb-2 flex-wrap">
                                                 {estaExpandida ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
                                                 <h5 className="ms-2 mb-0">
-                                                    Reparación #{reparacion.id.substring(0, 8)}
+                                                    Reparación {reparacion.data.IdPublicoRep || `#${reparacion.id.substring(0, 8)}`}
                                                 </h5>
                                                 <span className="badge bg-secondary ms-2">
                                                     {reparacion.data.EstadoRep}

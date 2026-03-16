@@ -106,7 +106,7 @@ export default function EstadosLegacyManager(): JSX.Element {
               <div className="d-flex w-100 justify-content-between align-items-center">
                 <div>
                   <h6 className="mb-1">
-                    ID: {reparacion.id}
+                    {reparacion.data.IdPublicoRep || reparacion.id}
                     <span className="badge badge-warning ml-2">
                       {reparacion.data.EstadoRep}
                     </span>

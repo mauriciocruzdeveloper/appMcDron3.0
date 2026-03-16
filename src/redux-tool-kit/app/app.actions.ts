@@ -75,7 +75,7 @@ export const enviarReciboAsync = createAsyncThunk(
 
       const body = {
         cliente: reparacion.data.ApellidoUsu ? `${reparacion.data.NombreUsu} ${reparacion.data.ApellidoUsu}` : reparacion.data.NombreUsu,
-        nro_reparacion: reparacion.id,
+        nro_reparacion: reparacion.data.IdPublicoRep || reparacion.id,
         equipo: reparacion.data.ModeloDroneNameRep,
         fecha_ingreso: new Date(Number(reparacion.data.FeRecRep)).toLocaleDateString(),
         observaciones: reparacion.data.DescripcionUsuRep,
@@ -161,7 +161,7 @@ export const enviarPresupuestoAsync = createAsyncThunk(
 
       const body = {
         cliente: reparacion.data.ApellidoUsu ? `${reparacion.data.NombreUsu} ${reparacion.data.ApellidoUsu}` : reparacion.data.NombreUsu,
-        nro_reparacion: reparacion.id,
+        nro_reparacion: reparacion.data.IdPublicoRep || reparacion.id,
         equipo,
         fecha_ingreso: new Date(Number(reparacion.data.FeRecRep)).toLocaleDateString(),
         intervenciones: intervenciones,
@@ -246,7 +246,7 @@ export const generarPDFPresupuestoAsync = createAsyncThunk(
 
       const datosPresupuesto = {
         cliente: reparacion.data.ApellidoUsu ? `${reparacion.data.NombreUsu} ${reparacion.data.ApellidoUsu}` : reparacion.data.NombreUsu,
-        nro_reparacion: reparacion.id,
+        nro_reparacion: reparacion.data.IdPublicoRep || reparacion.id,
         equipo,
         fecha_ingreso: new Date(Number(reparacion.data.FeRecRep)).toLocaleDateString(),
         intervenciones: intervenciones,
@@ -382,7 +382,7 @@ export const enviarDroneReparadoAsync = createAsyncThunk(
 
       const body = {
         cliente: reparacion.data.ApellidoUsu ? `${reparacion.data.NombreUsu} ${reparacion.data.ApellidoUsu}` : reparacion.data.NombreUsu,
-        nro_reparacion: reparacion.id,
+        nro_reparacion: reparacion.data.IdPublicoRep || reparacion.id,
         equipo,
         fecha_ingreso: new Date(Number(reparacion.data.FeRecRep)).toLocaleDateString(),
         fecha_finalizacion: new Date().toLocaleDateString(),
@@ -432,7 +432,7 @@ export const enviarDroneDiagnosticadoAsync = createAsyncThunk(
 
       const body = {
         cliente: reparacion.data.ApellidoUsu ? `${reparacion.data.NombreUsu} ${reparacion.data.ApellidoUsu}` : reparacion.data.NombreUsu,
-        nro_reparacion: reparacion.id,
+        nro_reparacion: reparacion.data.IdPublicoRep || reparacion.id,
         equipo: reparacion.data.ModeloDroneNameRep,
         fecha_ingreso: new Date(Number(reparacion.data.FeRecRep)).toLocaleDateString(),
         fecha_diagnostico: new Date().toLocaleDateString(),

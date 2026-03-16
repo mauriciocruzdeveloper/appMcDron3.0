@@ -5,6 +5,7 @@ import { selectUsuarioPorId } from "../../../redux-tool-kit/usuario/usuario.sele
 import { selectDroneById } from "../../../redux-tool-kit/drone/drone.selectors";
 import { selectModeloDronePorId } from "../../../redux-tool-kit/modeloDrone/modeloDrone.selectors";
 import { esEstadoLegacy, obtenerMensajeMigracion } from "../../../utils/estadosHelper";
+import { getPublicIdDisplay } from "../../../utils/publicIdHelper";
 
 interface ReparacionHeaderProps {
     reparacionId: string;
@@ -40,7 +41,7 @@ export const ReparacionHeader: React.FC<ReparacionHeaderProps> = ({ reparacionId
                     </div>
                 )}
 
-                <div>id: {reparacion.id}</div>
+                <div>Nro: {getPublicIdDisplay(reparacion)}</div>
                 <div>Drone: {drone?.data?.Nombre || 'Sin nombre'}</div>
                 <div>Modelo: {modeloDrone?.data?.NombreModelo || reparacion.data.ModeloDroneNameRep || 'Modelo no disponible'}</div>
                 <div>Cliente: {usuario?.data?.NombreUsu}{usuario?.data?.ApellidoUsu ? ` ${usuario?.data?.ApellidoUsu}` : ''}</div>
