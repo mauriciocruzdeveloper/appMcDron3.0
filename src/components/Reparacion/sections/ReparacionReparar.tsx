@@ -42,6 +42,12 @@ export const ReparacionReparar: React.FC<ReparacionRepararProps> = ({
         selectPuedeAvanzarA(reparacionId, 'Diagnosticado')(state)
     );
 
+    // Mostrar botón alternativo cuando hay intervenciones pendientes o se está en Repuestos
+    const estadoActual = reparacion?.data.EstadoRep;
+    const puedeResolverAlternativamente =
+        (estadoActual === 'Aceptado' && !puedeAvanzarAReparado) ||
+        estadoActual === 'Repuestos';
+
     // Obtener asignaciones de intervenciones
     const asignaciones = useAppSelector(selectIntervencionesDeReparacionActual);
     const catalogoIntervenciones = useAppSelector(selectColeccionIntervenciones);
@@ -89,6 +95,31 @@ export const ReparacionReparar: React.FC<ReparacionRepararProps> = ({
                 titulo: "Error",
             });
         }
+    };
+
+    const resolverAlternativamente = () => {
+        openModal({
+            titulo: "Resolver sin completar intervenciones",
+            mensaje:
+                "¿Estás seguro? Esta acción marcará la reparación como Reparada " +
+                "sin haber completado todas las intervenciones presupuestadas. " +
+                "Asegurate de haber explicado la resolución en el campo Informe de Reparación.",
+            tipo: "warning",
+            confirmCallback: async () => {
+                const response = await dispatch(cambiarEstadoReparacionAsync({
+                    reparacionId,
+                    nuevoEstado: 'Reparado',
+                    enviarEmail: true
+                }));
+                if (response.meta.requestStatus !== 'fulfilled') {
+                    openModal({
+                        mensaje: "Error al resolver la reparación.",
+                        tipo: "danger",
+                        titulo: "Error",
+                    });
+                }
+            }
+        });
     };
 
     const avanzarADiagnosticado = async () => {
@@ -225,6 +256,16 @@ export const ReparacionReparar: React.FC<ReparacionRepararProps> = ({
                                 onClick={avanzarADiagnosticado}
                             >
                                 Marcar como Diagnosticado
+                            </button>
+                        )}
+                        {puedeResolverAlternativamente && (
+                            <button
+                                type="button"
+                                className="btn btn-outline-secondary ms-2"
+                                onClick={resolverAlternativamente}
+                                title="Cerrar la reparación sin completar las intervenciones presupuestadas"
+                            >
+                                Resolver alternativamente
                             </button>
                         )}
                     </div>
