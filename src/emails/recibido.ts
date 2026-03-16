@@ -7,7 +7,7 @@ export const bodyRecibo = (reparacion: ReparacionType): string => {
     
     const fechaIngreso = reparacion.data.FeRecRep ? new Date(reparacion.data.FeRecRep).toLocaleDateString() : 'No especificada';
     
-    return `Nro. de reparación: ${reparacion.id}
+    return `Nro. de reparación: ${reparacion.data.IdPublicoRep || reparacion.id}
 Recibo de equipo: ${reparacion.data.ModeloDroneNameRep}
 Fecha de ingreso: ${fechaIngreso}
 Observaciones: ${reparacion.data.DescripcionUsuRep}

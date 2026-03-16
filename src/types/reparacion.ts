@@ -3,6 +3,8 @@ export interface DataReparacion {
     EstadoRep: string;
     PrioridadRep: number | null;
     FeConRep: number | null;
+    FeAltaRep?: number | null; // Fecha de alta (created_at en BD), timestamp unix
+    IdPublicoRep?: string; // ID público para mostrar al cliente (ej: REP-2026-00042)
     ModeloDroneNameRep: string;
     DescripcionUsuRep: string;
     UsuarioRep: string; // ID del usuario propietario (owner_id en BD)

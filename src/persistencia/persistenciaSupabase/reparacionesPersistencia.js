@@ -1,4 +1,6 @@
 import { supabase } from './supabaseClient.js';
+import { eliminarArchivoPersistencia } from './archivosPersistencia.js';
+import { formatRepairPublicId } from '../../utils/publicIdHelper';
 
 // Agregar una asignación de intervención a una reparación
 // Se permiten múltiples asignaciones de la misma intervención
@@ -150,7 +152,31 @@ export const getIntervencionesPorReparacionPersistencia = async (reparacionId) =
 // NOTA: asignacionId es el ID de la tabla repair_intervention, NO el ID de la intervención
 export const eliminarIntervencionDeReparacionPersistencia = async (reparacionId, asignacionId) => {
   try {
-    // 1. Eliminar la asignación específica por su ID único
+    // 1. Obtener los datos de la asignación antes de eliminarla para acceder a las fotos
+    const { data: asignacionData, error: consultaAsignacionError } = await supabase
+      .from('repair_intervention')
+      .select('photos')
+      .eq('id', asignacionId)
+      .eq('repair_id', reparacionId)
+      .single();
+
+    if (consultaAsignacionError) {
+      console.error('Error al consultar asignación antes de eliminar:', consultaAsignacionError);
+      // No bloqueamos la eliminación si falla la consulta, pero logueamos el error
+    } else if (asignacionData && asignacionData.photos && asignacionData.photos.length > 0) {
+      // Si tiene fotos, procedemos a eliminarlas del Storage
+      try {
+        const promesasEliminacion = asignacionData.photos.map(url => eliminarArchivoPersistencia(url));
+        await Promise.all(promesasEliminacion);
+        console.log(`Eliminadas ${asignacionData.photos.length} fotos asociadas a la asignación ${asignacionId}.`);
+      } catch (errorFotos) {
+        // No bloqueamos la eliminación del registro si falla borrar alguna foto, 
+        // pero es importante saberlo para mantenimiento
+        console.error('Error al eliminar fotos asociadas a la asignación:', errorFotos);
+      }
+    }
+
+    // 2. Eliminar la asignación específica por su ID único
     const { error: eliminacionError } = await supabase
       .from('repair_intervention')
       .delete()
@@ -361,6 +387,8 @@ export const getReparacionesPersistencia = (setReparacionesToRedux, usuario) => 
         data: {
           EstadoRep: item.state,
           PrioridadRep: item.priority,
+          FeAltaRep: item.created_at ? new Date(item.created_at).getTime() : null,
+          IdPublicoRep: item.public_id || (item.created_at ? formatRepairPublicId(item.id, item.created_at) : undefined),
           DroneId: item.drone?.id ? String(item.drone.id) : '',
           ModeloDroneNameRep: item.drone_name || '',
           NombreUsu: item.owner?.first_name || '',
@@ -462,6 +490,8 @@ export const getReparacionPersistencia = async (id) => {
       data: {
         EstadoRep: data.state,
         PrioridadRep: data.priority,
+        FeAltaRep: data.created_at ? new Date(data.created_at).getTime() : null,
+        IdPublicoRep: data.public_id || (data.created_at ? formatRepairPublicId(data.id, data.created_at) : undefined),
         DroneId: data.drone?.id ? String(data.drone.id) : '',
         ModeloDroneNameRep: data.drone_name || '',
         NombreUsu: data.owner?.first_name || '',
@@ -591,6 +621,16 @@ export const guardarReparacionPersistencia = async (reparacion) => {
         throw error;
       }
       result = data[0];
+
+      // Computar y guardar el public_id usando el id recién generado
+      if (result && result.id && result.created_at) {
+        const publicId = formatRepairPublicId(result.id, result.created_at);
+        await supabase
+          .from('repair')
+          .update({ public_id: publicId })
+          .eq('id', result.id);
+        result.public_id = publicId;
+      }
     }
 
     console.log('Resultado de la operación:', result);
@@ -600,9 +640,18 @@ export const guardarReparacionPersistencia = async (reparacion) => {
       throw new Error('No se pudo guardar la reparación');
     }
 
+    // Mapear IdPublicoRep desde la BD
+    const updatedData = { ...reparacion.data };
+    if (result.public_id) {
+      updatedData.IdPublicoRep = result.public_id;
+    }
+    if (result.created_at) {
+      updatedData.FeAltaRep = new Date(result.created_at).getTime();
+    }
+
     return {
       id: String(result.id),
-      data: reparacion.data
+      data: updatedData
     };
   } catch (error) {
     console.error("Error al guardar reparación:", error);
