@@ -13,6 +13,7 @@ import { isFetchingComplete, isFetchingStart } from "./app.slice";
 import { callEndpoint } from "../../utils/utils";
 import { HttpMethod } from "../../types/httpMethods";
 import { guardarReparacionAsync, getIntervencionesPorReparacionAsync, actualizarFotosAsignacionAsync } from '../reparacion/reparacion.actions';
+import { EstadoAsignacion } from '../../types/intervencion';
 import { sanitizeBaseName, buildUploadPath, addTimestampToBase } from '../../utils/fileUtils';
 import { supabaseAuthErrors } from "../../persistencia/persistenciaSupabase/supabaseAuthErrors";
 import { RootState } from "../store";
@@ -363,14 +364,16 @@ export const enviarDroneReparadoAsync = createAsyncThunk(
         }
       }
 
-      // Construir array de intervenciones para el email
-      const intervenciones = asignacionesIntervenciones.map((asignacion) => {
-        const intervencion = catalogoIntervenciones[asignacion.data.intervencionId];
-        return {
-          nombre: intervencion?.data?.NombreInt || 'Intervención',
-          precio: asignacion.data.PrecioTotal || 0
-        };
-      });
+      // Construir array de intervenciones para el email (solo las completadas)
+      const intervenciones = asignacionesIntervenciones
+        .filter((asignacion) => asignacion.data.estado === EstadoAsignacion.COMPLETADA)
+        .map((asignacion) => {
+          const intervencion = catalogoIntervenciones[asignacion.data.intervencionId];
+          return {
+            nombre: intervencion?.data?.NombreInt || 'Intervención',
+            precio: asignacion.data.PrecioTotal || 0
+          };
+        });
 
       // Los comentarios del técnico van por separado
       const comentariosTecnico = reparacion.data.DescripcionTecRep || "";
