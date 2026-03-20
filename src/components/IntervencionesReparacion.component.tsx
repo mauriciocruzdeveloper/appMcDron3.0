@@ -16,9 +16,11 @@ interface IntervencionesReparacionProps {
   reparacionId: string;
   readOnly?: boolean;
   modeloDroneId?: string;
+  incluirRepuestosMap?: Record<string, boolean>;
+  onIncluirRepuestosChange?: (asignacionId: string, incluir: boolean) => void;
 }
 
-export default function IntervencionesReparacion({ reparacionId, readOnly = false, modeloDroneId }: IntervencionesReparacionProps): JSX.Element {
+export default function IntervencionesReparacion({ reparacionId, readOnly = false, modeloDroneId, incluirRepuestosMap = {}, onIncluirRepuestosChange }: IntervencionesReparacionProps): JSX.Element {
   const dispatch = useAppDispatch();
   const { openModal } = useModal();
 
@@ -60,21 +62,24 @@ export default function IntervencionesReparacion({ reparacionId, readOnly = fals
   }, [dispatch, reparacionId]);
 
   useEffect(() => {
-    // Calcular los totales cuando cambian las asignaciones
+    // Calcular los totales cuando cambian las asignaciones o el mapa de repuestos
     let manoObra = 0;
     let repuestos = 0;
     let total = 0;
 
     intervenciones.forEach(asignacion => {
-      manoObra += asignacion.data.PrecioManoObra;
-      repuestos += asignacion.data.PrecioPiezas;
-      total += asignacion.data.PrecioTotal;
+      const incluirRepuesto = incluirRepuestosMap[asignacion.id] !== false;
+      manoObra += asignacion.data.PrecioManoObra || 0;
+      if (incluirRepuesto) {
+        repuestos += asignacion.data.PrecioPiezas || 0;
+      }
+      total += incluirRepuesto ? (asignacion.data.PrecioTotal || 0) : (asignacion.data.PrecioManoObra || 0);
     });
 
     setTotalManoObra(manoObra);
     setTotalRepuestos(repuestos);
     setTotalGeneral(total);
-  }, [intervenciones]);
+  }, [intervenciones, incluirRepuestosMap]);
 
   const handleAgregarIntervencion = async () => {
     if (!intervencionSeleccionada) return;
@@ -213,7 +218,11 @@ export default function IntervencionesReparacion({ reparacionId, readOnly = fals
                     </h6>
                     <div>
                       <span className="badge bg-bluemcdron">
-                        {formatPrice(asignacion.data.PrecioTotal)}
+                        {formatPrice(
+                          incluirRepuestosMap[asignacion.id] !== false
+                            ? (asignacion.data.PrecioTotal || 0)
+                            : (asignacion.data.PrecioManoObra || 0)
+                        )}
                       </span>
                     </div>
                   </div>
@@ -248,9 +257,11 @@ export default function IntervencionesReparacion({ reparacionId, readOnly = fals
                       <span className="badge bg-secondary me-2">
                         Mano de obra: {formatPrice(asignacion.data.PrecioManoObra)}
                       </span>
-                      <span className="badge bg-secondary">
-                        Repuestos: {formatPrice(asignacion.data.PrecioPiezas)}
-                      </span>
+                      {asignacion.data.PrecioPiezas > 0 && (
+                        <span className="badge bg-secondary">
+                          Repuestos: {formatPrice(asignacion.data.PrecioPiezas)}
+                        </span>
+                      )}
                     </div>
 
                     {!readOnly && (
@@ -262,6 +273,22 @@ export default function IntervencionesReparacion({ reparacionId, readOnly = fals
                       </button>
                     )}
                   </div>
+
+                  {asignacion.data.PrecioPiezas > 0 && (
+                    <div className="form-check mt-2">
+                      <input
+                        className="form-check-input"
+                        type="checkbox"
+                        id={`incluir-repuesto-${asignacion.id}`}
+                        checked={incluirRepuestosMap[asignacion.id] !== false}
+                        onChange={(e) => onIncluirRepuestosChange?.(asignacion.id, e.target.checked)}
+                        disabled={readOnly}
+                      />
+                      <label className="form-check-label small" htmlFor={`incluir-repuesto-${asignacion.id}`}>
+                        Incluir repuesto en presupuesto ({formatPrice(asignacion.data.PrecioPiezas)})
+                      </label>
+                    </div>
+                  )}
 
                   {/* Detalles de la asignación para el presupuesto */}
                   <AsignacionIntervencionDetalle
