@@ -2,6 +2,7 @@
 <widget id="com.mcdev.appmcdron" version="1.0.0" xmlns="http://www.w3.org/ns/widgets" xmlns:cdv="http://cordova.apache.org/ns/1.0">
     <name>App MC Dron 3.0</name>
     <hook type="before_prepare" src="scripts/prebuild.js" />
+    <hook type="after_prepare" src="scripts/fix-browser-favicon.js" />
     <description>
         App para MC Dron hecha con Cordova/React/Redux Tool Kit/Firebase
     </description>
