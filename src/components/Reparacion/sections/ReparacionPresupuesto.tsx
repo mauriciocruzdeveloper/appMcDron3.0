@@ -52,6 +52,12 @@ export const ReparacionPresupuesto: React.FC<ReparacionPresupuestoProps> = ({
         selectPuedeAvanzarA(reparacionId, 'Rechazado')(state)
     );
 
+    const [incluirRepuestosMap, setIncluirRepuestosMap] = React.useState<Record<string, boolean>>({});
+
+    const handleIncluirRepuestosChange = (asignacionId: string, incluir: boolean) => {
+        setIncluirRepuestosMap(prev => ({ ...prev, [asignacionId]: incluir }));
+    };
+
     // Usar debounce para campos numéricos
     const presuMo = useDebouncedField({
         reparacionId,
@@ -70,6 +76,16 @@ export const ReparacionPresupuesto: React.FC<ReparacionPresupuestoProps> = ({
         campo: 'PresuFiRep',
         valorInicial: reparacion?.data.PresuFiRep || ""
     });
+
+    // Recalcular PresuFiRep cuando cambia el mapa de repuestos
+    React.useEffect(() => {
+        if (intervencionesAplicadas.length === 0) return;
+        const totalEfectivo = intervencionesAplicadas.reduce((sum, a) => {
+            const incluir = incluirRepuestosMap[a.id] !== false;
+            return sum + (incluir ? (a.data.PrecioTotal || 0) : (a.data.PrecioManoObra || 0));
+        }, 0);
+        presuFi.onChange(String(totalEfectivo));
+    }, [incluirRepuestosMap, intervencionesAplicadas, presuFi.onChange]);
 
     const diagnostico = useDebouncedField({
         reparacionId,
@@ -111,7 +127,7 @@ export const ReparacionPresupuesto: React.FC<ReparacionPresupuestoProps> = ({
         if (!reparacion) return;
 
         try {
-            await dispatch(enviarPresupuestoAsync(reparacion)).unwrap();
+            await dispatch(enviarPresupuestoAsync({ reparacion, incluirRepuestosMap })).unwrap();
             openModal({
                 mensaje: "Presupuesto enviado correctamente por email.",
                 tipo: "success",
@@ -130,7 +146,7 @@ export const ReparacionPresupuesto: React.FC<ReparacionPresupuestoProps> = ({
         if (!reparacion) return;
 
         try {
-            await dispatch(generarPDFPresupuestoAsync(reparacion)).unwrap();
+            await dispatch(generarPDFPresupuestoAsync({ reparacion, incluirRepuestosMap })).unwrap();
             openModal({
                 mensaje: "PDF del presupuesto generado. Se abrirá en una nueva pestaña.",
                 tipo: "success",
@@ -154,6 +170,8 @@ export const ReparacionPresupuesto: React.FC<ReparacionPresupuestoProps> = ({
                     reparacionId={reparacionId}
                     readOnly={!isAdmin}
                     modeloDroneId={drone?.data.ModeloDroneId}
+                    incluirRepuestosMap={incluirRepuestosMap}
+                    onIncluirRepuestosChange={handleIncluirRepuestosChange}
                 />
                 <h6 className="card-title bluemcdron">PRECIO</h6>
                 <div>
@@ -200,9 +218,16 @@ export const ReparacionPresupuesto: React.FC<ReparacionPresupuestoProps> = ({
                     />
                     {isAdmin && intervencionesAplicadas.length > 0 && (
                         <small className="form-text text-muted">
-                            {precioManualDifiere
-                                ? `El precio actual difiere del total de intervenciones (${formatPrice(totalIntervenciones)})`
-                                : `Precio calculado a partir de las intervenciones: ${formatPrice(totalIntervenciones)}`}
+                            {(() => {
+                                const totalEfectivo = intervencionesAplicadas.reduce((sum, a) => {
+                                    const incluir = incluirRepuestosMap[a.id] !== false;
+                                    return sum + (incluir ? (a.data.PrecioTotal || 0) : (a.data.PrecioManoObra || 0));
+                                }, 0);
+                                const difiere = Math.abs(totalEfectivo - (Number(presuFi.value) || 0)) > 0.01;
+                                return difiere
+                                    ? `El precio actual difiere del total de intervenciones (${formatPrice(totalEfectivo)})`
+                                    : `Precio calculado a partir de las intervenciones: ${formatPrice(totalEfectivo)}`;
+                            })()}
                         </small>
                     )}
                 </div>

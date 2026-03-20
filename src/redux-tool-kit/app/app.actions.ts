@@ -105,7 +105,7 @@ export const enviarReciboAsync = createAsyncThunk(
 // ENVIAR EMAIL DE PRESUPUESTO
 export const enviarPresupuestoAsync = createAsyncThunk(
   'app/enviarPresupuesto',
-  async (reparacion: ReparacionType, { dispatch, getState }) => {
+  async ({ reparacion, incluirRepuestosMap = {} }: { reparacion: ReparacionType; incluirRepuestosMap: Record<string, boolean> }, { dispatch, getState }) => {
     try {
       dispatch(isFetchingStart());
 
@@ -147,12 +147,16 @@ export const enviarPresupuestoAsync = createAsyncThunk(
       // Construir array de intervenciones con descripción, fotos y precio
       const intervenciones = asignacionesIntervenciones.map((asignacion) => {
         const intervencion = catalogoIntervenciones[asignacion.data.intervencionId];
+        const incluirRepuesto = incluirRepuestosMap[asignacion.id] !== false;
+        const precio = incluirRepuesto
+          ? (asignacion.data.PrecioTotal || 0)
+          : (asignacion.data.PrecioManoObra || 0);
         return {
           nombre: intervencion?.data?.NombreInt || 'Intervención',
           descripcionIntervencion: intervencion?.data?.DescripcionInt || '',
           comentarios: asignacion.data.descripcion || '',
           fotos: asignacion.data.fotos || [],
-          precio: asignacion.data.PrecioTotal || 0
+          precio
         };
       })
       // Ordenar de mayor a menor precio
@@ -192,7 +196,7 @@ export const enviarPresupuestoAsync = createAsyncThunk(
 // GENERAR PDF PRESUPUESTO
 export const generarPDFPresupuestoAsync = createAsyncThunk(
   'app/generarPDFPresupuesto',
-  async (reparacion: ReparacionType, { dispatch, getState, rejectWithValue }) => {
+  async ({ reparacion, incluirRepuestosMap = {} }: { reparacion: ReparacionType; incluirRepuestosMap: Record<string, boolean> }, { dispatch, getState, rejectWithValue }) => {
     try {
       dispatch(isFetchingStart());
 
@@ -232,12 +236,16 @@ export const generarPDFPresupuestoAsync = createAsyncThunk(
       // Construir array de intervenciones con descripción, fotos y precio
       const intervenciones = asignacionesIntervenciones.map((asignacion) => {
         const intervencion = catalogoIntervenciones[asignacion.data.intervencionId];
+        const incluirRepuesto = incluirRepuestosMap[asignacion.id] !== false;
+        const precio = incluirRepuesto
+          ? (asignacion.data.PrecioTotal || 0)
+          : (asignacion.data.PrecioManoObra || 0);
         return {
           nombre: intervencion?.data?.NombreInt || 'Intervención',
           descripcionIntervencion: intervencion?.data?.DescripcionInt || '',
           comentarios: asignacion.data.descripcion || '',
           fotos: asignacion.data.fotos || [],
-          precio: asignacion.data.PrecioTotal || 0
+          precio
         };
       })
       // Ordenar de mayor a menor precio
