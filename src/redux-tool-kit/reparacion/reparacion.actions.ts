@@ -18,6 +18,18 @@ import { PresupuestoProps } from "../../components/Presupuesto.component";
 import { Drone } from "../../types/drone";
 import { RootState } from "../store";
 
+const IDS_INTERVENCIONES_POR_DEFECTO = ['47', '48', '49', '50', '51', '52'];
+
+async function guardarReparacionNueva(reparacion: ReparacionType): Promise<ReparacionType> {
+  const reparacionGuardada = await guardarReparacionPersistencia(reparacion);
+  await Promise.all(
+    IDS_INTERVENCIONES_POR_DEFECTO.map(id =>
+      agregarIntervencionAReparacionPersistencia(reparacionGuardada.id, id)
+    )
+  );
+  return reparacionGuardada;
+}
+
 // OBTENER REPARACIONES
 export const getReparacionesAsync = createAsyncThunk(
   'app/getReparaciones',
@@ -95,7 +107,7 @@ export const guardarReciboAsync = createAsyncThunk(
       // 3. Guardar la reparación con el usuario y drone guardados
       reparacion.data.UsuarioRep = usuarioGuardado.id.toString();
       reparacion.data.DroneId = droneGuardado.id.toString();
-      const reparacionGuardada = await guardarReparacionPersistencia(reparacion);
+      const reparacionGuardada = await guardarReparacionNueva(reparacion);
 
       // 4. Enviar el recibo
       const nombreCompleto = presupuesto.ApellidoUsu 
@@ -181,7 +193,7 @@ export const guardarTransitoAsync = createAsyncThunk(
       // 3. Guardar la reparación con el usuario y drone guardados
       reparacion.data.UsuarioRep = usuarioGuardado.id.toString();
       reparacion.data.DroneId = droneGuardado.id.toString();
-      const reparacionGuardada = await guardarReparacionPersistencia(reparacion);
+      const reparacionGuardada = await guardarReparacionNueva(reparacion);
 
       dispatch(isFetchingComplete());
       return { reparacion: reparacionGuardada, usuario: usuarioGuardado };
@@ -491,7 +503,7 @@ export const guardarPresupuestadoAsync = createAsyncThunk(
       // 3. Guardar la reparación con el usuario y drone guardados
       reparacion.data.UsuarioRep = usuarioGuardado.id.toString();
       reparacion.data.DroneId = droneGuardado.id.toString();
-      const reparacionGuardada = await guardarReparacionPersistencia(reparacion);
+      const reparacionGuardada = await guardarReparacionNueva(reparacion);
 
       dispatch(isFetchingComplete());
       return { reparacion: reparacionGuardada, usuario: usuarioGuardado };
