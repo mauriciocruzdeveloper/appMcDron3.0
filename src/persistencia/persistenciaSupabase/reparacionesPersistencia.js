@@ -663,16 +663,32 @@ export const guardarReparacionPersistencia = async (reparacion) => {
 export const eliminarReparacionPersistencia = async (id) => {
   return new Promise(async (resolve, reject) => {
     try {
-      // 1. Primero verificamos si hay relaciones en repair_intervention
+      // Importar función de archivos para eliminar archivos
+      const { eliminarArchivoPersistencia } = await import('./archivosPersistencia.js');
+
+      // 1. Primero verificamos si hay relaciones en repair_intervention y obtenemos sus fotos
       const { data: relacionesIntervenciones, error: errorRelaciones } = await supabase
         .from('repair_intervention')
-        .select('id')
+        .select('id, photos')
         .eq('repair_id', id);
 
       if (errorRelaciones) throw errorRelaciones;
 
-      // 2. Si existen relaciones, las eliminamos primero
+      // 2. Si existen relaciones, eliminamos primero las fotos de cada asignación del Storage y luego los registros
       if (relacionesIntervenciones && relacionesIntervenciones.length > 0) {
+        // Eliminar fotos de cada asignación del Storage antes de borrar los registros
+        for (const intervencion of relacionesIntervenciones) {
+          if (intervencion.photos && intervencion.photos.length > 0) {
+            for (const url of intervencion.photos) {
+              try {
+                await eliminarArchivoPersistencia(url);
+              } catch (error) {
+                console.error(`Error al eliminar foto de asignación: ${url}`, error);
+              }
+            }
+          }
+        }
+
         const { error: errorBorradoRelaciones } = await supabase
           .from('repair_intervention')
           .delete()
@@ -690,9 +706,6 @@ export const eliminarReparacionPersistencia = async (id) => {
         .single();
 
       if (errorReparacion) throw errorReparacion;
-
-      // Importar función de archivos para eliminar archivos
-      const { eliminarArchivoPersistencia } = await import('./archivosPersistencia.js');
 
       if (reparacion.photo_urls) {
         for (const url of reparacion.photo_urls) {
