@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useAppDispatch } from '../redux-tool-kit/hooks/useAppDispatch';
 import { useAppSelector } from '../redux-tool-kit/hooks/useAppSelector';
-import { getIntervencionesPorReparacionAsync, agregarIntervencionAReparacionAsync, eliminarIntervencionDeReparacionAsync } from '../redux-tool-kit/reparacion/reparacion.actions';
+import { getIntervencionesPorReparacionAsync, agregarIntervencionAReparacionAsync, eliminarIntervencionDeReparacionAsync, actualizarIncluirRepuestoAsignacionAsync } from '../redux-tool-kit/reparacion/reparacion.actions';
 import { AsignacionIntervencion } from '../types/intervencion';
 import { useModal } from './Modal/useModal';
 import Select from 'react-select';
@@ -16,11 +16,9 @@ interface IntervencionesReparacionProps {
   reparacionId: string;
   readOnly?: boolean;
   modeloDroneId?: string;
-  incluirRepuestosMap?: Record<string, boolean>;
-  onIncluirRepuestosChange?: (asignacionId: string, incluir: boolean) => void;
 }
 
-export default function IntervencionesReparacion({ reparacionId, readOnly = false, modeloDroneId, incluirRepuestosMap = {}, onIncluirRepuestosChange }: IntervencionesReparacionProps): JSX.Element {
+export default function IntervencionesReparacion({ reparacionId, readOnly = false, modeloDroneId }: IntervencionesReparacionProps): JSX.Element {
   const dispatch = useAppDispatch();
   const { openModal } = useModal();
 
@@ -62,24 +60,21 @@ export default function IntervencionesReparacion({ reparacionId, readOnly = fals
   }, [dispatch, reparacionId]);
 
   useEffect(() => {
-    // Calcular los totales cuando cambian las asignaciones o el mapa de repuestos
+    // Calcular los totales cuando cambian las asignaciones
     let manoObra = 0;
     let repuestos = 0;
     let total = 0;
 
     intervenciones.forEach(asignacion => {
-      const incluirRepuesto = incluirRepuestosMap[asignacion.id] !== false;
       manoObra += asignacion.data.PrecioManoObra || 0;
-      if (incluirRepuesto) {
-        repuestos += asignacion.data.PrecioPiezas || 0;
-      }
-      total += incluirRepuesto ? (asignacion.data.PrecioTotal || 0) : (asignacion.data.PrecioManoObra || 0);
+      repuestos += asignacion.data.PrecioPiezas || 0;
+      total += asignacion.data.PrecioTotal || 0;
     });
 
     setTotalManoObra(manoObra);
     setTotalRepuestos(repuestos);
     setTotalGeneral(total);
-  }, [intervenciones, incluirRepuestosMap]);
+  }, [intervenciones]);
 
   const handleAgregarIntervencion = async () => {
     if (!intervencionSeleccionada) return;
@@ -218,11 +213,7 @@ export default function IntervencionesReparacion({ reparacionId, readOnly = fals
                     </h6>
                     <div>
                       <span className="badge bg-bluemcdron">
-                        {formatPrice(
-                          incluirRepuestosMap[asignacion.id] !== false
-                            ? (asignacion.data.PrecioTotal || 0)
-                            : (asignacion.data.PrecioManoObra || 0)
-                        )}
+                        {formatPrice(asignacion.data.PrecioTotal || 0)}
                       </span>
                     </div>
                   </div>
@@ -274,14 +265,18 @@ export default function IntervencionesReparacion({ reparacionId, readOnly = fals
                     )}
                   </div>
 
-                  {asignacion.data.PrecioPiezas > 0 && (
+                  {intervencion.data.RepuestosIds && intervencion.data.RepuestosIds.length > 0 && (
                     <div className="form-check mt-2">
                       <input
                         className="form-check-input"
                         type="checkbox"
                         id={`incluir-repuesto-${asignacion.id}`}
-                        checked={incluirRepuestosMap[asignacion.id] !== false}
-                        onChange={(e) => onIncluirRepuestosChange?.(asignacion.id, e.target.checked)}
+                        checked={asignacion.data.PrecioPiezas > 0}
+                        onChange={(e) => dispatch(actualizarIncluirRepuestoAsignacionAsync({
+                          asignacionId: asignacion.id,
+                          intervencionId: asignacion.data.intervencionId,
+                          incluirRepuesto: e.target.checked
+                        }))}
                         disabled={readOnly}
                       />
                       <label className="form-check-label small" htmlFor={`incluir-repuesto-${asignacion.id}`}>

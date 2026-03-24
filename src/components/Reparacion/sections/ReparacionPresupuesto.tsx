@@ -14,6 +14,7 @@ import {
     cambiarEstadoReparacionAsync,
 } from "../../../redux-tool-kit/reparacion/reparacion.actions";
 import { enviarPresupuestoAsync, generarPDFPresupuestoAsync } from "../../../redux-tool-kit/app/app.actions";
+import { obtenerEstadoSeguro } from "../../../utils/estadosHelper";
 import { selectDroneById } from "../../../redux-tool-kit/drone/drone.selectors";
 import IntervencionesReparacion from '../../IntervencionesReparacion.component';
 import { useModal } from "../../Modal/useModal";
@@ -52,11 +53,10 @@ export const ReparacionPresupuesto: React.FC<ReparacionPresupuestoProps> = ({
         selectPuedeAvanzarA(reparacionId, 'Rechazado')(state)
     );
 
-    const [incluirRepuestosMap, setIncluirRepuestosMap] = React.useState<Record<string, boolean>>({});
-
-    const handleIncluirRepuestosChange = (asignacionId: string, incluir: boolean) => {
-        setIncluirRepuestosMap(prev => ({ ...prev, [asignacionId]: incluir }));
-    };
+    // Bloqueo por estado: una vez presupuestado no se puede modificar el presupuesto
+    const isPresupuestado = reparacion
+        ? obtenerEstadoSeguro(reparacion.data.EstadoRep).etapa >= 6
+        : false;
 
     // Usar debounce para campos numéricos
     const presuMo = useDebouncedField({
@@ -77,15 +77,11 @@ export const ReparacionPresupuesto: React.FC<ReparacionPresupuestoProps> = ({
         valorInicial: reparacion?.data.PresuFiRep || ""
     });
 
-    // Recalcular PresuFiRep cuando cambia el mapa de repuestos
+    // Recalcular PresuFiRep cuando cambia el total de intervenciones
     React.useEffect(() => {
         if (intervencionesAplicadas.length === 0) return;
-        const totalEfectivo = intervencionesAplicadas.reduce((sum, a) => {
-            const incluir = incluirRepuestosMap[a.id] !== false;
-            return sum + (incluir ? (a.data.PrecioTotal || 0) : (a.data.PrecioManoObra || 0));
-        }, 0);
-        presuFi.onChange(String(totalEfectivo));
-    }, [incluirRepuestosMap, intervencionesAplicadas, presuFi.onChange]);
+        presuFi.onChange(String(totalIntervenciones));
+    }, [totalIntervenciones]); // eslint-disable-line
 
     const diagnostico = useDebouncedField({
         reparacionId,
@@ -127,7 +123,7 @@ export const ReparacionPresupuesto: React.FC<ReparacionPresupuestoProps> = ({
         if (!reparacion) return;
 
         try {
-            await dispatch(enviarPresupuestoAsync({ reparacion, incluirRepuestosMap })).unwrap();
+            await dispatch(enviarPresupuestoAsync({ reparacion })).unwrap();
             openModal({
                 mensaje: "Presupuesto enviado correctamente por email.",
                 tipo: "success",
@@ -146,7 +142,7 @@ export const ReparacionPresupuesto: React.FC<ReparacionPresupuestoProps> = ({
         if (!reparacion) return;
 
         try {
-            await dispatch(generarPDFPresupuestoAsync({ reparacion, incluirRepuestosMap })).unwrap();
+            await dispatch(generarPDFPresupuestoAsync({ reparacion })).unwrap();
             openModal({
                 mensaje: "PDF del presupuesto generado. Se abrirá en una nueva pestaña.",
                 tipo: "success",
@@ -168,10 +164,8 @@ export const ReparacionPresupuesto: React.FC<ReparacionPresupuestoProps> = ({
                 <h6 className="card-title bluemcdron">INTERVENCIONES</h6>
                 <IntervencionesReparacion
                     reparacionId={reparacionId}
-                    readOnly={!isAdmin}
+                    readOnly={!isAdmin || isPresupuestado}
                     modeloDroneId={drone?.data.ModeloDroneId}
-                    incluirRepuestosMap={incluirRepuestosMap}
-                    onIncluirRepuestosChange={handleIncluirRepuestosChange}
                 />
                 <h6 className="card-title bluemcdron">PRECIO</h6>
                 <div>
@@ -218,16 +212,9 @@ export const ReparacionPresupuesto: React.FC<ReparacionPresupuestoProps> = ({
                     />
                     {isAdmin && intervencionesAplicadas.length > 0 && (
                         <small className="form-text text-muted">
-                            {(() => {
-                                const totalEfectivo = intervencionesAplicadas.reduce((sum, a) => {
-                                    const incluir = incluirRepuestosMap[a.id] !== false;
-                                    return sum + (incluir ? (a.data.PrecioTotal || 0) : (a.data.PrecioManoObra || 0));
-                                }, 0);
-                                const difiere = Math.abs(totalEfectivo - (Number(presuFi.value) || 0)) > 0.01;
-                                return difiere
-                                    ? `El precio actual difiere del total de intervenciones (${formatPrice(totalEfectivo)})`
-                                    : `Precio calculado a partir de las intervenciones: ${formatPrice(totalEfectivo)}`;
-                            })()}
+                            {Math.abs(totalIntervenciones - (Number(presuFi.value) || 0)) > 0.01
+                                ? `El precio actual difiere del total de intervenciones (${formatPrice(totalIntervenciones)})`
+                                : `Precio calculado a partir de las intervenciones: ${formatPrice(totalIntervenciones)}`}
                         </small>
                     )}
                 </div>

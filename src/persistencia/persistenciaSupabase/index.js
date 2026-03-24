@@ -13,6 +13,7 @@ export {
   actualizarEstadoAsignacionPersistencia,
   actualizarDescripcionAsignacionPersistencia,
   actualizarFotosAsignacionPersistencia,
+  actualizarPreciosPiezasAsignacionPersistencia,
   getReparacionesPersistencia,
   getReparacionPersistencia,
   guardarReparacionPersistencia,
