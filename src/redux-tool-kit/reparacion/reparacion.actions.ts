@@ -445,6 +445,47 @@ export const actualizarFotosAsignacionAsync = createAsyncThunk(
   },
 );
 
+// Actualizar si se incluye el repuesto en el presupuesto de una asignación.
+// Toda la lógica de cálculo se resuelve aquí con datos del store; la persistencia solo escribe.
+export const actualizarIncluirRepuestoAsignacionAsync = createAsyncThunk(
+  'reparacion/actualizarIncluirRepuestoAsignacion',
+  async ({ asignacionId, intervencionId, incluirRepuesto }: { asignacionId: string, intervencionId: string, incluirRepuesto: boolean }, { dispatch, getState }) => {
+    const state = getState() as RootState;
+    const asignaciones = state.reparacion.intervencionesDeReparacionActual;
+    const asignacion = asignaciones.find(a => a.id === asignacionId);
+    if (!asignacion) throw new Error('Asignación no encontrada en el store');
+
+    // Calcular parts_cost: si se incluye, tomar el precio del catálogo actual (cantidad = 1)
+    let parts_cost = 0;
+    if (incluirRepuesto) {
+      const intervencion = state.intervencion.coleccionIntervenciones[intervencionId];
+      const repuestoId = intervencion?.data?.RepuestosIds?.[0];
+      if (repuestoId) {
+        parts_cost = state.repuesto.coleccionRepuestos[repuestoId]?.data?.PrecioRepu || 0;
+      }
+    }
+
+    const total_cost = (asignacion.data.PrecioManoObra || 0) + parts_cost;
+    const reparacionId = asignacion.data.reparacionId;
+
+    // Calcular nuevo precio total de la reparación desde el store (sin query adicional)
+    const nuevoPrecioReparacion = asignaciones.reduce((sum, a) => {
+      return sum + (a.id === asignacionId ? total_cost : (a.data.PrecioTotal || 0));
+    }, 0);
+
+    const { actualizarPreciosPiezasAsignacionPersistencia } = await import('../../persistencia/persistencia');
+    const resultado = await actualizarPreciosPiezasAsignacionPersistencia(
+      asignacionId, reparacionId, parts_cost, total_cost, nuevoPrecioReparacion
+    );
+
+    if (!resultado.success) throw new Error(resultado.error);
+
+    await dispatch(getIntervencionesPorReparacionAsync(reparacionId));
+
+    return resultado.data;
+  },
+);
+
 // GUARDA Presupuestado (nuevo estado)
 export const guardarPresupuestadoAsync = createAsyncThunk(
   'app/guardarPresupuestado',

@@ -27,6 +27,7 @@ export const eliminarIntervencionDeReparacionPersistencia = backend.eliminarInte
 export const actualizarEstadoAsignacionPersistencia = backend.actualizarEstadoAsignacionPersistencia;
 export const actualizarDescripcionAsignacionPersistencia = backend.actualizarDescripcionAsignacionPersistencia;
 export const actualizarFotosAsignacionPersistencia = backend.actualizarFotosAsignacionPersistencia;
+export const actualizarPreciosPiezasAsignacionPersistencia = backend.actualizarPreciosPiezasAsignacionPersistencia;
 
 // USUARIOS / CLIENTES
 export const getUsuariosPersistencia = backend.getUsuariosPersistencia;

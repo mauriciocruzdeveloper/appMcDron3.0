@@ -132,7 +132,7 @@ export const getIntervencionesPorReparacionPersistencia = async (reparacionId) =
           intervencionId: String(item.intervention.id),
           estado: item.status || 'pendiente', // Estado de la asignación
           PrecioManoObra: item.labor_cost || 0,
-          PrecioPiezas: item.parts_cost || 0, // 0 es válido para intervenciones sin repuestos
+          PrecioPiezas: item.parts_cost || 0, // 0 significa sin repuesto en el presupuesto
           PrecioTotal: item.total_cost || 0,
           descripcion: item.description || '', // Descripción del problema
           fotos: item.photos || [] // Array de URLs de fotos
@@ -271,6 +271,33 @@ export const actualizarDescripcionAsignacionPersistencia = async (asignacionId, 
       success: false,
       error: error.message || 'Error al actualizar la descripción de la asignación'
     };
+  }
+};
+
+// ACTUALIZAR PRECIOS DE PIEZAS DE ASIGNACIÓN
+// Recibe los valores ya calculados desde el thunk; solo persiste sin lógica.
+export const actualizarPreciosPiezasAsignacionPersistencia = async (asignacionId, reparacionId, parts_cost, total_cost, nuevoPrecioReparacion) => {
+  try {
+    const { data, error } = await supabase
+      .from('repair_intervention')
+      .update({ parts_cost, total_cost })
+      .eq('id', asignacionId)
+      .select()
+      .single();
+
+    if (error) {
+      throw new Error(`Error al actualizar precios: ${error.message}`);
+    }
+
+    await supabase
+      .from('repair')
+      .update({ price_total: nuevoPrecioReparacion })
+      .eq('id', reparacionId);
+
+    return { success: true, data };
+  } catch (error) {
+    console.error('Error en actualizarPreciosPiezasAsignacionPersistencia:', error);
+    return { success: false, error: error.message };
   }
 };
 
