@@ -52,7 +52,7 @@ export default function Estadisticas(): JSX.Element {
             // Si tiene PresuDiRep, ese es el monto. Si no, PresuFiRep.
             const presuDi = rep.data.PresuDiRep || 0;
             const presuFi = rep.data.PresuFiRep || 0;
-            const presuRe = rep.data.PresuReRep || 0;
+            const presuRe = rep.data.AdelantoRep || 0;
             
             if (presuDi > 0) {
                 return total + presuDi;
@@ -209,7 +209,7 @@ export default function Estadisticas(): JSX.Element {
                                         
                                         const presuDi = rep.data.PresuDiRep || 0;
                                         const presuFi = rep.data.PresuFiRep || 0;
-                                        const presuRe = rep.data.PresuReRep || 0;
+                                        const presuRe = rep.data.AdelantoRep || 0;
                                         
                                         if (presuDi > 0) {
                                             ingreso = presuDi;

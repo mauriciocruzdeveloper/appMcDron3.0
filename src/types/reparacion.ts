@@ -20,7 +20,7 @@ export interface DataReparacion {
     NumeroSerieRep?: string;
     DescripcionTecRep?: string;
     PresuMoRep?: number | null;
-    PresuReRep?: number | null;
+    AdelantoRep?: number | null;
     PresuFiRep?: number | null;
     PresuDiRep?: number | null;
     TxtRepuestosRep?: string;

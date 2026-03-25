@@ -79,7 +79,7 @@ Estos estados se mantienen por retrocompatibilidad pero se recomienda migrarlos:
 **Campos:**
 - `IntervencionesIds` - Lista de intervenciones aplicadas
 - `PresuMoRep` - Presupuesto mano de obra
-- `PresuReRep` - Presupuesto repuestos
+- `AdelantoRep` - Adelanto (monto ya pagado por el cliente)
 - `PresuFiRep` - Presupuesto final (calculado automáticamente)
 - `PresuDiRep` - Costo del diagnóstico
 
