@@ -67,8 +67,8 @@ export const ReparacionPresupuesto: React.FC<ReparacionPresupuestoProps> = ({
 
     const presuRe = useDebouncedField({
         reparacionId,
-        campo: 'PresuReRep',
-        valorInicial: reparacion?.data.PresuReRep || ""
+        campo: 'AdelantoRep',
+        valorInicial: reparacion?.data.AdelantoRep || ""
     });
 
     const presuFi = useDebouncedField({
@@ -184,14 +184,14 @@ export const ReparacionPresupuesto: React.FC<ReparacionPresupuestoProps> = ({
                 </div>
                 <div>
                     <label className="form-label">
-                        Presupuesto Repuestos $
+                        Adelanto $
                         {presuRe.isSaving && <small className="text-muted ms-2">Guardando...</small>}
                     </label>
                     <input
                         onChange={(e) => presuRe.onChange(e.target.value)}
                         type="number"
                         className="form-control"
-                        id="PresuReRep"
+                        id="AdelantoRep"
                         value={presuRe.value}
                         disabled={!isAdmin}
                     />

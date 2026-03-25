@@ -400,7 +400,7 @@ export const enviarDroneReparadoAsync = createAsyncThunk(
 
       // Cálculo correcto de los montos
       const montoTotal = reparacion.data.PresuFiRep || 0;
-      const montoPagado = reparacion.data.PresuReRep || 0;
+      const montoPagado = reparacion.data.AdelantoRep || 0;
       const montoRestante = montoTotal - montoPagado;
 
       const body = {
