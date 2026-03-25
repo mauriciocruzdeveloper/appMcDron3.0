@@ -77,10 +77,23 @@ export const ReparacionPresupuesto: React.FC<ReparacionPresupuestoProps> = ({
         valorInicial: reparacion?.data.PresuFiRep || ""
     });
 
-    // Recalcular PresuFiRep cuando cambia el total de intervenciones
+    // Actualizar PresuFiRep cuando cambia totalIntervenciones (por agregar/quitar
+    // asignaciones o marcar/desmarcar checkbox de repuesto), SOLO si el admin no
+    // modificó el total manualmente. Se detecta comparando el valor actual del campo
+    // con el último total que el sistema calculó.
+    const ultimoTotalCalculadoRef = React.useRef<number | null>(null);
     React.useEffect(() => {
-        if (intervencionesAplicadas.length === 0) return;
-        presuFi.onChange(String(totalIntervenciones));
+        if (ultimoTotalCalculadoRef.current === null) {
+            // Carga inicial: registrar el valor calculado sin pisar el campo (puede ser un total manual)
+            ultimoTotalCalculadoRef.current = totalIntervenciones;
+            return;
+        }
+        const valorActual = Number(presuFi.value) || 0;
+        if (Math.abs(valorActual - ultimoTotalCalculadoRef.current) < 0.01) {
+            // El campo sigue igual al último total calculado → el admin no lo tocó, actualizamos
+            presuFi.onChange(String(totalIntervenciones));
+        }
+        ultimoTotalCalculadoRef.current = totalIntervenciones;
     }, [totalIntervenciones]); // eslint-disable-line
 
     const diagnostico = useDebouncedField({
