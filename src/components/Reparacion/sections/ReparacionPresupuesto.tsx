@@ -98,8 +98,8 @@ export const ReparacionPresupuesto: React.FC<ReparacionPresupuestoProps> = ({
 
     const diagnostico = useDebouncedField({
         reparacionId,
-        campo: 'DiagnosticoRep',
-        valorInicial: reparacion?.data.DiagnosticoRep || ""
+        campo: 'PresuDiRep',
+        valorInicial: reparacion?.data.PresuDiRep || ""
     });
 
     if (!seccionVisible || !reparacion) return null;
