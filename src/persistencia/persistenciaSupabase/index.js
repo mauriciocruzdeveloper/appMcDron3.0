@@ -17,6 +17,7 @@ export {
   getReparacionesPersistencia,
   getReparacionPersistencia,
   guardarReparacionPersistencia,
+  actualizarEstadoReparacionPersistencia,
   eliminarReparacionPersistencia,
 } from './reparacionesPersistencia.js';
 

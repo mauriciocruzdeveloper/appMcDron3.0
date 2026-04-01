@@ -686,6 +686,34 @@ export const guardarReparacionPersistencia = async (reparacion) => {
   }
 };
 
+// ACTUALIZAR SOLO ESTADO, PRIORIDAD Y FECHAS de una reparación
+// NO toca los campos de precio para evitar sobrescribir valores pendientes del debounce
+export const actualizarEstadoReparacionPersistencia = async (id, camposEstado) => {
+  try {
+    // Filtrar undefined para que no se envíen al UPDATE (preservar valores existentes)
+    const datos = Object.fromEntries(
+      Object.entries(camposEstado).filter(([, v]) => v !== undefined && v !== null)
+    );
+
+    const { data, error } = await supabase
+      .from('repair')
+      .update(datos)
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) {
+      console.error('❌ Error al actualizar estado:', error);
+      throw error;
+    }
+
+    return data;
+  } catch (error) {
+    console.error('Error en actualizarEstadoReparacionPersistencia:', error);
+    throw error;
+  }
+};
+
 // DELETE Reparación por id
 export const eliminarReparacionPersistencia = async (id) => {
   return new Promise(async (resolve, reject) => {
