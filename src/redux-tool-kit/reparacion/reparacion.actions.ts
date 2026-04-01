@@ -6,6 +6,7 @@ import {
   getReparacionesPersistencia,
   getReparacionPersistencia,
   guardarReparacionPersistencia,
+  actualizarEstadoReparacionPersistencia,
   getIntervencionesPorReparacionPersistencia,
   agregarIntervencionAReparacionPersistencia,
   eliminarIntervencionDeReparacionPersistencia
@@ -842,8 +843,26 @@ export const cambiarEstadoReparacionAsync = createAsyncThunk(
       const { updateReparacion } = await import('./reparacion.slice');
       dispatch(updateReparacion(reparacionActualizada));
 
-      // Guardar la reparación
-      const reparacionGuardada = await guardarReparacionPersistencia(reparacionActualizada);
+      // Guardar SOLO estado, prioridad y fechas en la BD.
+      // Los campos de precio NO se incluyen para evitar sobrescribir valores correctos
+      // con el estado potencialmente desactualizado de Redux (debounce pendiente).
+      const camposEstado: Record<string, any> = {
+        state: nuevoEstado,
+        priority: estadoDestino.prioridad,
+      };
+      if (dataActualizada.FeConRep) camposEstado.contact_date = dataActualizada.FeConRep;
+      if (dataActualizada.FeRecRep) camposEstado.reception_date = dataActualizada.FeRecRep;
+      if (dataActualizada.FeFinRep) camposEstado.completion_date = dataActualizada.FeFinRep;
+      if (dataActualizada.FeEntRep) camposEstado.delivery_date = dataActualizada.FeEntRep;
+      if (dataActualizada.DiagnosticoRep) camposEstado.diagnosis = dataActualizada.DiagnosticoRep;
+
+      await actualizarEstadoReparacionPersistencia(reparacionActualizada.id, camposEstado);
+
+      // Construir reparacionGuardada desde el estado optimista (para uso en emails)
+      const reparacionGuardada: ReparacionType = {
+        id: reparacionActualizada.id,
+        data: reparacionActualizada.data
+      };
 
       // Enviar emails según el estado si se solicita
       if (enviarEmail) {
