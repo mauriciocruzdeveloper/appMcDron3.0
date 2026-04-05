@@ -277,20 +277,65 @@ export const selectReparacionesEstadosPrioritarios = createSelector(
   }
 );
 
+// Días de tolerancia por estado antes de considerarse urgente
+const UMBRAL_URGENCIA_DIAS: Record<string, number> = {
+  Consulta: 1,
+  Recibido: 2,
+  Revisado: 2,
+  Aceptado: 15,
+};
+
+// Orden normal de prioridad (sin urgencia)
+const ORDEN_ESTADO_NORMAL: Record<string, number> = {
+  Consulta: 1,
+  Recibido: 2,
+  Revisado: 3,
+  Aceptado: 4,
+};
+
+function getFechaIngresoMs(reparacion: ReparacionType): number {
+  return Number(reparacion.data.FeRecRep) || Number(reparacion.data.FeConRep) || 0;
+}
+
+function getDiasDesdeIngreso(reparacion: ReparacionType): number {
+  const fechaMs = getFechaIngresoMs(reparacion);
+  if (!fechaMs) return 0;
+  return (Date.now() - fechaMs) / (1000 * 60 * 60 * 24);
+}
+
+function esUrgente(reparacion: ReparacionType): boolean {
+  const estado = reparacion.data.EstadoRep;
+  const umbral = UMBRAL_URGENCIA_DIAS[estado];
+  if (umbral === undefined) return false;
+  return getDiasDesdeIngreso(reparacion) > umbral;
+}
+
 /**
- * Selector memoizado para reparaciones que requieren acción inmediata
- * @returns Array de reparaciones en estados Recibido, Revisado o Reparar
+ * Selector memoizado para reparaciones que requieren acción inmediata.
+ * Orden: urgentes primero (más antiguas primero), luego por estado
+ * (Consulta → Recibido → Revisado → Aceptado), y dentro de cada grupo
+ * las más antiguas primero.
+ * Una reparación es urgente si supera el umbral de días por estado:
+ * Consulta > 1 día, Recibido > 2 días, Revisado > 2 días, Aceptado > 15 días.
  */
 export const selectReparacionesAccionInmediata = createSelector(
   [selectReparacionesArray],
   (reparaciones): ReparacionType[] => {
-    const estadosAccion = ["Recibido", "Revisado", "Aceptado", "Consulta"];
+    const estadosAccion = ["Consulta", "Recibido", "Revisado", "Aceptado"];
     return reparaciones
       .filter(reparacion => estadosAccion.includes(reparacion.data.EstadoRep))
       .sort((a, b) => {
-        const prioridadA = estados[a.data.EstadoRep]?.prioridad || 999;
-        const prioridadB = estados[b.data.EstadoRep]?.prioridad || 999;
-        return prioridadA - prioridadB;
+        const urgenteA = esUrgente(a);
+        const urgenteB = esUrgente(b);
+        // Urgentes van primero
+        if (urgenteA !== urgenteB) return urgenteA ? -1 : 1;
+        // En ambos casos (urgentes y no urgentes): ordenar por estado, luego por fecha
+        const ordenA = ORDEN_ESTADO_NORMAL[a.data.EstadoRep] ?? 99;
+        const ordenB = ORDEN_ESTADO_NORMAL[b.data.EstadoRep] ?? 99;
+        if (ordenA !== ordenB) return ordenA - ordenB;
+        const fechaA = getFechaIngresoMs(a);
+        const fechaB = getFechaIngresoMs(b);
+        return fechaA - fechaB;
       });
   }
 );
