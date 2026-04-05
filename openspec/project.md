@@ -239,6 +239,19 @@ Component → Action Creator → Async Logic → Dispatch → Reducer → State 
    - Reparaciones almacenadas como diccionario `{[id: string]: ReparacionType}` para O(1) lookup
    - Conversión a array cuando se necesita iterar/filtrar
 
+5. **Orden de Reparaciones Prioritarias (Pantalla de Inicio)**:
+   - Solo se muestran reparaciones en estados: Consulta, Recibido, Revisado, Aceptado
+   - Una reparación es **urgente** si supera el umbral de días desde su ingreso (`FeRecRep` o `FeConRep`):
+     - Consulta: > 1 día
+     - Recibido: > 2 días
+     - Revisado: > 2 días
+     - Aceptado: > 15 días
+   - **Criterios de orden** (en orden de prioridad):
+     1. Urgentes primero, no urgentes después
+     2. Dentro de cada grupo: por estado (Consulta → Recibido → Revisado → Aceptado)
+     3. Mismo estado: más antigua primero (fecha de ingreso ascendente)
+   - Selector: `selectReparacionesAccionInmediata` en `reparacion.selectors.ts`
+
 ## Important Constraints
 
 ### Technical Constraints
