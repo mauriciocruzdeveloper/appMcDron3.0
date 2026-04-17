@@ -5,6 +5,7 @@ import { useAppSelector } from "redux-tool-kit/hooks/useAppSelector";
 import { selectColeccionModelosDrone } from "redux-tool-kit/modeloDrone/modeloDrone.selectors";
 import { selectDronesDictionary } from "redux-tool-kit/drone/drone.selectors";
 import { ReparacionType } from "types/reparacion";
+import { esUrgente } from "redux-tool-kit/reparacion/reparacion.selectors";
 
 interface ReparacionesListaProps {
   reparaciones: ReparacionType[];
@@ -45,10 +46,17 @@ const ReparacionesLista = ({ reparaciones }: ReparacionesListaProps): React.Reac
             className="card mb-3 p-1"
             aria-current="true"
             onClick={() => history.push(`/inicio/reparaciones/${reparacion.id}`)}
-            style={{ cursor: 'pointer' }}
+            style={{ cursor: 'pointer', borderLeft: esUrgente(reparacion) ? '4px solid #dc3545' : undefined }}
           >
             <div className="d-flex w-100 justify-content-between">
-              <h5 className="mb-1">{modeloDroneName}</h5>
+              <h5 className="mb-1">
+                {esUrgente(reparacion) && (
+                  <span style={{ backgroundColor: '#dc3545', color: 'white', borderRadius: 4, padding: '2px 6px', fontSize: '0.75rem', marginRight: 6 }}>
+                    ⚡ Urgente
+                  </span>
+                )}
+                {modeloDroneName}
+              </h5>
               {reparacion.data.PresuFiRep && (
                 <div className="text-end">
                   <strong className="text-success">${reparacion.data.PresuFiRep.toLocaleString()}</strong>
