@@ -303,7 +303,7 @@ function getDiasDesdeIngreso(reparacion: ReparacionType): number {
   return (Date.now() - fechaMs) / (1000 * 60 * 60 * 24);
 }
 
-function esUrgente(reparacion: ReparacionType): boolean {
+export function esUrgente(reparacion: ReparacionType): boolean {
   const estado = reparacion.data.EstadoRep;
   const umbral = UMBRAL_URGENCIA_DIAS[estado];
   if (umbral === undefined) return false;
