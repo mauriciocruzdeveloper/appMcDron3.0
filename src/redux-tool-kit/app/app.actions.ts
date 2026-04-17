@@ -206,48 +206,51 @@ export const generarPDFPresupuestoAsync = createAsyncThunk(
     try {
       dispatch(isFetchingStart());
 
-      const state = getState() as RootState;
-      
-      // Obtener las asignaciones de intervenciones desde el state
-      let asignacionesIntervenciones = state.reparacion.intervencionesDeReparacionActual;
-      
-      // Verificar si necesitamos cargar las intervenciones
-      if (asignacionesIntervenciones.length === 0 || 
-          asignacionesIntervenciones[0]?.data.reparacionId !== reparacion.id) {
-        const { getIntervencionesPorReparacionPersistencia } = await import('../../persistencia/persistencia');
-        asignacionesIntervenciones = await getIntervencionesPorReparacionPersistencia(reparacion.id);
-      }
-      
-      // Obtener el catálogo de intervenciones
-      const catalogoIntervenciones = state.intervencion.coleccionIntervenciones;
+      // Obtener datos frescos del backend antes de generar el PDF
+      const {
+        getReparacionPersistencia,
+        getIntervencionesPorReparacionPersistencia,
+        getIntervencionPersistencia,
+        getRepuestoPersistencia,
+        getClientePersistencia,
+      } = await import('../../persistencia/persistencia');
 
-      // Obtener el usuario
-      const usuario = state.usuario.coleccionUsuarios[reparacion.data.UsuarioRep];
-      const emailDestino = usuario?.data?.EmailContacto || reparacion.data.EmailUsu;
+      // Fetch paralelo: reparación actualizada + asignaciones actualizadas
+      const [reparacionFresh, asignacionesIntervenciones] = await Promise.all([
+        getReparacionPersistencia(reparacion.id),
+        getIntervencionesPorReparacionPersistencia(reparacion.id),
+      ]);
 
-      let equipo = reparacion.data.ModeloDroneNameRep;
+      // Fetch paralelo: catálogo de intervenciones involucradas + usuario
+      const intervencionIds = Array.from(new Set(asignacionesIntervenciones.map((a: any) => a.data.intervencionId))) as string[];
+      const [intervencionesArr, usuarioFresh] = await Promise.all([
+        Promise.all(intervencionIds.map((id: string) => getIntervencionPersistencia(id))),
+        reparacionFresh.data.UsuarioRep ? getClientePersistencia(reparacionFresh.data.UsuarioRep) : Promise.resolve(null),
+      ]);
+      const catalogoIntervencionFresh: Record<string, any> = {};
+      intervencionesArr.forEach((iv: any) => { catalogoIntervencionFresh[iv.id] = iv; });
+
+      // Fetch paralelo: repuestos únicos involucrados en las intervenciones
+      const repuestoIds = Array.from(new Set(intervencionesArr.flatMap((iv: any) => iv.data.RepuestosIds || []))) as string[];
+      const repuestosArr = await Promise.all(repuestoIds.map((id: string) => getRepuestoPersistencia(id)));
+      const catalogoRepuestosFresh: Record<string, any> = {};
+      repuestosArr.forEach((r: any) => { catalogoRepuestosFresh[r.id] = r; });
+
+      const emailDestino = usuarioFresh?.data?.EmailContacto || reparacionFresh.data.EmailUsu;
+
+      let equipo = reparacionFresh.data.ModeloDroneNameRep;
       if (!equipo) {
-        if (reparacion.data.DroneId) {
-          const drone = state.drone.coleccionDrones[reparacion.data.DroneId];
-          if (drone) {
-            equipo = state.modeloDrone.coleccionModelosDrone[drone.data.ModeloDroneId].data.NombreModelo;
-          } else {
-            equipo = 'Drone no encontrado';
-          }
-        } else {
-          equipo = 'Drone no asignado';
-        }
+        equipo = reparacionFresh.data.DroneId ? 'Drone no encontrado' : 'Drone no asignado';
       }
 
       // Construir array de intervenciones con descripción, fotos y precio
-      const catalogoRepuestos = state.repuesto.coleccionRepuestos;
-      const intervenciones = asignacionesIntervenciones.map((asignacion) => {
-        const intervencion = catalogoIntervenciones[asignacion.data.intervencionId];
+      const intervenciones = asignacionesIntervenciones.map((asignacion: any) => {
+        const intervencion = catalogoIntervencionFresh[asignacion.data.intervencionId];
         const tienePiezas = (intervencion?.data?.RepuestosIds || []).length > 0;
         const conRepuesto = (asignacion.data.PrecioPiezas || 0) > 0;
         const precio = asignacion.data.PrecioTotal || 0;
         const nombresPiezas = (intervencion?.data?.RepuestosIds || []).map(
-          (id: string) => catalogoRepuestos[id]?.data?.NombreRepu || id
+          (id: string) => catalogoRepuestosFresh[id]?.data?.NombreRepu || id
         );
         return {
           nombre: intervencion?.data?.NombreInt || 'Intervención',
@@ -261,18 +264,18 @@ export const generarPDFPresupuestoAsync = createAsyncThunk(
         };
       })
       // Ordenar de mayor a menor precio
-      .sort((a, b) => b.precio - a.precio);
+      .sort((a: any, b: any) => b.precio - a.precio);
 
-      const montoTotal = reparacion.data.PresuFiRep || 0;
+      const montoTotal = reparacionFresh.data.PresuFiRep || 0;
 
       const datosPresupuesto = {
-        cliente: reparacion.data.ApellidoUsu ? `${reparacion.data.NombreUsu} ${reparacion.data.ApellidoUsu}` : reparacion.data.NombreUsu,
-        nro_reparacion: reparacion.data.IdPublicoRep || reparacion.id,
+        cliente: reparacionFresh.data.ApellidoUsu ? `${reparacionFresh.data.NombreUsu} ${reparacionFresh.data.ApellidoUsu}` : reparacionFresh.data.NombreUsu,
+        nro_reparacion: reparacionFresh.data.IdPublicoRep || reparacionFresh.id,
         equipo,
-        fecha_ingreso: new Date(Number(reparacion.data.FeRecRep)).toLocaleDateString(),
+        fecha_ingreso: new Date(Number(reparacionFresh.data.FeRecRep)).toLocaleDateString(),
         intervenciones: intervenciones,
         monto_total: montoTotal,
-        telefono: reparacion.data.TelefonoUsu,
+        telefono: reparacionFresh.data.TelefonoUsu,
         email: emailDestino
       };
 
