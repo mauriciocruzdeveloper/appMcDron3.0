@@ -11,10 +11,12 @@ import {
 import { 
     actualizarCampoReparacionAsync,
     cambiarEstadoReparacionAsync,
+    cambiarModeloDroneEnReparacionAsync,
 } from "../../../redux-tool-kit/reparacion/reparacion.actions";
+import { selectModeloDroneIdByReparacionId } from "../../../redux-tool-kit/reparacion/reparacion.selectors";
 import { selectUsuarioPorId } from "../../../redux-tool-kit/usuario/usuario.selectors";
 import { selectDronesByPropietario } from "../../../redux-tool-kit/drone/drone.selectors";
-import { selectModeloDronePorId } from "../../../redux-tool-kit/modeloDrone/modeloDrone.selectors";
+import { selectModeloDronePorId, selectModelosDroneOrdenados } from "../../../redux-tool-kit/modeloDrone/modeloDrone.selectors";
 import { enviarSms, getEmailForNotifications } from "../../../utils/utils";
 import { enviarEmailVacio } from "../../../utils/sendEmails";
 import { convertTimestampCORTO } from "../../../utils/utils";
@@ -48,6 +50,10 @@ export const ReparacionConsulta: React.FC<ReparacionConsultaProps> = ({
     const puedeAvanzarATransito = useAppSelector(state => 
         selectPuedeAvanzarA(reparacionId, 'Transito')(state)
     );
+    const modeloDroneIdActual = useAppSelector(state => 
+        selectModeloDroneIdByReparacionId(reparacionId)(state)
+    );
+    const modelosDrone = useAppSelector(selectModelosDroneOrdenados);
 
     // Usar debounce para campos de texto
     const modeloDrone = useDebouncedField({
@@ -70,6 +76,15 @@ export const ReparacionConsulta: React.FC<ReparacionConsultaProps> = ({
             reparacionId, 
             campo: 'DroneId', 
             valor: droneId 
+        }));
+    };
+
+    const handleModeloDroneChange = (event: ChangeEvent<HTMLSelectElement>) => {
+        const nuevoModeloDroneId = event.target.value;
+        if (!nuevoModeloDroneId || !reparacion.data.DroneId) return;
+        dispatch(cambiarModeloDroneEnReparacionAsync({
+            reparacionId,
+            nuevoModeloDroneId,
         }));
     };
 
@@ -216,6 +231,25 @@ export const ReparacionConsulta: React.FC<ReparacionConsultaProps> = ({
                         </small>
                     )}
                 </div>
+                {reparacion.data.DroneId && (
+                    <div>
+                        <label className="form-label">Cambiar Modelo del Drone</label>
+                        <select
+                            className="form-control"
+                            id="ModeloDroneIdSelect"
+                            value={modeloDroneIdActual || ""}
+                            onChange={handleModeloDroneChange}
+                            disabled={!isAdmin}
+                        >
+                            <option value="">Seleccione un modelo</option>
+                            {modelosDrone.map(modelo => (
+                                <option key={modelo.id} value={modelo.id}>
+                                    {modelo.data.NombreModelo} - {modelo.data.Fabricante}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+                )}
                 <div>
                     <label className="form-label">
                         Modelo del Drone

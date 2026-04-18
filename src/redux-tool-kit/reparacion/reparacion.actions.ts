@@ -1048,3 +1048,91 @@ export const generarYGuardarDiagnosticoAsync = createAsyncThunk(
     }
   }
 );
+
+/**
+ * Cambia el modelo del drone asociado a una reparación.
+ * Actualiza en cascada:
+ * 1. El drone: drone_model_id y nombre regenerado
+ * 2. ModeloDroneNameRep en la reparación actual
+ * 3. ModeloDroneNameRep en TODAS las demás reparaciones que referencian el mismo drone
+ */
+export const cambiarModeloDroneEnReparacionAsync = createAsyncThunk(
+  'reparacion/cambiarModeloDrone',
+  async ({
+    reparacionId,
+    nuevoModeloDroneId,
+  }: {
+    reparacionId: string;
+    nuevoModeloDroneId: string;
+  }, { dispatch, rejectWithValue, getState }) => {
+    try {
+      const state = getState() as RootState;
+      const reparacion = state.reparacion.coleccionReparaciones[reparacionId];
+
+      if (!reparacion) {
+        throw new Error('Reparación no encontrada');
+      }
+
+      const droneId = reparacion.data.DroneId;
+      if (!droneId) {
+        throw new Error('La reparación no tiene un drone asociado');
+      }
+
+      const drone = state.drone.coleccionDrones[droneId];
+      if (!drone) {
+        throw new Error('Drone no encontrado');
+      }
+
+      const nuevoModelo = state.modeloDrone.coleccionModelosDrone[nuevoModeloDroneId];
+      if (!nuevoModelo) {
+        throw new Error('Modelo de drone no encontrado');
+      }
+
+      const nombreModelo = nuevoModelo.data.NombreModelo;
+      const nombreUsu = reparacion.data.NombreUsu || '';
+      const apellidoUsu = reparacion.data.ApellidoUsu || '';
+
+      // Regenerar nombre único del drone
+      const dronesList = Object.values(state.drone.coleccionDrones);
+      const nuevoNombre = generarNombreUnico(dronesList, nombreModelo, nombreUsu, apellidoUsu);
+
+      // 1. Actualizar el drone (modelo y nombre)
+      const { guardarDroneAsync } = await import('../drone/drone.actions');
+      const droneActualizado: Drone = {
+        ...drone,
+        data: {
+          ...drone.data,
+          ModeloDroneId: nuevoModeloDroneId,
+          Nombre: nuevoNombre,
+        },
+      };
+      await dispatch(guardarDroneAsync(droneActualizado)).unwrap();
+
+      // 2. Actualizar ModeloDroneNameRep en la reparación actual
+      await dispatch(actualizarCampoReparacionAsync({
+        reparacionId,
+        campo: 'ModeloDroneNameRep',
+        valor: nombreModelo,
+      })).unwrap();
+
+      // 3. Actualizar ModeloDroneNameRep en todas las demás reparaciones del mismo drone
+      const { selectReparacionesByDrone } = await import('./reparacion.selectors');
+      const reparacionesDelDrone = selectReparacionesByDrone(droneId)(state);
+      const otrasReparaciones = reparacionesDelDrone.filter(r => r.id !== reparacionId);
+
+      await Promise.all(
+        otrasReparaciones.map(r =>
+          dispatch(actualizarCampoReparacionAsync({
+            reparacionId: r.id,
+            campo: 'ModeloDroneNameRep',
+            valor: nombreModelo,
+          })).unwrap()
+        )
+      );
+
+      return { droneId, nuevoModeloDroneId, nombreModelo, nuevoNombre };
+    } catch (error: unknown) {
+      return rejectWithValue(error);
+    }
+  }
+);
