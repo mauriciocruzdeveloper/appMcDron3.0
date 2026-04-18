@@ -45,7 +45,7 @@ interface UseDebounceProps<T> {
 export const useDebounce = <T = string>({ 
     valorInicial, 
     onSave,
-    delay = 6000,
+    delay = 3000,
     transformBeforeSave
 }: UseDebounceProps<T>) => {
     const [localValue, setLocalValue] = useState<T>(valorInicial);
