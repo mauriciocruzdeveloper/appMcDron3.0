@@ -216,7 +216,7 @@ export const ReparacionConsulta: React.FC<ReparacionConsultaProps> = ({
                         id="DroneId"
                         value={reparacion.data.DroneId || ""}
                         onChange={handleDroneChange}
-                        disabled={!isAdmin}
+                        disabled
                     >
                         <option value="">Seleccione un drone</option>
                         {dronesDelCliente.map(drone => (
@@ -231,9 +231,9 @@ export const ReparacionConsulta: React.FC<ReparacionConsultaProps> = ({
                         </small>
                     )}
                 </div>
-                {reparacion.data.DroneId && (
+                {reparacion.data.DroneId ? (
                     <div>
-                        <label className="form-label">Cambiar Modelo del Drone</label>
+                        <label className="form-label">Modelo del Drone</label>
                         <select
                             className="form-control"
                             id="ModeloDroneIdSelect"
@@ -249,21 +249,22 @@ export const ReparacionConsulta: React.FC<ReparacionConsultaProps> = ({
                             ))}
                         </select>
                     </div>
+                ) : (
+                    <div>
+                        <label className="form-label">
+                            Modelo del Drone
+                            {modeloDrone.isSaving && <small className="text-muted ms-2">Guardando...</small>}
+                        </label>
+                        <input
+                            type="text"
+                            className="form-control"
+                            id="ModeloDroneNameRep"
+                            value={modeloDrone.value}
+                            onChange={(e) => modeloDrone.onChange(e.target.value)}
+                            disabled={!isAdmin}
+                        />
+                    </div>
                 )}
-                <div>
-                    <label className="form-label">
-                        Modelo del Drone
-                        {modeloDrone.isSaving && <small className="text-muted ms-2">Guardando...</small>}
-                    </label>
-                    <input
-                        type="text"
-                        className="form-control"
-                        id="ModeloDroneNameRep"
-                        value={modeloDrone.value}
-                        onChange={(e) => modeloDrone.onChange(e.target.value)}
-                        disabled={!isAdmin}
-                    />
-                </div>
                 <div>
                     <label className="form-label">
                         Desperfectos o Roturas
