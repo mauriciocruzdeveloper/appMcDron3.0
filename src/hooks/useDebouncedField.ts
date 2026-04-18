@@ -25,7 +25,7 @@ export const useDebouncedField = ({
     reparacionId, 
     campo, 
     valorInicial,
-    delay = 6000,
+    delay = 3000,
     isDateField = false
 }: UseDebouncedFieldProps) => {
     const dispatch = useAppDispatch();
