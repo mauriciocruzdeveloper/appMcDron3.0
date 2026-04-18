@@ -341,6 +341,27 @@ export const selectReparacionesAccionInmediata = createSelector(
 );
 
 /**
+ * Selector para obtener el ModeloDroneId del drone asociado a una reparación
+ * @param reparacionId - ID de la reparación
+ * @returns Función selector que retorna el ModeloDroneId o null si no hay drone
+ */
+export const selectModeloDroneIdByReparacionId = (reparacionId: string) =>
+  createSelector(
+    [
+      (state: RootState) => selectReparacionById(reparacionId)(state),
+      (state: RootState) => state.drone.coleccionDrones,
+    ],
+    (reparacion, drones) => {
+      if (!reparacion?.data.DroneId) return null;
+      
+      const drone = drones[reparacion.data.DroneId];
+      if (!drone?.data.ModeloDroneId) return null;
+      
+      return drone.data.ModeloDroneId;
+    }
+  );
+
+/**
  * Selector para obtener el nombre del modelo de drone de una reparación
  * @param reparacionId - ID de la reparación
  * @returns Función selector que retorna el nombre del modelo o null
