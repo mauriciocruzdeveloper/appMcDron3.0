@@ -68,6 +68,7 @@ export {
   
   // Selectores de filtrado por drone
   selectReparacionesByDrone,
+  selectReparacionesByParentId,
   selectReparacionesByNumeroSerie,
   selectFotosByDrone,
   

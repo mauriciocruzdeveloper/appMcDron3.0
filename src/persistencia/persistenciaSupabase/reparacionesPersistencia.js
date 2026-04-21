@@ -369,6 +369,7 @@ export const getReparacionesPersistencia = (setReparacionesToRedux, usuario) => 
         photo_after,
         parts_notes,
         requested_parts_ids,
+        parent_repair_id,
         drone:drone_id (id),
         owner:owner_id (id, email, first_name, last_name, telephone)
       `);
@@ -446,7 +447,8 @@ export const getReparacionesPersistencia = (setReparacionesToRedux, usuario) => 
           FotoAntes: item.photo_before || undefined,  // Mapeo de BD a frontend
           FotoDespues: item.photo_after || undefined,  // Mapeo de BD a frontend
           ObsRepuestos: item.parts_notes || undefined,  // Mapeo de BD a frontend - NUEVO
-          RepuestosSolicitados: item.requested_parts_ids || undefined  // Mapeo de BD a frontend - NUEVO
+          RepuestosSolicitados: item.requested_parts_ids || undefined,  // Mapeo de BD a frontend - NUEVO
+          ParentRepairId: item.parent_repair_id ? String(item.parent_repair_id) : undefined
         }
       }));
 
@@ -547,7 +549,8 @@ export const getReparacionPersistencia = async (id) => {
         urlsDocumentos: data.document_urls || [],
         IntervencionesIds: intervencionesIds,  // IDs de intervenciones asociadas
         FotoAntes: data.photo_before || undefined,  // Mapeo de BD a frontend
-        FotoDespues: data.photo_after || undefined  // Mapeo de BD a frontend
+        FotoDespues: data.photo_after || undefined,  // Mapeo de BD a frontend
+        ParentRepairId: data.parent_repair_id ? String(data.parent_repair_id) : undefined
       }
     };
   } catch (error) {
@@ -595,7 +598,8 @@ export const guardarReparacionPersistencia = async (reparacion) => {
       photo_before: reparacion.data.FotoAntes || null,  // Mapeo de frontend a BD
       photo_after: reparacion.data.FotoDespues || null,   // Mapeo de frontend a BD
       parts_notes: reparacion.data.ObsRepuestos || null,  // Mapeo de frontend a BD - NUEVO
-      requested_parts_ids: reparacion.data.RepuestosSolicitados || null  // Mapeo de frontend a BD - NUEVO
+      requested_parts_ids: reparacion.data.RepuestosSolicitados || null,  // Mapeo de frontend a BD - NUEVO
+      parent_repair_id: reparacion.data.ParentRepairId ? parseInt(reparacion.data.ParentRepairId) : null
     };
     
     console.log('🔍 GUARDANDO REPARACION:', {
