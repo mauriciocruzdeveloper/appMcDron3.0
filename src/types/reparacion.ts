@@ -54,6 +54,16 @@ export interface DataReparacion {
      * @example ["rep_abc123xyz", "rep_def456uvw"]
      */
     RepuestosSolicitados?: string[];
+
+    // ======================================================
+    // CAMPO PARA REPARACIONES VINCULADAS (AMPLIACIONES)
+    // ======================================================
+
+    /**
+     * ID de la reparación padre. Si está presente, esta reparación es una
+     * ampliación de un trabajo anterior cuyo presupuesto ya fue cerrado.
+     */
+    ParentRepairId?: string;
 }
 
 export interface ReparacionType {

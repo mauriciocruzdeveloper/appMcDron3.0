@@ -1136,3 +1136,43 @@ export const cambiarModeloDroneEnReparacionAsync = createAsyncThunk(
     }
   }
 );
+
+// CREAR AMPLIACIÓN
+// Crea una reparación nueva en estado "Recibido" vinculada a una reparación padre.
+// Hereda drone, usuario y modelo para no tener que rellenarlos de cero.
+export const crearAmpliacionReparacionAsync = createAsyncThunk(
+  'reparacion/crearAmpliacion',
+  async (parentReparacionId: string, { dispatch, rejectWithValue, getState }) => {
+    try {
+      const state = getState() as RootState;
+      const parent = state.reparacion.coleccionReparaciones[parentReparacionId];
+
+      if (!parent) {
+        return rejectWithValue('Reparación padre no encontrada');
+      }
+
+      const ampliacion: ReparacionType = {
+        id: '',
+        data: {
+          EstadoRep: 'Recibido',
+          PrioridadRep: parent.data.PrioridadRep,
+          FeConRep: Date.now(),
+          FeRecRep: Date.now(),
+          UsuarioRep: parent.data.UsuarioRep,
+          DroneId: parent.data.DroneId,
+          ModeloDroneNameRep: parent.data.ModeloDroneNameRep,
+          DescripcionUsuRep: '',
+          ParentRepairId: parentReparacionId,
+        },
+      };
+
+      dispatch(isFetchingStart());
+      const nuevaReparacion = await guardarReparacionNueva(ampliacion);
+      dispatch(isFetchingComplete());
+      return nuevaReparacion;
+    } catch (error: unknown) {
+      dispatch(isFetchingComplete());
+      return rejectWithValue(error);
+    }
+  }
+);

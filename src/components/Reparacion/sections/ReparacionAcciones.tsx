@@ -4,7 +4,8 @@ import { useHistory } from "../../../hooks/useHistory";
 import { useModal } from "../../Modal/useModal";
 import { useAppSelector } from "../../../redux-tool-kit/hooks/useAppSelector";
 import { selectReparacionById } from "../../../redux-tool-kit/reparacion";
-import { eliminarReparacionAsync } from "../../../redux-tool-kit/reparacion/reparacion.actions";
+import { crearAmpliacionReparacionAsync, eliminarReparacionAsync } from "../../../redux-tool-kit/reparacion/reparacion.actions";
+import { getPublicIdDisplay } from "../../../utils/publicIdHelper";
 
 interface ReparacionAccionesProps {
     reparacionId: string;
@@ -21,6 +22,32 @@ export const ReparacionAcciones: React.FC<ReparacionAccionesProps> = ({
     const reparacion = useAppSelector(state => selectReparacionById(reparacionId)(state));
 
     if (!isAdmin || !reparacion) return null;
+
+    const handleCrearAmpliacion = () => {
+        openModal({
+            mensaje: `Se creará una nueva reparación vinculada a ${getPublicIdDisplay(reparacion)}.`,
+            tipo: "warning",
+            titulo: "Crear Ampliación",
+            confirmCallback: async () => {
+                try {
+                    const nuevaReparacion = await dispatch(crearAmpliacionReparacionAsync(reparacionId)).unwrap();
+                    openModal({
+                        mensaje: `Ampliación creada: ${getPublicIdDisplay(nuevaReparacion)}.`,
+                        tipo: "success",
+                        titulo: "Crear Ampliación",
+                    });
+                    history.push(`/inicio/reparaciones/${nuevaReparacion.id}`);
+                } catch (error: unknown) {
+                    console.error("Error al crear la ampliación:", error);
+                    openModal({
+                        mensaje: "No se pudo crear la ampliación.",
+                        tipo: "danger",
+                        titulo: "Crear Ampliación",
+                    });
+                }
+            },
+        });
+    };
 
     const handleEliminarReparacion = () => {
         openModal({
@@ -50,6 +77,14 @@ export const ReparacionAcciones: React.FC<ReparacionAccionesProps> = ({
 
     return (
         <div className="text-center">
+            <button
+                key="botonCrearAmpliacion"
+                onClick={handleCrearAmpliacion}
+                className="w-100 btn btn-primary mb-2"
+            >
+                Crear Ampliación
+            </button>
+
             <button
                 key="botonEliminar"
                 onClick={handleEliminarReparacion}

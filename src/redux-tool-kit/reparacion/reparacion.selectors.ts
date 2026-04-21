@@ -453,6 +453,18 @@ export const selectReparacionesByDrone = (droneId: string): ReparacionArraySelec
   );
 
 /**
+ * Selector para ampliaciones de una reparación padre.
+ * @param parentRepairId - ID de la reparación padre
+ * @returns Función selector que retorna reparaciones vinculadas al padre
+ */
+export const selectReparacionesByParentId = (parentRepairId: string): ReparacionArraySelector =>
+  createSelector(
+    [selectReparacionesArray],
+    (reparaciones): ReparacionType[] =>
+      reparaciones.filter(reparacion => reparacion.data.ParentRepairId === parentRepairId)
+  );
+
+/**
  * Selector para obtener todas las fotos de las reparaciones de un drone
  * @param droneId - ID del drone
  * @returns Función selector que retorna array de URLs de fotos
