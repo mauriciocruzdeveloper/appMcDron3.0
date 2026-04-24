@@ -28,6 +28,10 @@ export const agregarIntervencionAReparacionPersistencia = async (reparacionId, i
       throw new Error('Intervención no encontrada');
     }
 
+    if (intervencion.is_obsolete) {
+      throw new Error('Esta intervención está marcada como obsoleta y no puede asignarse a nuevas reparaciones');
+    }
+
     // 3. Obtener los repuestos asociados a esta intervención para calcular el costo
     const { data: partInterventions, error: partsError } = await supabase
       .from('part_intervention')

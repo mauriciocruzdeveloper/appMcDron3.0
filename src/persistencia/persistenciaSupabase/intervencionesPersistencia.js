@@ -40,6 +40,7 @@ export const getIntervencionPersistencia = async (id) => {
       data: {
         NombreInt: data.name,
         DescripcionInt: data.description || '',
+        Obsoleta: data.is_obsolete || false,
         ModeloDroneId: data.drone_model_id ? String(data.drone_model_id) : '',
         RepuestosIds: repuestosIds,
         PrecioManoObra: data.labor_cost || 0,
@@ -90,6 +91,7 @@ export const getIntervencionesPorModeloDronePersistencia = async (modeloDroneId)
         data: {
           NombreInt: intervencion.name,
           DescripcionInt: intervencion.description || '',
+          Obsoleta: intervencion.is_obsolete || false,
           ModeloDroneId: intervencion.drone_model_id ? String(intervencion.drone_model_id) : '',
           RepuestosIds: repuestosIds,
           PrecioManoObra: intervencion.labor_cost || 0,
@@ -116,6 +118,7 @@ export const guardarIntervencionPersistencia = async (intervencion) => {
     const intervencionData = {
       name: intervencion.data.NombreInt,
       description: intervencion.data.DescripcionInt || '',
+      is_obsolete: intervencion.data.Obsoleta || false,
       drone_model_id: intervencion.data.ModeloDroneId || null,
       labor_cost: intervencion.data.PrecioManoObra || 0,
       estimated_duration: intervencion.data.DuracionEstimada || 30
@@ -225,6 +228,7 @@ export const guardarIntervencionPersistencia = async (intervencion) => {
       data: {
         NombreInt: intervencionResult.name,
         DescripcionInt: intervencionResult.description || '',
+        Obsoleta: intervencionResult.is_obsolete || false,
         ModeloDroneId: intervencionResult.drone_model_id ? String(intervencionResult.drone_model_id) : '',
         RepuestosIds: intervencion.data.RepuestosIds ?
           intervencion.data.RepuestosIds.map(id => String(id)) : [],
@@ -307,6 +311,7 @@ export const getIntervencionesPersistencia = async (setIntervencionesToRedux) =>
         data: {
           NombreInt: intervencion.name,
           DescripcionInt: intervencion.description || '',
+          Obsoleta: intervencion.is_obsolete || false,
           ModeloDroneId: intervencion.drone_model_id ? String(intervencion.drone_model_id) : '',
           RepuestosIds: intervencion.part_intervention.map(rel => String(rel.part.id)),
           PrecioManoObra: intervencion.labor_cost || 0,

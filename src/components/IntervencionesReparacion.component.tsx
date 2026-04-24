@@ -37,6 +37,8 @@ export default function IntervencionesReparacion({ reparacionId, readOnly = fals
   // Se permiten múltiples asignaciones de la misma intervención
   const opcionesIntervenciones = Object.values(todasLasIntervenciones)
     .filter(intervencion => {
+      if (intervencion.data.Obsoleta) return false;
+
       // Si no hay modeloDroneId, mostrar todas las intervenciones
       if (!modeloDroneId) return true;
       // Si la intervención no tiene ModeloDroneId, es compatible con todos los modelos
@@ -205,6 +207,11 @@ export default function IntervencionesReparacion({ reparacionId, readOnly = fals
                   <div className="d-flex w-100 justify-content-between mb-2">
                     <h6 className="mb-1">
                       {intervencion.data.NombreInt}
+                      {intervencion.data.Obsoleta && (
+                        <span className="badge bg-warning text-dark ms-2" style={{fontSize: '0.7rem'}}>
+                          Obsoleta
+                        </span>
+                      )}
                       {contarAsignaciones(asignacion.data.intervencionId) > 1 && (
                         <span className="badge bg-info ms-2" style={{fontSize: '0.7rem'}}>
                           x{contarAsignaciones(asignacion.data.intervencionId)}
