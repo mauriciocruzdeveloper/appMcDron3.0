@@ -5,6 +5,7 @@
 export interface IntervencionData {
   NombreInt: string;
   DescripcionInt: string;
+  Obsoleta?: boolean;
   ModeloDroneId?: string; // Opcional - Referencia al ID del modelo de drone
   RepuestosIds: string[]; // Lista de IDs de repuestos utilizados
   PrecioManoObra: number; // Precio de mano de obra base (solo para referencia)

@@ -112,6 +112,9 @@ export default function ListaIntervenciones(): JSX.Element {
               <div className='d-flex w-100 justify-content-between'>
                 <h5 className='mb-1'>{intervencion.data.NombreInt}</h5>
                 <div>
+                  {intervencion.data.Obsoleta && (
+                    <span className="badge bg-warning text-dark me-2">Obsoleta</span>
+                  )}
                   <span className={`badge ${getPriceBadgeClass(intervencion.precioCalculado)} me-2`}>
                     {formatPrice(intervencion.precioCalculado)}
                   </span>

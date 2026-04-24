@@ -35,6 +35,7 @@ export default function IntervencionComponent(): JSX.Element {
     data: {
       NombreInt: '',
       DescripcionInt: '',
+      Obsoleta: false,
       ModeloDroneId: '',
       RepuestosIds: [],
       PrecioManoObra: 0,
@@ -172,6 +173,16 @@ export default function IntervencionComponent(): JSX.Element {
     // Si estamos cambiando el modelo, los repuestos se actualizarán en el useEffect
   };
 
+  const handleObsoletaChange = (e: ChangeEvent<HTMLInputElement>) => {
+    setIntervencion(prevState => ({
+      ...prevState,
+      data: {
+        ...prevState.data,
+        Obsoleta: e.target.checked
+      }
+    }));
+  };
+
   const handleRepuestosChange = (selected: readonly {value: string, label: string, precio: number}[] | null) => {
     const selectedArray = selected ? [...selected] : [];
     setSelectedRepuestos(selectedArray);
@@ -298,6 +309,24 @@ export default function IntervencionComponent(): JSX.Element {
               onChange={handleTextInputChange}
               rows={3}
             />
+          </div>
+
+          <div className="mb-3">
+            <div className="form-check form-switch">
+              <input
+                className="form-check-input"
+                type="checkbox"
+                id="Obsoleta"
+                checked={Boolean(intervencion.data.Obsoleta)}
+                onChange={handleObsoletaChange}
+              />
+              <label className="form-check-label" htmlFor="Obsoleta">
+                Marcar como obsoleta
+              </label>
+            </div>
+            <small className="form-text text-muted">
+              Las intervenciones obsoletas se mantienen en el historial, pero no podrán asignarse a nuevas reparaciones.
+            </small>
           </div>
           
           <div className="mb-3">
