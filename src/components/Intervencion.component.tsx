@@ -10,6 +10,8 @@ import Select from 'react-select';
 import { selectModelosDroneArray } from '../redux-tool-kit/modeloDrone/modeloDrone.selectors';
 import { selectColeccionRepuestos, selectRepuestosArray } from '../redux-tool-kit/repuesto/repuesto.selectors';
 import { selectIntervencionPorId } from '../redux-tool-kit/intervencion/intervencion.selectors';
+import { selectReparacionesArray } from '../redux-tool-kit/reparacion/reparacion.selectors';
+import { estados } from '../datos/estados';
 
 interface ParamTypes extends Record<string, string | undefined> {
   id: string;
@@ -29,6 +31,13 @@ export default function IntervencionComponent(): JSX.Element {
   const modelosDroneArray = useAppSelector(selectModelosDroneArray);
   const repuestos = useAppSelector(selectColeccionRepuestos);
   const repuestosArray = useAppSelector(selectRepuestosArray);
+  const reparacionesAsociadas = useAppSelector((state) => {
+    if (isNew || !id) return [];
+
+    return selectReparacionesArray(state).filter((reparacion) =>
+      (reparacion.data.IntervencionesIds || []).includes(id)
+    );
+  });
   
   const [intervencion, setIntervencion] = useState<Intervencion>({
     id: '',
@@ -274,6 +283,34 @@ export default function IntervencionComponent(): JSX.Element {
     return precio.toLocaleString('es-AR', { style: 'currency', currency: 'ARS' });
   };
 
+  const formatRepairDate = (timestamp?: number | null): string => {
+    if (!timestamp) return 'Sin fecha';
+
+    return new Date(timestamp).toLocaleDateString('es-AR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    });
+  };
+
+  const getReparacionDisplayId = (reparacionId: string, publicId?: string): string => {
+    return publicId || reparacionId;
+  };
+
+  const getEstadoStyle = (estado: string): React.CSSProperties => {
+    const colorEstado = estados[estado]?.color || '#6c757d';
+
+    return {
+      backgroundColor: colorEstado,
+      color: '#ffffff',
+      borderRadius: '999px',
+      padding: '2px 8px',
+      fontSize: '0.75rem',
+      fontWeight: 600,
+      display: 'inline-block'
+    };
+  };
+
   return (
     <div className="p-4">
       <div className="card mb-3 bg-bluemcdron">
@@ -428,6 +465,77 @@ export default function IntervencionComponent(): JSX.Element {
               </div>
             </div>
           </div>
+
+          {!isNew && (
+            <details className="card bg-light mt-3 mb-0">
+              <summary className="card-body d-flex justify-content-between align-items-center cursor-pointer">
+                <div>
+                  <h6 className="card-title mb-1">Reparaciones donde se usó esta intervención</h6>
+                  <p className="mb-0 small text-muted">
+                    {reparacionesAsociadas.length === 0
+                      ? 'No hay reparaciones asociadas.'
+                      : `${reparacionesAsociadas.length} reparación${reparacionesAsociadas.length === 1 ? '' : 'es'} asociada${reparacionesAsociadas.length === 1 ? '' : 's'}.`}
+                  </p>
+                </div>
+                <span className="badge bg-bluemcdron text-white">
+                  {reparacionesAsociadas.length}
+                </span>
+              </summary>
+
+              <div className="card-body border-top pt-3">
+                {reparacionesAsociadas.length === 0 ? (
+                  <p className="mb-0 text-muted">
+                    Esta intervención todavía no está vinculada a ninguna reparación.
+                  </p>
+                ) : (
+                  <div className="list-group list-group-flush">
+                    {reparacionesAsociadas.map((reparacion) => (
+                      <button
+                        key={reparacion.id}
+                        type="button"
+                        className="list-group-item list-group-item-action text-start"
+                        onClick={() => history.push(`/inicio/reparaciones/${reparacion.id}`)}
+                      >
+                        <div className="d-flex w-100 justify-content-between align-items-start gap-3">
+                          <div>
+                            <div className="fw-bold">
+                              {getReparacionDisplayId(reparacion.id, reparacion.data.IdPublicoRep)}
+                            </div>
+                            <div className="small text-muted">
+                              {reparacion.data.ModeloDroneNameRep || 'Drone sin modelo'}
+                            </div>
+                            <div className="small text-muted mt-1">
+                              {(reparacion.data.NombreUsu || reparacion.data.ApellidoUsu)
+                                ? `${reparacion.data.NombreUsu || ''} ${reparacion.data.ApellidoUsu || ''}`.trim()
+                                : 'Cliente sin nombre'}
+                            </div>
+                            <div className="small text-muted mt-1">
+                              Estado:{' '}
+                              <span style={getEstadoStyle(reparacion.data.EstadoRep)}>
+                                {reparacion.data.EstadoRep}
+                              </span>
+                            </div>
+                          </div>
+                          <div className="d-flex align-items-center gap-2 flex-shrink-0">
+                            <span className="small text-muted">
+                              {formatRepairDate(reparacion.data.FeAltaRep ?? reparacion.data.FeConRep)}
+                            </span>
+                            <span className="badge bg-secondary">
+                              {reparacion.data.PresuFiRep != null
+                                ? formatPrice(reparacion.data.PresuFiRep)
+                                : reparacion.data.PresuMoRep != null
+                                  ? formatPrice(reparacion.data.PresuMoRep)
+                                  : 'Sin precio'}
+                            </span>
+                          </div>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </details>
+          )}
         </div>
       </div>
       
