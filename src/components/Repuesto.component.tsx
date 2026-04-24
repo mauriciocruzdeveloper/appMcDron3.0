@@ -10,6 +10,7 @@ import Select from 'react-select'; // Importar Select para selección múltiple
 import { SelectOption } from '../types/selectOption';
 import { selectModelosDroneArray } from '../redux-tool-kit/modeloDrone/modeloDrone.selectors';
 import { selectRepuestoPorId } from '../redux-tool-kit/repuesto/repuesto.selectors';
+import { selectIntervencionesPorRepuesto } from '../redux-tool-kit/intervencion/intervencion.selectors';
 
 interface ParamTypes extends Record<string, string | undefined> {
   id: string;
@@ -45,6 +46,9 @@ export default function RepuestoComponent(): JSX.Element {
   const [selectedModelos, setSelectedModelos] = useState<SelectOption[]>([]);
 
   const modelosDrone = useAppSelector(selectModelosDroneArray);
+  const intervencionesAsociadas = useAppSelector((state) =>
+    isNew || !id ? [] : selectIntervencionesPorRepuesto(state, id)
+  );
 
   const [repuesto, setRepuesto] = useState<Repuesto>({
     id: '',
@@ -224,6 +228,15 @@ export default function RepuestoComponent(): JSX.Element {
     label: `${modelo.data.NombreModelo} - ${modelo.data.Fabricante}`
   }));
 
+  const getModeloDroneLabel = (modeloDroneId?: string): string => {
+    if (!modeloDroneId) return 'Compatible con todos los modelos';
+
+    const modelo = modelosDrone.find((item) => item.id === modeloDroneId);
+    if (!modelo) return 'Modelo no encontrado';
+
+    return `${modelo.data.NombreModelo} - ${modelo.data.Fabricante}`;
+  };
+
   return (
     <div className="p-4">
       <div className="card mb-3 bg-bluemcdron">
@@ -361,6 +374,61 @@ export default function RepuestoComponent(): JSX.Element {
               </ul>
             </div>
           </div>
+
+          {!isNew && (
+            <details className="card bg-light mb-0">
+              <summary className="card-body d-flex justify-content-between align-items-center cursor-pointer">
+                <div>
+                  <h6 className="card-title mb-1">Intervenciones donde se usa este repuesto</h6>
+                  <p className="mb-0 small text-muted">
+                    {intervencionesAsociadas.length === 0
+                      ? 'No hay intervenciones asociadas.'
+                      : `${intervencionesAsociadas.length} intervención${intervencionesAsociadas.length === 1 ? '' : 'es'} asociada${intervencionesAsociadas.length === 1 ? '' : 's'}.`}
+                  </p>
+                </div>
+                <span className="badge bg-bluemcdron text-white">
+                  {intervencionesAsociadas.length}
+                </span>
+              </summary>
+
+              <div className="card-body border-top pt-3">
+                {intervencionesAsociadas.length === 0 ? (
+                  <p className="mb-0 text-muted">
+                    Este repuesto todavía no está vinculado a ninguna intervención.
+                  </p>
+                ) : (
+                  <div className="list-group list-group-flush">
+                    {intervencionesAsociadas.map((intervencion) => (
+                      <button
+                        key={intervencion.id}
+                        type="button"
+                        className="list-group-item list-group-item-action text-start"
+                        onClick={() => history.push(`/inicio/intervenciones/${intervencion.id}`)}
+                      >
+                        <div className="d-flex w-100 justify-content-between align-items-start gap-3">
+                          <div>
+                            <div className="fw-bold">{intervencion.data.NombreInt}</div>
+                            <div className="small text-muted">
+                              {getModeloDroneLabel(intervencion.data.ModeloDroneId)}
+                            </div>
+                            <div className="small text-muted mt-1">
+                              {intervencion.data.DescripcionInt || 'Sin descripción.'}
+                            </div>
+                          </div>
+                          <span className="badge bg-secondary">
+                            {(intervencion.precioCalculado || 0).toLocaleString('es-AR', {
+                              style: 'currency',
+                              currency: 'ARS'
+                            })}
+                          </span>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </details>
+          )}
         </div>
       </div>
 
