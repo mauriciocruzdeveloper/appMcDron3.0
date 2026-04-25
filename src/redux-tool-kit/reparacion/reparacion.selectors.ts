@@ -310,6 +310,15 @@ export function esUrgente(reparacion: ReparacionType): boolean {
   return getDiasDesdeIngreso(reparacion) > umbral;
 }
 
+export function getDiasAtrasoUrgencia(reparacion: ReparacionType): number {
+  const estado = reparacion.data.EstadoRep;
+  const umbral = UMBRAL_URGENCIA_DIAS[estado];
+  if (umbral === undefined) return 0;
+
+  const diasAtraso = Math.floor(getDiasDesdeIngreso(reparacion) - umbral);
+  return Math.max(0, diasAtraso);
+}
+
 /**
  * Selector memoizado para reparaciones que requieren acción inmediata.
  * Orden: urgentes primero (más antiguas primero), luego por estado

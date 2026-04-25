@@ -1,6 +1,6 @@
 import React from 'react';
 import { useAppSelector } from 'redux-tool-kit/hooks/useAppSelector';
-import { selectModeloNombreByReparacionId, esUrgente } from 'redux-tool-kit/reparacion/reparacion.selectors';
+import { selectModeloNombreByReparacionId, esUrgente, getDiasAtrasoUrgencia } from 'redux-tool-kit/reparacion/reparacion.selectors';
 
 interface ReparacionItemProps {
   reparacion: any;
@@ -11,6 +11,7 @@ interface ReparacionItemProps {
 const ReparacionItem = ({ reparacion, estado, onClick }: ReparacionItemProps): React.ReactElement => {
   const modeloNombre = useAppSelector(selectModeloNombreByReparacionId(reparacion.id));
   const urgente = esUrgente(reparacion);
+  const diasAtraso = getDiasAtrasoUrgencia(reparacion);
 
   return (
     <div
@@ -21,7 +22,14 @@ const ReparacionItem = ({ reparacion, estado, onClick }: ReparacionItemProps): R
       <div className='d-flex justify-content-between align-items-center'>
         <div>
           <h6 className='mb-1'>
-            {urgente && <span className='badge badge-danger mr-1' style={{ backgroundColor: '#dc3545', color: 'white', marginRight: 6 }}>⚡ Urgente</span>}
+            {urgente && (
+              <>
+                <span className='badge badge-danger mr-1' style={{ backgroundColor: '#dc3545', color: 'white', marginRight: 6 }}>⚡ Urgente</span>
+                <span style={{ color: '#dc3545', fontSize: '0.8rem', marginRight: 6 }}>
+                  {diasAtraso} {diasAtraso === 1 ? 'día' : 'días'}
+                </span>
+              </>
+            )}
             {modeloNombre || reparacion.data.ModeloDroneNameRep || 'Modelo no especificado'}
           </h6>
           <p className='mb-1 text-muted'>{reparacion.data.NombreUsu}{reparacion.data.ApellidoUsu ? ` ${reparacion.data.ApellidoUsu}` : ''}</p>
