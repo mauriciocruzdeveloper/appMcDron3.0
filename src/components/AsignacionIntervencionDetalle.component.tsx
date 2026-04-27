@@ -35,7 +35,7 @@ export const AsignacionIntervencionDetalle: React.FC<AsignacionIntervencionDetal
         descripcion: valor
       })).unwrap();
     },
-    delay: 1500
+    delay: 3000
   });
 
   const [fotos, setFotos] = useState<string[]>(fotosIniciales);
