@@ -25,6 +25,7 @@ import Estadisticas from "../components/Estadisticas.component";
 import EstadisticasLocacion from "../components/EstadisticasLocacion.component";
 import EstadosLegacyManager from "../components/EstadosLegacyManager.component";
 import GaleriaReparaciones from "../components/GaleriaReparaciones.component";
+import ExportarClientesGoogleAds from "../components/ExportarClientesGoogleAds.component";
 import RoleGuard from "../components/RoleGuard.component";
 import { useAppSelector } from "../redux-tool-kit/hooks/useAppSelector";
 
@@ -131,6 +132,11 @@ const InicioRoutes = ({ isLoggedIn, admin }) => {
                 <Route path="estados-legacy" element={
                     <RoleGuard allowedRoles={['admin']} userRole={userRole}>
                         <EstadosLegacyManager />
+                    </RoleGuard>
+                } />
+                <Route path="exportar-clientes-google-ads" element={
+                    <RoleGuard allowedRoles={['admin']} userRole={userRole}>
+                        <ExportarClientesGoogleAds />
                     </RoleGuard>
                 } />
             </Routes>

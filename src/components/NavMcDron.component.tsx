@@ -105,6 +105,10 @@ export default function NavMcDron (): JSX.Element {
                             Estados Legacy
                         </NavDropdown.Item>
                         <NavDropdown.Divider />
+                        <NavDropdown.Item onClick={() => history.push('/inicio/exportar-clientes-google-ads')}>
+                            Exportar Clientes (Google Ads)
+                        </NavDropdown.Item>
+                        <NavDropdown.Divider />
                     </>
                 )}
                 <NavDropdown.Item onClick={() => history.push('/inicio/mensajes')}>
