@@ -1,6 +1,6 @@
 import React from 'react';
 import { Navbar, NavDropdown } from 'react-bootstrap';
-import { ArrowLeftShort, List } from 'react-bootstrap-icons';
+import { List } from 'react-bootstrap-icons';
 import { useHistory } from '../hooks/useHistory';
 import { logout } from "../redux-tool-kit/app/app.slice";
 import { useAppSelector } from "../redux-tool-kit/hooks/useAppSelector";
@@ -17,6 +17,11 @@ export default function NavMcDron (): JSX.Element {
     const dispatch = useAppDispatch();
     const history = useHistory();
     const admin = usuario?.data?.Role === 'admin';
+    const nombreUsuario =
+        usuario?.data?.NombreUsu?.trim() ||
+        usuario?.data?.Nick?.trim() ||
+        usuario?.data?.EmailUsu?.split('@')[0] ||
+        "usuario";
 
     const {
         openModal,
@@ -45,22 +50,23 @@ export default function NavMcDron (): JSX.Element {
 
     return (
         <Navbar sticky="top" className="navbar-shadow bg-bluemcdron d-flex justify-content-between px-2">
-            <ArrowLeftShort
+            <img
+                src={usuario?.data?.UrlFotoUsu || "./img/logo1.png"}
                 width="50"
-                height="50"
-                onClick={handleBack}
-                color="white"
+                className="rounded-circle"
+                alt="Foto del usuario"
+                onClick={() => history.push('/inicio')}
+                style={{ cursor: 'pointer' }}
             />
             <h4 className="text-white m-0">
-                Hola {usuario?.data?.NombreUsu || "amigo"}!
+                Hola {nombreUsuario}!
             </h4>
             <NavDropdown 
                 title={
-                    <img
-                        src={usuario?.data?.UrlFotoUsu || "./img/logo1.png"}
-                        width="50"
-                        className="rounded-circle"
-                        alt="Foto del usuario"
+                    <List
+                        width="35"
+                        height="35"
+                        color="white"
                     />
                 }
                 id="nav-dropdown"
