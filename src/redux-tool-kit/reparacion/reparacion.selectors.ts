@@ -174,6 +174,13 @@ export const selectReparacionesFiltradas = createSelector(
       }
     }
 
+    // Filtro por estados específicos (OR: muestra si coincide con alguno de los seleccionados)
+    if (filtro.estadosReparacion && filtro.estadosReparacion.length > 0) {
+      reparacionesFiltradas = reparacionesFiltradas.filter(reparacion =>
+        filtro.estadosReparacion.includes(reparacion.data.EstadoRep)
+      );
+    }
+
     return reparacionesFiltradas;
   }
 );

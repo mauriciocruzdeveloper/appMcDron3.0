@@ -17,6 +17,7 @@ const initialState: ReparacionState = {
   filter: {
     estadosPrioritarios: true,
     search: '',
+    estadosReparacion: [],
   },
   coleccionReparaciones: {},
   intervencionesDeReparacionActual: [],
