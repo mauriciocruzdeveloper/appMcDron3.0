@@ -56,21 +56,23 @@ export default function EstadisticasSemanales(): JSX.Element {
     const reparaciones = useAppSelector(selectReparacionesArray);
     const navigate = useNavigate();
 
-    // Años disponibles según FeRecRep
+    // Años disponibles según FeRecRep o FeConRep como fallback
     const anosDisponibles = useMemo(() => {
         const anos = new Set<number>();
         reparaciones.forEach(rep => {
-            if (!rep.data.FeRecRep) return;
-            anos.add(new Date(rep.data.FeRecRep).getFullYear());
+            const fecha = rep.data.FeRecRep ?? rep.data.FeConRep;
+            if (!fecha) return;
+            anos.add(new Date(fecha).getFullYear());
         });
         return Array.from(anos).sort((a, b) => b - a);
     }, [reparaciones]);
 
-    // Reparaciones del año seleccionado con fecha de recibo
+    // Reparaciones del año seleccionado (con fecha de recibo o contacto)
     const reparacionesDelAno = useMemo(() =>
         reparaciones.filter(rep => {
-            if (!rep.data.FeRecRep) return false;
-            return new Date(rep.data.FeRecRep).getFullYear() === filtroAno;
+            const fecha = rep.data.FeRecRep ?? rep.data.FeConRep;
+            if (!fecha) return false;
+            return new Date(fecha).getFullYear() === filtroAno;
         }),
         [reparaciones, filtroAno]
     );
@@ -80,7 +82,7 @@ export default function EstadisticasSemanales(): JSX.Element {
         const map = new Map<string, SemanaData>();
 
         reparacionesDelAno.forEach(rep => {
-            const fecha = new Date(rep.data.FeRecRep!);
+            const fecha = new Date((rep.data.FeRecRep ?? rep.data.FeConRep)!);
             const { week, isoYear } = getISOWeek(fecha);
             const weekKey = `${isoYear}-W${String(week).padStart(2, '0')}`;
 
@@ -295,7 +297,8 @@ export default function EstadisticasSemanales(): JSX.Element {
                                             </div>
                                             <div className="text-end">
                                                 <small className="text-muted">
-                                                    {formatFechaLarga(rep.data.FeRecRep!)}
+                                                    {formatFechaLarga((rep.data.FeRecRep ?? rep.data.FeConRep)!)}
+                                                    {!rep.data.FeRecRep && <span className="text-warning ms-1">(consulta)</span>}
                                                 </small>
                                                 <br />
                                                 <span className={`badge ${
