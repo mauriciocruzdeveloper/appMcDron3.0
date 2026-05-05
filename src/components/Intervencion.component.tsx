@@ -333,6 +333,7 @@ export default function IntervencionComponent(): JSX.Element {
               id="NombreInt"
               value={intervencion.data.NombreInt}
               onChange={handleTextInputChange}
+              disabled={!isNew}
               required
             />
           </div>

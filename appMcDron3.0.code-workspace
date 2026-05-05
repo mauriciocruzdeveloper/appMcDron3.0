@@ -1,0 +1,11 @@
+{
+	"folders": [
+		{
+			"path": "."
+		},
+		{
+			"path": "../mcdron-web-php"
+		}
+	],
+	"settings": {}
+}
