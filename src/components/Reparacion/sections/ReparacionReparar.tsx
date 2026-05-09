@@ -17,7 +17,7 @@ import {
 import { selectColeccionIntervenciones } from "../../../redux-tool-kit/intervencion/intervencion.selectors";
 import { EstadoAsignacion } from "../../../types/intervencion";
 import { convertTimestampCORTO } from "../../../utils/utils";
-import TextareaAutosize from "react-textarea-autosize";
+import { SectionCard, FormField, FormTextarea, AppButton } from "../../ui";
 
 interface ReparacionRepararProps {
     reparacionId: string;
@@ -164,9 +164,7 @@ export const ReparacionReparar: React.FC<ReparacionRepararProps> = ({
     };
 
     return (
-        <div className="card mb-3" id="seccion-reparar">
-            <div className="card-body">
-                <h5 className="card-title bluemcdron">REPARAR</h5>
+        <SectionCard title="REPARAR" id="seccion-reparar">
                 
                 {/* Lista simplificada de intervenciones con checks */}
                 {asignaciones.length > 0 && (
@@ -209,68 +207,44 @@ export const ReparacionReparar: React.FC<ReparacionRepararProps> = ({
                     </div>
                 )}
 
-                <div>
-                    <label className="form-label">
-                        Informe de Reparación o Diagnóstico
-                        {descripcionTec.isSaving && <small className="text-muted ms-2">Guardando...</small>}
-                    </label>
-                    <TextareaAutosize
-                        onChange={(e) => descripcionTec.onChange(e.target.value)}
-                        className="form-control"
-                        id="DescripcionTecRep"
-                        value={descripcionTec.value}
-                        rows={5}
-                        disabled={!isAdmin}
-                    />
-                </div>
-                <div>
-                    <label className="form-label">
-                        Fecha Finalizacion
-                        {fechaFin.isSaving && <small className="text-muted ms-2">Guardando...</small>}
-                    </label>
-                    <input
-                        onChange={(e) => fechaFin.onChange(e.target.value)}
-                        type="date"
-                        className="form-control"
-                        id="FeFinRep"
-                        value={fechaFin.value}
-                        disabled={!isAdmin}
-                    />
-                </div>
+                <FormTextarea
+                    label="Informe de Reparación o Diagnóstico"
+                    id="DescripcionTecRep"
+                    value={descripcionTec.value}
+                    onChange={descripcionTec.onChange}
+                    isSaving={descripcionTec.isSaving}
+                    rows={5}
+                    disabled={!isAdmin}
+                />
+                <FormField
+                    label="Fecha Finalización"
+                    id="FeFinRep"
+                    type="date"
+                    value={fechaFin.value}
+                    onChange={fechaFin.onChange}
+                    isSaving={fechaFin.isSaving}
+                    disabled={!isAdmin}
+                />
 
                 {isAdmin && (
-                    <div className="mt-3">
+                    <div className="d-flex flex-wrap gap-2 mt-3">
                         {puedeAvanzarAReparado && (
-                            <button
-                                type="button"
-                                className="btn btn-success"
-                                onClick={avanzarAReparado}
-                            >
+                            <AppButton variant="success" onClick={avanzarAReparado}>
                                 Marcar como Reparado
-                            </button>
+                            </AppButton>
                         )}
                         {puedeAvanzarADiagnosticado && (
-                            <button
-                                type="button"
-                                className="btn btn-warning ms-2"
-                                onClick={avanzarADiagnosticado}
-                            >
+                            <AppButton variant="warning" onClick={avanzarADiagnosticado}>
                                 Marcar como Diagnosticado
-                            </button>
+                            </AppButton>
                         )}
                         {puedeResolverAlternativamente && (
-                            <button
-                                type="button"
-                                className="btn btn-outline-secondary ms-2"
-                                onClick={resolverAlternativamente}
-                                title="Cerrar la reparación sin completar las intervenciones presupuestadas"
-                            >
+                            <AppButton variant="outline-secondary" onClick={resolverAlternativamente}>
                                 Resolver alternativamente
-                            </button>
+                            </AppButton>
                         )}
                     </div>
                 )}
-            </div>
-        </div>
+        </SectionCard>
     );
 };

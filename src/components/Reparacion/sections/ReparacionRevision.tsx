@@ -1,4 +1,4 @@
-import React, { ChangeEvent } from "react";
+import React from "react";
 import { useAppSelector } from "../../../redux-tool-kit/hooks/useAppSelector";
 import { useAppDispatch } from "../../../redux-tool-kit/hooks/useAppDispatch";
 import { useModal } from "../../Modal/useModal";
@@ -9,11 +9,10 @@ import {
     selectPuedeAvanzarA,
 } from "../../../redux-tool-kit/reparacion";
 import { 
-    actualizarCampoReparacionAsync,
     cambiarEstadoReparacionAsync,
     generarYGuardarDiagnosticoAsync,
 } from "../../../redux-tool-kit/reparacion/reparacion.actions";
-import TextareaAutosize from "react-textarea-autosize";
+import { SectionCard, FormField, FormTextarea, AppButton } from "../../ui";
 
 interface ReparacionRevisionProps {
     reparacionId: string;
@@ -70,62 +69,46 @@ export const ReparacionRevision: React.FC<ReparacionRevisionProps> = ({
     };
 
     return (
-        <div className="card mb-3" id="seccion-revision">
-            <div className="card-body">
-                <h5 className="card-title bluemcdron">REVISIÓN</h5>
-                <div>
-                    <label className="form-label">
-                        Número de Serie
-                        {numeroSerie.isSaving && <small className="text-muted ms-2">Guardando...</small>}
-                    </label>
-                    <input
-                        onChange={(e) => numeroSerie.onChange(e.target.value)}
-                        type="text"
-                        className="form-control"
-                        id="NumeroSerieRep"
-                        value={numeroSerie.value}
-                        disabled={!isAdmin}
-                    />
-                </div>
-                <div className="d-flex w-100 justify-content-between align-items-center">
-                    <label className="form-label">Autodiagnóstico</label>
-                    {isAdmin && (
-                        <button
-                            type="button"
-                            className="btn btn-outline-secondary bg-bluemcdron text-white"
-                            onClick={handleGenerarAutoDiagnostico}
-                        >
-                            <i className="bi bi-arrow-repeat"></i>
-                        </button>
-                    )}
-                </div>
-                <div>
-                    <label className="form-label">
-                        Observaciones del Técnico
-                        {diagnostico.isSaving && <small className="text-muted ms-2">Guardando...</small>}
-                    </label>
-                    <TextareaAutosize
-                        onChange={(e) => diagnostico.onChange(e.target.value)}
-                        className="form-control"
-                        id="DiagnosticoRep"
-                        value={diagnostico.value}
-                        rows={5}
-                        disabled={!isAdmin}
-                    />
-                </div>
+        <SectionCard title="REVISIÓN" id="seccion-revision">
+            <FormField
+                label="Número de Serie"
+                id="NumeroSerieRep"
+                value={numeroSerie.value}
+                onChange={numeroSerie.onChange}
+                isSaving={numeroSerie.isSaving}
+                disabled={!isAdmin}
+            />
 
-                {isAdmin && puedeAvanzarARevisado && (
-                    <div className="mt-3">
-                        <button
-                            type="button"
-                            className="btn btn-info"
-                            onClick={avanzarARevisado}
-                        >
-                            Marcar como Revisado
-                        </button>
-                    </div>
+            <div className="d-flex w-100 justify-content-between align-items-center">
+                <label className="form-label">Autodiagnóstico</label>
+                {isAdmin && (
+                    <AppButton
+                        variant="outline-secondary"
+                        className="bg-bluemcdron text-white"
+                        onClick={handleGenerarAutoDiagnostico}
+                    >
+                        <i className="bi bi-arrow-repeat"></i>
+                    </AppButton>
                 )}
             </div>
-        </div>
+
+            <FormTextarea
+                label="Observaciones del Técnico"
+                id="DiagnosticoRep"
+                value={diagnostico.value}
+                onChange={diagnostico.onChange}
+                isSaving={diagnostico.isSaving}
+                rows={5}
+                disabled={!isAdmin}
+            />
+
+            {isAdmin && puedeAvanzarARevisado && (
+                <div className="mt-3">
+                    <AppButton variant="info" onClick={avanzarARevisado}>
+                        Marcar como Revisado
+                    </AppButton>
+                </div>
+            )}
+        </SectionCard>
     );
 };

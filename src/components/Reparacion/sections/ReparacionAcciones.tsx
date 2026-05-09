@@ -6,6 +6,7 @@ import { useAppSelector } from "../../../redux-tool-kit/hooks/useAppSelector";
 import { selectReparacionById } from "../../../redux-tool-kit/reparacion";
 import { crearAmpliacionReparacionAsync, eliminarReparacionAsync } from "../../../redux-tool-kit/reparacion/reparacion.actions";
 import { getPublicIdDisplay } from "../../../utils/publicIdHelper";
+import { AppButton } from "../../ui";
 
 interface ReparacionAccionesProps {
     reparacionId: string;
@@ -77,21 +78,12 @@ export const ReparacionAcciones: React.FC<ReparacionAccionesProps> = ({
 
     return (
         <div className="text-center">
-            <button
-                key="botonCrearAmpliacion"
-                onClick={handleCrearAmpliacion}
-                className="w-100 btn btn-primary mb-2"
-            >
+            <AppButton variant="primary" className="w-100 mb-2" onClick={handleCrearAmpliacion}>
                 Crear Ampliación
-            </button>
-
-            <button
-                key="botonEliminar"
-                onClick={handleEliminarReparacion}
-                className="w-100 btn bg-danger text-white"
-            >
+            </AppButton>
+            <AppButton variant="danger" className="w-100" onClick={handleEliminarReparacion}>
                 Eliminar
-            </button>
+            </AppButton>
         </div>
     );
 };
