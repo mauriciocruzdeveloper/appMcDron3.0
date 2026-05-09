@@ -102,6 +102,14 @@ export {
   reconectarCanalesCerrados
 } from './websocketDiagnostico.js';
 
+// === PEDIDOS DE REPUESTOS ===
+export {
+  getPedidosPersistencia,
+  getPedidoPersistencia,
+  guardarPedidoPersistencia,
+  eliminarPedidoPersistencia
+} from './pedidosPersistencia.js';
+
 // === WEBSOCKET MANAGER ===
 export {
   initWebSocketManager,
