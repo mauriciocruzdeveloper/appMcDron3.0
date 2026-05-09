@@ -16,11 +16,11 @@ import {
 import { selectModeloDroneIdByReparacionId } from "../../../redux-tool-kit/reparacion/reparacion.selectors";
 import { selectUsuarioPorId } from "../../../redux-tool-kit/usuario/usuario.selectors";
 import { selectDronesByPropietario } from "../../../redux-tool-kit/drone/drone.selectors";
-import { selectModeloDronePorId, selectModelosDroneOrdenados } from "../../../redux-tool-kit/modeloDrone/modeloDrone.selectors";
+import { selectModelosDroneOrdenados } from "../../../redux-tool-kit/modeloDrone/modeloDrone.selectors";
 import { enviarSms, getEmailForNotifications } from "../../../utils/utils";
 import { enviarEmailVacio } from "../../../utils/sendEmails";
 import { convertTimestampCORTO } from "../../../utils/utils";
-import TextareaAutosize from "react-textarea-autosize";
+import { SectionCard, FormField, FormTextarea, AppButton } from "../../ui";
 
 interface ReparacionConsultaProps {
     reparacionId: string;
@@ -129,181 +129,142 @@ export const ReparacionConsulta: React.FC<ReparacionConsultaProps> = ({
     };
 
     return (
-        <div className="card mb-3" id="seccion-consulta">
-            <div className="card-body">
-                <div className="d-flex w-100 justify-content-between align-items-center">
-                    <h5 className="card-title bluemcdron">CONSULTA</h5>
-                    <button
-                        type="button"
-                        className="btn btn-outline-secondary bg-bluemcdron text-white"
-                        onClick={handleGoToUser}
-                    >
-                        Ir al Cliente
-                    </button>
-                </div>
-                <div>
-                    <label className="form-label">Fecha de Cosulta</label>
-                    <input
-                        type="date"
-                        className="form-control"
-                        id="FeConRep"
-                        value={convertTimestampCORTO(reparacion.data.FeConRep)}
+        <SectionCard
+            title="CONSULTA"
+            id="seccion-consulta"
+            headerAction={
+                <AppButton variant="outline-secondary" className="bg-bluemcdron text-white" onClick={handleGoToUser}>
+                    Ir al Cliente
+                </AppButton>
+            }
+        >
+            <FormField
+                label="Fecha de Consulta"
+                id="FeConRep"
+                type="date"
+                value={convertTimestampCORTO(reparacion.data.FeConRep)}
+                onChange={() => undefined}
+                disabled
+            />
+            <div className="d-flex w-100 justify-content-between align-items-end gap-2">
+                <div className="flex-grow-1">
+                    <FormField
+                        label="Email Cliente"
+                        id="EmailUsu"
+                        value={getEmailForNotifications(usuario)}
+                        onChange={() => undefined}
                         disabled
                     />
                 </div>
-                <div>
-                    <label className="form-label">Email Cliente</label>
-                    <div className="d-flex w-100 justify-content-between">
-                        <input
-                            type="text"
-                            className="form-control"
-                            id="EmailUsu"
-                            value={getEmailForNotifications(usuario)}
-                            disabled
-                        />
-                        <button
-                            type="submit"
-                            className="btn btn-outline-secondary bg-bluemcdron text-white"
-                            onClick={handleSendEmail}
-                        >
-                            <i className="bi bi-envelope"></i>
-                        </button>
-                    </div>
-                </div>
-                <div>
-                    <label className="form-label">Nombre Cliente</label>
-                    <input
-                        type="text"
-                        className="form-control"
-                        id="NombreUsu"
-                        value={usuario?.data?.NombreUsu}
+                <AppButton variant="outline-secondary" className="bg-bluemcdron text-white" onClick={handleSendEmail}>
+                    <i className="bi bi-envelope"></i>
+                </AppButton>
+            </div>
+            <FormField
+                label="Nombre Cliente"
+                id="NombreUsu"
+                value={usuario?.data?.NombreUsu || ""}
+                onChange={() => undefined}
+                disabled
+            />
+            <FormField
+                label="Apellido Cliente"
+                id="ApellidoUsu"
+                value={usuario?.data?.ApellidoUsu || ""}
+                onChange={() => undefined}
+                disabled
+            />
+            <div className="d-flex w-100 justify-content-between align-items-end gap-2">
+                <div className="flex-grow-1">
+                    <FormField
+                        label="Teléfono Cliente"
+                        id="TelefonoUsu"
+                        type="tel"
+                        value={usuario?.data?.TelefonoUsu || ""}
+                        onChange={() => undefined}
                         disabled
                     />
                 </div>
+                <AppButton variant="outline-secondary" className="bg-bluemcdron text-white" onClick={handleSendSms}>
+                    <i className="bi bi-chat-left-text"></i>
+                </AppButton>
+            </div>
+
+            <div>
+                <label className="form-label">Nombre del Drone</label>
+                <select
+                    className="form-control"
+                    id="DroneId"
+                    value={reparacion.data.DroneId || ""}
+                    onChange={handleDroneChange}
+                    disabled
+                >
+                    <option value="">Seleccione un drone</option>
+                    {dronesDelCliente.map(drone => (
+                        <option key={drone.id} value={drone.id}>
+                            {drone.data.Nombre || `Drone sin nombre (${drone.id})`}
+                        </option>
+                    ))}
+                </select>
+                {dronesDelCliente.length === 0 && usuario?.id && (
+                    <small className="form-text text-muted">
+                        El cliente no tiene drones registrados
+                    </small>
+                )}
+            </div>
+
+            {reparacion.data.DroneId ? (
                 <div>
-                    <label className="form-label">Apellido Cliente</label>
-                    <input
-                        type="text"
-                        className="form-control"
-                        id="ApellidoUsu"
-                        value={usuario?.data?.ApellidoUsu}
-                        disabled
-                    />
-                </div>
-                <div>
-                    <label className="form-label">Teléfono Cliente</label>
-                    <div className="d-flex w-100 justify-content-between">
-                        <input
-                            type="tel"
-                            className="form-control"
-                            id="TelefonoUsu"
-                            value={usuario?.data?.TelefonoUsu}
-                            disabled
-                        />
-                        <button
-                            type="submit"
-                            className="btn btn-outline-secondary bg-bluemcdron text-white"
-                            onClick={handleSendSms}
-                        >
-                            <i className="bi bi-chat-left-text"></i>
-                        </button>
-                    </div>
-                </div>
-                <div>
-                    <label className="form-label">Nombre del Drone</label>
+                    <label className="form-label">Modelo del Drone</label>
                     <select
                         className="form-control"
-                        id="DroneId"
-                        value={reparacion.data.DroneId || ""}
-                        onChange={handleDroneChange}
-                        disabled
+                        id="ModeloDroneIdSelect"
+                        value={modeloDroneIdActual || ""}
+                        onChange={handleModeloDroneChange}
+                        disabled={!isAdmin}
                     >
-                        <option value="">Seleccione un drone</option>
-                        {dronesDelCliente.map(drone => (
-                            <option key={drone.id} value={drone.id}>
-                                {drone.data.Nombre || `Drone sin nombre (${drone.id})`}
+                        <option value="">Seleccione un modelo</option>
+                        {modelosDrone.map(modelo => (
+                            <option key={modelo.id} value={modelo.id}>
+                                {modelo.data.NombreModelo} - {modelo.data.Fabricante}
                             </option>
                         ))}
                     </select>
-                    {dronesDelCliente.length === 0 && usuario?.id && (
-                        <small className="form-text text-muted">
-                            El cliente no tiene drones registrados
-                        </small>
+                </div>
+            ) : (
+                <FormField
+                    label="Modelo del Drone"
+                    id="ModeloDroneNameRep"
+                    value={modeloDrone.value}
+                    onChange={modeloDrone.onChange}
+                    isSaving={modeloDrone.isSaving}
+                    disabled={!isAdmin}
+                />
+            )}
+
+            <FormTextarea
+                label="Desperfectos o Roturas"
+                id="DescripcionUsuRep"
+                value={descripcionUsu.value}
+                onChange={descripcionUsu.onChange}
+                isSaving={descripcionUsu.isSaving}
+                disabled={!isAdmin}
+            />
+
+            {isAdmin && (
+                <div className="d-flex flex-wrap gap-2 mt-3">
+                    {puedeAvanzarARespondido && (
+                        <AppButton variant="success" className="flex-fill" onClick={avanzarARespondido}>
+                            Marcar como Respondido
+                        </AppButton>
+                    )}
+                    {puedeAvanzarATransito && (
+                        <AppButton variant="warning" className="flex-fill" onClick={avanzarATransito}>
+                            Marcar en Tránsito
+                        </AppButton>
                     )}
                 </div>
-                {reparacion.data.DroneId ? (
-                    <div>
-                        <label className="form-label">Modelo del Drone</label>
-                        <select
-                            className="form-control"
-                            id="ModeloDroneIdSelect"
-                            value={modeloDroneIdActual || ""}
-                            onChange={handleModeloDroneChange}
-                            disabled={!isAdmin}
-                        >
-                            <option value="">Seleccione un modelo</option>
-                            {modelosDrone.map(modelo => (
-                                <option key={modelo.id} value={modelo.id}>
-                                    {modelo.data.NombreModelo} - {modelo.data.Fabricante}
-                                </option>
-                            ))}
-                        </select>
-                    </div>
-                ) : (
-                    <div>
-                        <label className="form-label">
-                            Modelo del Drone
-                            {modeloDrone.isSaving && <small className="text-muted ms-2">Guardando...</small>}
-                        </label>
-                        <input
-                            type="text"
-                            className="form-control"
-                            id="ModeloDroneNameRep"
-                            value={modeloDrone.value}
-                            onChange={(e) => modeloDrone.onChange(e.target.value)}
-                            disabled={!isAdmin}
-                        />
-                    </div>
-                )}
-                <div>
-                    <label className="form-label">
-                        Desperfectos o Roturas
-                        {descripcionUsu.isSaving && <small className="text-muted ms-2">Guardando...</small>}
-                    </label>
-                    <TextareaAutosize
-                        onChange={(e) => descripcionUsu.onChange(e.target.value)}
-                        className="form-control"
-                        id="DescripcionUsuRep"
-                        value={descripcionUsu.value}
-                        disabled={!isAdmin}
-                    />
-                </div>
-
-                {isAdmin && (
-                    <div className="d-flex flex-wrap gap-2 mt-3">
-                        {puedeAvanzarARespondido && (
-                            <button
-                                type="button"
-                                className="btn btn-success flex-fill"
-                                style={{ minWidth: '140px' }}
-                                onClick={avanzarARespondido}
-                            >
-                                Marcar como Respondido
-                            </button>
-                        )}
-                        {puedeAvanzarATransito && (
-                            <button
-                                type="button"
-                                className="btn btn-warning flex-fill"
-                                style={{ minWidth: '140px' }}
-                                onClick={avanzarATransito}
-                            >
-                                Marcar en Tránsito
-                            </button>
-                        )}
-                    </div>
-                )}
-            </div>
-        </div>
+            )}
+        </SectionCard>
     );
 };

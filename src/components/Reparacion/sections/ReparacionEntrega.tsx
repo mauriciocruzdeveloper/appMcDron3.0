@@ -12,7 +12,7 @@ import {
     cambiarEstadoReparacionAsync,
 } from "../../../redux-tool-kit/reparacion/reparacion.actions";
 import { convertTimestampCORTO } from "../../../utils/utils";
-import TextareaAutosize from "react-textarea-autosize";
+import { SectionCard, FormField, FormTextarea, AppButton } from "../../ui";
 
 interface ReparacionEntregaProps {
     reparacionId: string;
@@ -117,102 +117,62 @@ export const ReparacionEntrega: React.FC<ReparacionEntregaProps> = ({
     };
 
     return (
-        <div className="card mb-3" id="seccion-entrega">
-            <div className="card-body">
-                <h5 className="card-title bluemcdron">ENTREGA</h5>
-                <div>
-                    <label className="form-label">
-                        Fecha Entrega
-                        {fechaEntrega.isSaving && <small className="text-muted ms-2">Guardando...</small>}
-                    </label>
-                    <input
-                        onChange={(e) => fechaEntrega.onChange(e.target.value)}
-                        type="date"
-                        className="form-control"
-                        id="FeEntRep"
-                        value={fechaEntrega.value}
-                        disabled={!isAdmin}
-                    />
-                </div>
-                <div>
-                    <label className="form-label">
-                        Cliente, Comisionista, Correo, Seguimiento
-                        {txtEntrega.isSaving && <small className="text-muted ms-2">Guardando...</small>}
-                    </label>
-                    <TextareaAutosize
-                        onChange={(e) => txtEntrega.onChange(e.target.value)}
-                        className="form-control"
-                        id="TxtEntregaRep"
-                        value={txtEntrega.value}
-                        rows={5}
-                        disabled={!isAdmin}
-                    />
-                </div>
-                <div>
-                    <label className="form-label">
-                        Nro. de Seguimiento
-                        {seguimiento.isSaving && <small className="text-muted ms-2">Guardando...</small>}
-                    </label>
-                    <input
-                        onChange={(e) => seguimiento.onChange(e.target.value)}
-                        type="text"
-                        className="form-control"
-                        id="SeguimientoEntregaRep"
-                        value={seguimiento.value}
-                        disabled={!isAdmin}
-                    />
-                </div>
+        <SectionCard title="ENTREGA" id="seccion-entrega">
+            <FormField
+                label="Fecha Entrega"
+                id="FeEntRep"
+                type="date"
+                value={fechaEntrega.value}
+                onChange={fechaEntrega.onChange}
+                isSaving={fechaEntrega.isSaving}
+                disabled={!isAdmin}
+            />
+            <FormTextarea
+                label="Cliente, Comisionista, Correo, Seguimiento"
+                id="TxtEntregaRep"
+                value={txtEntrega.value}
+                onChange={txtEntrega.onChange}
+                isSaving={txtEntrega.isSaving}
+                rows={5}
+                disabled={!isAdmin}
+            />
+            <FormField
+                label="Nro. de Seguimiento"
+                id="SeguimientoEntregaRep"
+                value={seguimiento.value}
+                onChange={seguimiento.onChange}
+                isSaving={seguimiento.isSaving}
+                disabled={!isAdmin}
+            />
 
-                {isAdmin && (
-                    <div className="mt-3">
-                        <div className="d-flex flex-wrap gap-2 mb-2">
-                            {(reparacion.data.EstadoRep === 'Reparado' || reparacion.data.EstadoRep === 'Diagnosticado') && puedeAvanzarACobrado && (
-                                <button
-                                    type="button"
-                                    className="btn btn-info flex-fill"
-                                    style={{ minWidth: '140px' }}
-                                    onClick={avanzarACobrado}
-                                >
-                                    Marcar como Cobrado
-                                </button>
-                            )}
-                            {puedeAvanzarAEnviado && (
-                                <button
-                                    type="button"
-                                    className="btn btn-warning flex-fill"
-                                    style={{ minWidth: '140px' }}
-                                    onClick={avanzarAEnviado}
-                                >
-                                    Marcar como Enviado
-                                </button>
-                            )}
-                        </div>
-
-                        <div className="d-flex flex-wrap gap-2">
-                            {puedeAvanzarAFinalizado && (
-                                <button
-                                    type="button"
-                                    className="btn btn-success flex-fill"
-                                    style={{ minWidth: '140px' }}
-                                    onClick={avanzarAFinalizado}
-                                >
-                                    Finalizar Reparación
-                                </button>
-                            )}
-                            {puedeAvanzarAAbandonado && (
-                                <button
-                                    type="button"
-                                    className="btn btn-secondary flex-fill"
-                                    style={{ minWidth: '140px' }}
-                                    onClick={avanzarAAbandonado}
-                                >
-                                    Marcar como Abandonado
-                                </button>
-                            )}
-                        </div>
+            {isAdmin && (
+                <div className="mt-3">
+                    <div className="d-flex flex-wrap gap-2 mb-2">
+                        {(reparacion.data.EstadoRep === 'Reparado' || reparacion.data.EstadoRep === 'Diagnosticado') && puedeAvanzarACobrado && (
+                            <AppButton variant="info" className="flex-fill" onClick={avanzarACobrado}>
+                                Marcar como Cobrado
+                            </AppButton>
+                        )}
+                        {puedeAvanzarAEnviado && (
+                            <AppButton variant="warning" className="flex-fill" onClick={avanzarAEnviado}>
+                                Marcar como Enviado
+                            </AppButton>
+                        )}
                     </div>
-                )}
-            </div>
-        </div>
+                    <div className="d-flex flex-wrap gap-2">
+                        {puedeAvanzarAFinalizado && (
+                            <AppButton variant="success" className="flex-fill" onClick={avanzarAFinalizado}>
+                                Finalizar Reparación
+                            </AppButton>
+                        )}
+                        {puedeAvanzarAAbandonado && (
+                            <AppButton variant="secondary" className="flex-fill" onClick={avanzarAAbandonado}>
+                                Marcar como Abandonado
+                            </AppButton>
+                        )}
+                    </div>
+                </div>
+            )}
+        </SectionCard>
     );
 };

@@ -462,7 +462,7 @@ export const enviarDroneDiagnosticadoAsync = createAsyncThunk(
         equipo: reparacion.data.ModeloDroneNameRep,
         fecha_ingreso: new Date(Number(reparacion.data.FeRecRep)).toLocaleDateString(),
         fecha_diagnostico: new Date().toLocaleDateString(),
-        diagnostico: reparacion.data.DescripcionTecRep || "Sin diagnóstico",
+        diagnostico: reparacion.data.DescripcionTecRep || "Ver presupuesto",
         costo_diagnostico: `$${reparacion.data.PresuDiRep ?? 0}`,
         telefono: reparacion.data.TelefonoUsu,
         email: emailDestino

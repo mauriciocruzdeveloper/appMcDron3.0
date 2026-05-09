@@ -11,6 +11,8 @@ import {
     borrarDocumentoAsync,
 } from "../../../redux-tool-kit/app/app.actions";
 
+import { SectionCard } from "../../ui";
+
 interface ReparacionDocumentosProps {
     reparacionId: string;
     isAdmin: boolean;
@@ -68,23 +70,21 @@ export const ReparacionDocumentos: React.FC<ReparacionDocumentosProps> = ({
     };
 
     return (
-        <div className="card mb-3">
-            <div className="card-body">
-                <div className="d-flex w-100 justify-content-between align-items-center">
-                    <h5 className="card-title bluemcdron">DOCUMENTOS</h5>
-                    {isAdmin && (
-                        <div className="d-flex justify-content-start mb-2">
-                            <label className="btn btn-outline-secondary bg-bluemcdron text-white">
-                                Subir Documento
-                                <input
-                                    type="file"
-                                    onChange={handleDocumentoChange}
-                                    style={{ display: "none" }}
-                                />
-                            </label>
-                        </div>
-                    )}
-                </div>
+        <SectionCard
+            title="DOCUMENTOS"
+            headerAction={
+                isAdmin ? (
+                    <label className="btn btn-outline-secondary bg-bluemcdron text-white">
+                        Subir Documento
+                        <input
+                            type="file"
+                            onChange={handleDocumentoChange}
+                            style={{ display: "none" }}
+                        />
+                    </label>
+                ) : undefined
+            }
+        >
                 <div className="mt-3">
                     {reparacion.data.urlsDocumentos?.length ? (
                         <div className="list-group">
@@ -133,7 +133,6 @@ export const ReparacionDocumentos: React.FC<ReparacionDocumentosProps> = ({
                         </div>
                     )}
                 </div>
-            </div>
-        </div>
+        </SectionCard>
     );
 };

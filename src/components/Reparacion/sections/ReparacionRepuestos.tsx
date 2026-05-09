@@ -11,7 +11,7 @@ import {
     actualizarCampoReparacionAsync,
     cambiarEstadoReparacionAsync,
 } from "../../../redux-tool-kit/reparacion/reparacion.actions";
-import TextareaAutosize from "react-textarea-autosize";
+import { SectionCard, FormTextarea, AppButton } from "../../ui";
 
 interface ReparacionRepuestosProps {
     reparacionId: string;
@@ -67,84 +67,71 @@ export const ReparacionRepuestos: React.FC<ReparacionRepuestosProps> = ({
     };
 
     return (
-        <div className="card mb-3" id="seccion-repuestos">
-            <div className="card-body">
-                <h5 className="card-title bluemcdron">REPUESTOS</h5>
-                
-                <div className="mb-3">
-                    <label className="form-label">
-                        Observaciones de Repuestos 
-                        <small className="text-muted ms-2">
-                            ({(obsRepuestos.value || "").length}/2000 caracteres)
-                        </small>
-                        {obsRepuestos.isSaving && <small className="text-muted ms-2">Guardando...</small>}
-                    </label>
-                    <TextareaAutosize
-                        onChange={(e) => obsRepuestos.onChange(e.target.value)}
-                        className="form-control"
-                        id="ObsRepuestos"
-                        value={obsRepuestos.value}
-                        rows={3}
-                        maxLength={2000}
-                        placeholder="Ej: Motor delantero izquierdo DJI Mini 3 Pro, tornillos M2x6 (x4)"
-                    />
-                    <small className="form-text text-muted">
-                        Especificar qué repuestos se necesitan para continuar con la reparación
+        <SectionCard title="REPUESTOS" id="seccion-repuestos">
+            <div className="mb-3">
+                <label className="form-label">
+                    Observaciones de Repuestos
+                    <small className="text-muted ms-2">
+                        ({(obsRepuestos.value || "").length}/2000 caracteres)
                     </small>
-                </div>
-
-                <div className="mb-3">
-                    <label className="form-label">
-                        Seguimiento de Repuestos (Legacy)
-                        <span className="badge bg-secondary ms-2">Opcional</span>
-                        {txtRepuestos.isSaving && <small className="text-muted ms-2">Guardando...</small>}
-                    </label>
-                    <TextareaAutosize
-                        onChange={(e) => txtRepuestos.onChange(e.target.value)}
-                        className="form-control"
-                        id="TxtRepuestosRep"
-                        value={txtRepuestos.value}
-                        rows={3}
-                        placeholder="Información de transportista, seguimiento, etc."
-                    />
-                    <small className="form-text text-muted">
-                        Información adicional: transportista, número de seguimiento, etc.
-                    </small>
-                </div>
-
-                {isAdmin && (
-                    <div className="mt-3">
-                        {reparacion.data.EstadoRep === 'Aceptado' && puedeAvanzarARepuestos && (
-                            <button
-                                type="button"
-                                className="btn btn-warning me-2 mb-2"
-                                onClick={avanzarARepuestos}
-                            >
-                                ⏸️ Pausar - Esperando Repuestos
-                            </button>
-                        )}
-                        
-                        {reparacion.data.EstadoRep === 'Repuestos' && puedeAvanzarAAceptado && (
-                            <button
-                                type="button"
-                                className="btn btn-success me-2 mb-2"
-                                onClick={avanzarAAceptado}
-                            >
-                                ✅ Repuestos Llegaron - Continuar Reparación
-                            </button>
-                        )}
-
-                        {reparacion.data.EstadoRep === 'Repuestos' && (
-                            <div className="alert alert-warning mt-2" role="alert">
-                                <strong>⚠️ Estado: Esperando Repuestos</strong>
-                                <p className="mb-0 mt-1">
-                                    La reparación está pausada hasta que lleguen los repuestos necesarios.
-                                </p>
-                            </div>
-                        )}
-                    </div>
-                )}
+                    {obsRepuestos.isSaving && <small className="text-muted ms-2">Guardando...</small>}
+                </label>
+                <FormTextarea
+                    label=""
+                    id="ObsRepuestos"
+                    value={obsRepuestos.value}
+                    onChange={obsRepuestos.onChange}
+                    isSaving={false}
+                    rows={3}
+                    placeholder="Ej: Motor delantero izquierdo DJI Mini 3 Pro, tornillos M2x6 (x4)"
+                />
+                <small className="form-text text-muted">
+                    Especificar qué repuestos se necesitan para continuar con la reparación
+                </small>
             </div>
-        </div>
+
+            <div className="mb-3">
+                <label className="form-label">
+                    Seguimiento de Repuestos (Legacy)
+                    <span className="badge bg-secondary ms-2">Opcional</span>
+                    {txtRepuestos.isSaving && <small className="text-muted ms-2">Guardando...</small>}
+                </label>
+                <FormTextarea
+                    label=""
+                    id="TxtRepuestosRep"
+                    value={txtRepuestos.value}
+                    onChange={txtRepuestos.onChange}
+                    isSaving={false}
+                    rows={3}
+                    placeholder="Información de transportista, seguimiento, etc."
+                />
+                <small className="form-text text-muted">
+                    Información adicional: transportista, número de seguimiento, etc.
+                </small>
+            </div>
+
+            {isAdmin && (
+                <div className="mt-3">
+                    {reparacion.data.EstadoRep === 'Aceptado' && puedeAvanzarARepuestos && (
+                        <AppButton variant="warning" className="me-2 mb-2" onClick={avanzarARepuestos}>
+                            ⏸️ Pausar - Esperando Repuestos
+                        </AppButton>
+                    )}
+                    {reparacion.data.EstadoRep === 'Repuestos' && puedeAvanzarAAceptado && (
+                        <AppButton variant="success" className="me-2 mb-2" onClick={avanzarAAceptado}>
+                            ✅ Repuestos Llegaron - Continuar Reparación
+                        </AppButton>
+                    )}
+                    {reparacion.data.EstadoRep === 'Repuestos' && (
+                        <div className="alert alert-warning mt-2" role="alert">
+                            <strong>⚠️ Estado: Esperando Repuestos</strong>
+                            <p className="mb-0 mt-1">
+                                La reparación está pausada hasta que lleguen los repuestos necesarios.
+                            </p>
+                        </div>
+                    )}
+                </div>
+            )}
+        </SectionCard>
     );
 };

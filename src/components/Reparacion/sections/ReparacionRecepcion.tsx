@@ -13,6 +13,7 @@ import {
 } from "../../../redux-tool-kit/reparacion/reparacion.actions";
 import { enviarReciboAsync } from "../../../redux-tool-kit/app/app.actions";
 import { estados } from "../../../datos/estados";
+import { SectionCard, FormField, AppButton } from "../../ui";
 
 interface ReparacionRecepcionProps {
     reparacionId: string;
@@ -106,74 +107,60 @@ export const ReparacionRecepcion: React.FC<ReparacionRecepcionProps> = ({ repara
     };
 
     return (
-        <div className="card mb-3" id="seccion-recepcion">
-            <div className="card-body">
-                <h5 className="card-title bluemcdron">RECEPCIÓN</h5>
-
-                {estaPendienteDeRecepcion && (
-                    <div className="alert alert-info mb-3">
-                        <strong>Estado actual:</strong> {reparacion.data.EstadoRep}
-                        <br />
-                        <small>Una vez que el equipo llegue al taller, márcalo como recibido.</small>
-                    </div>
-                )}
-
-                <div>
-                    <label className="form-label">
-                        Fecha de Recepción
-                        {fechaRecepcion.isSaving && <small className="text-muted ms-2">Guardando...</small>}
-                    </label>
-                    <div className="d-flex w-100 justify-content-between">
-                        <input
-                            onChange={(e) => fechaRecepcion.onChange(e.target.value)}
-                            type="date"
-                            className="form-control"
-                            id="FeRecRep"
-                            value={fechaRecepcion.value}
-                            disabled={!isAdmin}
-                        />
-                        <button
-                            type="submit"
-                            className="btn btn-outline-secondary bg-bluemcdron text-white"
-                            onClick={handleSendRecibo}
-                            disabled={!reparacion.data.FeRecRep}
-                            title={!reparacion.data.FeRecRep ? "Primero marque como recibido" : "Enviar recibo por email"}
-                        >
-                            <i className="bi bi-envelope"></i>
-                        </button>
-                    </div>
+        <SectionCard title="RECEPCIÓN" id="seccion-recepcion">
+            {estaPendienteDeRecepcion && (
+                <div className="alert alert-info mb-3">
+                    <strong>Estado actual:</strong> {reparacion.data.EstadoRep}
+                    <br />
+                    <small>Una vez que el equipo llegue al taller, márcalo como recibido.</small>
                 </div>
+            )}
 
-                {isAdmin && (
-                    <div className="mt-3">
-                        {puedeAvanzarARecibido && (
-                            <button
-                                type="button"
-                                className="btn btn-primary"
-                                onClick={avanzarARecibido}
-                            >
-                                <i className="bi bi-check-circle me-2"></i>
-                                Marcar como Recibido
-                            </button>
-                        )}
-                        {estadoEsRecibido && (
-                            <>
-                                <div className="alert alert-success mt-2 mb-0">
-                                    <i className="bi bi-check-circle-fill me-2"></i>
-                                    Equipo recibido correctamente
-                                </div>
-                                <button
-                                    type="button"
-                                    className="btn btn-warning mt-2"
-                                    onClick={handleReenviarEmailRecibido}
-                                >
-                                    <i className="bi bi-envelope"></i> Reenviar email de drone recibido
-                                </button>
-                            </>
-                        )}
-                    </div>
-                )}
+            <div className="d-flex w-100 justify-content-between align-items-end gap-2">
+                <div className="flex-grow-1">
+                    <FormField
+                        label="Fecha de Recepción"
+                        id="FeRecRep"
+                        type="date"
+                        value={fechaRecepcion.value}
+                        onChange={fechaRecepcion.onChange}
+                        isSaving={fechaRecepcion.isSaving}
+                        disabled={!isAdmin}
+                    />
+                </div>
+                <AppButton
+                    variant="outline-secondary"
+                    className="bg-bluemcdron text-white"
+                    onClick={handleSendRecibo}
+                    disabled={!reparacion.data.FeRecRep}
+                >
+                    <i className="bi bi-envelope"></i>
+                </AppButton>
             </div>
-        </div>
+
+            {isAdmin && (
+                <div className="mt-3">
+                    {puedeAvanzarARecibido && (
+                        <AppButton variant="primary" onClick={avanzarARecibido}>
+                            <i className="bi bi-check-circle me-2"></i>
+                            Marcar como Recibido
+                        </AppButton>
+                    )}
+                    {estadoEsRecibido && (
+                        <>
+                            <div className="alert alert-success mt-2 mb-0">
+                                <i className="bi bi-check-circle-fill me-2"></i>
+                                Equipo recibido correctamente
+                            </div>
+                            <div className="mt-2">
+                                <AppButton variant="warning" onClick={handleReenviarEmailRecibido}>
+                                    <i className="bi bi-envelope"></i> Reenviar email de drone recibido
+                                </AppButton>
+                            </div>
+                        </>
+                    )}
+                </div>
+            )}
+        </SectionCard>
     );
 };
