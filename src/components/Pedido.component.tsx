@@ -70,8 +70,20 @@ export default function PedidoComponent(): JSX.Element {
     useEffect(() => {
         if (!isNew && pedidoActual) {
             setPedido(pedidoActual);
+
+            // Pre-popular el filtro de modelo con el primer modelo de cada repuesto
+            const filtrosIniciales: Record<string, string> = {};
+            pedidoActual.data.Items.forEach(item => {
+                if (item.data.RepuestoId) {
+                    const repuesto = repuestos.find(r => r.id === item.data.RepuestoId);
+                    if (repuesto?.data.ModelosDroneIds?.length) {
+                        filtrosIniciales[item.id] = repuesto.data.ModelosDroneIds[0];
+                    }
+                }
+            });
+            setFiltrosModeloItem(filtrosIniciales);
         }
-    }, [isNew, pedidoActual]);
+    }, [isNew, pedidoActual, repuestos]);
 
     // -------------------------------------------------------
     // Handlers campos principales
@@ -410,9 +422,16 @@ export default function PedidoComponent(): JSX.Element {
                                     </button>
                                 </div>
 
-                                {/* Filtro por modelo de drone */}
+                                {/* Modelo de drone: filtra el combo de repuestos */}
                                 <div className="mb-2">
-                                    <label className="form-label small mb-1">Filtrar por modelo de drone</label>
+                                    <label className="form-label small mb-1">
+                                        Modelo de drone
+                                        {item.data.RepuestoId && filtrosModeloItem[item.id] && (
+                                            <span className="ms-1 text-muted fw-normal">
+                                                — {modelosDrone.find(m => m.id === filtrosModeloItem[item.id])?.data.NombreModelo ?? ''}
+                                            </span>
+                                        )}
+                                    </label>
                                     <select
                                         className="form-select form-select-sm"
                                         value={filtrosModeloItem[item.id] ?? ''}
