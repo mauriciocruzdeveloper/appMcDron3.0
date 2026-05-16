@@ -10,6 +10,8 @@ import {
     selectEstadisticasPedidos,
 } from '../redux-tool-kit/pedidoRepuesto/pedidoRepuesto.selectors';
 import { ESTADOS_PEDIDO, EstadoPedido, PedidoRepuesto } from '../types/pedidoRepuesto';
+import { selectColeccionRepuestos } from '../redux-tool-kit/repuesto/repuesto.selectors';
+import { selectColeccionModelosDrone } from '../redux-tool-kit/modeloDrone/modeloDrone.selectors';
 
 export default function ListaPedidos(): JSX.Element {
     const dispatch = useAppDispatch();
@@ -23,6 +25,18 @@ export default function ListaPedidos(): JSX.Element {
     const pedidosFiltrados = useAppSelector((state) =>
         selectPedidosFiltrados(state, filtroEstado)
     );
+    const coleccionRepuestos = useAppSelector(selectColeccionRepuestos);
+    const coleccionModelosDrone = useAppSelector(selectColeccionModelosDrone);
+
+    const getModeloDroneNombres = (repuestoId: string | null): string => {
+        if (!repuestoId) return '';
+        const repuesto = coleccionRepuestos[repuestoId];
+        if (!repuesto?.data?.ModelosDroneIds?.length) return '';
+        const nombres = [...new Set(repuesto.data.ModelosDroneIds as string[])]
+            .map((id: string) => coleccionModelosDrone[id]?.data?.NombreModelo)
+            .filter(Boolean);
+        return nombres.length > 0 ? ` [${nombres.join(', ')}]` : '';
+    };
 
     const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         dispatch(setFilter(e.target.value));
@@ -169,12 +183,21 @@ export default function ListaPedidos(): JSX.Element {
                                     {/* Ítems del pedido */}
                                     {pedido.data.Items.length > 0 && (
                                         <div className="mt-2">
-                                            <small className="text-muted">
-                                                {pedido.data.Items.length === 1
-                                                    ? `1 repuesto: ${pedido.data.Items[0].data.NombreRepuesto} (x${pedido.data.Items[0].data.Cantidad})`
-                                                    : `${pedido.data.Items.length} repuestos: ${pedido.data.Items.map(i => `${i.data.NombreRepuesto} (x${i.data.Cantidad})`).join(', ')}`
-                                                }
+                                            <small className="text-muted d-block mb-1">
+                                                {pedido.data.Items.length} {pedido.data.Items.length === 1 ? 'repuesto' : 'repuestos'}:
                                             </small>
+                                            {pedido.data.Items.map(item => {
+                                                const modelos = getModeloDroneNombres(item.data.RepuestoId);
+                                                return (
+                                                    <div key={item.id} className="d-flex align-items-baseline gap-1 ms-2">
+                                                        <small>
+                                                            <span className="fw-semibold">{item.data.NombreRepuesto}</span>
+                                                            {modelos && <span className="text-muted"> {modelos}</span>}
+                                                            <span className="text-secondary"> ×{item.data.Cantidad}</span>
+                                                        </small>
+                                                    </div>
+                                                );
+                                            })}
                                         </div>
                                     )}
 
