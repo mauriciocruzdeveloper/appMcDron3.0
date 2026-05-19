@@ -131,6 +131,35 @@ export const esEstadoTerminal = (estado: EstadoReparacion): boolean => {
 };
 
 /**
+ * Determina si la reparación ya fue resuelta (reparada o diagnosticada) y por lo tanto
+ * los repuestos faltantes ya no son relevantes.
+ * Incluye también los estados terminales y rechazados posteriores.
+ *
+ * @param estado - Estado a verificar
+ * @returns true si el problema de la reparación ya fue resuelto
+ */
+export const esReparacionResuelta = (estado: EstadoReparacion): boolean => {
+  const estadosResueltos: EstadoReparacion[] = [
+    "Presupuestado",  // aún no aceptado → repuestos no son relevantes aún
+    "Reparado",
+    "Diagnosticado",
+    "Cobrado",
+    "Enviado",
+    "Finalizado",
+    "Abandonado",
+    "Cancelado",
+    "Rechazado",
+    // Legacy — también resueltos
+    "Reparar",
+    "Entregado",
+    "Venta",
+    "Liquidación",
+    "Indefinido",
+  ];
+  return estadosResueltos.includes(estado);
+};
+
+/**
  * Verifica si un estado es legacy (retrocompatibilidad)
  * 
  * @param estado - Estado a verificar

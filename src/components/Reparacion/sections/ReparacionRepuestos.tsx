@@ -1,16 +1,19 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { useAppSelector } from "../../../redux-tool-kit/hooks/useAppSelector";
 import { useAppDispatch } from "../../../redux-tool-kit/hooks/useAppDispatch";
 import { useDebouncedField } from "../../../hooks/useDebouncedField";
-import { 
-    selectReparacionById, 
+import { useHistory } from "../../../hooks/useHistory";
+import {
+    selectReparacionById,
     selectSeccionesVisibles,
     selectPuedeAvanzarA,
+    selectRepuestosDeReparacionActual,
 } from "../../../redux-tool-kit/reparacion";
-import { 
-    actualizarCampoReparacionAsync,
+import {
     cambiarEstadoReparacionAsync,
+    getIntervencionesPorReparacionAsync,
 } from "../../../redux-tool-kit/reparacion/reparacion.actions";
+import { ESTADOS_PEDIDO } from "../../../types/pedidoRepuesto";
 import TextareaAutosize from "react-textarea-autosize";
 
 interface ReparacionRepuestosProps {
@@ -18,62 +21,152 @@ interface ReparacionRepuestosProps {
     isAdmin: boolean;
 }
 
-export const ReparacionRepuestos: React.FC<ReparacionRepuestosProps> = ({ 
-    reparacionId, 
-    isAdmin 
+export const ReparacionRepuestos: React.FC<ReparacionRepuestosProps> = ({
+    reparacionId,
+    isAdmin,
 }) => {
     const dispatch = useAppDispatch();
-    
+    const history = useHistory();
+
     const reparacion = useAppSelector(state => selectReparacionById(reparacionId)(state));
-    const seccionVisible = useAppSelector(state => 
+    const seccionVisible = useAppSelector(state =>
         selectSeccionesVisibles(reparacionId, isAdmin)(state).repuestos
     );
-    const puedeAvanzarARepuestos = useAppSelector(state => 
+    const puedeAvanzarARepuestos = useAppSelector(state =>
         selectPuedeAvanzarA(reparacionId, 'Repuestos')(state)
     );
-    const puedeAvanzarAAceptado = useAppSelector(state => 
+    const puedeAvanzarAAceptado = useAppSelector(state =>
         selectPuedeAvanzarA(reparacionId, 'Aceptado')(state)
     );
+    const repuestos = useAppSelector(selectRepuestosDeReparacionActual);
 
-    // Usar debounce para campos de texto
     const obsRepuestos = useDebouncedField({
         reparacionId,
         campo: 'ObsRepuestos',
-        valorInicial: reparacion?.data.ObsRepuestos || ""
+        valorInicial: reparacion?.data.ObsRepuestos || "",
     });
 
     const txtRepuestos = useDebouncedField({
         reparacionId,
         campo: 'TxtRepuestosRep',
-        valorInicial: reparacion?.data.TxtRepuestosRep || ""
+        valorInicial: reparacion?.data.TxtRepuestosRep || "",
     });
+
+    useEffect(() => {
+        if (seccionVisible) {
+            dispatch(getIntervencionesPorReparacionAsync(reparacionId));
+        }
+    }, [dispatch, reparacionId, seccionVisible]);
 
     if (!seccionVisible || !reparacion || !isAdmin) return null;
 
+    const repuestosFaltantes = repuestos.filter(r => r.requierePedido);
+
     const avanzarARepuestos = () => {
-        dispatch(cambiarEstadoReparacionAsync({
-            reparacionId,
-            nuevoEstado: 'Repuestos',
-            enviarEmail: false
-        }));
+        dispatch(cambiarEstadoReparacionAsync({ reparacionId, nuevoEstado: 'Repuestos', enviarEmail: false }));
     };
 
     const avanzarAAceptado = () => {
-        dispatch(cambiarEstadoReparacionAsync({
-            reparacionId,
-            nuevoEstado: 'Aceptado',
-            enviarEmail: false
-        }));
+        dispatch(cambiarEstadoReparacionAsync({ reparacionId, nuevoEstado: 'Aceptado', enviarEmail: false }));
     };
 
     return (
         <div className="card mb-3" id="seccion-repuestos">
             <div className="card-body">
                 <h5 className="card-title bluemcdron">REPUESTOS</h5>
-                
+
+                {/* Repuestos derivados de las intervenciones */}
+                <div className="mb-3">
+                    <label className="form-label fw-semibold">
+                        Repuestos necesarios
+                        {repuestos.length > 0 && (
+                            <span className="ms-2 text-muted fw-normal small">
+                                ({repuestos.length} repuesto{repuestos.length !== 1 ? 's' : ''} de las intervenciones asignadas)
+                            </span>
+                        )}
+                    </label>
+
+                    {repuestos.length > 0 && repuestosFaltantes.length > 0 && (
+                        <div className="alert alert-danger py-2 mb-2" role="alert">
+                            <strong>⚠️ {repuestosFaltantes.length} repuesto{repuestosFaltantes.length !== 1 ? 's' : ''} sin pedido activo:</strong>
+                            <span className="ms-2 small">
+                                {repuestosFaltantes.map(r => r.nombre).join(', ')}
+                            </span>
+                        </div>
+                    )}
+
+                    {repuestos.length === 0 ? (
+                        <p className="text-muted small mb-0">
+                            No hay intervenciones asignadas con repuestos de inventario.
+                        </p>
+                    ) : (
+                        <div className="d-flex flex-column gap-2">
+                            {repuestos.map(r => {
+                                const borderColor = r.tienePedidoActivo || r.stockRepu > 0
+                                    ? '#198754'
+                                    : '#dc3545';
+
+                                return (
+                                    <div
+                                        key={r.repuestoId}
+                                        className="border rounded p-2"
+                                        style={{ borderLeftWidth: 4, borderLeftColor: borderColor, borderLeftStyle: 'solid' }}
+                                    >
+                                        <div className="d-flex justify-content-between align-items-start flex-wrap gap-1">
+                                            <div>
+                                                <span className="fw-semibold">{r.nombre}</span>
+                                                <span className={`badge bg-${r.estadoColor} ms-2`}>
+                                                    {r.estadoStock}
+                                                </span>
+                                                <div className="text-muted small mt-1">
+                                                    Requerido por: {r.intervencionesNombre.join(', ')}
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {r.stockRepu > 0 ? null : r.pedidos.length === 0 ? (
+                                            <div className="mt-1">
+                                                <span className="badge bg-danger">⚠️ Sin pedido</span>
+                                                <span className="text-muted small ms-2">
+                                                    No está en ningún pedido de compra
+                                                </span>
+                                            </div>
+                                        ) : (
+                                            <div className="mt-2 d-flex flex-column gap-1">
+                                                {r.pedidos.map(pedido => {
+                                                    const estadoInfo = ESTADOS_PEDIDO.find(e => e.value === pedido.estado);
+                                                    return (
+                                                        <div key={pedido.pedidoId} className="d-flex align-items-center gap-2 flex-wrap">
+                                                            <span className={`badge bg-${estadoInfo?.color || 'secondary'}`}>
+                                                                {estadoInfo?.label || pedido.estado}
+                                                            </span>
+                                                            <span className="small">{pedido.proveedorNombre}</span>
+                                                            {pedido.numeroPedido && (
+                                                                <span className="text-muted small">#{pedido.numeroPedido}</span>
+                                                            )}
+                                                            <button
+                                                                type="button"
+                                                                className="btn btn-sm btn-link p-0 ms-auto text-decoration-none"
+                                                                onClick={() => history.push(`/inicio/pedidos/${pedido.pedidoId}`)}
+                                                            >
+                                                                Ver pedido →
+                                                            </button>
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+                                        )}
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    )}
+                </div>
+
+                {/* Observaciones libres */}
                 <div className="mb-3">
                     <label className="form-label">
-                        Observaciones de Repuestos 
+                        Observaciones de Repuestos
                         <small className="text-muted ms-2">
                             ({(obsRepuestos.value || "").length}/2000 caracteres)
                         </small>
@@ -112,6 +205,7 @@ export const ReparacionRepuestos: React.FC<ReparacionRepuestosProps> = ({
                     </small>
                 </div>
 
+                {/* Botones de estado */}
                 {isAdmin && (
                     <div className="mt-3">
                         {reparacion.data.EstadoRep === 'Aceptado' && puedeAvanzarARepuestos && (
@@ -123,7 +217,7 @@ export const ReparacionRepuestos: React.FC<ReparacionRepuestosProps> = ({
                                 ⏸️ Pausar - Esperando Repuestos
                             </button>
                         )}
-                        
+
                         {reparacion.data.EstadoRep === 'Repuestos' && puedeAvanzarAAceptado && (
                             <button
                                 type="button"
