@@ -5,6 +5,7 @@ import { Filtro } from '../../types/Filtro';
 import { AsignacionIntervencion, EstadoAsignacion } from '../../types/intervencion';
 import { estados } from '../../datos/estados';
 import { obtenerEstadoSeguro, esEstadoLegacy } from '../../utils/estadosHelper';
+import { esReparacionResuelta, EstadoReparacion } from '../../usecases/estadosReparacion';
 
 // Constantes para filtros
 /**
@@ -1105,3 +1106,154 @@ export const selectCanEditReparacion = (reparacionId: string) =>
       return role === 'admin';
     }
   );
+
+/**
+ * Selector que, dado el conjunto global de asignaciones, intervenciones, repuestos y pedidos,
+ * devuelve un Set con los IDs de reparaciones que tienen al menos un repuesto faltante:
+ * - El repuesto no tiene stock Y
+ * - No hay ningún pedido activo (pending o in_transit) que lo contenga
+ *
+ * NOTA: usa intervencionesDeReparacionActual (asignaciones de la reparación abierta).
+ * Para mostrar el indicador en la lista se basa en IntervencionesIds de la propia reparación
+ * cruzado con el catálogo de intervenciones y el inventario de pedidos.
+ */
+export const selectReparacionesConRepuestoFaltante = createSelector(
+  [
+    selectReparacionesArray,
+    (state: RootState) => state.intervencion.coleccionIntervenciones,
+    (state: RootState) => state.repuesto.coleccionRepuestos,
+    (state: RootState) => Object.values(state.pedidoRepuesto.coleccionPedidos),
+  ],
+  (reparaciones, catalogoIntervenciones, coleccionRepuestos, pedidos): Set<string> => {
+    // Construir mapa repuestoId → tiene pedido activo
+    const repuestosConPedidoActivo = new Set<string>();
+    pedidos.forEach((pedido: any) => {
+      if (pedido.data.Estado === 'pending' || pedido.data.Estado === 'in_transit') {
+        pedido.data.Items.forEach((item: any) => {
+          if (item.data.RepuestoId) repuestosConPedidoActivo.add(item.data.RepuestoId);
+        });
+      }
+    });
+
+    const resultado = new Set<string>();
+
+    reparaciones.forEach(reparacion => {
+      // No alertar si la reparación ya fue resuelta
+      if (esReparacionResuelta(reparacion.data.EstadoRep as EstadoReparacion)) return;
+
+      const intervencionesIds: string[] = reparacion.data.IntervencionesIds || [];
+      for (const ivId of intervencionesIds) {
+        const intervencion = catalogoIntervenciones[ivId];
+        const repuestosIds: string[] = intervencion?.data?.RepuestosIds || [];
+        for (const repId of repuestosIds) {
+          const repuesto = coleccionRepuestos[repId];
+          const tieneStock = (repuesto?.data?.StockRepu ?? 0) > 0;
+          if (!tieneStock && !repuestosConPedidoActivo.has(repId)) {
+            resultado.add(reparacion.id);
+            break; // con uno alcanza para marcar la reparación
+          }
+        }
+        if (resultado.has(reparacion.id)) break;
+      }
+    });
+
+    return resultado;
+  }
+);
+
+// ============================================================================
+// SELECTORES PARA DETALLE DE REPUESTOS EN UNA REPARACIÓN
+// ============================================================================
+
+export interface RepuestoDeReparacion {
+  repuestoId: string;
+  nombre: string;
+  stockRepu: number;
+  unidadesPedidas: number;
+  estadoStock: 'En stock' | 'En pedido' | 'Agotado';
+  estadoColor: 'success' | 'warning' | 'danger';
+  intervencionesNombre: string[];       // qué intervenciones lo requieren
+  pedidos: {                            // pedidos activos que lo contienen
+    pedidoId: string;
+    estado: string;
+    proveedorNombre: string;
+    numeroPedido: string | null;
+  }[];
+  tienePedidoActivo: boolean;
+  requierePedido: boolean;              // true si stok=0 y sin pedido activo
+}
+
+/**
+ * Dado el estado actual de asignaciones de la reparación (intervencionesDeReparacionActual),
+ * deriva la lista enriquecida de repuestos necesarios con su estado de stock y pedidos.
+ */
+export const selectRepuestosDeReparacionActual = createSelector(
+  [
+    selectIntervencionesDeReparacionActual,
+    (state: RootState) => state.intervencion.coleccionIntervenciones,
+    (state: RootState) => state.repuesto.coleccionRepuestos,
+    (state: RootState) => Object.values(state.pedidoRepuesto.coleccionPedidos),
+  ],
+  (asignaciones, catalogoIntervenciones, coleccionRepuestos, pedidos): RepuestoDeReparacion[] => {
+    // 1. Recopilar IDs únicos de repuestos y las intervenciones que los requieren
+    const repuestoMap = new Map<string, string[]>(); // repuestoId → nombres de intervenciones
+    asignaciones.forEach(asignacion => {
+      const iv = catalogoIntervenciones[asignacion.data.intervencionId];
+      const repIds: string[] = iv?.data?.RepuestosIds || [];
+      repIds.forEach(repId => {
+        const ivNombre = iv?.data?.NombreInt || asignacion.data.intervencionId;
+        if (!repuestoMap.has(repId)) repuestoMap.set(repId, []);
+        const nombres = repuestoMap.get(repId)!;
+        if (!nombres.includes(ivNombre)) nombres.push(ivNombre);
+      });
+    });
+
+    // 2. Para cada repuesto, enriquecer con datos de stock y pedidos
+    return Array.from(repuestoMap.entries()).map(([repuestoId, intervencionesNombre]) => {
+      const repuesto = coleccionRepuestos[repuestoId];
+      const stockRepu = repuesto?.data?.StockRepu ?? 0;
+      const unidadesPedidas = repuesto?.data?.UnidadesPedidas ?? 0;
+
+      const estadoStock: RepuestoDeReparacion['estadoStock'] =
+        stockRepu > 0 ? 'En stock' : unidadesPedidas > 0 ? 'En pedido' : 'Agotado';
+      const estadoColor: RepuestoDeReparacion['estadoColor'] =
+        stockRepu > 0 ? 'success' : unidadesPedidas > 0 ? 'warning' : 'danger';
+
+      const ORDEN_ESTADO_PEDIDO: Record<string, number> = {
+        in_transit: 0,
+        pending: 1,
+        arrived: 2,
+        cancelled: 3,
+      };
+
+      const pedidosDeRepuesto = pedidos
+        .filter((p: any) => p.data.Items.some((i: any) => i.data.RepuestoId === repuestoId))
+        .map((p: any) => ({
+          pedidoId: p.id,
+          estado: p.data.Estado,
+          proveedorNombre: p.data.ProveedorNombre,
+          numeroPedido: p.data.NumeroPedido ?? null,
+        }))
+        .sort((a, b) =>
+          (ORDEN_ESTADO_PEDIDO[a.estado] ?? 99) - (ORDEN_ESTADO_PEDIDO[b.estado] ?? 99)
+        );
+
+      const tienePedidoActivo = pedidosDeRepuesto.some(
+        p => p.estado === 'pending' || p.estado === 'in_transit'
+      );
+
+      return {
+        repuestoId,
+        nombre: repuesto?.data?.NombreRepu || repuestoId,
+        stockRepu,
+        unidadesPedidas,
+        estadoStock,
+        estadoColor,
+        intervencionesNombre,
+        pedidos: pedidosDeRepuesto,
+        tienePedidoActivo,
+        requierePedido: stockRepu === 0 && !tienePedidoActivo,
+      };
+    });
+  }
+);
