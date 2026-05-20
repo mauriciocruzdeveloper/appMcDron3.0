@@ -8,6 +8,7 @@ import repuestoReducer from './repuesto/repuesto.slice';
 import droneReducer from './drone/drone.slice';
 import modeloDroneReducer from './modeloDrone/modeloDrone.slice';
 import intervencionReducer from './intervencion/intervencion.slice';
+import pedidoRepuestoReducer from './pedidoRepuesto/pedidoRepuesto.slice';
 // Importa otros reducers según sea necesario
 
 export const store = configureStore({
@@ -20,6 +21,7 @@ export const store = configureStore({
     drone: droneReducer,
     modeloDrone: modeloDroneReducer,
     intervencion: intervencionReducer,
+    pedidoRepuesto: pedidoRepuestoReducer,
     // Agrega otros reducers según sea necesario
   },
   middleware: (getDefaultMiddleware) =>

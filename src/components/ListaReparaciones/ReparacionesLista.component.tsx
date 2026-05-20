@@ -5,7 +5,7 @@ import { useAppSelector } from "redux-tool-kit/hooks/useAppSelector";
 import { selectColeccionModelosDrone } from "redux-tool-kit/modeloDrone/modeloDrone.selectors";
 import { selectDronesDictionary } from "redux-tool-kit/drone/drone.selectors";
 import { ReparacionType } from "types/reparacion";
-import { esUrgente, getDiasAtrasoUrgencia } from "redux-tool-kit/reparacion/reparacion.selectors";
+import { esUrgente, getDiasAtrasoUrgencia, selectReparacionesConRepuestoFaltante } from "redux-tool-kit/reparacion/reparacion.selectors";
 
 interface ReparacionesListaProps {
   reparaciones: ReparacionType[];
@@ -19,6 +19,7 @@ const ReparacionesLista = ({ reparaciones }: ReparacionesListaProps): React.Reac
   const history = useHistory();
   const modelosDroneDictionary = useAppSelector(selectColeccionModelosDrone);
   const drones = useAppSelector(selectDronesDictionary);
+  const reparacionesConRepuestoFaltante = useAppSelector(selectReparacionesConRepuestoFaltante);
 
   if (reparaciones.length === 0) {
     return (
@@ -35,6 +36,7 @@ const ReparacionesLista = ({ reparaciones }: ReparacionesListaProps): React.Reac
         let modeloDroneName = reparacion.data.ModeloDroneNameRep;
         const urgente = esUrgente(reparacion);
         const diasAtraso = getDiasAtrasoUrgencia(reparacion);
+        const faltanRepuestos = reparacionesConRepuestoFaltante.has(reparacion.id);
         if (drone) {
           const modelo = modelosDroneDictionary[drone.data.ModeloDroneId];
           if (modelo) {
@@ -61,6 +63,11 @@ const ReparacionesLista = ({ reparaciones }: ReparacionesListaProps): React.Reac
                       {diasAtraso} {diasAtraso === 1 ? 'día' : 'días'}
                     </span>
                   </>
+                )}
+                {faltanRepuestos && (
+                  <span style={{ backgroundColor: '#dc3545', color: 'white', borderRadius: 4, padding: '2px 6px', fontSize: '0.75rem', marginRight: 6 }}>
+                    ⚠️ Repuesto sin pedido
+                  </span>
                 )}
                 {modeloDroneName}
               </h5>

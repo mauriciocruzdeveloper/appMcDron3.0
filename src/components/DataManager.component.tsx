@@ -7,6 +7,7 @@ import {
     getModelosDronePersistencia,
     getDronesPersistencia,
     getIntervencionesPersistencia,
+    getPedidosPersistencia,
     initWebSocketManager,
     stopWebSocketManager,
     verifyAndReconnectChannels
@@ -27,6 +28,8 @@ import { Drone } from "../types/drone";
 import { setDrones } from "../redux-tool-kit/drone/drone.slice";
 import { Intervencion } from "../types/intervencion";
 import { setIntervenciones } from "../redux-tool-kit/intervencion/intervencion.slice";
+import { setPedidos } from "../redux-tool-kit/pedidoRepuesto/pedidoRepuesto.slice";
+import { PedidoRepuesto } from "../types/pedidoRepuesto";
 import { verificarConexionWebSocketAsync } from "../redux-tool-kit/app/app.actions";
 
 export interface DataManagerProps {
@@ -45,6 +48,7 @@ export function DataManagerComponent({ children }: DataManagerProps): React.Reac
     const [unsubscribeModelosDrone, setUnsubscribeModelosDrone] = useState<Unsubscribe>();
     const [unsubscribeDrones, setUnsubscribeDrones] = useState<Unsubscribe>();
     const [unsubscribeIntervenciones, setUnsubscribeIntervenciones] = useState<Unsubscribe>();
+    const [unsubscribePedidos, setUnsubscribePedidos] = useState<Unsubscribe>();
 
     // 🚀 Inicializar WebSocket Manager al montar el componente
     useEffect(() => {
@@ -82,6 +86,7 @@ export function DataManagerComponent({ children }: DataManagerProps): React.Reac
                         getModelosDrone();
                         getDrones();
                         getIntervenciones();
+                        getPedidos();
                     }
                 } else {
                     console.log("⚠️ No se pudo verificar la conexión WebSocket");
@@ -147,6 +152,13 @@ export function DataManagerComponent({ children }: DataManagerProps): React.Reac
         getIntervenciones();
         return () => {
             unsubscribeIntervenciones?.();
+        };
+    }, []);
+
+    useEffect(() => {
+        getPedidos();
+        return () => {
+            unsubscribePedidos?.();
         };
     }, []);
 
@@ -256,6 +268,19 @@ export function DataManagerComponent({ children }: DataManagerProps): React.Reac
             setUnsubscribeIntervenciones(() => unsubscribe);
         } catch (error) {
             console.error("Error al obtener intervenciones:", error);
+        }
+    };
+
+    const getPedidos = async () => {
+        try {
+            const unsubscribe = await getPedidosPersistencia(
+                (pedidos: PedidoRepuesto[]) => {
+                    dispatch(setPedidos(pedidos));
+                }
+            );
+            setUnsubscribePedidos(() => unsubscribe);
+        } catch (error) {
+            console.error("Error al obtener pedidos:", error);
         }
     };
 

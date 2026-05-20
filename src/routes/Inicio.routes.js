@@ -27,6 +27,8 @@ import EstadisticasSemanales from "../components/EstadisticasSemanales.component
 import EstadosLegacyManager from "../components/EstadosLegacyManager.component";
 import GaleriaReparaciones from "../components/GaleriaReparaciones.component";
 import ExportarClientesGoogleAds from "../components/ExportarClientesGoogleAds.component";
+import ListaPedidos from "../components/ListaPedidos.component";
+import Pedido from "../components/Pedido.component";
 import RoleGuard from "../components/RoleGuard.component";
 import { useAppSelector } from "../redux-tool-kit/hooks/useAppSelector";
 
@@ -113,6 +115,16 @@ const InicioRoutes = ({ isLoggedIn, admin }) => {
                 <Route path="intervenciones-reparacion/:id" element={
                     <RoleGuard allowedRoles={['admin']} userRole={userRole}>
                         <IntervencionesReparacion />
+                    </RoleGuard>
+                } />
+                <Route path="pedidos" element={
+                    <RoleGuard allowedRoles={['admin']} userRole={userRole}>
+                        <ListaPedidos />
+                    </RoleGuard>
+                } />
+                <Route path="pedidos/:id" element={
+                    <RoleGuard allowedRoles={['admin']} userRole={userRole}>
+                        <Pedido />
                     </RoleGuard>
                 } />
                 <Route path="estadisticas" element={

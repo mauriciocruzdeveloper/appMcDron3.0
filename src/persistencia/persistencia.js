@@ -82,6 +82,12 @@ export const subirArchivoPersistencia = backend.subirArchivoPersistencia;
 export const subirImagenConMiniaturaPersistencia = backend.subirImagenConMiniaturaPersistencia;
 export const eliminarArchivoPersistencia = backend.eliminarArchivoPersistencia;
 
+// PEDIDOS DE REPUESTOS
+export const getPedidosPersistencia = backend.getPedidosPersistencia;
+export const getPedidoPersistencia = backend.getPedidoPersistencia;
+export const guardarPedidoPersistencia = backend.guardarPedidoPersistencia;
+export const eliminarPedidoPersistencia = backend.eliminarPedidoPersistencia;
+
 // WEBSOCKETS
 export const verificarConexionWebSocket = backend.verificarConexionWebSocket;
 

@@ -102,6 +102,10 @@ export {
   selectSeccionesVisibles,
   selectPrecioManualDifiere,
   selectResumenProgreso,
+
+  // Selectores para repuestos de reparación
+  selectReparacionesConRepuestoFaltante,
+  selectRepuestosDeReparacionActual,
 } from './reparacion.selectors';
 
 // Re-exportar el reducer por defecto
