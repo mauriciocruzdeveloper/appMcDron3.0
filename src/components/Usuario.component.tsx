@@ -11,7 +11,7 @@ import { Usuario } from "../types/usuario";
 import { useAppSelector } from "../redux-tool-kit/hooks/useAppSelector";
 import { useAppDispatch } from "../redux-tool-kit/hooks/useAppDispatch";
 import { useModal } from "./Modal/useModal";
-import { eliminarUsuarioAsync, guardarUsuarioAsync } from "../redux-tool-kit/usuario/usuario.actions";
+import { eliminarUsuarioAsync, crearUsuarioAsync, actualizarUsuarioAsync } from "../redux-tool-kit/usuario/usuario.actions";
 import { selectUsuarioPorId } from "../redux-tool-kit/usuario/usuario.selectors";
 import { selectReparacionesByUsuario } from "../redux-tool-kit/reparacion/reparacion.selectors";
 import { convertTimestampCORTO } from "../utils/utils";
@@ -58,9 +58,9 @@ export default function UsuarioComponent(): React.ReactElement | null {
             Role: 'cliente',
             Nick: '',
             UrlFotoUsu: '',
-            PasswordUsu: ''
         }
     });
+    const [passwordCreacion, setPasswordCreacion] = useState('');
     
     const [confirmPassword, setConfirmPassword] = useState('');
     const [passwordActual, setPasswordActual] = useState('');
@@ -133,6 +133,15 @@ export default function UsuarioComponent(): React.ReactElement | null {
             return;
         }
         
+        // Advertencia si es nuevo sin email (pero permitir guardar)
+        if (isNew && !usuario.data.EmailUsu?.trim()) {
+            openModal({
+                mensaje: "El usuario se creará sin email. Podrá agregarse después, pero no se podrán realizar acciones que requieran notificaciones.",
+                tipo: "warning",
+                titulo: "Usuario sin email",
+            });
+        }
+        
         // Si es el propio perfil y quiere cambiar la contraseña
         if (esPropioPerfil && nuevaPassword) {
             // Validar que se haya ingresado la contraseña actual
@@ -196,23 +205,18 @@ export default function UsuarioComponent(): React.ReactElement | null {
         }
         
         // Para usuarios nuevos, asegurar que tengan una contraseña
-        let usuarioAGuardar = usuario;
-        if (isNew && !usuario.data.PasswordUsu) {
-            const passwordGenerada = generarPasswordPorDefecto(usuario.data.NombreUsu);
-            usuarioAGuardar = {
-                ...usuario,
-                data: {
-                    ...usuario.data,
-                    PasswordUsu: passwordGenerada
-                }
-            };
-            setUsuario(usuarioAGuardar);
+        let passwordFinal = passwordCreacion;
+        if (isNew && !passwordFinal) {
+            passwordFinal = generarPasswordPorDefecto(usuario.data.NombreUsu);
+            setPasswordCreacion(passwordFinal);
         }
         
-        const response = await dispatch(guardarUsuarioAsync(usuarioAGuardar));
+        const response = isNew
+            ? await dispatch(crearUsuarioAsync({ usuario: { data: usuario.data }, password: passwordFinal }))
+            : await dispatch(actualizarUsuarioAsync(usuario));
         if (response.meta.requestStatus === 'fulfilled') {
             const passwordInfo = isNew 
-                ? `\n\nContraseña generada: ${usuarioAGuardar.data.PasswordUsu}\n\nEl usuario puede cambiarla después de iniciar sesión.`
+                ? `\n\nContraseña generada: ${passwordFinal}\n\nEl usuario puede cambiarla después de iniciar sesión.`
                 : "";
             
             const mensajeBase = isNew 

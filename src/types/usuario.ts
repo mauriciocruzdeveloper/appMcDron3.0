@@ -4,18 +4,24 @@ export type UserRole = 'admin' | 'cliente' | 'partner';
 export interface Usuario {
     id: string,
     data: {
-      NombreUsu: string,     // name en Supabase (first_name)
-      TelefonoUsu: string,   // tel en Supabase (telephone)
-      ApellidoUsu?: string,   // last_name en Supabase
-      EmailUsu?: string,      // email en Supabase (autenticación, inmutable)
-      EmailContacto?: string, // contact_email en Supabase (notificaciones, editable)
-      ProvinciaUsu?: string,  // state en Supabase
-      CiudadUsu?: string,     // city en Supabase
-      Role: UserRole,         // role en Supabase
-      Nick?: string,          // nick en Supabase
-      UrlFotoUsu?: string,    // url_photo en Supabase
-      PasswordUsu?: string    // Solo para crear nuevos usuarios
+      NombreUsu: string,
+      TelefonoUsu: string,
+      ApellidoUsu?: string,
+      EmailUsu?: string,
+      EmailContacto?: string,
+      ProvinciaUsu?: string,
+      CiudadUsu?: string,
+      Role: UserRole,
+      Nick?: string,
+      UrlFotoUsu?: string,
     };
+}
+
+/** Datos necesarios para crear un usuario nuevo (auth + perfil).
+ *  La contraseña se mantiene fuera del modelo de dominio `Usuario`. */
+export interface DatosCreacionUsuario {
+  usuario: Omit<Usuario, 'id'>;
+  password: string;
 }
 
 // Tipo para la colección de usuarios como diccionario

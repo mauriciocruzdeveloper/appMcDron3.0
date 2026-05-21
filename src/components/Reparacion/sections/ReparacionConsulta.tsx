@@ -165,10 +165,16 @@ export const ReparacionConsulta: React.FC<ReparacionConsultaProps> = ({
                             type="submit"
                             className="btn btn-outline-secondary bg-bluemcdron text-white"
                             onClick={handleSendEmail}
+                            disabled={!usuario?.data?.EmailUsu && !usuario?.data?.EmailContacto}
                         >
                             <i className="bi bi-envelope"></i>
                         </button>
                     </div>
+                    {!usuario?.data?.EmailUsu && !usuario?.data?.EmailContacto && (
+                        <small className="text-danger d-block mt-1">
+                            ⚠️ Cliente sin email. No se podrán cambiar estados que requieran notificación.
+                        </small>
+                    )}
                 </div>
                 <div>
                     <label className="form-label">Nombre Cliente</label>

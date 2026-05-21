@@ -26,6 +26,8 @@ export {
   getUsuariosPersistencia,
   getClientePersistencia,
   getClientePorEmailPersistencia,
+  crearUsuarioPersistencia,
+  actualizarPerfilUsuarioPersistencia,
   guardarUsuarioPersistencia,
   eliminarUsuarioPersistencia
 } from './usuariosPersistencia.js';
