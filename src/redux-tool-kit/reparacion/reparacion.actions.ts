@@ -12,7 +12,6 @@ import {
   eliminarIntervencionDeReparacionPersistencia
 } from "../../persistencia/persistencia";
 import { AppState, isFetchingComplete, isFetchingStart } from "../app/app.slice";
-import { Usuario } from "../../types/usuario";
 import { enviarDroneDiagnosticadoAsync, enviarDroneReparadoAsync, enviarReciboAsync } from "../app/app.actions";
 import { generarAutoDiagnostico, generarNombreUnico, generarPasswordPorDefecto } from "../../utils/utils";
 import { PresupuestoProps } from "../../components/Presupuesto.component";
@@ -57,6 +56,10 @@ export const guardarReciboAsync = createAsyncThunk(
     const drones = state.drone.coleccionDrones;
     const dronesArray = Object.values(drones);
 
+    // Si viene un cliente seleccionado desde el formulario, usar su id real.
+    // Si no viene, dejar id vacío para que persistencia cree un usuario nuevo.
+    const usuarioId = (presupuesto.UsuarioRep || '').trim();
+
     const reparacion: ReparacionType = {
       id: "",
       data: {
@@ -65,49 +68,58 @@ export const guardarReciboAsync = createAsyncThunk(
         EstadoRep: presupuesto.EstadoRep,
         PrioridadRep: presupuesto.PrioridadRep,
         FeConRep: presupuesto.FeConRep,
-        UsuarioRep: presupuesto.EmailUsu,
+        UsuarioRep: usuarioId,
         DroneId: presupuesto.DroneId,
         ModeloDroneNameRep: presupuesto.ModeloDroneNameRep,
       }
     }
-    const usuario: Usuario = {
-      id: presupuesto.UsuarioRep,
-      data: {
-        EmailUsu: presupuesto.EmailUsu,
-        NombreUsu: presupuesto.NombreUsu,
-        ApellidoUsu: presupuesto.ApellidoUsu,
-        TelefonoUsu: presupuesto.TelefonoUsu,
-        ProvinciaUsu: presupuesto.ProvinciaUsu,
-        CiudadUsu: presupuesto.CiudadUsu,
-        Role: 'cliente', // Por defecto, los usuarios creados desde recibo son clientes
-        PasswordUsu: generarPasswordPorDefecto(presupuesto.NombreUsu), // Contraseña generada automáticamente
-      }
-    }
-    const drone: Drone = {
-      id: presupuesto.DroneId,
-      data: {
-        ModeloDroneId: presupuesto.ModeloDroneIdRep,
-        Nombre: generarNombreUnico(dronesArray, presupuesto.ModeloDroneNameRep, presupuesto.NombreUsu, presupuesto.ApellidoUsu),
-        Propietario: '',
-        NumeroSerie: '',
-        Observaciones: '',
-      }
-    }
-
     dispatch(isFetchingStart());
     try {
-      // 1. Primero guardar el usuario
-      const { guardarUsuarioPersistencia } = await import('../../persistencia/persistencia');
-      const usuarioGuardado = await guardarUsuarioPersistencia(usuario);
+      // 1. Resolver usuario: reusar si ya existe, crear si no
+      let usuarioGuardadoId: string;
+      if (usuarioId) {
+        usuarioGuardadoId = usuarioId;
+      } else {
+        const { crearUsuarioPersistencia } = await import('../../persistencia/persistencia');
+        const creado = await crearUsuarioPersistencia({
+          usuario: {
+            data: {
+              EmailUsu: presupuesto.EmailUsu,
+              NombreUsu: presupuesto.NombreUsu,
+              ApellidoUsu: presupuesto.ApellidoUsu,
+              TelefonoUsu: presupuesto.TelefonoUsu,
+              ProvinciaUsu: presupuesto.ProvinciaUsu,
+              CiudadUsu: presupuesto.CiudadUsu,
+              Role: 'cliente' as const,
+            },
+          },
+          password: generarPasswordPorDefecto(presupuesto.NombreUsu),
+        });
+        usuarioGuardadoId = creado.id;
+      }
 
-      // 2. Guardar el drone
-      const { guardarDronePersistencia } = await import('../../persistencia/persistencia');
-      drone.data.Propietario = usuarioGuardado.id;
-      const droneGuardado = await guardarDronePersistencia(drone);
+      // 2. Resolver drone: reusar si ya existe, crear si no
+      let droneGuardadoId: string;
+      if (presupuesto.DroneId) {
+        droneGuardadoId = presupuesto.DroneId;
+      } else {
+        const { guardarDronePersistencia } = await import('../../persistencia/persistencia');
+        const droneCreado = await guardarDronePersistencia({
+          id: '',
+          data: {
+            ModeloDroneId: presupuesto.ModeloDroneIdRep,
+            Nombre: generarNombreUnico(dronesArray, presupuesto.ModeloDroneNameRep, presupuesto.NombreUsu, presupuesto.ApellidoUsu),
+            Propietario: usuarioGuardadoId,
+            NumeroSerie: '',
+            Observaciones: '',
+          },
+        });
+        droneGuardadoId = droneCreado.id;
+      }
 
-      // 3. Guardar la reparación con el usuario y drone guardados
-      reparacion.data.UsuarioRep = usuarioGuardado.id.toString();
-      reparacion.data.DroneId = droneGuardado.id.toString();
+      // 3. Guardar la reparación
+      reparacion.data.UsuarioRep = usuarioGuardadoId;
+      reparacion.data.DroneId = droneGuardadoId;
       const reparacionGuardada = await guardarReparacionNueva(reparacion);
 
       // 4. Enviar el recibo
@@ -128,8 +140,8 @@ export const guardarReciboAsync = createAsyncThunk(
         return rejectWithValue('Error al enviar recibo');
       }
       dispatch(isFetchingComplete());
-      return { reparacion: reparacionGuardada, usuario: usuarioGuardado };
-    } catch (error: unknown) { // TODO: Hacer tipo de dato para el error
+      return { reparacion: reparacionGuardada };
+    } catch (error: unknown) {
       dispatch(isFetchingComplete());
       return rejectWithValue(error);
     }
@@ -144,6 +156,10 @@ export const guardarTransitoAsync = createAsyncThunk(
     const drones = state.drone.coleccionDrones;
     const dronesArray = Object.values(drones);
 
+    // Si viene un cliente seleccionado desde el formulario, usar su id real.
+    // Si no viene, dejar id vacío para que persistencia cree un usuario nuevo.
+    const usuarioId = (presupuesto.UsuarioRep || '').trim();
+
     const reparacion: ReparacionType = {
       id: "",
       data: {
@@ -151,54 +167,63 @@ export const guardarTransitoAsync = createAsyncThunk(
         EstadoRep: presupuesto.EstadoRep,
         PrioridadRep: presupuesto.PrioridadRep,
         FeConRep: presupuesto.FeConRep,
-        UsuarioRep: presupuesto.EmailUsu,
+        UsuarioRep: usuarioId,
         DroneId: presupuesto.DroneId,
         ModeloDroneNameRep: presupuesto.ModeloDroneNameRep,
       }
     }
-    const usuario: Usuario = {
-      id: presupuesto.UsuarioRep,
-      data: {
-        EmailUsu: presupuesto.EmailUsu,
-        NombreUsu: presupuesto.NombreUsu,
-        ApellidoUsu: presupuesto.ApellidoUsu,
-        TelefonoUsu: presupuesto.TelefonoUsu,
-        ProvinciaUsu: presupuesto.ProvinciaUsu,
-        CiudadUsu: presupuesto.CiudadUsu,
-        Role: 'cliente', // Por defecto, los usuarios creados desde tránsito son clientes
-        PasswordUsu: generarPasswordPorDefecto(presupuesto.NombreUsu), // Contraseña generada automáticamente
-      }
-    }
-    const drone: Drone = {
-      id: presupuesto.DroneId,
-      data: {
-        ModeloDroneId: presupuesto.ModeloDroneIdRep,
-        Nombre: generarNombreUnico(dronesArray, presupuesto.ModeloDroneNameRep, presupuesto.NombreUsu, presupuesto.ApellidoUsu),
-        Propietario: '',
-        NumeroSerie: '',
-        Observaciones: '',
-      }
-    }
-
     dispatch(isFetchingStart());
     try {
-      // 1. Primero guardar el usuario
-      const { guardarUsuarioPersistencia } = await import('../../persistencia/persistencia');
-      const usuarioGuardado = await guardarUsuarioPersistencia(usuario);
+      // 1. Resolver usuario: reusar si ya existe, crear si no
+      let usuarioGuardadoId: string;
+      if (usuarioId) {
+        usuarioGuardadoId = usuarioId;
+      } else {
+        const { crearUsuarioPersistencia } = await import('../../persistencia/persistencia');
+        const creado = await crearUsuarioPersistencia({
+          usuario: {
+            data: {
+              EmailUsu: presupuesto.EmailUsu,
+              NombreUsu: presupuesto.NombreUsu,
+              ApellidoUsu: presupuesto.ApellidoUsu,
+              TelefonoUsu: presupuesto.TelefonoUsu,
+              ProvinciaUsu: presupuesto.ProvinciaUsu,
+              CiudadUsu: presupuesto.CiudadUsu,
+              Role: 'cliente' as const,
+            },
+          },
+          password: generarPasswordPorDefecto(presupuesto.NombreUsu),
+        });
+        usuarioGuardadoId = creado.id;
+      }
 
-      // 2. Guardar el drone
-      const { guardarDronePersistencia } = await import('../../persistencia/persistencia');
-      drone.data.Propietario = usuarioGuardado.id;
-      const droneGuardado = await guardarDronePersistencia(drone);
+      // 2. Resolver drone: reusar si ya existe, crear si no
+      let droneGuardadoId: string;
+      if (presupuesto.DroneId) {
+        droneGuardadoId = presupuesto.DroneId;
+      } else {
+        const { guardarDronePersistencia } = await import('../../persistencia/persistencia');
+        const droneCreado = await guardarDronePersistencia({
+          id: '',
+          data: {
+            ModeloDroneId: presupuesto.ModeloDroneIdRep,
+            Nombre: generarNombreUnico(dronesArray, presupuesto.ModeloDroneNameRep, presupuesto.NombreUsu, presupuesto.ApellidoUsu),
+            Propietario: usuarioGuardadoId,
+            NumeroSerie: '',
+            Observaciones: '',
+          },
+        });
+        droneGuardadoId = droneCreado.id;
+      }
 
-      // 3. Guardar la reparación con el usuario y drone guardados
-      reparacion.data.UsuarioRep = usuarioGuardado.id.toString();
-      reparacion.data.DroneId = droneGuardado.id.toString();
+      // 3. Guardar la reparación
+      reparacion.data.UsuarioRep = usuarioGuardadoId;
+      reparacion.data.DroneId = droneGuardadoId;
       const reparacionGuardada = await guardarReparacionNueva(reparacion);
 
       dispatch(isFetchingComplete());
-      return { reparacion: reparacionGuardada, usuario: usuarioGuardado };
-    } catch (error: unknown) { // TODO: Hacer tipo de dato para el error
+      return { reparacion: reparacionGuardada };
+    } catch (error: unknown) {
       dispatch(isFetchingComplete());
       return rejectWithValue(error);
     }
@@ -495,6 +520,10 @@ export const guardarPresupuestadoAsync = createAsyncThunk(
     const drones = state.drone.coleccionDrones;
     const dronesArray = Object.values(drones);
 
+    // Si viene un cliente seleccionado desde el formulario, usar su id real.
+    // Si no viene, dejar id vacío para que persistencia cree un usuario nuevo.
+    const usuarioId = (presupuesto.UsuarioRep || '').trim();
+
     const reparacion: ReparacionType = {
       id: "",
       data: {
@@ -502,54 +531,63 @@ export const guardarPresupuestadoAsync = createAsyncThunk(
         EstadoRep: presupuesto.EstadoRep,
         PrioridadRep: presupuesto.PrioridadRep,
         FeConRep: presupuesto.FeConRep,
-        UsuarioRep: presupuesto.EmailUsu,
+        UsuarioRep: usuarioId,
         DroneId: presupuesto.DroneId,
         ModeloDroneNameRep: presupuesto.ModeloDroneNameRep,
       }
     }
-    const usuario: Usuario = {
-      id: presupuesto.UsuarioRep,
-      data: {
-        EmailUsu: presupuesto.EmailUsu,
-        NombreUsu: presupuesto.NombreUsu,
-        ApellidoUsu: presupuesto.ApellidoUsu,
-        TelefonoUsu: presupuesto.TelefonoUsu,
-        ProvinciaUsu: presupuesto.ProvinciaUsu,
-        CiudadUsu: presupuesto.CiudadUsu,
-        Role: 'cliente', // Por defecto, los usuarios creados desde presupuestado son clientes
-        PasswordUsu: generarPasswordPorDefecto(presupuesto.NombreUsu), // Contraseña generada automáticamente
-      }
-    }
-    const drone: Drone = {
-      id: presupuesto.DroneId,
-      data: {
-        ModeloDroneId: presupuesto.ModeloDroneIdRep,
-        Nombre: generarNombreUnico(dronesArray, presupuesto.ModeloDroneNameRep, presupuesto.NombreUsu, presupuesto.ApellidoUsu),
-        Propietario: '',
-        NumeroSerie: '',
-        Observaciones: '',
-      }
-    }
-
     dispatch(isFetchingStart());
     try {
-      // 1. Primero guardar el usuario
-      const { guardarUsuarioPersistencia } = await import('../../persistencia/persistencia');
-      const usuarioGuardado = await guardarUsuarioPersistencia(usuario);
+      // 1. Resolver usuario: reusar si ya existe, crear si no
+      let usuarioGuardadoId: string;
+      if (usuarioId) {
+        usuarioGuardadoId = usuarioId;
+      } else {
+        const { crearUsuarioPersistencia } = await import('../../persistencia/persistencia');
+        const creado = await crearUsuarioPersistencia({
+          usuario: {
+            data: {
+              EmailUsu: presupuesto.EmailUsu,
+              NombreUsu: presupuesto.NombreUsu,
+              ApellidoUsu: presupuesto.ApellidoUsu,
+              TelefonoUsu: presupuesto.TelefonoUsu,
+              ProvinciaUsu: presupuesto.ProvinciaUsu,
+              CiudadUsu: presupuesto.CiudadUsu,
+              Role: 'cliente' as const,
+            },
+          },
+          password: generarPasswordPorDefecto(presupuesto.NombreUsu),
+        });
+        usuarioGuardadoId = creado.id;
+      }
 
-      // 2. Guardar el drone
-      const { guardarDronePersistencia } = await import('../../persistencia/persistencia');
-      drone.data.Propietario = usuarioGuardado.id;
-      const droneGuardado = await guardarDronePersistencia(drone);
+      // 2. Resolver drone: reusar si ya existe, crear si no
+      let droneGuardadoId: string;
+      if (presupuesto.DroneId) {
+        droneGuardadoId = presupuesto.DroneId;
+      } else {
+        const { guardarDronePersistencia } = await import('../../persistencia/persistencia');
+        const droneCreado = await guardarDronePersistencia({
+          id: '',
+          data: {
+            ModeloDroneId: presupuesto.ModeloDroneIdRep,
+            Nombre: generarNombreUnico(dronesArray, presupuesto.ModeloDroneNameRep, presupuesto.NombreUsu, presupuesto.ApellidoUsu),
+            Propietario: usuarioGuardadoId,
+            NumeroSerie: '',
+            Observaciones: '',
+          },
+        });
+        droneGuardadoId = droneCreado.id;
+      }
 
-      // 3. Guardar la reparación con el usuario y drone guardados
-      reparacion.data.UsuarioRep = usuarioGuardado.id.toString();
-      reparacion.data.DroneId = droneGuardado.id.toString();
+      // 3. Guardar la reparación
+      reparacion.data.UsuarioRep = usuarioGuardadoId;
+      reparacion.data.DroneId = droneGuardadoId;
       const reparacionGuardada = await guardarReparacionNueva(reparacion);
 
       dispatch(isFetchingComplete());
-      return { reparacion: reparacionGuardada, usuario: usuarioGuardado };
-    } catch (error: unknown) { // TODO: Hacer tipo de dato para el error
+      return { reparacion: reparacionGuardada };
+    } catch (error: unknown) {
       dispatch(isFetchingComplete());
       return rejectWithValue(error);
     }
@@ -761,6 +799,17 @@ export const cambiarEstadoReparacionAsync = createAsyncThunk(
 
       if (!reparacionActual) {
         throw new Error('Reparación no encontrada');
+      }
+
+      // Validar que el cliente tenga email si se requiere
+      const estadosQueRequierenEmail = ['Recibido', 'Reparado', 'Diagnosticado'];
+      const tieneEmail = reparacionActual.data.EmailUsu?.trim();
+      
+      if (!tieneEmail && (enviarEmail || estadosQueRequierenEmail.includes(nuevoEstado))) {
+        return rejectWithValue(
+          `No se puede cambiar el estado a "${nuevoEstado}" porque el cliente no tiene email asignado. ` +
+          `Por favor, agregue un email al cliente primero.`
+        );
       }
 
       const { estados } = await import('../../datos/estados');

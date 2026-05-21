@@ -34,6 +34,8 @@ export const actualizarPreciosPiezasAsignacionPersistencia = backend.actualizarP
 export const getUsuariosPersistencia = backend.getUsuariosPersistencia;
 export const getClientePersistencia = backend.getClientePersistencia;
 export const getClientePorEmailPersistencia = backend.getClientePorEmailPersistencia;
+export const crearUsuarioPersistencia = backend.crearUsuarioPersistencia;
+export const actualizarPerfilUsuarioPersistencia = backend.actualizarPerfilUsuarioPersistencia;
 export const guardarUsuarioPersistencia = backend.guardarUsuarioPersistencia;
 export const eliminarUsuarioPersistencia = backend.eliminarUsuarioPersistencia;
 

@@ -199,14 +199,23 @@ export default function Presupuesto(): JSX.Element {
     }
 
     const handleGuardarPresupuesto = () => {
-        // Validar campos requeridos
-        if (!presupuesto.EmailUsu || !presupuesto.NombreUsu) {
+        // Validar campos requeridos: solo nombre es obligatorio
+        if (!presupuesto.NombreUsu) {
             openModal({
-                mensaje: "Por favor complete los campos obligatorios: Email y Nombre",
+                mensaje: "Por favor complete el Nombre del cliente",
                 tipo: "danger",
                 titulo: `Registrar ${estadoInfo.nombre}`,
             });
             return;
+        }
+        
+        // Advertencia si falta email (pero permitir guardar)
+        if (!presupuesto.EmailUsu) {
+            openModal({
+                mensaje: "El cliente no tiene email asignado. Podrá agregarse después, pero no se podrán realizar acciones que requieran notificaciones (cambios de estado con envío de email).",
+                tipo: "warning",
+                titulo: `Registrar ${estadoInfo.nombre}`,
+            });
         }
 
         if (!presupuesto.ModeloDroneIdRep || !presupuesto.ModeloDroneNameRep) {

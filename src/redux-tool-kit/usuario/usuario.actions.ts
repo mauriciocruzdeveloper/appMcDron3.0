@@ -3,10 +3,11 @@ import {
     eliminarUsuarioPersistencia,
     getClientePersistencia,
     getClientePorEmailPersistencia,
-    guardarUsuarioPersistencia,
-} from "../../persistencia/persistencia"; // Actualizado para usar la importación centralizada
+    crearUsuarioPersistencia,
+    actualizarPerfilUsuarioPersistencia,
+} from "../../persistencia/persistencia";
 import { isFetchingComplete, isFetchingStart } from "../app/app.slice";
-import { Usuario } from "../../types/usuario";
+import { Usuario, DatosCreacionUsuario } from "../../types/usuario";
 
 // ELIMINAR USUARIO
 export const eliminarUsuarioAsync = createAsyncThunk(
@@ -26,18 +27,34 @@ export const eliminarUsuarioAsync = createAsyncThunk(
     },
 )
 
-// GUARDAR USUARIO
-export const guardarUsuarioAsync = createAsyncThunk(
-    'app/guardarUsuario',
+// CREAR Usuario nuevo (autenticación + perfil)
+export const crearUsuarioAsync = createAsyncThunk(
+    'app/crearUsuario',
+    async (datos: DatosCreacionUsuario, { dispatch }) => {
+        try {
+            dispatch(isFetchingStart());
+            const usuarioCreado = await crearUsuarioPersistencia(datos);
+            dispatch(isFetchingComplete());
+            return usuarioCreado;
+        } catch (error: any) {
+            dispatch(isFetchingComplete());
+            throw error;
+        }
+    },
+);
+
+// ACTUALIZAR perfil de usuario existente (no modifica autenticación)
+export const actualizarUsuarioAsync = createAsyncThunk(
+    'app/actualizarUsuario',
     async (usuario: Usuario, { dispatch }) => {
         try {
             dispatch(isFetchingStart());
-            const usuarioGuardado = await guardarUsuarioPersistencia(usuario);
+            const usuarioActualizado = await actualizarPerfilUsuarioPersistencia(usuario.id, usuario.data);
             dispatch(isFetchingComplete());
-            return usuarioGuardado;
-        } catch (error: any) { // TODO: Hacer tipo de dato para el error
+            return usuarioActualizado;
+        } catch (error: any) {
             dispatch(isFetchingComplete());
-            return error;
+            throw error;
         }
     },
 );

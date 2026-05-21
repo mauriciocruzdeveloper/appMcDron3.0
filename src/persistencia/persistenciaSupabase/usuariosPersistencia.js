@@ -146,79 +146,85 @@ export const getClientePorEmailPersistencia = async (email) => {
   }
 };
 
-// GUARDAR Cliente
-export const guardarUsuarioPersistencia = async (usuario) => {
+// Helper privado: mapea datos de dominio al esquema de la tabla 'user'
+const toDatosTablaUser = (datosUsuario) => ({
+  email: datosUsuario.EmailUsu,
+  contact_email: datosUsuario.EmailContacto || null,
+  first_name: datosUsuario.NombreUsu || '',
+  last_name: datosUsuario.ApellidoUsu || '',
+  telephone: datosUsuario.TelefonoUsu || '',
+  address: datosUsuario.DireccionUsu || '',
+  city: datosUsuario.CiudadUsu || '',
+  state: datosUsuario.ProvinciaUsu || '',
+  role: datosUsuario.Role || 'cliente',
+  nick: datosUsuario.EmailUsu,
+});
+
+// CREAR Usuario nuevo: crea la identidad de autenticación y el perfil en la tabla 'user'
+// La contraseña se pasa separada para que nunca forme parte del modelo de dominio.
+export const crearUsuarioPersistencia = async ({ usuario, password }) => {
   try {
-    // Preparar datos para Supabase
-    const userData = {
+    await registroUsuarioEndpointPersistencia({
       email: usuario.data.EmailUsu,
-      contact_email: usuario.data.EmailContacto || null,
-      first_name: usuario.data.NombreUsu || '',
-      last_name: usuario.data.ApellidoUsu || '',
-      telephone: usuario.data.TelefonoUsu || '',
-      address: usuario.data.DireccionUsu || '',
-      city: usuario.data.CiudadUsu || '',
-      state: usuario.data.ProvinciaUsu || '',
+      password,
       role: usuario.data.Role || 'cliente',
-      nick: usuario.data.EmailUsu,
-    };
+      NombreUsu: usuario.data.NombreUsu || '',
+      ApellidoUsu: usuario.data.ApellidoUsu || '',
+      TelefonoUsu: usuario.data.TelefonoUsu || '',
+      EmailContacto: usuario.data.EmailContacto || '',
+      ProvinciaUsu: usuario.data.ProvinciaUsu || '',
+      CiudadUsu: usuario.data.CiudadUsu || '',
+      UrlPhotoUsu: usuario.data.UrlFotoUsu || '',
+      created_by_admin: true,
+    });
 
-    let result;
+    // Obtener el registro creado para retornar su id real
+    const { data: userCreated, error: getUserError } = await supabase
+      .from('user')
+      .select('*')
+      .eq('email', usuario.data.EmailUsu)
+      .single();
 
-    if (usuario.id) {
-      // Actualización - Usuario existente
-      const { data, error } = await supabase
-        .from('user')
-        .update(userData)
-        .eq('id', usuario.id)
-        .select();
-
-      if (error) throw error;
-      result = data[0];
-
-      // En lugar de actualizar los datos en las reparaciones, confiar en las relaciones
-      // y joins para obtener la información actualizada del usuario
-    } else {
-      // Inserción - Usuario nuevo: usar endpoint de registro
-      // Esto crea tanto la autenticación como el registro en la tabla user
-      
-      const registroData = {
-        email: usuario.data.EmailUsu,
-        password: usuario.data.PasswordUsu,
-        role: usuario.data.Role || 'cliente',
-        NombreUsu: usuario.data.NombreUsu || '',
-        ApellidoUsu: usuario.data.ApellidoUsu || '',
-        TelefonoUsu: usuario.data.TelefonoUsu || '',
-        EmailContacto: usuario.data.EmailContacto || '',
-        ProvinciaUsu: usuario.data.ProvinciaUsu || '',
-        CiudadUsu: usuario.data.CiudadUsu || '',
-        UrlPhotoUsu: usuario.data.UrlFotoUsu || '',
-        created_by_admin: true // Indicar que lo crea un admin
-      };
-
-      // Llamar al endpoint de registro (devuelve el usuario creado con Prefer: return=representation)
-      await registroUsuarioEndpointPersistencia(registroData);
-      
-      // El backend ya devuelve el usuario creado, lo obtenemos para estar seguros
-      const { data: userCreated, error: getUserError } = await supabase
-        .from('user')
-        .select('*')
-        .eq('email', usuario.data.EmailUsu)
-        .single();
-
-      if (getUserError) throw getUserError;
-      
-      result = userCreated;
-    }
+    if (getUserError) throw getUserError;
 
     return {
-      id: String(result.id),
-      data: usuario.data
+      id: String(userCreated.id),
+      data: usuario.data,
     };
   } catch (error) {
-    console.error("Error al guardar usuario:", error);
+    console.error('Error al crear usuario:', error);
     throw error;
   }
+};
+
+// ACTUALIZAR perfil de usuario existente (solo tabla 'user', no toca autenticación)
+export const actualizarPerfilUsuarioPersistencia = async (id, datosUsuario) => {
+  try {
+    const { data, error } = await supabase
+      .from('user')
+      .update(toDatosTablaUser(datosUsuario))
+      .eq('id', id)
+      .select();
+
+    if (error) throw error;
+
+    return {
+      id: String(data[0].id),
+      data: datosUsuario,
+    };
+  } catch (error) {
+    console.error('Error al actualizar perfil de usuario:', error);
+    throw error;
+  }
+};
+
+// GUARDAR Usuario (mantenido por compatibilidad con backends legacy)
+// Preferir crearUsuarioPersistencia / actualizarPerfilUsuarioPersistencia en código nuevo.
+export const guardarUsuarioPersistencia = async (usuario) => {
+  if (usuario.id) {
+    return actualizarPerfilUsuarioPersistencia(usuario.id, usuario.data);
+  }
+  return crearUsuarioPersistencia({ usuario: { data: usuario.data }, password: usuario.data.PasswordUsu });
 };
 
 // DELETE Usuario/Cliente
