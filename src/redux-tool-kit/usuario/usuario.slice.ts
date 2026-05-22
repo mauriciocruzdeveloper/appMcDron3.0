@@ -1,7 +1,7 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { Usuario, Usuarios } from '../../types/usuario';
 import { SelectOption } from '../../types/selectOption';
-import { guardarUsuarioAsync, eliminarUsuarioAsync } from './usuario.actions';
+import { crearUsuarioAsync, actualizarUsuarioAsync, eliminarUsuarioAsync } from './usuario.actions';
 
 // Tipos para el estado inicial
 interface UsuarioState {
@@ -55,9 +55,12 @@ const usuarioSlice = createSlice({
         },
     },
     extraReducers: (builder) => {
-        builder.addCase(guardarUsuarioAsync.fulfilled, (state, action) => {
+        builder.addCase(crearUsuarioAsync.fulfilled, (state, action) => {
             const usuario = action.payload;
-            // Actualizar o añadir el usuario en la colección
+            state.coleccionUsuarios[usuario.id] = usuario;
+        });
+        builder.addCase(actualizarUsuarioAsync.fulfilled, (state, action) => {
+            const usuario = action.payload;
             state.coleccionUsuarios[usuario.id] = usuario;
         });
         builder.addCase(eliminarUsuarioAsync.fulfilled, (state, action) => {
