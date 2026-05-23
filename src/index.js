@@ -7,9 +7,7 @@ import 'bootstrap/dist/js/bootstrap.min.js'
 import 'bootstrap-icons/font/bootstrap-icons.css'
 import './css/estilos.css';
 
-import dotenv from 'dotenv';
 import store from "./redux-tool-kit/store";
-dotenv.config();
 
 const startApp = () => {
     // console.log(device.cordova)
