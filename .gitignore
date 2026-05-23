@@ -21,4 +21,6 @@ ainfo/
 # Variables de entorno
 .env
 
+.env.development.local
+
 prompts.txt
