@@ -11,6 +11,22 @@ import {
 import { setRepuesto } from '../repuesto/repuesto.slice';
 import { RootState } from '../store';
 
+const agruparCantidadesPorRepuesto = (items: PedidoRepuesto['data']['Items']) => {
+    const cantidades = new Map<string, number>();
+
+    items.forEach((item) => {
+        const repuestoId = item.data.RepuestoId;
+        if (!repuestoId) return;
+
+        const qty = Number(item.data.Cantidad) || 0;
+        if (qty <= 0) return;
+
+        cantidades.set(repuestoId, (cantidades.get(repuestoId) || 0) + qty);
+    });
+
+    return cantidades;
+};
+
 // GUARDAR PEDIDO (crear o actualizar)
 export const guardarPedidoAsync = createAsyncThunk(
     'pedidoRepuesto/guardar',
@@ -47,20 +63,26 @@ export const guardarPedidoAsync = createAsyncThunk(
                 })
             );
 
-            // Incrementar stock cuando el pedido pasa a "arrived" por primera vez
+            // Cuando el pedido pasa a "arrived" por primera vez:
+            // sumar recibido a stock fisico disponible.
             if (esPrimerArrived) {
-                const itemsConRepuesto = pedido.data.Items.filter(i => i.data.RepuestoId);
+                const cantidadesPorRepuesto = agruparCantidadesPorRepuesto(pedido.data.Items);
+
                 await Promise.all(
-                    itemsConRepuesto.map(async (item) => {
-                        // 1. Obtener el repuesto actual
-                        const repuesto = await getRepuestoPersistencia(item.data.RepuestoId!);
-                        // 2. Sumar la cantidad pedida al stock actual
-                        const nuevoStock = (repuesto.data.StockRepu ?? 0) + item.data.Cantidad;
+                    Array.from(cantidadesPorRepuesto.entries()).map(async ([repuestoId, cantidadRecibida]) => {
+                        const repuesto = await getRepuestoPersistencia(repuestoId);
+
+                        const stockActual = Number(repuesto.data.StockRepu || 0);
+                        const nuevoStock = stockActual + cantidadRecibida;
+
                         const actualizado = await guardarRepuestoPersistencia({
                             ...repuesto,
-                            data: { ...repuesto.data, StockRepu: nuevoStock },
+                            data: {
+                                ...repuesto.data,
+                                StockRepu: nuevoStock,
+                            },
                         });
-                        // 3. Reflejar en el store
+
                         dispatch(setRepuesto(actualizado));
                     })
                 );

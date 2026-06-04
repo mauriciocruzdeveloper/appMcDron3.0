@@ -18,8 +18,107 @@ import { generarAutoDiagnostico, generarNombreUnico, generarPasswordPorDefecto }
 import { PresupuestoProps } from "../../components/Presupuesto.component";
 import { Drone } from "../../types/drone";
 import { RootState } from "../store";
+import { setRepuesto } from "../repuesto/repuesto.slice";
 
 const IDS_INTERVENCIONES_POR_DEFECTO = ['47', '48', '49', '50', '51', '52'];
+
+const consolidarCantidadPorRepuesto = (partsRelations: any[]): Map<string, number> => {
+  const requiredByPart = new Map<string, number>();
+
+  (partsRelations || []).forEach((rel: any) => {
+    const partId = rel?.part_id ? String(rel.part_id) : null;
+    if (!partId) return;
+
+    const qty = Number(rel?.quantity) || 1;
+    requiredByPart.set(partId, (requiredByPart.get(partId) || 0) + qty);
+  });
+
+  return requiredByPart;
+};
+
+const obtenerCompromisoPorRepuestoDeReparacion = async (reparacionId: string): Promise<Map<string, number>> => {
+  const { getIntervencionPersistencia } = await import('../../persistencia/persistencia');
+  const asignaciones = await getIntervencionesPorReparacionPersistencia(reparacionId);
+  const requiredByPart = new Map<string, number>();
+
+  for (const asignacion of asignaciones) {
+    const intervencionId = asignacion?.data?.intervencionId;
+    if (!intervencionId) continue;
+
+    const intervencion = await getIntervencionPersistencia(intervencionId);
+    const requiredByIntervention = consolidarCantidadPorRepuesto(
+      intervencion?.data?._partsRelations || []
+    );
+
+    Array.from(requiredByIntervention.entries()).forEach(([partId, qty]) => {
+      requiredByPart.set(partId, (requiredByPart.get(partId) || 0) + qty);
+    });
+  }
+
+  return requiredByPart;
+};
+
+const comprometerRepuestosDeReparacion = async (reparacionId: string, dispatch: any): Promise<void> => {
+  const { getRepuestoPersistencia, guardarRepuestoPersistencia } = await import('../../persistencia/persistencia');
+  const requiredByPart = await obtenerCompromisoPorRepuestoDeReparacion(reparacionId);
+
+  for (const [repuestoId, requiredQty] of Array.from(requiredByPart.entries())) {
+    const repuesto = await getRepuestoPersistencia(repuestoId);
+    const backorderActual = Number(repuesto.data.UnidadesPedidas || 0);
+
+    const actualizado = await guardarRepuestoPersistencia({
+      ...repuesto,
+      data: {
+        ...repuesto.data,
+        UnidadesPedidas: backorderActual + requiredQty,
+      },
+    });
+
+    dispatch(setRepuesto(actualizado));
+  }
+};
+
+const liberarCompromisoDeReparacion = async (reparacionId: string, dispatch: any): Promise<void> => {
+  const { getRepuestoPersistencia, guardarRepuestoPersistencia } = await import('../../persistencia/persistencia');
+  const requiredByPart = await obtenerCompromisoPorRepuestoDeReparacion(reparacionId);
+
+  for (const [repuestoId, requiredQty] of Array.from(requiredByPart.entries())) {
+    const repuesto = await getRepuestoPersistencia(repuestoId);
+    const backorderActual = Number(repuesto.data.UnidadesPedidas || 0);
+
+    const actualizado = await guardarRepuestoPersistencia({
+      ...repuesto,
+      data: {
+        ...repuesto.data,
+        UnidadesPedidas: Math.max(0, backorderActual - requiredQty),
+      },
+    });
+
+    dispatch(setRepuesto(actualizado));
+  }
+};
+
+const consumirStockYLiberarCompromisoDeReparacion = async (reparacionId: string, dispatch: any): Promise<void> => {
+  const { getRepuestoPersistencia, guardarRepuestoPersistencia } = await import('../../persistencia/persistencia');
+  const requiredByPart = await obtenerCompromisoPorRepuestoDeReparacion(reparacionId);
+
+  for (const [repuestoId, requiredQty] of Array.from(requiredByPart.entries())) {
+    const repuesto = await getRepuestoPersistencia(repuestoId);
+    const stockActual = Number(repuesto.data.StockRepu || 0);
+    const backorderActual = Number(repuesto.data.UnidadesPedidas || 0);
+
+    const actualizado = await guardarRepuestoPersistencia({
+      ...repuesto,
+      data: {
+        ...repuesto.data,
+        StockRepu: Math.max(0, stockActual - requiredQty),
+        UnidadesPedidas: Math.max(0, backorderActual - requiredQty),
+      },
+    });
+
+    dispatch(setRepuesto(actualizado));
+  }
+};
 
 async function guardarReparacionNueva(reparacion: ReparacionType): Promise<ReparacionType> {
   const reparacionGuardada = await guardarReparacionPersistencia(reparacion);
@@ -295,6 +394,7 @@ export const agregarIntervencionAReparacionAsync = createAsyncThunk(
     try {
       dispatch(isFetchingStart());
       await agregarIntervencionAReparacionPersistencia(reparacionId, intervencionId);
+
       // Recargar intervenciones
       await dispatch(getIntervencionesPorReparacionAsync(reparacionId));
       
@@ -572,6 +672,12 @@ export const aceptarPresupuestoAsync = createAsyncThunk(
       };
 
       const reparacionGuardada = await guardarReparacionPersistencia(reparacionActualizada);
+
+      // Comprometer repuestos solo al aceptar presupuesto por primera vez.
+      if (reparacion.data.EstadoRep === 'Presupuestado') {
+        await comprometerRepuestosDeReparacion(reparacion.id, dispatch);
+      }
+
       dispatch(isFetchingComplete());
       return reparacionGuardada;
     } catch (error: unknown) {
@@ -826,6 +932,24 @@ export const cambiarEstadoReparacionAsync = createAsyncThunk(
         ...reparacionActual,
         data: dataActualizada
       };
+
+      const estadoAnterior = reparacionActual.data.EstadoRep;
+      const estadoAnteriorConCompromiso = estadoAnterior === 'Aceptado' || estadoAnterior === 'Repuestos';
+      const estadoDestinoSinReparar =
+        nuevoEstado !== 'Aceptado' &&
+        nuevoEstado !== 'Repuestos' &&
+        nuevoEstado !== 'Reparado';
+
+      // Si sale de Aceptado/Repuestos sin llegar a Reparado, liberar compromiso.
+      if (estadoAnteriorConCompromiso && estadoDestinoSinReparar) {
+        await liberarCompromisoDeReparacion(reparacionId, dispatch);
+      }
+
+      // Al pasar a Reparado por primera vez, consumir stock fisico y liberar compromisos
+      // de los repuestos requeridos por esta reparacion.
+      if (nuevoEstado === 'Reparado' && reparacionActual.data.EstadoRep !== 'Reparado') {
+        await consumirStockYLiberarCompromisoDeReparacion(reparacionId, dispatch);
+      }
 
       // Generar diagnóstico automático si es necesario
       if (nuevoEstado === 'Recibido' && !reparacionActualizada.data.DiagnosticoRep) {
