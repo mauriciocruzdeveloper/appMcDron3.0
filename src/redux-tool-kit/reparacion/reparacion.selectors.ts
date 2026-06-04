@@ -1109,9 +1109,9 @@ export const selectCanEditReparacion = (reparacionId: string) =>
 
 /**
  * Selector que, dado el conjunto global de asignaciones, intervenciones, repuestos y pedidos,
- * devuelve un Set con los IDs de reparaciones que tienen al menos un repuesto faltante:
- * - El repuesto no tiene stock Y
- * - No hay ningún pedido activo (pending o in_transit) que lo contenga
+ * devuelve un Set con los IDs de reparaciones que tienen al menos un repuesto faltante crítico:
+ * - El repuesto tiene faltante real (stock < comprometido) Y
+ * - No hay pedido activo (pending/in_transit) para ese repuesto
  *
  * NOTA: usa intervencionesDeReparacionActual (asignaciones de la reparación abierta).
  * Para mostrar el indicador en la lista se basa en IntervencionesIds de la propia reparación
@@ -1125,16 +1125,6 @@ export const selectReparacionesConRepuestoFaltante = createSelector(
     (state: RootState) => Object.values(state.pedidoRepuesto.coleccionPedidos),
   ],
   (reparaciones, catalogoIntervenciones, coleccionRepuestos, pedidos): Set<string> => {
-    // Construir mapa repuestoId → tiene pedido activo
-    const repuestosConPedidoActivo = new Set<string>();
-    pedidos.forEach((pedido: any) => {
-      if (pedido.data.Estado === 'pending' || pedido.data.Estado === 'in_transit') {
-        pedido.data.Items.forEach((item: any) => {
-          if (item.data.RepuestoId) repuestosConPedidoActivo.add(item.data.RepuestoId);
-        });
-      }
-    });
-
     const resultado = new Set<string>();
 
     reparaciones.forEach(reparacion => {
@@ -1147,8 +1137,16 @@ export const selectReparacionesConRepuestoFaltante = createSelector(
         const repuestosIds: string[] = intervencion?.data?.RepuestosIds || [];
         for (const repId of repuestosIds) {
           const repuesto = coleccionRepuestos[repId];
-          const tieneStock = (repuesto?.data?.StockRepu ?? 0) > 0;
-          if (!tieneStock && !repuestosConPedidoActivo.has(repId)) {
+          const stockActual = Number(repuesto?.data?.StockRepu ?? 0);
+          const comprometido = Number(repuesto?.data?.UnidadesPedidas ?? 0);
+          const tieneFaltante = stockActual < comprometido;
+          const tienePedidoActivo = pedidos.some(
+            (p: any) =>
+              (p.data.Estado === 'pending' || p.data.Estado === 'in_transit') &&
+              p.data.Items.some((i: any) => i.data.RepuestoId === repId)
+          );
+
+          if (tieneFaltante && !tienePedidoActivo) {
             resultado.add(reparacion.id);
             break; // con uno alcanza para marcar la reparación
           }
@@ -1170,6 +1168,7 @@ export interface RepuestoDeReparacion {
   nombre: string;
   stockRepu: number;
   unidadesPedidas: number;
+  stockLibre: number;
   estadoStock: 'En stock' | 'En pedido' | 'Agotado';
   estadoColor: 'success' | 'warning' | 'danger';
   intervencionesNombre: string[];       // qué intervenciones lo requieren
@@ -1180,7 +1179,7 @@ export interface RepuestoDeReparacion {
     numeroPedido: string | null;
   }[];
   tienePedidoActivo: boolean;
-  requierePedido: boolean;              // true si stok=0 y sin pedido activo
+  requierePedido: boolean;              // true si hay faltante real y sin pedido activo
 }
 
 /**
@@ -1214,10 +1213,7 @@ export const selectRepuestosDeReparacionActual = createSelector(
       const stockRepu = repuesto?.data?.StockRepu ?? 0;
       const unidadesPedidas = repuesto?.data?.UnidadesPedidas ?? 0;
 
-      const estadoStock: RepuestoDeReparacion['estadoStock'] =
-        stockRepu > 0 ? 'En stock' : unidadesPedidas > 0 ? 'En pedido' : 'Agotado';
-      const estadoColor: RepuestoDeReparacion['estadoColor'] =
-        stockRepu > 0 ? 'success' : unidadesPedidas > 0 ? 'warning' : 'danger';
+      const stockLibre = stockRepu - unidadesPedidas;
 
       const ORDEN_ESTADO_PEDIDO: Record<string, number> = {
         in_transit: 0,
@@ -1242,17 +1238,23 @@ export const selectRepuestosDeReparacionActual = createSelector(
         p => p.estado === 'pending' || p.estado === 'in_transit'
       );
 
+      const estadoStock: RepuestoDeReparacion['estadoStock'] =
+        stockLibre > 0 ? 'En stock' : tienePedidoActivo ? 'En pedido' : 'Agotado';
+      const estadoColor: RepuestoDeReparacion['estadoColor'] =
+        stockLibre > 0 ? 'success' : tienePedidoActivo ? 'warning' : 'danger';
+
       return {
         repuestoId,
         nombre: repuesto?.data?.NombreRepu || repuestoId,
         stockRepu,
         unidadesPedidas,
+        stockLibre,
         estadoStock,
         estadoColor,
         intervencionesNombre,
         pedidos: pedidosDeRepuesto,
         tienePedidoActivo,
-        requierePedido: stockRepu === 0 && !tienePedidoActivo,
+        requierePedido: stockLibre < 0 && !tienePedidoActivo,
       };
     });
   }

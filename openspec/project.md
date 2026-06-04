@@ -147,6 +147,12 @@ Component → Action Creator → Async Logic → Dispatch → Reducer → State 
 - Tipos para diccionarios optimizados (`Reparaciones: {[id: string]: ReparacionType}`)
 - DTOs explícitos para Firebase
 
+#### 8. **Layer Boundaries (Regla obligatoria)**
+- Reglas de negocio en `redux-tool-kit/*.actions.ts`, `redux-tool-kit/*.selectors.ts` o `usecases/`.
+- `persistencia/` solo acceso a datos: CRUD, queries, mapeo DTO/entidad y suscripciones.
+- No introducir en `persistencia/` validaciones de negocio, decisiones de dominio ni orquestación de efectos (por ejemplo, consumo/reposición de stock por eventos funcionales).
+- Si una funcionalidad nueva exige lógica de dominio, se documenta primero con OpenSpec (proposal + tasks + spec delta) y luego se implementa respetando esta separación.
+
 ### Testing Strategy
 - Framework: Jest + React Testing Library
 - Testing scripts disponibles: `npm test`

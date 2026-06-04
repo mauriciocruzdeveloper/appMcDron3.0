@@ -88,7 +88,7 @@ export const ReparacionRepuestos: React.FC<ReparacionRepuestosProps> = ({
 
                     {repuestos.length > 0 && repuestosFaltantes.length > 0 && (
                         <div className="alert alert-danger py-2 mb-2" role="alert">
-                            <strong>⚠️ {repuestosFaltantes.length} repuesto{repuestosFaltantes.length !== 1 ? 's' : ''} sin pedido activo:</strong>
+                            <strong>⚠️ {repuestosFaltantes.length} repuesto{repuestosFaltantes.length !== 1 ? 's' : ''} con faltante sin pedido activo:</strong>
                             <span className="ms-2 small">
                                 {repuestosFaltantes.map(r => r.nombre).join(', ')}
                             </span>
@@ -102,9 +102,11 @@ export const ReparacionRepuestos: React.FC<ReparacionRepuestosProps> = ({
                     ) : (
                         <div className="d-flex flex-column gap-2">
                             {repuestos.map(r => {
-                                const borderColor = r.tienePedidoActivo || r.stockRepu > 0
+                                const borderColor = r.stockLibre > 0
                                     ? '#198754'
-                                    : '#dc3545';
+                                    : r.tienePedidoActivo
+                                        ? '#ffc107'
+                                        : '#dc3545';
 
                                 return (
                                     <div
@@ -124,15 +126,27 @@ export const ReparacionRepuestos: React.FC<ReparacionRepuestosProps> = ({
                                             </div>
                                         </div>
 
-                                        {r.stockRepu > 0 ? null : r.pedidos.length === 0 ? (
+                                        <div className="small text-muted mt-1">
+                                            Stock: {r.stockRepu} | Comprometido: {r.unidadesPedidas} | Libre: {r.stockLibre}
+                                        </div>
+
+                                        {r.requierePedido ? (
                                             <div className="mt-1">
-                                                <span className="badge bg-danger">⚠️ Sin pedido</span>
+                                                <span className="badge bg-danger">⚠️ Faltante sin pedido activo</span>
                                                 <span className="text-muted small ms-2">
-                                                    No está en ningún pedido de compra
+                                                    No hay cobertura para la demanda comprometida de reparaciones activas
                                                 </span>
                                             </div>
                                         ) : (
                                             <div className="mt-2 d-flex flex-column gap-1">
+                                                <div className="small text-warning">
+                                                    Comprometido en reparaciones activas: {r.unidadesPedidas}
+                                                </div>
+                                                {r.tienePedidoActivo && (
+                                                    <div className="small text-info">
+                                                        Hay pedido activo para este repuesto
+                                                    </div>
+                                                )}
                                                 {r.pedidos.map(pedido => {
                                                     const estadoInfo = ESTADOS_PEDIDO.find(e => e.value === pedido.estado);
                                                     return (
