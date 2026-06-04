@@ -9,13 +9,23 @@ import {
     guardarRepuestoPersistencia,
 } from '../../persistencia/persistencia';
 import { setRepuesto } from '../repuesto/repuesto.slice';
+import { RootState } from '../store';
 
 // GUARDAR PEDIDO (crear o actualizar)
 export const guardarPedidoAsync = createAsyncThunk(
     'pedidoRepuesto/guardar',
-    async (pedido: PedidoRepuesto, { dispatch }) => {
+    async (pedido: PedidoRepuesto, { dispatch, getState }) => {
         try {
             dispatch(isFetchingStart());
+
+            // Detectar si el pedido transiciona a "arrived" por primera vez
+            // (el estado anterior en el store no era "arrived")
+            const state = getState() as RootState;
+            const pedidoAnterior = state.pedidoRepuesto.coleccionPedidos[pedido.id] ?? null;
+            const esPrimerArrived =
+                pedido.data.Estado === 'arrived' &&
+                pedidoAnterior?.data.Estado !== 'arrived';
+
             const guardado = await guardarPedidoPersistencia(pedido);
             dispatch(isFetchingComplete());
 
@@ -36,6 +46,25 @@ export const guardarPedidoAsync = createAsyncThunk(
                     dispatch(setRepuesto(actualizado));
                 })
             );
+
+            // Incrementar stock cuando el pedido pasa a "arrived" por primera vez
+            if (esPrimerArrived) {
+                const itemsConRepuesto = pedido.data.Items.filter(i => i.data.RepuestoId);
+                await Promise.all(
+                    itemsConRepuesto.map(async (item) => {
+                        // 1. Obtener el repuesto actual
+                        const repuesto = await getRepuestoPersistencia(item.data.RepuestoId!);
+                        // 2. Sumar la cantidad pedida al stock actual
+                        const nuevoStock = (repuesto.data.StockRepu ?? 0) + item.data.Cantidad;
+                        const actualizado = await guardarRepuestoPersistencia({
+                            ...repuesto,
+                            data: { ...repuesto.data, StockRepu: nuevoStock },
+                        });
+                        // 3. Reflejar en el store
+                        dispatch(setRepuesto(actualizado));
+                    })
+                );
+            }
 
             return guardado;
         } catch (error: unknown) {
