@@ -27,6 +27,33 @@ const agruparCantidadesPorRepuesto = (items: PedidoRepuesto['data']['Items']) =>
     return cantidades;
 };
 
+const calcularCompromisosPorRepuestoEnFlujoActivo = (
+    state: RootState,
+    repuestoIdsObjetivo: Set<string>
+) => {
+    const compromisos = new Map<string, number>();
+    const reparaciones = Object.values(state.reparacion.coleccionReparaciones || {});
+    const intervenciones = state.intervencion.coleccionIntervenciones || {};
+
+    reparaciones.forEach((reparacion) => {
+        const estado = reparacion?.data?.EstadoRep;
+        if (estado !== 'Aceptado' && estado !== 'Repuestos') return;
+
+        const intervencionesIds: string[] = reparacion?.data?.IntervencionesIds || [];
+        intervencionesIds.forEach((intervencionId) => {
+            const intervencion = intervenciones[intervencionId];
+            const repuestosIds: string[] = intervencion?.data?.RepuestosIds || [];
+
+            repuestosIds.forEach((repuestoId) => {
+                if (!repuestoIdsObjetivo.has(repuestoId)) return;
+                compromisos.set(repuestoId, (compromisos.get(repuestoId) || 0) + 1);
+            });
+        });
+    });
+
+    return compromisos;
+};
+
 // GUARDAR PEDIDO (crear o actualizar)
 export const guardarPedidoAsync = createAsyncThunk(
     'pedidoRepuesto/guardar',
@@ -67,6 +94,8 @@ export const guardarPedidoAsync = createAsyncThunk(
             // sumar recibido a stock fisico disponible.
             if (esPrimerArrived) {
                 const cantidadesPorRepuesto = agruparCantidadesPorRepuesto(pedido.data.Items);
+                const repuestoIdsObjetivo = new Set(Array.from(cantidadesPorRepuesto.keys()));
+                const compromisosActuales = calcularCompromisosPorRepuestoEnFlujoActivo(state, repuestoIdsObjetivo);
 
                 await Promise.all(
                     Array.from(cantidadesPorRepuesto.entries()).map(async ([repuestoId, cantidadRecibida]) => {
@@ -74,12 +103,14 @@ export const guardarPedidoAsync = createAsyncThunk(
 
                         const stockActual = Number(repuesto.data.StockRepu || 0);
                         const nuevoStock = stockActual + cantidadRecibida;
+                        const nuevoCompromiso = compromisosActuales.get(repuestoId) || 0;
 
                         const actualizado = await guardarRepuestoPersistencia({
                             ...repuesto,
                             data: {
                                 ...repuesto.data,
                                 StockRepu: nuevoStock,
+                                UnidadesPedidas: nuevoCompromiso,
                             },
                         });
 

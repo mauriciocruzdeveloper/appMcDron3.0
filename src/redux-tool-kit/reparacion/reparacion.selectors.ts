@@ -1110,8 +1110,7 @@ export const selectCanEditReparacion = (reparacionId: string) =>
 /**
  * Selector que, dado el conjunto global de asignaciones, intervenciones, repuestos y pedidos,
  * devuelve un Set con los IDs de reparaciones que tienen al menos un repuesto faltante crítico:
- * - El repuesto tiene faltante real (stock < comprometido) Y
- * - No hay pedido activo (pending/in_transit) para ese repuesto
+ * - La disponibilidad proyectada para esa reparación (stock + pedidos activos) no cubre su demanda.
  *
  * NOTA: usa intervencionesDeReparacionActual (asignaciones de la reparación abierta).
  * Para mostrar el indicador en la lista se basa en IntervencionesIds de la propia reparación
@@ -1132,27 +1131,42 @@ export const selectReparacionesConRepuestoFaltante = createSelector(
       if (esReparacionResuelta(reparacion.data.EstadoRep as EstadoReparacion)) return;
 
       const intervencionesIds: string[] = reparacion.data.IntervencionesIds || [];
-      for (const ivId of intervencionesIds) {
+
+      // Demanda de esta reparación por repuesto (un mismo repuesto puede repetirse en varias intervenciones)
+      const demandaPorRepuesto = new Map<string, number>();
+      intervencionesIds.forEach((ivId) => {
         const intervencion = catalogoIntervenciones[ivId];
         const repuestosIds: string[] = intervencion?.data?.RepuestosIds || [];
-        for (const repId of repuestosIds) {
-          const repuesto = coleccionRepuestos[repId];
-          const stockActual = Number(repuesto?.data?.StockRepu ?? 0);
-          const comprometido = Number(repuesto?.data?.UnidadesPedidas ?? 0);
-          const tieneFaltante = stockActual < comprometido;
-          const tienePedidoActivo = pedidos.some(
-            (p: any) =>
-              (p.data.Estado === 'pending' || p.data.Estado === 'in_transit') &&
-              p.data.Items.some((i: any) => i.data.RepuestoId === repId)
-          );
+        repuestosIds.forEach((repId) => {
+          demandaPorRepuesto.set(repId, (demandaPorRepuesto.get(repId) || 0) + 1);
+        });
+      });
 
-          if (tieneFaltante && !tienePedidoActivo) {
-            resultado.add(reparacion.id);
-            break; // con uno alcanza para marcar la reparación
-          }
+      demandaPorRepuesto.forEach((demandaReparacion, repId) => {
+        const repuesto = coleccionRepuestos[repId];
+        const stockActual = Number(repuesto?.data?.StockRepu ?? 0);
+        const comprometido = Number(repuesto?.data?.UnidadesPedidas ?? 0);
+        const compromisoAjeno = Math.max(0, comprometido - demandaReparacion);
+        const disponibleInmediata = stockActual - compromisoAjeno;
+
+        const cantidadPedidoActivo = pedidos.reduce((sum: number, p: any) => {
+          if (p.data.Estado !== 'pending' && p.data.Estado !== 'in_transit') return sum;
+
+          const cantidadDeEseRepuesto = (p.data.Items || []).reduce((acc: number, i: any) => {
+            if (i.data.RepuestoId !== repId) return acc;
+            return acc + (Number(i.data.Cantidad) || 0);
+          }, 0);
+
+          return sum + cantidadDeEseRepuesto;
+        }, 0);
+
+        const disponibleProyectada = disponibleInmediata + cantidadPedidoActivo;
+        const tieneFaltanteCritico = disponibleProyectada < demandaReparacion;
+
+        if (tieneFaltanteCritico) {
+          resultado.add(reparacion.id);
         }
-        if (resultado.has(reparacion.id)) break;
-      }
+      });
     });
 
     return resultado;
@@ -1166,6 +1180,7 @@ export const selectReparacionesConRepuestoFaltante = createSelector(
 export interface RepuestoDeReparacion {
   repuestoId: string;
   nombre: string;
+  demandaReparacion: number;
   stockRepu: number;
   unidadesPedidas: number;
   stockLibre: number;
@@ -1179,7 +1194,7 @@ export interface RepuestoDeReparacion {
     numeroPedido: string | null;
   }[];
   tienePedidoActivo: boolean;
-  requierePedido: boolean;              // true si hay faltante real y sin pedido activo
+  requierePedido: boolean;              // true si no hay cobertura inmediata (independientemente de si hay pedidos)
 }
 
 /**
@@ -1195,20 +1210,29 @@ export const selectRepuestosDeReparacionActual = createSelector(
   ],
   (asignaciones, catalogoIntervenciones, coleccionRepuestos, pedidos): RepuestoDeReparacion[] => {
     // 1. Recopilar IDs únicos de repuestos y las intervenciones que los requieren
-    const repuestoMap = new Map<string, string[]>(); // repuestoId → nombres de intervenciones
+    const repuestoMap = new Map<string, { intervencionesNombre: string[]; demandaReparacion: number }>();
+    // repuestoId → intervenciones que lo usan + cantidad requerida por la reparación actual
     asignaciones.forEach(asignacion => {
       const iv = catalogoIntervenciones[asignacion.data.intervencionId];
       const repIds: string[] = iv?.data?.RepuestosIds || [];
       repIds.forEach(repId => {
         const ivNombre = iv?.data?.NombreInt || asignacion.data.intervencionId;
-        if (!repuestoMap.has(repId)) repuestoMap.set(repId, []);
-        const nombres = repuestoMap.get(repId)!;
+        if (!repuestoMap.has(repId)) {
+          repuestoMap.set(repId, {
+            intervencionesNombre: [],
+            demandaReparacion: 0,
+          });
+        }
+        const entry = repuestoMap.get(repId)!;
+        const nombres = entry.intervencionesNombre;
         if (!nombres.includes(ivNombre)) nombres.push(ivNombre);
+        entry.demandaReparacion += 1;
       });
     });
 
     // 2. Para cada repuesto, enriquecer con datos de stock y pedidos
-    return Array.from(repuestoMap.entries()).map(([repuestoId, intervencionesNombre]) => {
+    return Array.from(repuestoMap.entries()).map(([repuestoId, entry]) => {
+      const { intervencionesNombre, demandaReparacion } = entry;
       const repuesto = coleccionRepuestos[repuestoId];
       const stockRepu = repuesto?.data?.StockRepu ?? 0;
       const unidadesPedidas = repuesto?.data?.UnidadesPedidas ?? 0;
@@ -1234,18 +1258,33 @@ export const selectRepuestosDeReparacionActual = createSelector(
           (ORDEN_ESTADO_PEDIDO[a.estado] ?? 99) - (ORDEN_ESTADO_PEDIDO[b.estado] ?? 99)
         );
 
-      const tienePedidoActivo = pedidosDeRepuesto.some(
-        p => p.estado === 'pending' || p.estado === 'in_transit'
-      );
+      const compromisoAjeno = Math.max(0, unidadesPedidas - demandaReparacion);
+      const disponibleInmediata = stockRepu - compromisoAjeno;
+      const cantidadPedidoActivo = pedidos.reduce((sum: number, p: any) => {
+        if (p.data.Estado !== 'pending' && p.data.Estado !== 'in_transit') return sum;
+
+        const cantidadDeEseRepuesto = (p.data.Items || []).reduce((acc: number, i: any) => {
+          if (i.data.RepuestoId !== repuestoId) return acc;
+          return acc + (Number(i.data.Cantidad) || 0);
+        }, 0);
+
+        return sum + cantidadDeEseRepuesto;
+      }, 0);
+
+      const disponibleProyectada = disponibleInmediata + cantidadPedidoActivo;
+      const tienePedidoActivo = cantidadPedidoActivo > 0;
+      // Hay FALTANTE si no tengo cobertura inmediata, independientemente de si hay pedidos
+      const tieneFaltante = disponibleInmediata < demandaReparacion;
 
       const estadoStock: RepuestoDeReparacion['estadoStock'] =
-        stockLibre > 0 ? 'En stock' : tienePedidoActivo ? 'En pedido' : 'Agotado';
+        !tieneFaltante ? 'En stock' : !tienePedidoActivo ? 'Agotado' : 'En pedido';
       const estadoColor: RepuestoDeReparacion['estadoColor'] =
-        stockLibre > 0 ? 'success' : tienePedidoActivo ? 'warning' : 'danger';
+        !tieneFaltante ? 'success' : !tienePedidoActivo ? 'danger' : 'warning';
 
       return {
         repuestoId,
         nombre: repuesto?.data?.NombreRepu || repuestoId,
+        demandaReparacion,
         stockRepu,
         unidadesPedidas,
         stockLibre,
@@ -1254,7 +1293,7 @@ export const selectRepuestosDeReparacionActual = createSelector(
         intervencionesNombre,
         pedidos: pedidosDeRepuesto,
         tienePedidoActivo,
-        requierePedido: stockLibre < 0 && !tienePedidoActivo,
+        requierePedido: tieneFaltante,
       };
     });
   }
