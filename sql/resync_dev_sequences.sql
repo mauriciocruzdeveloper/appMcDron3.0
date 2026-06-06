@@ -22,6 +22,27 @@ SELECT setval(
   false
 );
 
+-- drone
+SELECT setval(
+  pg_get_serial_sequence('public.drone', 'id'),
+  COALESCE((SELECT MAX(id) FROM public.drone), 0) + 1,
+  false
+);
+
+-- intervention
+SELECT setval(
+  pg_get_serial_sequence('public.intervention', 'id'),
+  COALESCE((SELECT MAX(id) FROM public.intervention), 0) + 1,
+  false
+);
+
+-- part_intervention
+SELECT setval(
+  pg_get_serial_sequence('public.part_intervention', 'id'),
+  COALESCE((SELECT MAX(id) FROM public.part_intervention), 0) + 1,
+  false
+);
+
 -- purchase_order
 SELECT setval(
   pg_get_serial_sequence('public.purchase_order', 'id'),
@@ -57,6 +78,24 @@ SELECT
   MAX(id) AS max_id,
   (SELECT last_value FROM public.repair_intervention_id_seq) AS seq_last_value
 FROM public.repair_intervention
+UNION ALL
+SELECT
+  'drone' AS table_name,
+  MAX(id) AS max_id,
+  (SELECT last_value FROM public.drone_id_seq) AS seq_last_value
+FROM public.drone
+UNION ALL
+SELECT
+  'intervention' AS table_name,
+  MAX(id) AS max_id,
+  (SELECT last_value FROM public.intervention_id_seq) AS seq_last_value
+FROM public.intervention
+UNION ALL
+SELECT
+  'part_intervention' AS table_name,
+  MAX(id) AS max_id,
+  (SELECT last_value FROM public.part_intervention_id_seq) AS seq_last_value
+FROM public.part_intervention
 UNION ALL
 SELECT
   'purchase_order' AS table_name,

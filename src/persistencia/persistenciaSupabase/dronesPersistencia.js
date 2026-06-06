@@ -1,5 +1,11 @@
 import { supabase } from './supabaseClient.js';
 
+const DRONE_SELECT = `
+  *,
+  drone_model:drone_model_id (*),
+  owner:owner_id (*)
+`;
+
 // GET ModeloDrone por id
 export const getModeloDronePersistencia = async (id) => {
   try {
@@ -364,11 +370,7 @@ export const guardarDronePersistencia = async (drone) => {
         .from('drone')
         .update(droneData)
         .eq('id', drone.id)
-        .select(`
-          *,
-          drone_model:drone_model_id (*),
-          owner:owner_id (*)
-        `);
+        .select(DRONE_SELECT);
 
       if (error) throw error;
       result = data[0];
@@ -378,13 +380,9 @@ export const guardarDronePersistencia = async (drone) => {
         .from('drone')
         .insert({
           ...droneData,
-          created_at: new Date()
+          created_at: new Date().toISOString()
         })
-        .select(`
-          *,
-          drone_model:drone_model_id (*),
-          owner:owner_id (*)
-        `);
+        .select(DRONE_SELECT);
 
       if (error) throw error;
       result = data[0];

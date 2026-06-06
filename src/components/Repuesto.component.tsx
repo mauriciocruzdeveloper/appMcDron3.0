@@ -344,7 +344,7 @@ export default function RepuestoComponent(): JSX.Element {
           </div>
 
           <div className="mb-3">
-            <label className="form-label">Unidades Pedidas</label>
+            <label className="form-label">Repuestos comprometidos</label>
             <input
               type="number"
               className="form-control"
@@ -353,9 +353,9 @@ export default function RepuestoComponent(): JSX.Element {
               onChange={handleNumberInputChange}
               min="0"
             />
-            <small className="form-text text-muted">
-              Cantidad de unidades que están en proceso de pedido
-            </small>
+              <small className="form-text text-muted">
+                Cantidad de repuestos comprometidos en reparaciones (demanda)
+              </small>
           </div>
 
           <div className="card bg-light mb-3">
