@@ -71,7 +71,7 @@ const recalcularUnidadesPedidasDesdeReparacionesAceptadas = async (
   // Obtener todas las reparaciones del estado
   const coleccion = state.reparacion.coleccionReparaciones || {};
   const reparacionesAceptadas = Object.values(coleccion).filter(
-    (rep: any) => rep?.data?.EstadoRep === 'Aceptado'
+    (rep: any) => rep?.data?.EstadoRep === 'Aceptado' || rep?.data?.EstadoRep === 'Repuestos'
   );
 
   // Calcular demanda consolidada desde todas las reparaciones Aceptadas
