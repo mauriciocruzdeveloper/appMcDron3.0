@@ -246,8 +246,12 @@ export default function PedidoComponent(): JSX.Element {
                 }
             } else {
                 const resp = response as { error: { message: string } };
+                const msg = resp.error?.message ?? '';
+                const esRed = /failed to fetch|networkerror|network error|fetch failed|err_name_not_resolved|err_internet_disconnected|err_connection|err_timed_out|load failed/i.test(msg);
                 openModal({
-                    mensaje: 'Error al guardar el pedido: ' + resp.error.message,
+                    mensaje: esRed
+                        ? 'No se pudo conectar con el servidor. Revisá tu conexión a internet y volvé a intentar.'
+                        : 'Error al guardar el pedido: ' + msg,
                     tipo: 'danger',
                     titulo: 'Error',
                 });
