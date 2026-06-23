@@ -1,4 +1,5 @@
 import { supabase } from './supabaseClient.js';
+import { conReintento } from './networkRetry.js';
 
 // Helper: transforma fila de BD al formato del frontend
 const toFrontend = (row, items = []) => ({
@@ -126,26 +127,32 @@ export const guardarPedidoPersistencia = async (pedido) => {
     let savedId;
 
     if (isNew) {
-      const { data, error } = await supabase
-        .from('purchase_order')
-        .insert(rowData)
-        .select()
-        .single();
+      const { data, error } = await conReintento(() =>
+        supabase
+          .from('purchase_order')
+          .insert(rowData)
+          .select()
+          .single()
+      );
       if (error) throw error;
       savedId = data.id;
     } else {
-      const { error } = await supabase
-        .from('purchase_order')
-        .update(rowData)
-        .eq('id', pedido.id);
+      const { error } = await conReintento(() =>
+        supabase
+          .from('purchase_order')
+          .update(rowData)
+          .eq('id', pedido.id)
+      );
       if (error) throw error;
       savedId = pedido.id;
 
       // Eliminar ítems antiguos para re-insertar
-      const { error: delError } = await supabase
-        .from('purchase_order_item')
-        .delete()
-        .eq('purchase_order_id', savedId);
+      const { error: delError } = await conReintento(() =>
+        supabase
+          .from('purchase_order_item')
+          .delete()
+          .eq('purchase_order_id', savedId)
+      );
       if (delError) throw delError;
     }
 
@@ -159,9 +166,11 @@ export const guardarPedidoPersistencia = async (pedido) => {
         unit_price:        item.data.PrecioUnitario ?? null,
       }));
 
-      const { error: itemsError } = await supabase
-        .from('purchase_order_item')
-        .insert(itemsRows);
+      const { error: itemsError } = await conReintento(() =>
+        supabase
+          .from('purchase_order_item')
+          .insert(itemsRows)
+      );
       if (itemsError) throw itemsError;
     }
 
