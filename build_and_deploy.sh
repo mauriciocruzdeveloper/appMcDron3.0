@@ -551,7 +551,7 @@ EOF
 
 if [ $? -eq 0 ]; then
     log_info "✓ Despliegue completado exitosamente"
-    log_info "🌐 La aplicación está disponible en: http://mauriciocruzdrones.com/app"
+    log_info "🌐 La aplicación está disponible en: http://mauriciocruzdrones.com.ar/app"
 else
     log_error "Error durante el despliegue"
     log_warn "Puedes subir manualmente los archivos de: platforms/browser/www/"
@@ -564,7 +564,7 @@ echo -e "${MAGENTA}║                                                          
 echo -e "${MAGENTA}║            ✓ PROCESO COMPLETO FINALIZADO                  ║${NC}"
 echo -e "${MAGENTA}║                                                           ║${NC}"
 echo -e "${MAGENTA}║  📱 APK Android: $BUILD_DIR/signed_$APK_NAME              ║${NC}"
-echo -e "${MAGENTA}║  🌐 Web desplegada: http://mauriciocruzdrones.com/app    ║${NC}"
+echo -e "${MAGENTA}║  🌐 Web desplegada: http://mauriciocruzdrones.com.ar/app    ║${NC}"
 echo -e "${MAGENTA}║                                                           ║${NC}"
 echo -e "${MAGENTA}╚═══════════════════════════════════════════════════════════╝${NC}"
 echo ""

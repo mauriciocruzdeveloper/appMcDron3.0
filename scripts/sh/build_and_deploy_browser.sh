@@ -175,7 +175,7 @@ EOF
 
 if [ $? -eq 0 ]; then
     echo -e "${GREEN}✓ Despliegue completado exitosamente${NC}"
-    echo -e "${CYAN}La aplicación está disponible en: http://mauriciocruzdrones.com/$([ "$DESTINO" = "public_html/app" ] && echo "app" || echo "")${NC}"
+    echo -e "${CYAN}La aplicación está disponible en: http://mauriciocruzdrones.com.ar/$([ "$DESTINO" = "public_html/app" ] && echo "app" || echo "")${NC}"
 else
     echo -e "${RED}✗ Error durante el despliegue${NC}"
     echo -e "${YELLOW}Puedes subir manualmente los archivos de: platforms/browser/www/${NC}"
