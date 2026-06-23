@@ -310,7 +310,7 @@ export default function UsuarioComponent(): React.ReactElement | null {
     const handleSendEmail = () => {
         const data = {
             to: getEmailForNotifications(usuario),
-            cc: 'info@mauriciocruzdrones.com',
+            cc: 'info@mauriciocruzdrones.com.ar',
             bcc: [],
             subject: '',
             body: ''
