@@ -33,8 +33,8 @@ const MensajesPresentational = (props) => {
                             onChange={e => handleOnChangeUsuarios(e)}
                             id="EmailUsu"
                             value={{
-                                value: `${cliente?.data?.NombreUsu || 'Admin'} - ${cliente?.data?.EmailUsu || 'admin@mauriciocruzdrones.com'}`, 
-                                label: `${cliente?.data?.NombreUsu || 'Admin'} - ${cliente?.data?.EmailUsu || 'admin@mauriciocruzdrones.com'}`
+                                value: `${cliente?.data?.NombreUsu || 'Admin'} - ${cliente?.data?.EmailUsu || 'admin@mauriciocruzdrones.com.ar'}`, 
+                                label: `${cliente?.data?.NombreUsu || 'Admin'} - ${cliente?.data?.EmailUsu || 'admin@mauriciocruzdrones.com.ar'}`
                             }}
                         />
                     </div>
