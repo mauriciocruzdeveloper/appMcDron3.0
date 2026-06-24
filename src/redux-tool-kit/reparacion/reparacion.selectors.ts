@@ -287,9 +287,9 @@ export const selectReparacionesEstadosPrioritarios = createSelector(
 
 // Días de tolerancia por estado antes de considerarse urgente
 const UMBRAL_URGENCIA_DIAS: Record<string, number> = {
-  Consulta: 1,
-  Recibido: 2,
-  Revisado: 2,
+  Consulta: 5,
+  Recibido: 5,
+  Revisado: 5,
   Aceptado: 15,
 };
 
@@ -333,7 +333,7 @@ export function getDiasAtrasoUrgencia(reparacion: ReparacionType): number {
  * (Consulta → Recibido → Revisado → Aceptado), y dentro de cada grupo
  * las más antiguas primero.
  * Una reparación es urgente si supera el umbral de días por estado:
- * Consulta > 1 día, Recibido > 2 días, Revisado > 2 días, Aceptado > 15 días.
+ * Consulta > 5 días, Recibido > 5 días, Revisado > 5 días, Aceptado > 15 días.
  */
 export const selectReparacionesAccionInmediata = createSelector(
   [selectReparacionesArray],
