@@ -5,6 +5,7 @@ import { useAppDispatch } from '../redux-tool-kit/hooks/useAppDispatch';
 import { setFilter } from '../redux-tool-kit/intervencion/intervencion.slice';
 import { selectModelosDroneArray } from '../redux-tool-kit/modeloDrone/modeloDrone.selectors';
 import { selectIntervencionesConPrecios } from '../redux-tool-kit/intervencion/intervencion.selectors';
+import { ComboBox } from './common';
 
 export default function ListaIntervenciones(): JSX.Element {
   const dispatch = useAppDispatch();
@@ -67,17 +68,17 @@ export default function ListaIntervenciones(): JSX.Element {
             />
           </div>
           <div className='form-group mt-2'>
-            <select
-              className='form-control'
+            <ComboBox
+              options={[
+                { value: 'general', label: 'General' },
+                ...modelosDrone.map(modelo => ({ value: modelo.id, label: modelo.data.NombreModelo })),
+              ]}
               value={selectedModelo}
-              onChange={(e) => setSelectedModelo(e.target.value)}
-            >
-              <option value="">Todos los modelos</option>
-              <option value="general">General</option>
-              {modelosDrone.map(modelo => (
-                <option key={modelo.id} value={modelo.id}>{modelo.data.NombreModelo}</option>
-              ))}
-            </select>
+              onChange={(option) => setSelectedModelo(option?.value ?? '')}
+              placeholder="Todos los modelos"
+              noOptionsMessage="No se encontraron modelos"
+              isClearable
+            />
           </div>
         </div>
       </div>

@@ -6,7 +6,8 @@ import { useAppSelector } from '../redux-tool-kit/hooks/useAppSelector';
 import { Intervencion } from '../types/intervencion';
 import { guardarIntervencionAsync, eliminarIntervencionAsync, getIntervencionAsync } from '../redux-tool-kit/intervencion/intervencion.actions';
 import { useModal } from './Modal/useModal';
-import Select from 'react-select';
+import { ComboBox } from './common';
+import { SelectOption } from '../types/selectOption';
 import { selectModelosDroneArray } from '../redux-tool-kit/modeloDrone/modeloDrone.selectors';
 import { selectColeccionRepuestos, selectRepuestosArray } from '../redux-tool-kit/repuesto/repuesto.selectors';
 import { selectIntervencionPorId } from '../redux-tool-kit/intervencion/intervencion.selectors';
@@ -169,8 +170,7 @@ export default function IntervencionComponent(): JSX.Element {
   };
 
   // Manejador para los selects
-  const handleSelectChange = (e: ChangeEvent<HTMLSelectElement>) => {
-    const { id, value } = e.target;
+  const handleSelectChange = (id: string, value: string) => {
     setIntervencion(prevState => ({
       ...prevState,
       data: {
@@ -192,8 +192,11 @@ export default function IntervencionComponent(): JSX.Element {
     }));
   };
 
-  const handleRepuestosChange = (selected: readonly {value: string, label: string, precio: number}[] | null) => {
-    const selectedArray = selected ? [...selected] : [];
+  const handleRepuestosChange = (selected: SelectOption[]) => {
+    const selectedArray = selected.map(opt => {
+      const full = repuestosFiltrados.find(r => r.value === opt.value);
+      return { value: opt.value, label: opt.label, precio: full?.precio ?? 0 };
+    });
     setSelectedRepuestos(selectedArray);
     
     // Actualizar los IDs de repuestos en el objeto de intervención
@@ -369,19 +372,18 @@ export default function IntervencionComponent(): JSX.Element {
           
           <div className="mb-3">
             <label className="form-label">Modelo de Drone (opcional)</label>
-            <select
-              className="form-select"
+            <ComboBox
+              options={modelosDroneArray.map((modelo) => ({
+                value: modelo.id,
+                label: `${modelo.data.NombreModelo} - ${modelo.data.Fabricante}`,
+              }))}
               id="ModeloDroneId"
               value={intervencion.data.ModeloDroneId || ''}
-              onChange={handleSelectChange}
-            >
-              <option value="">General (compatible con cualquier modelo)</option>
-              {modelosDroneArray.map((modelo) => (
-                <option key={modelo.id} value={modelo.id}>
-                  {modelo.data.NombreModelo} - {modelo.data.Fabricante}
-                </option>
-              ))}
-            </select>
+              onChange={(option) => handleSelectChange('ModeloDroneId', option?.value ?? '')}
+              placeholder="General (compatible con cualquier modelo)"
+              noOptionsMessage="No se encontraron modelos"
+              isClearable
+            />
             <small className="form-text text-muted">
               Deje en blanco para intervenciones generales que aplican a cualquier modelo
             </small>
@@ -389,14 +391,14 @@ export default function IntervencionComponent(): JSX.Element {
           
           <div className="mb-3">
             <label className="form-label">Repuestos Necesarios</label>
-            <Select
+            <ComboBox
               isMulti
-              options={repuestosFiltrados} // Usar los repuestos filtrados aquí en lugar de repuestosOptions
-              value={selectedRepuestos}
-              onChange={handleRepuestosChange}
+              options={repuestosFiltrados}
+              value={selectedRepuestos.map(r => r.value)}
+              onChangeMulti={handleRepuestosChange}
               placeholder="Seleccione los repuestos..."
-              noOptionsMessage={() => intervencion.data.ModeloDroneId 
-                ? "No hay repuestos compatibles con este modelo" 
+              noOptionsMessage={intervencion.data.ModeloDroneId
+                ? "No hay repuestos compatibles con este modelo"
                 : "No se encontraron repuestos"}
             />
             {intervencion.data.ModeloDroneId && repuestosFiltrados.length === 0 && (

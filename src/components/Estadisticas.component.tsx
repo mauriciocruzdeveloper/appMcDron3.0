@@ -13,6 +13,7 @@ import {
     Legend,
 } from 'chart.js';
 import { useNavigate } from 'react-router-dom';
+import { ComboBox } from './common';
 
 ChartJS.register(
     CategoryScale,
@@ -134,15 +135,14 @@ export default function Estadisticas(): JSX.Element {
                 <div className='card-body'>
                     <div className='form-group'>
                         <label>Año:</label>
-                        <select
-                            className='form-select'
-                            value={filtroAno}
-                            onChange={(e) => setFiltroAno(Number(e.target.value))}
-                        >
-                            {Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - i).map(year => (
-                                <option key={year} value={year}>{year}</option>
-                            ))}
-                        </select>
+                        <ComboBox
+                            options={Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - i).map(year => ({
+                                value: String(year),
+                                label: String(year),
+                            }))}
+                            value={String(filtroAno)}
+                            onChange={(option) => setFiltroAno(Number(option?.value))}
+                        />
                     </div>
                 </div>
             </div>

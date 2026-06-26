@@ -4,6 +4,7 @@ import { useAppDispatch } from "redux-tool-kit/hooks/useAppDispatch";
 import { selectReparacionFilter, setFilter } from "redux-tool-kit/reparacion";
 import { selectModelosDroneArray } from "redux-tool-kit/modeloDrone/modeloDrone.selectors";
 import { estados } from "datos/estados";
+import { ComboBox } from "../common";
 
 const ESTADOS_REPARACION = [
   "Consulta", "Respondido", "Transito", "Recibido", "Revisado",
@@ -97,16 +98,14 @@ const ReparacionesFiltro = ({ selectedModelo, onModeloChange }: ReparacionesFilt
           />
         </div>
         <div className='form-group mt-2'>
-          <select
-            className='form-control'
+          <ComboBox
+            options={modelosDrone.map(modelo => ({ value: modelo.id, label: modelo.data.NombreModelo }))}
             value={selectedModelo}
-            onChange={(e) => onModeloChange(e.target.value)}
-          >
-            <option value="">Todos los modelos</option>
-            {modelosDrone.map(modelo => (
-              <option key={modelo.id} value={modelo.id}>{modelo.data.NombreModelo}</option>
-            ))}
-          </select>
+            onChange={(option) => onModeloChange(option?.value ?? '')}
+            placeholder="Todos los modelos"
+            noOptionsMessage="No se encontraron modelos"
+            isClearable
+          />
         </div>
         <div className="mt-3">
           <div className="row row-cols-2 row-cols-sm-3 row-cols-md-4 g-2">

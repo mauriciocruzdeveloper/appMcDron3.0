@@ -6,7 +6,8 @@ import { useAppSelector } from '../redux-tool-kit/hooks/useAppSelector';
 import { Drone } from '../types/drone';
 import { guardarDroneAsync, eliminarDroneAsync, getDroneAsync } from '../redux-tool-kit/drone/drone.actions';
 import { useModal } from './Modal/useModal';
-import Select from 'react-select';
+import { ComboBox } from './common';
+import { SelectOption } from '../types/selectOption';
 import { selectModelosDroneArray } from '../redux-tool-kit/modeloDrone/modeloDrone.selectors';
 import { selectUsuarioPorId } from '../redux-tool-kit/usuario/usuario.selectors';
 import { selectDroneById, selectDronesArray } from '../redux-tool-kit/drone';
@@ -47,6 +48,12 @@ export default function DroneComponent(): JSX.Element {
   });
 
   const [propietarioValue, setPropietarioValue] = useState<{ value: string, label: string } | null>(null);
+
+  // Opciones para el combo de modelos de drone.
+  const modelosDroneOptions: SelectOption[] = modelosDrone.map((modelo) => ({
+    value: modelo.id,
+    label: `${modelo.data.NombreModelo} - ${modelo.data.Fabricante}`,
+  }));
 
   // Obtener usuario completo para generar nombre
   const usuarioCompleto = useAppSelector(state =>
@@ -106,7 +113,7 @@ export default function DroneComponent(): JSX.Element {
     changeInput('ModeloDroneId', modeloId);
   };
 
-  const handleUsuarioChange = (selectedOption: { value: string; label: string } | null) => {
+  const handleUsuarioChange = (selectedOption: SelectOption | null) => {
     if (selectedOption) {
       setPropietarioValue(selectedOption);
       changeInput('Propietario', selectedOption.value);
@@ -235,29 +242,24 @@ export default function DroneComponent(): JSX.Element {
 
           <div className="mb-3">
             <label className="form-label">Modelo de Drone</label>
-            <select
-              className="form-select"
+            <ComboBox
+              options={modelosDroneOptions}
               value={drone.data.ModeloDroneId}
-              onChange={(e) => handleModeloChange(e.target.value)}
-              required
-            >
-              <option value="">Seleccione un modelo...</option>
-              {modelosDrone.map((modelo) => (
-                <option key={modelo.id} value={modelo.id}>
-                  {modelo.data.NombreModelo} - {modelo.data.Fabricante}
-                </option>
-              ))}
-            </select>
+              onChange={(option) => handleModeloChange(option?.value ?? '')}
+              placeholder="Seleccione un modelo..."
+              noOptionsMessage="No se encontraron modelos"
+              isClearable
+            />
           </div>
 
           <div className="mb-3">
             <label className="form-label">Propietario</label>
-            <Select
+            <ComboBox
               options={usuariosSelect}
-              noOptionsMessage={() => "No se encontraron usuarios"}
+              value={propietarioValue?.value ?? ''}
               onChange={handleUsuarioChange}
-              value={propietarioValue}
               placeholder="Seleccione un propietario..."
+              noOptionsMessage="No se encontraron usuarios"
               isClearable
             />
           </div>
