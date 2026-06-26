@@ -12,6 +12,8 @@ import {
     selectEstadisticasRepuestos
 } from '../redux-tool-kit/repuesto/repuesto.selectors';
 import { selectModelosDroneArray } from '../redux-tool-kit/modeloDrone/modeloDrone.selectors';
+import { ComboBox } from './common';
+import { SelectOption } from '../types/selectOption';
 
 // Mock de repuestos para mostrar como ejemplo
 const repuestosMock: Repuesto[] = [
@@ -90,8 +92,8 @@ export default function ListaRepuestos(): JSX.Element {
         dispatch(setFilter(e.target.value));
     }
 
-    const handleModeloChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-        setFiltroModeloDrone(e.target.value);
+    const handleModeloChange = (option: SelectOption | null) => {
+        setFiltroModeloDrone(option?.value ?? '');
     }
 
     const formatPrice = (precio: number): string => {
@@ -120,30 +122,29 @@ export default function ListaRepuestos(): JSX.Element {
                         />
                     </div>
                     <div className='form-group mt-2'>
-                        <select
-                            className='form-select'
+                        <ComboBox
+                            options={modelosDrone.map((modelo: ModeloDrone) => ({
+                                value: modelo.id,
+                                label: modelo.data.NombreModelo,
+                            }))}
                             value={filtroModeloDrone}
                             onChange={handleModeloChange}
-                        >
-                            <option value=''>Todos los modelos</option>
-                            {modelosDrone.map((modelo: ModeloDrone) => (
-                                <option key={modelo.id} value={modelo.id}>
-                                    {modelo.data.NombreModelo}
-                                </option>
-                            ))}
-                        </select>
+                            placeholder='Todos los modelos'
+                            isClearable
+                        />
                     </div>
                     <div className='form-group mt-2'>
-                        <select
-                            className='form-select'
+                        <ComboBox
+                            options={[
+                                { value: 'Disponible', label: 'Disponibles' },
+                                { value: 'En Pedido', label: 'En Pedido' },
+                                { value: 'Agotado', label: 'Agotados' },
+                            ]}
                             value={filtroEstado}
-                            onChange={(e) => setFiltroEstado(e.target.value)}
-                        >
-                            <option value=''>Todos los estados</option>
-                            <option value='Disponible'>Disponibles</option>
-                            <option value='En Pedido'>En Pedido</option>
-                            <option value='Agotado'>Agotados</option>
-                        </select>
+                            onChange={(option) => setFiltroEstado(option?.value ?? '')}
+                            placeholder='Todos los estados'
+                            isClearable
+                        />
                     </div>
                 </div>
             </div>

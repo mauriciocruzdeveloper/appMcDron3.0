@@ -12,6 +12,7 @@ import {
 import { ESTADOS_PEDIDO, EstadoPedido, PedidoRepuesto } from '../types/pedidoRepuesto';
 import { selectColeccionRepuestos } from '../redux-tool-kit/repuesto/repuesto.selectors';
 import { selectColeccionModelosDrone } from '../redux-tool-kit/modeloDrone/modeloDrone.selectors';
+import { ComboBox } from './common';
 
 export default function ListaPedidos(): JSX.Element {
     const dispatch = useAppDispatch();
@@ -78,16 +79,13 @@ export default function ListaPedidos(): JSX.Element {
                                 />
                             </div>
                             <div className='form-group mt-2'>
-                                <select
-                                    className='form-select'
+                                <ComboBox
+                                    options={ESTADOS_PEDIDO.map(e => ({ value: e.value, label: e.label }))}
                                     value={filtroEstado}
-                                    onChange={(e) => setFiltroEstado(e.target.value)}
-                                >
-                                    <option value=''>Todos los estados</option>
-                                    {ESTADOS_PEDIDO.map(e => (
-                                        <option key={e.value} value={e.value}>{e.label}</option>
-                                    ))}
-                                </select>
+                                    onChange={(option) => setFiltroEstado(option?.value ?? '')}
+                                    placeholder='Todos los estados'
+                                    isClearable
+                                />
                             </div>
                         </div>
                     </div>

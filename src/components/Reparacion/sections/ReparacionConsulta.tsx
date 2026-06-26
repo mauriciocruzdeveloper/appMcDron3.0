@@ -1,4 +1,4 @@
-import React, { ChangeEvent } from "react";
+import React from "react";
 import { useAppSelector } from "../../../redux-tool-kit/hooks/useAppSelector";
 import { useAppDispatch } from "../../../redux-tool-kit/hooks/useAppDispatch";
 import { useHistory } from "../../../hooks/useHistory";
@@ -21,6 +21,8 @@ import { enviarSms, getEmailForNotifications } from "../../../utils/utils";
 import { enviarEmailVacio } from "../../../utils/sendEmails";
 import { convertTimestampCORTO } from "../../../utils/utils";
 import TextareaAutosize from "react-textarea-autosize";
+import { ComboBox } from "../../common";
+import { SelectOption } from "../../../types/selectOption";
 
 interface ReparacionConsultaProps {
     reparacionId: string;
@@ -70,8 +72,8 @@ export const ReparacionConsulta: React.FC<ReparacionConsultaProps> = ({
 
     if (!seccionVisible || !reparacion) return null;
 
-    const handleDroneChange = (event: ChangeEvent<HTMLSelectElement>) => {
-        const droneId = event.target.value;
+    const handleDroneChange = (option: SelectOption | null) => {
+        const droneId = option?.value ?? '';
         dispatch(actualizarCampoReparacionAsync({ 
             reparacionId, 
             campo: 'DroneId', 
@@ -79,8 +81,8 @@ export const ReparacionConsulta: React.FC<ReparacionConsultaProps> = ({
         }));
     };
 
-    const handleModeloDroneChange = (event: ChangeEvent<HTMLSelectElement>) => {
-        const nuevoModeloDroneId = event.target.value;
+    const handleModeloDroneChange = (option: SelectOption | null) => {
+        const nuevoModeloDroneId = option?.value ?? '';
         if (!nuevoModeloDroneId || !reparacion.data.DroneId) return;
         dispatch(cambiarModeloDroneEnReparacionAsync({
             reparacionId,
@@ -211,20 +213,17 @@ export const ReparacionConsulta: React.FC<ReparacionConsultaProps> = ({
                 </div>
                 <div>
                     <label className="form-label">Nombre del Drone</label>
-                    <select
-                        className="form-control"
+                    <ComboBox
                         id="DroneId"
+                        options={dronesDelCliente.map(drone => ({
+                            value: drone.id,
+                            label: drone.data.Nombre || `Drone sin nombre (${drone.id})`,
+                        }))}
                         value={reparacion.data.DroneId || ""}
                         onChange={handleDroneChange}
+                        placeholder="Seleccione un drone"
                         disabled
-                    >
-                        <option value="">Seleccione un drone</option>
-                        {dronesDelCliente.map(drone => (
-                            <option key={drone.id} value={drone.id}>
-                                {drone.data.Nombre || `Drone sin nombre (${drone.id})`}
-                            </option>
-                        ))}
-                    </select>
+                    />
                     {dronesDelCliente.length === 0 && usuario?.id && (
                         <small className="form-text text-muted">
                             El cliente no tiene drones registrados
@@ -234,20 +233,17 @@ export const ReparacionConsulta: React.FC<ReparacionConsultaProps> = ({
                 {reparacion.data.DroneId ? (
                     <div>
                         <label className="form-label">Modelo del Drone</label>
-                        <select
-                            className="form-control"
+                        <ComboBox
                             id="ModeloDroneIdSelect"
+                            options={modelosDrone.map(modelo => ({
+                                value: modelo.id,
+                                label: `${modelo.data.NombreModelo} - ${modelo.data.Fabricante}`,
+                            }))}
                             value={modeloDroneIdActual || ""}
                             onChange={handleModeloDroneChange}
+                            placeholder="Seleccione un modelo"
                             disabled={!isAdmin}
-                        >
-                            <option value="">Seleccione un modelo</option>
-                            {modelosDrone.map(modelo => (
-                                <option key={modelo.id} value={modelo.id}>
-                                    {modelo.data.NombreModelo} - {modelo.data.Fabricante}
-                                </option>
-                            ))}
-                        </select>
+                        />
                     </div>
                 ) : (
                     <div>

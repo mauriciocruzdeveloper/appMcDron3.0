@@ -4,7 +4,7 @@ import { useAppSelector } from '../redux-tool-kit/hooks/useAppSelector';
 import { getIntervencionesPorReparacionAsync, agregarIntervencionAReparacionAsync, eliminarIntervencionDeReparacionAsync, actualizarIncluirRepuestoAsignacionAsync } from '../redux-tool-kit/reparacion/reparacion.actions';
 import { AsignacionIntervencion } from '../types/intervencion';
 import { useModal } from './Modal/useModal';
-import Select from 'react-select';
+import { ComboBox } from './common';
 import { setIntervencionesDeReparacionActual } from '../redux-tool-kit/reparacion/reparacion.slice';
 import { selectColeccionModelosDrone } from '../redux-tool-kit/modeloDrone/modeloDrone.selectors';
 import { selectColeccionRepuestos } from '../redux-tool-kit/repuesto/repuesto.selectors';
@@ -158,11 +158,12 @@ export default function IntervencionesReparacion({ reparacionId, readOnly = fals
         <div className="mb-4">
           <div className="row g-3 align-items-center">
             <div className="col">
-              <Select
+              <ComboBox
                 options={opcionesIntervenciones}
-                value={opcionesIntervenciones.find(opt => opt.value === intervencionSeleccionada) || null}
+                value={intervencionSeleccionada || ''}
                 onChange={(selected) => setIntervencionSeleccionada(selected?.value || null)}
                 placeholder="Seleccionar una intervención..."
+                noOptionsMessage="No se encontraron intervenciones"
                 isClearable
               />
               {modeloDroneId && (

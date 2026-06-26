@@ -1,5 +1,5 @@
-import Select from 'react-select';
 import TextareaAutosize from "react-textarea-autosize";
+import { ComboBox } from './common';
 
 const MensajesPresentational = (props) => {
 
@@ -27,15 +27,13 @@ const MensajesPresentational = (props) => {
                     <h5 className="card-title bluemcdron">CLIENTE</h5>
                     <div>
                         <label className="form-label">E-mail</label>
-                        <Select 
+                        <ComboBox
                             options={usuariosSelect}
-                            noOptionsMessage={() => null}
                             onChange={e => handleOnChangeUsuarios(e)}
                             id="EmailUsu"
-                            value={{
-                                value: `${cliente?.data?.NombreUsu || 'Admin'} - ${cliente?.data?.EmailUsu || 'admin@mauriciocruzdrones.com.ar'}`, 
-                                label: `${cliente?.data?.NombreUsu || 'Admin'} - ${cliente?.data?.EmailUsu || 'admin@mauriciocruzdrones.com.ar'}`
-                            }}
+                            value={cliente?.id || ''}
+                            placeholder="Seleccionar cliente..."
+                            noOptionsMessage="No se encontraron clientes"
                         />
                     </div>
                 </div>

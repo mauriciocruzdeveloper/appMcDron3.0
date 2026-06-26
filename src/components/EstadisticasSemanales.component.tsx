@@ -14,6 +14,7 @@ import {
     Legend,
 } from 'chart.js';
 import { useNavigate } from 'react-router-dom';
+import { ComboBox } from './common';
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
@@ -177,18 +178,14 @@ export default function EstadisticasSemanales(): JSX.Element {
                 <div className='card-body'>
                     <div className='form-group'>
                         <label>Año:</label>
-                        <select
-                            className='form-select'
-                            value={filtroAno}
-                            onChange={(e) => {
-                                setFiltroAno(Number(e.target.value));
+                        <ComboBox
+                            options={anosDisponibles.map(year => ({ value: String(year), label: String(year) }))}
+                            value={String(filtroAno)}
+                            onChange={(option) => {
+                                setFiltroAno(Number(option?.value));
                                 setSemanaExpandida(null);
                             }}
-                        >
-                            {anosDisponibles.map(year => (
-                                <option key={year} value={year}>{year}</option>
-                            ))}
-                        </select>
+                        />
                     </div>
                 </div>
             </div>

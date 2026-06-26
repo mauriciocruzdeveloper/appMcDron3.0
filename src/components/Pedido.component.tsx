@@ -1,4 +1,4 @@
-import React, { useEffect, useState, ChangeEvent } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useHistory } from '../hooks/useHistory';
 import { useAppDispatch } from '../redux-tool-kit/hooks/useAppDispatch';
@@ -16,6 +16,8 @@ import { guardarPedidoAsync, eliminarPedidoAsync } from '../redux-tool-kit/pedid
 import { selectPedidoPorId } from '../redux-tool-kit/pedidoRepuesto/pedidoRepuesto.selectors';
 import { selectRepuestosArray } from '../redux-tool-kit/repuesto/repuesto.selectors';
 import { selectModelosDroneArray } from '../redux-tool-kit/modeloDrone/modeloDrone.selectors';
+import { ComboBox } from './common';
+import { SelectOption } from '../types/selectOption';
 
 interface ParamTypes extends Record<string, string | undefined> {
     id: string;
@@ -88,8 +90,8 @@ export default function PedidoComponent(): JSX.Element {
     // -------------------------------------------------------
     // Handlers campos principales
     // -------------------------------------------------------
-    const handleProveedorChange = (e: ChangeEvent<HTMLSelectElement>) => {
-        const provId = Number(e.target.value) as ProveedorId;
+    const handleProveedorChange = (option: SelectOption | null) => {
+        const provId = Number(option?.value) as ProveedorId;
         const proveedor = PROVEEDORES_PEDIDO.find(p => p.id === provId);
         setPedido(prev => ({
             ...prev,
@@ -101,8 +103,8 @@ export default function PedidoComponent(): JSX.Element {
         }));
     };
 
-    const handleEstadoChange = (e: ChangeEvent<HTMLSelectElement>) => {
-        const nuevoEstado = e.target.value as EstadoPedido;
+    const handleEstadoChange = (option: SelectOption | null) => {
+        const nuevoEstado = (option?.value ?? '') as EstadoPedido;
         // Si pasa a "arrived" y no tiene fecha real, poner hoy
         const llegada =
             nuevoEstado === 'arrived' && !pedido.data.FechaLlegadaReal
@@ -312,29 +314,21 @@ export default function PedidoComponent(): JSX.Element {
                     {/* Proveedor */}
                     <div className="mb-3">
                         <label className="form-label fw-semibold">Proveedor</label>
-                        <select
-                            className="form-select"
-                            value={pedido.data.ProveedorId}
+                        <ComboBox
+                            options={PROVEEDORES_PEDIDO.map(p => ({ value: String(p.id), label: p.nombre }))}
+                            value={String(pedido.data.ProveedorId)}
                             onChange={handleProveedorChange}
-                        >
-                            {PROVEEDORES_PEDIDO.map(p => (
-                                <option key={p.id} value={p.id}>{p.nombre}</option>
-                            ))}
-                        </select>
+                        />
                     </div>
 
                     {/* Estado */}
                     <div className="mb-3">
                         <label className="form-label fw-semibold">Estado</label>
-                        <select
-                            className="form-select"
+                        <ComboBox
+                            options={ESTADOS_PEDIDO.map(e => ({ value: e.value, label: e.label }))}
                             value={pedido.data.Estado}
                             onChange={handleEstadoChange}
-                        >
-                            {ESTADOS_PEDIDO.map(e => (
-                                <option key={e.value} value={e.value}>{e.label}</option>
-                            ))}
-                        </select>
+                        />
                     </div>
 
                     {/* Número de seguimiento */}
@@ -436,39 +430,33 @@ export default function PedidoComponent(): JSX.Element {
                                             </span>
                                         )}
                                     </label>
-                                    <select
-                                        className="form-select form-select-sm"
+                                    <ComboBox
+                                        options={modelosDrone.map(m => ({
+                                            value: m.id,
+                                            label: `${m.data.NombreModelo} — ${m.data.Fabricante}`,
+                                        }))}
                                         value={filtrosModeloItem[item.id] ?? ''}
-                                        onChange={e => handleFiltroModeloItem(item.id, e.target.value)}
-                                    >
-                                        <option value=''>— Todos los modelos —</option>
-                                        {modelosDrone.map(m => (
-                                            <option key={m.id} value={m.id}>
-                                                {m.data.NombreModelo} — {m.data.Fabricante}
-                                            </option>
-                                        ))}
-                                    </select>
+                                        onChange={option => handleFiltroModeloItem(item.id, option?.value ?? '')}
+                                        placeholder='— Todos los modelos —'
+                                        isClearable
+                                    />
                                 </div>
 
                                 {/* Selector de repuesto existente */}
                                 <div className="mb-2">
                                     <label className="form-label small mb-1">Repuesto del catálogo (opcional)</label>
-                                    <select
-                                        className="form-select form-select-sm"
-                                        value={item.data.RepuestoId ?? ''}
-                                        onChange={e => handleItemRepuestoChange(item.id, e.target.value)}
-                                    >
-                                        <option value=''>— Seleccionar repuesto —</option>
-                                        {repuestos
+                                    <ComboBox
+                                        options={repuestos
                                             .filter(r =>
                                                 !filtrosModeloItem[item.id] ||
                                                 r.data.ModelosDroneIds.includes(filtrosModeloItem[item.id])
                                             )
-                                            .map(r => (
-                                                <option key={r.id} value={r.id}>{r.data.NombreRepu}</option>
-                                            ))
-                                        }
-                                    </select>
+                                            .map(r => ({ value: r.id, label: r.data.NombreRepu }))}
+                                        value={item.data.RepuestoId ?? ''}
+                                        onChange={option => handleItemRepuestoChange(item.id, option?.value ?? '')}
+                                        placeholder='— Seleccionar repuesto —'
+                                        isClearable
+                                    />
                                 </div>
 
 

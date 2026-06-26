@@ -1,8 +1,9 @@
 import { useEffect, useCallback, useState, useMemo } from "react";
 import { useLocation } from "react-router-dom";
 import TextareaAutosize from "react-textarea-autosize";
-import Select, { InputActionMeta } from 'react-select';
 
+import { ComboBox } from "./common";
+import { SelectOption } from "../types/selectOption";
 import { useHistory } from "../hooks/useHistory";
 import { useAppSelector } from "../redux-tool-kit/hooks/useAppSelector";
 import { useAppDispatch } from "../redux-tool-kit/hooks/useAppDispatch";
@@ -226,28 +227,35 @@ export default function Presupuesto(): JSX.Element {
         });
     }
 
-    const handleOnChangeProvincias = async (e: any) => {
-        await dispatch(getLocalidadesPorProvincia(e.value));
+    const handleOnChangeProvincias = async (option: SelectOption | null) => {
+        if (!option) {
+            setPresupuesto({
+                ...presupuesto,
+                ProvinciaUsu: ""
+            });
+            return;
+        }
+        await dispatch(getLocalidadesPorProvincia(option.value));
 
         setPresupuesto({
             ...presupuesto,
-            ProvinciaUsu: e.value
+            ProvinciaUsu: option.value
         });
     }
 
-    const handleOnChangeLocalidades = (e: any) => {
+    const handleOnChangeLocalidades = (option: SelectOption | null) => {
         setPresupuesto({
             ...presupuesto,
-            CiudadUsu: e.value,
+            CiudadUsu: option?.value ?? "",
         });
     }
 
 
     // Función que maneja el onChange del Select de usuarios cuando se selecciona
     // un usuario/cliente de la lista que previamente se cargó en el Select
-    const handleOnChangeUsuarios = async (e: any) => {
-        if (e) {
-            const response = await dispatch(getClienteAsync(e.value));
+    const handleOnChangeUsuarios = async (option: SelectOption | null) => {
+        if (option) {
+            const response = await dispatch(getClienteAsync(option.value));
 
             if (response.meta.requestStatus === 'rejected') {
                 openModal({
@@ -275,15 +283,15 @@ export default function Presupuesto(): JSX.Element {
         }
     }
 
-    // Función que maneja los onChange de toda la vida, del Select de usuarios.
-    const handleOnInputChangeUsuarios = (inputEmailUsu: string, action: InputActionMeta) => {
-        if (action.action === "input-change") changeInputUsu("EmailUsu", inputEmailUsu);
+    // Función que maneja el texto que se escribe en el campo de email (texto libre).
+    const handleOnInputChangeUsuarios = (inputEmailUsu: string) => {
+        changeInputUsu("EmailUsu", inputEmailUsu);
     }
     
     // Función que maneja el onChange del Select de drones
-    const handleOnChangeDrones = (e: any) => {
-        if (e) {
-            const droneSeleccionado = dronesDelUsuario.find(drone => drone.id === e.value);
+    const handleOnChangeDrones = (option: SelectOption | null) => {
+        if (option) {
+            const droneSeleccionado = dronesDelUsuario.find(drone => drone.id === option.value);
             if (droneSeleccionado) {
                 changeInput("DroneId", droneSeleccionado.id);
                 changeInput("ModeloDroneIdRep", droneSeleccionado.data.ModeloDroneId);
@@ -301,11 +309,15 @@ export default function Presupuesto(): JSX.Element {
     }
     
     // Función que maneja el onChange del Select de modelos de drone
-    const handleOnChangeModelosDrone = (e: any) => {
-        if (e && !modeloDeshabilitado) {
-            changeInput("ModeloDroneIdRep", e.value);
-            changeInput("ModeloDroneNameRep", e.label);
+    const handleOnChangeModelosDrone = (option: SelectOption | null) => {
+        if (modeloDeshabilitado) return;
+        if (!option) {
+            changeInput("ModeloDroneIdRep", "");
+            changeInput("ModeloDroneNameRep", "");
+            return;
         }
+        changeInput("ModeloDroneIdRep", option.value);
+        changeInput("ModeloDroneNameRep", option.label);
     }
 
     // Color de fondo según el estado
@@ -330,17 +342,16 @@ export default function Presupuesto(): JSX.Element {
                     <h5 className="card-title bluemcdron">USUARIO</h5>
                     <div>
                         <label className="form-label">E-mail</label>
-                        {/* Crear un componente propio para otros usos que no se borre
-                        el contenido cuando se desenfoca. Ponerlo en una carpeta aparte 
-                        de componentes propios */}
-                        <Select
+                        <ComboBox
                             options={usuariosSelect}
-                            noOptionsMessage={() => null}
-                            onChange={e => handleOnChangeUsuarios(e)}
+                            onChange={handleOnChangeUsuarios}
                             onInputChange={handleOnInputChangeUsuarios}
+                            allowCustomValue
                             id="EmailUsu"
-                            value={{ value: presupuesto.EmailUsu, label: presupuesto.EmailUsu }}
-                            isDisabled={!isAdmin}
+                            value={presupuesto.EmailUsu}
+                            placeholder="Email del cliente..."
+                            noOptionsMessage="No se encontraron clientes"
+                            disabled={!isAdmin}
                         />
                     </div>
                     <div>
@@ -375,28 +386,24 @@ export default function Presupuesto(): JSX.Element {
                     </div>
                     <div>
                         <label className="form-label">Provincia</label>
-                        <Select
-                            // onFocus={handleOnFocusSelect}
+                        <ComboBox
                             options={provinciasSelect}
-                            onChange={e => handleOnChangeProvincias(e)}
+                            onChange={handleOnChangeProvincias}
                             id="ProvinciaUsu"
-                            value={{
-                                value: presupuesto.ProvinciaUsu,
-                                label: presupuesto.ProvinciaUsu
-                            }}
+                            value={presupuesto.ProvinciaUsu}
+                            placeholder="Seleccionar provincia..."
+                            noOptionsMessage="No se encontraron provincias"
                         />
                     </div>
                     <div>
                         <label className="form-label">Ciudad</label>
-                        <Select
-                            // onFocus={handleOnFocusSelect}
+                        <ComboBox
                             options={localidadesSelect}
-                            onChange={e => handleOnChangeLocalidades(e)}
+                            onChange={handleOnChangeLocalidades}
                             id="CiudadUsu"
-                            value={{
-                                value: presupuesto.CiudadUsu,
-                                label: presupuesto.CiudadUsu
-                            }}
+                            value={presupuesto.CiudadUsu}
+                            placeholder="Seleccionar ciudad..."
+                            noOptionsMessage="No se encontraron ciudades"
                         />
                     </div>
                 </div>
@@ -408,34 +415,28 @@ export default function Presupuesto(): JSX.Element {
                     
                     <div>
                         <label className="form-label">Drone Existente (Opcional)</label>
-                        <Select
+                        <ComboBox
                             options={dronesSelect}
                             onChange={handleOnChangeDrones}
                             id="DroneId"
-                            value={{
-                                value: presupuesto.DroneId,
-                                label: dronesSelect.find(d => d.value === presupuesto.DroneId)?.label || ""
-                            }}
+                            value={presupuesto.DroneId}
                             placeholder="Seleccionar drone existente..."
-                            noOptionsMessage={() => "No hay drones disponibles para este usuario"}
+                            noOptionsMessage="No hay drones disponibles para este usuario"
                             isClearable
-                            isDisabled={!presupuesto.UsuarioRep}
+                            disabled={!presupuesto.UsuarioRep}
                         />
                     </div>
                     
                     <div>
                         <label className="form-label">Modelo del Drone</label>
-                        <Select
+                        <ComboBox
                             options={modelosDroneSelect}
                             onChange={handleOnChangeModelosDrone}
                             id="ModeloDroneIdRep"
-                            value={{
-                                value: presupuesto.ModeloDroneIdRep,
-                                label: presupuesto.ModeloDroneNameRep
-                            }}
+                            value={presupuesto.ModeloDroneIdRep}
                             placeholder="Seleccionar modelo de drone..."
-                            noOptionsMessage={() => "No hay modelos disponibles"}
-                            isDisabled={modeloDeshabilitado}
+                            noOptionsMessage="No hay modelos disponibles"
+                            disabled={modeloDeshabilitado}
                         />
                     </div>
 
