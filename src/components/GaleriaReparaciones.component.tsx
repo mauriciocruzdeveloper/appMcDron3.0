@@ -3,7 +3,7 @@ import { useAppSelector } from '../redux-tool-kit/hooks/useAppSelector';
 import { selectReparacionesArray } from '../redux-tool-kit/reparacion/reparacion.selectors';
 import { useNavigate } from 'react-router-dom';
 import { ImageGallery } from './ImageGallery';
-import { ChevronDown, ChevronUp, ImageFill } from 'react-bootstrap-icons';
+// Íconos Bootstrap Icons usando CSS
 import { useAppDispatch } from '../redux-tool-kit/hooks/useAppDispatch';
 import { guardarReparacionAsync } from '../redux-tool-kit/reparacion/reparacion.actions';
 import { ReparacionType } from '../types/reparacion';
@@ -146,7 +146,7 @@ export default function GaleriaReparaciones(): JSX.Element {
     return (
         <div className='p-4'>
             <h2 className="mb-4">
-                <ImageFill className="me-2" />
+                <i className="bi bi-image-fill me-2" style={{ fontSize: 24 }}></i>
                 Galería de Reparaciones
             </h2>
 
@@ -213,7 +213,7 @@ export default function GaleriaReparaciones(): JSX.Element {
             {reparacionesOrdenadas.length === 0 ? (
                 <div className="card">
                     <div className="card-body text-center text-muted py-5">
-                        <ImageFill size={64} className="mb-3 opacity-50" />
+                        <i className="bi bi-image-fill mb-3 opacity-50" style={{ fontSize: 64, display: 'inline-block' }}></i>
                         <h5>No hay reparaciones con fotos</h5>
                         <p>Las reparaciones con fotos aparecerán aquí</p>
                     </div>
@@ -234,7 +234,7 @@ export default function GaleriaReparaciones(): JSX.Element {
                                     >
                                         <div className="flex-grow-1 w-100">
                                             <div className="d-flex align-items-center mb-2 flex-wrap">
-                                                {estaExpandida ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+                                                {estaExpandida ? <i className="bi bi-chevron-up" style={{ fontSize: 20 }}></i> : <i className="bi bi-chevron-down" style={{ fontSize: 20 }}></i>}
                                                 <h5 className="ms-2 mb-0">
                                                     Reparación {reparacion.data.IdPublicoRep || `#${reparacion.id.substring(0, 8)}`}
                                                 </h5>
@@ -242,7 +242,7 @@ export default function GaleriaReparaciones(): JSX.Element {
                                                     {reparacion.data.EstadoRep}
                                                 </span>
                                                 <span className="badge bg-info ms-2">
-                                                    <ImageFill className="me-1" size={12} />
+                                                    <i className="bi bi-image-fill me-1" style={{ fontSize: 12 }}></i>
                                                     {numFotos} {numFotos === 1 ? 'foto' : 'fotos'}
                                                 </span>
                                             </div>

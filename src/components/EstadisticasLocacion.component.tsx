@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { useAppSelector } from '../redux-tool-kit/hooks/useAppSelector';
 import { selectReparacionesArray } from '../redux-tool-kit/reparacion/reparacion.selectors';
 import { selectColeccionUsuarios } from '../redux-tool-kit/usuario/usuario.selectors';
-import { ChevronDown, ChevronUp } from 'react-bootstrap-icons';
+// Íconos Bootstrap Icons usando CSS
 import { Line } from 'react-chartjs-2';
 import {
     Chart as ChartJS,
@@ -510,7 +510,7 @@ export default function EstadisticasLocacion(): JSX.Element {
                                 style={{ cursor: 'pointer' }}
                             >
                                 <div className="d-flex align-items-center">
-                                    {locacionExpandida === locacion.locacion ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                                    {locacionExpandida === locacion.locacion ? <i className="bi bi-chevron-up" style={{ fontSize: 16 }}></i> : <i className="bi bi-chevron-down" style={{ fontSize: 16 }}></i>}
                                     <strong className="ms-2">{locacion.locacion}</strong>
                                     <span 
                                         className="ms-2 badge"

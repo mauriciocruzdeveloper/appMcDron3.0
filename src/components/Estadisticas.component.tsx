@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useAppSelector } from '../redux-tool-kit/hooks/useAppSelector';
 import { selectReparacionesArray } from '../redux-tool-kit/reparacion/reparacion.selectors';
-import { ChevronDown, ChevronUp } from 'react-bootstrap-icons';
+// Íconos Bootstrap Icons usando CSS
 import { Bar } from 'react-chartjs-2';
 import {
     Chart as ChartJS,
@@ -190,7 +190,7 @@ export default function Estadisticas(): JSX.Element {
                                 style={{ cursor: 'pointer' }}
                             >
                                 <div className="d-flex align-items-center">
-                                    {mesExpandido === mes.mes ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                                    {mesExpandido === mes.mes ? <i className="bi bi-chevron-up" style={{ fontSize: 16 }}></i> : <i className="bi bi-chevron-down" style={{ fontSize: 16 }}></i>}
                                     <strong className="ms-2">{mes.nombreMes}</strong>
                                     <small className="text-muted ms-2">({mes.cantidad} reparaciones)</small>
                                 </div>
