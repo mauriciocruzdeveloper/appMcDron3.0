@@ -23,12 +23,12 @@ const ReparacionItem = ({ reparacion, estado, onClick }: ReparacionItemProps): R
         <div>
           <h6 className='mb-1'>
             {urgente && (
-              <>
+              <span className='d-block mb-1'>
                 <span className='badge badge-danger mr-1' style={{ backgroundColor: '#dc3545', color: 'white', marginRight: 6 }}>⚡ Urgente</span>
-                <span style={{ color: '#dc3545', fontSize: '0.8rem', marginRight: 6 }}>
+                <span style={{ color: '#dc3545', fontSize: '0.8rem', whiteSpace: 'nowrap' }}>
                   {diasAtraso} {diasAtraso === 1 ? 'día' : 'días'}
                 </span>
-              </>
+              </span>
             )}
             {modeloNombre || reparacion.data.ModeloDroneNameRep || 'Modelo no especificado'}
           </h6>

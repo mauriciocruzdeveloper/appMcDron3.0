@@ -4,7 +4,6 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { Card, Button, Alert, Table, Spinner, Badge } from 'react-bootstrap';
 import { useAppSelector } from '../redux-tool-kit/hooks/useAppSelector';
 import { useAppDispatch } from '../redux-tool-kit/hooks/useAppDispatch';
 import { guardarReparacionAsync } from '../redux-tool-kit/reparacion/reparacion.actions';
@@ -92,20 +91,17 @@ export const MigradorEntregadoFinalizado: React.FC = () => {
                     throw new Error(`Reparación ${reparacionEntregada.id} no encontrada`);
                 }
 
-                // Crear reparación actualizada
                 const reparacionActualizada = {
                     ...reparacion,
                     data: {
                         ...reparacion.data,
                         EstadoRep: 'Finalizado',
-                        // Metadatos de migración
                         MigracionTimestamp: Date.now(),
                         EstadoAnteriorMigracion: 'Entregado',
                         MigradoPorScript: true
                     }
                 };
 
-                // Actualizar usando Redux
                 await dispatch(guardarReparacionAsync(reparacionActualizada)).unwrap();
                 
                 exitosas++;
@@ -120,58 +116,45 @@ export const MigradorEntregadoFinalizado: React.FC = () => {
                 console.error(`❌ ${errorMsg}`);
             }
 
-            // Pequeña pausa para no sobrecargar el sistema
             await new Promise(resolve => setTimeout(resolve, 100));
         }
 
-        setResultado({
-            exitosas,
-            fallidas,
-            errores,
-            procesando: false
-        });
-
+        setResultado({ exitosas, fallidas, errores, procesando: false });
         setMostrarConfirmacion(false);
     };
 
     const resetearMigracion = () => {
         setMostrarConfirmacion(false);
-        setResultado({
-            exitosas: 0,
-            fallidas: 0,
-            errores: [],
-            procesando: false
-        });
+        setResultado({ exitosas: 0, fallidas: 0, errores: [], procesando: false });
     };
 
     return (
-        <Card className="mt-3">
-            <Card.Header>
-                <h5 className="mb-0">
-                    🔄 Migrador: Entregado → Finalizado
-                </h5>
-            </Card.Header>
-            <Card.Body>
-                <Alert variant="info">
+        <div className="card mt-3">
+            <div className="card-header">
+                <h5 className="mb-0">🔄 Migrador: Entregado → Finalizado</h5>
+            </div>
+
+            <div className="card-body">
+                <div className="alert alert-info">
                     <strong>Función:</strong> Este migrador cambia todas las reparaciones con estado 
                     Entregado al nuevo estado Finalizado del workflow actualizado.
-                </Alert>
+                </div>
 
                 {/* Estadísticas */}
                 <div className="mb-3">
                     <h6>📊 Reparaciones encontradas:</h6>
-                    <Badge bg="primary" className="me-2">
+                    <span className="badge bg-primary me-2">
                         Total con estado Entregado: {reparacionesEntregadas.length}
-                    </Badge>
+                    </span>
                     {resultado.exitosas > 0 && (
-                        <Badge bg="success" className="me-2">
+                        <span className="badge bg-success me-2">
                             Migradas: {resultado.exitosas}
-                        </Badge>
+                        </span>
                     )}
                     {resultado.fallidas > 0 && (
-                        <Badge bg="danger">
+                        <span className="badge bg-danger">
                             Con errores: {resultado.fallidas}
-                        </Badge>
+                        </span>
                     )}
                 </div>
 
@@ -179,7 +162,7 @@ export const MigradorEntregadoFinalizado: React.FC = () => {
                 {reparacionesEntregadas.length > 0 && (
                     <div className="mb-3">
                         <h6>📋 Reparaciones que serán migradas:</h6>
-                        <Table striped bordered hover size="sm">
+                        <table className="table table-striped table-bordered table-hover table-sm">
                             <thead>
                                 <tr>
                                     <th>ID</th>
@@ -197,9 +180,9 @@ export const MigradorEntregadoFinalizado: React.FC = () => {
                                         <td>{rep.modelo}</td>
                                         <td>{rep.fechaCreacion}</td>
                                         <td>
-                                            <Badge bg="warning">
+                                            <span className="badge bg-warning text-dark">
                                                 {rep.estadoActual}
-                                            </Badge>
+                                            </span>
                                         </td>
                                     </tr>
                                 ))}
@@ -211,25 +194,25 @@ export const MigradorEntregadoFinalizado: React.FC = () => {
                                     </tr>
                                 )}
                             </tbody>
-                        </Table>
+                        </table>
                     </div>
                 )}
 
                 {/* Errores */}
                 {resultado.errores.length > 0 && (
-                    <Alert variant="danger">
+                    <div className="alert alert-danger">
                         <strong>❌ Errores encontrados:</strong>
                         <ul className="mb-0 mt-2">
                             {resultado.errores.map((error, index) => (
                                 <li key={index}>{error}</li>
                             ))}
                         </ul>
-                    </Alert>
+                    </div>
                 )}
 
                 {/* Confirmación */}
                 {mostrarConfirmacion && (
-                    <Alert variant="warning">
+                    <div className="alert alert-warning">
                         <strong>⚠️ Confirmación requerida</strong>
                         <p className="mb-2">
                             Está a punto de migrar <strong>{reparacionesEntregadas.length}</strong> reparaciones 
@@ -238,42 +221,41 @@ export const MigradorEntregadoFinalizado: React.FC = () => {
                         <p className="mb-3">
                             <strong>Esta acción no se puede deshacer fácilmente.</strong>
                         </p>
-                        <div>
-                            <Button 
-                                variant="success" 
+                        <div className="d-flex gap-2">
+                            <button
+                                className="btn btn-success"
                                 onClick={ejecutarMigracion}
                                 disabled={resultado.procesando}
-                                className="me-2"
+                                type="button"
                             >
                                 {resultado.procesando ? (
                                     <>
-                                        <Spinner
-                                            as="span"
-                                            animation="border"
-                                            size="sm"
+                                        <span
+                                            className="spinner-border spinner-border-sm me-2"
                                             role="status"
-                                            className="me-2"
+                                            aria-hidden="true"
                                         />
                                         Migrando...
                                     </>
                                 ) : (
                                     '✅ Confirmar Migración'
                                 )}
-                            </Button>
-                            <Button 
-                                variant="secondary" 
+                            </button>
+                            <button
+                                className="btn btn-secondary"
                                 onClick={() => setMostrarConfirmacion(false)}
                                 disabled={resultado.procesando}
+                                type="button"
                             >
                                 ❌ Cancelar
-                            </Button>
+                            </button>
                         </div>
-                    </Alert>
+                    </div>
                 )}
 
                 {/* Resultado exitoso */}
                 {!mostrarConfirmacion && !resultado.procesando && resultado.exitosas > 0 && (
-                    <Alert variant="success">
+                    <div className="alert alert-success">
                         <strong>🎉 Migración completada!</strong>
                         <p className="mb-2">
                             Se migraron exitosamente <strong>{resultado.exitosas}</strong> reparaciones.
@@ -283,40 +265,42 @@ export const MigradorEntregadoFinalizado: React.FC = () => {
                                 <strong>{resultado.fallidas}</strong> reparaciones tuvieron errores.
                             </p>
                         )}
-                    </Alert>
+                    </div>
                 )}
 
                 {/* Botones de acción */}
                 <div className="d-flex gap-2">
                     {reparacionesEntregadas.length > 0 && !mostrarConfirmacion && !resultado.procesando && (
-                        <Button 
-                            variant="primary" 
+                        <button
+                            className="btn btn-primary"
                             onClick={() => setMostrarConfirmacion(true)}
+                            type="button"
                         >
                             🚀 Iniciar Migración
-                        </Button>
+                        </button>
                     )}
                     
                     {(resultado.exitosas > 0 || resultado.fallidas > 0) && (
-                        <Button 
-                            variant="outline-secondary" 
+                        <button
+                            className="btn btn-outline-secondary"
                             onClick={resetearMigracion}
+                            type="button"
                         >
                             🔄 Resetear
-                        </Button>
+                        </button>
                     )}
                 </div>
 
                 {reparacionesEntregadas.length === 0 && (
-                    <Alert variant="success">
+                    <div className="alert alert-success">
                         <strong>✅ No hay reparaciones para migrar</strong>
                         <p className="mb-0">
                             No se encontraron reparaciones con estado Entregado.
                         </p>
-                    </Alert>
+                    </div>
                 )}
-            </Card.Body>
-        </Card>
+            </div>
+        </div>
     );
 };
 

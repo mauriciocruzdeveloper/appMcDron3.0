@@ -1,8 +1,7 @@
 import React, { useMemo, useState } from 'react';
-import { OverlayTrigger, Tooltip as BSTooltip } from 'react-bootstrap';
 import { useAppSelector } from '../redux-tool-kit/hooks/useAppSelector';
 import { selectReparacionesArray } from '../redux-tool-kit/reparacion/reparacion.selectors';
-import { ChevronDown, ChevronUp } from 'react-bootstrap-icons';
+// Íconos Bootstrap Icons usando CSS
 import { Bar } from 'react-chartjs-2';
 import {
     Chart as ChartJS,
@@ -250,19 +249,15 @@ export default function EstadisticasSemanales(): JSX.Element {
                                 style={{ cursor: 'pointer' }}
                             >
                                 <div className="d-flex align-items-center">
-                                    {semanaExpandida === semana.weekKey ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-                                    <OverlayTrigger
-                                        placement="right"
-                                        overlay={
-                                            <BSTooltip id={`tooltip-semana-${semana.weekKey}`}>
-                                                {formatFechaConAnio(semana.lunes)} – {formatFechaConAnio(semana.domingo)}
-                                            </BSTooltip>
-                                        }
-                                    >
+                                    {semanaExpandida === semana.weekKey ? <i className="bi bi-chevron-up" style={{ fontSize: 16 }}></i> : <i className="bi bi-chevron-down" style={{ fontSize: 16 }}></i>}
+                                    <span className="mc-tooltip-wrapper">
                                         <strong className="ms-2" style={{ textDecoration: 'underline dotted', cursor: 'help' }}>
                                             Semana {semana.week}
                                         </strong>
-                                    </OverlayTrigger>
+                                        <span className="mc-tooltip-content">
+                                            {formatFechaConAnio(semana.lunes)} – {formatFechaConAnio(semana.domingo)}
+                                        </span>
+                                    </span>
                                     <small className="text-muted ms-2">
                                         {formatFecha(semana.lunes)} – {formatFecha(semana.domingo)}
                                     </small>

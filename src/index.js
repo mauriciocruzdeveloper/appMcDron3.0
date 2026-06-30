@@ -2,10 +2,11 @@ import ReactDOM from "react-dom";
 import App from "./components/App.component";
 import { Provider } from "react-redux";
 
-import 'bootstrap/dist/css/bootstrap.min.css'
-import 'bootstrap/dist/js/bootstrap.min.js'
-import 'bootstrap-icons/font/bootstrap-icons.css'
+// Estilos propios — sin Bootstrap, sin precompilación
+import './css/utilities.css';
 import './css/estilos.css';
+// Íconos Bootstrap (web font, liviana — solo íconos)
+import 'bootstrap-icons/font/bootstrap-icons.css';
 
 import store from "./redux-tool-kit/store";
 

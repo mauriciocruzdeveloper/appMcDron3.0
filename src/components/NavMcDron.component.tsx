@@ -1,13 +1,12 @@
-import React from 'react';
-import { Navbar, NavDropdown } from 'react-bootstrap';
-import { List } from 'react-bootstrap-icons';
+import React, { useState, useRef, useEffect } from 'react';
+// Íconos Bootstrap Icons usando CSS
 import { useHistory } from '../hooks/useHistory';
 import { logout } from "../redux-tool-kit/app/app.slice";
 import { useAppSelector } from "../redux-tool-kit/hooks/useAppSelector";
 import { useAppDispatch } from "../redux-tool-kit/hooks/useAppDispatch";
 import { useModal } from './Modal/useModal';
 import { notificacionesPorMensajesPersistencia } from '../persistencia/persistencia';
-import '../styles/navbar.css'; // Importa el archivo CSS
+import '../styles/navbar.css';
 
 
 export default function NavMcDron (): JSX.Element {
@@ -23,9 +22,10 @@ export default function NavMcDron (): JSX.Element {
         usuario?.data?.EmailUsu?.split('@')[0] ||
         "usuario";
 
-    const {
-        openModal,
-    } = useModal();
+    const { openModal } = useModal();
+
+    const [dropdownOpen, setDropdownOpen] = useState(false);
+    const dropdownRef = useRef<HTMLDivElement>(null);
 
     // Esto hay que ver donde lo ponemos...
     notificacionesPorMensajesPersistencia(usuario?.id);
@@ -33,100 +33,134 @@ export default function NavMcDron (): JSX.Element {
     const confirmaDesloguearse = () => {
         localStorage.removeItem('loginData');
         dispatch(logout());
-    }
-        
+    };
+
     const handleBack = () => {
-        if (history.location.pathname == "/inicio") {
+        if (history.location.pathname === "/inicio") {
             openModal({
                 mensaje: "Desea desloguearse?",
                 tipo: "warning",
                 titulo: "Atención!",
                 confirmCallback: confirmaDesloguearse,
-            })
+            });
         } else {
-            history.goBack()
+            history.goBack();
         }
-    }
+    };
+
+    const navigate = (path: string) => {
+        setDropdownOpen(false);
+        history.push(path);
+    };
+
+    // Cerrar dropdown al clickear fuera
+    useEffect(() => {
+        const handleOutsideClick = (e: MouseEvent) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+                setDropdownOpen(false);
+            }
+        };
+        if (dropdownOpen) {
+            document.addEventListener('mousedown', handleOutsideClick);
+        }
+        return () => document.removeEventListener('mousedown', handleOutsideClick);
+    }, [dropdownOpen]);
 
     return (
-        <Navbar sticky="top" className="navbar-shadow bg-bluemcdron d-flex justify-content-between px-2">
+        <nav className="mc-navbar">
+            {/* Foto de usuario → volver / inicio */}
             <img
                 src={usuario?.data?.UrlFotoUsu || "./img/logo1.png"}
                 width="50"
+                height="50"
                 className="rounded-circle"
                 alt="Foto del usuario"
                 onClick={() => history.push('/inicio')}
-                style={{ cursor: 'pointer' }}
+                style={{ cursor: 'pointer', objectFit: 'cover' }}
             />
-            <h4 className="text-white m-0">
+
+            {/* Saludo */}
+            <h4 className="text-white m-0" style={{ fontSize: '1.1rem' }}>
                 Hola {nombreUsuario}!
             </h4>
-            <NavDropdown 
-                title={
-                    <List
-                        width="35"
-                        height="35"
-                        color="white"
-                    />
-                }
-                id="nav-dropdown"
-                drop="down"
-                align="end"
-            >
-                <NavDropdown.Item onClick={() => history.push('/inicio/perfil')}>
-                    Perfil
-                </NavDropdown.Item>
-                <NavDropdown.Divider />
-                <NavDropdown.Item onClick={() => history.push('/inicio/reparaciones')}>
-                    Reparaciones
-                </NavDropdown.Item>
-                {admin && (
-                    <>
-                        <NavDropdown.Item onClick={() => history.push('/inicio/usuarios')}>
-                            Usuarios
-                        </NavDropdown.Item>
-                        <NavDropdown.Item onClick={() => history.push('/inicio/repuestos')}>
-                            Repuestos
-                        </NavDropdown.Item>
-                        <NavDropdown.Item onClick={() => history.push('/inicio/modelos-drone')}>
-                            Modelos de Drones
-                        </NavDropdown.Item>
-                        <NavDropdown.Item onClick={() => history.push('/inicio/drones')}>
-                            Drones
-                        </NavDropdown.Item>
-                        <NavDropdown.Item onClick={() => history.push('/inicio/intervenciones')}>
-                            Intervenciones
-                        </NavDropdown.Item>
-                        <NavDropdown.Item onClick={() => history.push('/inicio/pedidos')}>
-                            Pedidos de Repuestos
-                        </NavDropdown.Item>
-                        <NavDropdown.Divider />
-                        <NavDropdown.Item onClick={() => history.push('/inicio/estadisticas')}>
-                            Estadísticas (Ingresos)
-                        </NavDropdown.Item>
-                        <NavDropdown.Item onClick={() => history.push('/inicio/estadisticas-locacion')}>
-                            Estadísticas (Locación)
-                        </NavDropdown.Item>
-                        <NavDropdown.Item onClick={() => history.push('/inicio/estadisticas-semanales')}>
-                            Estadísticas (Recepción Semanal)
-                        </NavDropdown.Item>
-                        <NavDropdown.Item onClick={() => history.push('/inicio/galeria-reparaciones')}>
-                            Galería de Reparaciones
-                        </NavDropdown.Item>
-                        <NavDropdown.Item onClick={() => history.push('/inicio/estados-legacy')}>
-                            Estados Legacy
-                        </NavDropdown.Item>
-                        <NavDropdown.Divider />
-                        <NavDropdown.Item onClick={() => history.push('/inicio/exportar-clientes-google-ads')}>
-                            Exportar Clientes (Google Ads)
-                        </NavDropdown.Item>
-                        <NavDropdown.Divider />
-                    </>
-                )}
-                <NavDropdown.Item onClick={() => history.push('/inicio/mensajes')}>
-                    Mensajes
-                </NavDropdown.Item>
-            </NavDropdown>
-        </Navbar>
-    )
+
+            {/* Dropdown */}
+            <div className="mc-dropdown" ref={dropdownRef}>
+                <button
+                    className="mc-dropdown-toggle"
+                    aria-expanded={dropdownOpen}
+                    aria-haspopup="true"
+                    onClick={() => setDropdownOpen(prev => !prev)}
+                    type="button"
+                >
+                    <i className="bi bi-list text-white" style={{ fontSize: 35 }}></i>
+                </button>
+
+                <div className={`mc-dropdown-menu${dropdownOpen ? ' open' : ''}`} role="menu">
+                    <button className="mc-dropdown-item" onClick={() => navigate('/inicio/perfil')}>
+                        Perfil
+                    </button>
+
+                    <div className="mc-dropdown-divider" />
+
+                    <button className="mc-dropdown-item" onClick={() => navigate('/inicio/reparaciones')}>
+                        Reparaciones
+                    </button>
+
+                    {admin && (
+                        <>
+                            <button className="mc-dropdown-item" onClick={() => navigate('/inicio/usuarios')}>
+                                Usuarios
+                            </button>
+                            <button className="mc-dropdown-item" onClick={() => navigate('/inicio/repuestos')}>
+                                Repuestos
+                            </button>
+                            <button className="mc-dropdown-item" onClick={() => navigate('/inicio/modelos-drone')}>
+                                Modelos de Drones
+                            </button>
+                            <button className="mc-dropdown-item" onClick={() => navigate('/inicio/drones')}>
+                                Drones
+                            </button>
+                            <button className="mc-dropdown-item" onClick={() => navigate('/inicio/intervenciones')}>
+                                Intervenciones
+                            </button>
+                            <button className="mc-dropdown-item" onClick={() => navigate('/inicio/pedidos')}>
+                                Pedidos de Repuestos
+                            </button>
+
+                            <div className="mc-dropdown-divider" />
+
+                            <button className="mc-dropdown-item" onClick={() => navigate('/inicio/estadisticas')}>
+                                Estadísticas (Ingresos)
+                            </button>
+                            <button className="mc-dropdown-item" onClick={() => navigate('/inicio/estadisticas-locacion')}>
+                                Estadísticas (Locación)
+                            </button>
+                            <button className="mc-dropdown-item" onClick={() => navigate('/inicio/estadisticas-semanales')}>
+                                Estadísticas (Recepción Semanal)
+                            </button>
+                            <button className="mc-dropdown-item" onClick={() => navigate('/inicio/galeria-reparaciones')}>
+                                Galería de Reparaciones
+                            </button>
+                            <button className="mc-dropdown-item" onClick={() => navigate('/inicio/estados-legacy')}>
+                                Estados Legacy
+                            </button>
+
+                            <div className="mc-dropdown-divider" />
+
+                            <button className="mc-dropdown-item" onClick={() => navigate('/inicio/exportar-clientes-google-ads')}>
+                                Exportar Clientes (Google Ads)
+                            </button>
+
+                            <div className="mc-dropdown-divider" />
+                        </>
+                    )}
+
+                    <button className="mc-dropdown-item" onClick={() => navigate('/inicio/mensajes')}>
+                        Mensajes
+                    </button>
+                </div>
+            </div>
+        </nav>
+    );
 }

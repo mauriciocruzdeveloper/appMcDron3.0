@@ -1,16 +1,4 @@
-import { Modal } from 'react-bootstrap';
-
-//TIPOS
-// primary
-// secondary
-// success
-// danger
-// warning
-// info
-// light
-// dark
-// muted
-// white
+import React, { useEffect, useRef } from 'react';
 
 interface AlertComponentProps {
     show: boolean;
@@ -20,15 +8,30 @@ interface AlertComponentProps {
 }
 
 const AlertComponent = (props: AlertComponentProps) => {
-    const { show, titulo, mensaje, tipo } = props;
+    const { show } = props;
+    const dialogRef = useRef<HTMLDialogElement>(null);
 
-    console.log('ALERT COMPONENT');
+    useEffect(() => {
+        const dialog = dialogRef.current;
+        if (!dialog) return;
+        if (show) {
+            if (!dialog.open) dialog.showModal();
+        } else {
+            if (dialog.open) dialog.close();
+        }
+    }, [show]);
 
-    return(
-        <Modal centered show={show}>  
-            <Modal.Body><span className="spinner-grow float-right" role="status"></span></Modal.Body>
-        </Modal>
-    )
-}
+    return (
+        <dialog ref={dialogRef} className="mc-modal" style={{ textAlign: 'center' }}>
+            <div className="mc-modal-body">
+                <span
+                    className="spinner-grow"
+                    role="status"
+                    style={{ float: 'right' }}
+                />
+            </div>
+        </dialog>
+    );
+};
 
 export default AlertComponent;
