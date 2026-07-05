@@ -22,5 +22,6 @@ ainfo/
 .env
 
 .env.development.local
+..env.development.local
 
 prompts.txt
