@@ -6,7 +6,7 @@ import { useAppSelector } from '../redux-tool-kit/hooks/useAppSelector';
 import { Repuesto } from '../types/repuesto';
 import { guardarRepuestoAsync, eliminarRepuestoAsync } from '../redux-tool-kit/repuesto/repuesto.actions';
 import { useModal } from './Modal/useModal';
-import Select from 'react-select'; // Importar Select para selección múltiple
+import { ComboBox } from './common';
 import { SelectOption } from '../types/selectOption';
 import { selectModelosDroneArray } from '../redux-tool-kit/modeloDrone/modeloDrone.selectors';
 import { selectRepuestoPorId } from '../redux-tool-kit/repuesto/repuesto.selectors';
@@ -136,11 +136,11 @@ export default function RepuestoComponent(): JSX.Element {
   };
 
   // Nuevo manejador para el selector múltiple de modelos
-  const handleModelosChange = (selected: any) => {
-    setSelectedModelos(selected || []);
+  const handleModelosChange = (selected: SelectOption[]) => {
+    setSelectedModelos(selected);
 
     // Actualizar los IDs de modelos en el objeto de repuesto
-    const modelosIds = selected ? selected.map((item: any) => item.value) : [];
+    const modelosIds = selected.map(item => item.value);
     setRepuesto(prevState => ({
       ...prevState,
       data: {
@@ -276,13 +276,13 @@ export default function RepuestoComponent(): JSX.Element {
 
           <div className="mb-3">
             <label className="form-label">Modelos de Drone Compatibles</label>
-            <Select
+            <ComboBox
               isMulti
               options={modelosDroneOptions}
-              value={selectedModelos}
-              onChange={handleModelosChange}
+              value={selectedModelos.map(m => m.value)}
+              onChangeMulti={handleModelosChange}
               placeholder="Seleccione los modelos de drone compatibles..."
-              noOptionsMessage={() => "No se encontraron modelos de drone"}
+              noOptionsMessage="No se encontraron modelos de drone"
             />
             <small className="form-text text-muted">
               Seleccione todos los modelos de drone para los que este repuesto es compatible.

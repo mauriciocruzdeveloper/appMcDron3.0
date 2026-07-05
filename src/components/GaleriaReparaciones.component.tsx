@@ -8,6 +8,7 @@ import { useAppDispatch } from '../redux-tool-kit/hooks/useAppDispatch';
 import { guardarReparacionAsync } from '../redux-tool-kit/reparacion/reparacion.actions';
 import { ReparacionType } from '../types/reparacion';
 import { useModal } from './Modal/useModal';
+import { ComboBox } from './common';
 
 export default function GaleriaReparaciones(): JSX.Element {
     const [reparacionExpandida, setReparacionExpandida] = useState<string | null>(null);
@@ -157,28 +158,26 @@ export default function GaleriaReparaciones(): JSX.Element {
                             <div className="row align-items-center">
                                 <div className="col-md-4">
                                     <label className="form-label">Filtrar por Estado:</label>
-                                    <select
-                                        className="form-select"
+                                    <ComboBox
+                                        options={[
+                                            { value: 'todas', label: 'Todas las reparaciones' },
+                                            ...estadosDisponibles.map(estado => ({ value: estado, label: estado })),
+                                        ]}
                                         value={filtroEstado}
-                                        onChange={(e) => setFiltroEstado(e.target.value)}
-                                    >
-                                        <option value="todas">Todas las reparaciones</option>
-                                        {estadosDisponibles.map(estado => (
-                                            <option key={estado} value={estado}>{estado}</option>
-                                        ))}
-                                    </select>
+                                        onChange={(option) => setFiltroEstado(option?.value ?? 'todas')}
+                                    />
                                 </div>
                                 <div className="col-md-4">
                                     <label className="form-label">Fotos Antes/Después:</label>
-                                    <select
-                                        className="form-select"
+                                    <ComboBox
+                                        options={[
+                                            { value: 'todas', label: 'Todas' },
+                                            { value: 'sin-seleccion', label: '⚪ Sin fotos seleccionadas' },
+                                            { value: 'con-seleccion', label: '✅ Con fotos seleccionadas' },
+                                        ]}
                                         value={filtroFotos}
-                                        onChange={(e) => setFiltroFotos(e.target.value as 'todas' | 'sin-seleccion' | 'con-seleccion')}
-                                    >
-                                        <option value="todas">Todas</option>
-                                        <option value="sin-seleccion">⚪ Sin fotos seleccionadas</option>
-                                        <option value="con-seleccion">✅ Con fotos seleccionadas</option>
-                                    </select>
+                                        onChange={(option) => setFiltroFotos((option?.value ?? 'todas') as 'todas' | 'sin-seleccion' | 'con-seleccion')}
+                                    />
                                 </div>
                                 <div className="col-md-4 text-end">
                                     <label className="form-label d-block">&nbsp;</label>

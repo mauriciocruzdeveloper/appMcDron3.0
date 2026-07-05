@@ -248,9 +248,9 @@ Component → Action Creator → Async Logic → Dispatch → Reducer → State 
 5. **Orden de Reparaciones Prioritarias (Pantalla de Inicio)**:
    - Solo se muestran reparaciones en estados: Consulta, Recibido, Revisado, Aceptado
    - Una reparación es **urgente** si supera el umbral de días desde su ingreso (`FeRecRep` o `FeConRep`):
-     - Consulta: > 1 día
-     - Recibido: > 2 días
-     - Revisado: > 2 días
+     - Consulta: > 5 días
+     - Recibido: > 5 días
+     - Revisado: > 5 días
      - Aceptado: > 15 días
    - **Criterios de orden** (en orden de prioridad):
      1. Urgentes primero, no urgentes después

@@ -15,6 +15,7 @@ import {
     Legend,
 } from 'chart.js';
 import { useNavigate } from 'react-router-dom';
+import { ComboBox } from './common';
 
 ChartJS.register(
     CategoryScale,
@@ -392,45 +393,40 @@ export default function EstadisticasLocacion(): JSX.Element {
                         <div className='col-md-6'>
                             <div className='form-group'>
                                 <label>Año:</label>
-                                <select
-                                    className='form-select'
-                                    value={filtroAno}
-                                    onChange={(e) => setFiltroAno(Number(e.target.value))}
-                                >
-                                    {anosDisponibles.length > 0 ? (
-                                        anosDisponibles.map(year => (
-                                            <option key={year} value={year}>{year}</option>
-                                        ))
-                                    ) : (
-                                        <option value={new Date().getFullYear()}>{new Date().getFullYear()}</option>
-                                    )}
-                                </select>
+                                <ComboBox
+                                    options={(anosDisponibles.length > 0 ? anosDisponibles : [new Date().getFullYear()]).map(year => ({
+                                        value: String(year),
+                                        label: String(year),
+                                    }))}
+                                    value={String(filtroAno)}
+                                    onChange={(option) => setFiltroAno(Number(option?.value))}
+                                />
                             </div>
                         </div>
                         <div className='col-md-4'>
                             <div className='form-group'>
                                 <label>Tipo de Locación:</label>
-                                <select
-                                    className='form-select'
+                                <ComboBox
+                                    options={[
+                                        { value: 'ciudad', label: 'Por Ciudad' },
+                                        { value: 'provincia', label: 'Por Provincia' },
+                                    ]}
                                     value={tipoLocacion}
-                                    onChange={(e) => setTipoLocacion(e.target.value as 'ciudad' | 'provincia')}
-                                >
-                                    <option value="ciudad">Por Ciudad</option>
-                                    <option value="provincia">Por Provincia</option>
-                                </select>
+                                    onChange={(option) => setTipoLocacion((option?.value ?? 'ciudad') as 'ciudad' | 'provincia')}
+                                />
                             </div>
                         </div>
                         <div className='col-md-4'>
                             <div className='form-group'>
                                 <label>Agrupación:</label>
-                                <select
-                                    className='form-select'
+                                <ComboBox
+                                    options={[
+                                        { value: 'anual', label: 'Por Año (Histórico)' },
+                                        { value: 'mensual', label: 'Por Mes (Año Seleccionado)' },
+                                    ]}
                                     value={vistaAgrupacion}
-                                    onChange={(e) => setVistaAgrupacion(e.target.value as 'anual' | 'mensual')}
-                                >
-                                    <option value="anual">Por Año (Histórico)</option>
-                                    <option value="mensual">Por Mes (Año Seleccionado)</option>
-                                </select>
+                                    onChange={(option) => setVistaAgrupacion((option?.value ?? 'anual') as 'anual' | 'mensual')}
+                                />
                             </div>
                         </div>
                     </div>

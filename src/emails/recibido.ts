@@ -15,8 +15,8 @@ Cliente: ${clienteNombre}
 Teléfono: ${reparacion.data.TelefonoUsu}
 
 IMPORTANTE:
-- El diagnóstico y presupesto demorará hasta 48 hs hábiles a partir de la fecha de ingreso del equipo.
-- En caso de aceptar el presupuesto, el tiempo de reparación es aproximadamente de 5 a 7 días hábiles.
+- El diagnóstico y presupuesto demorará de 1 a 5 días hábiles a partir de la fecha de ingreso del equipo, dependiendo de la complejidad del mismo.
+- En caso de aceptar el presupuesto, el tiempo de reparación es aproximadamente de 5 a 15 días hábiles, dependiendo de la complejidad del equipo.
 - En caso de no aceptar el presupuesto, el costo del diagnóstico es de U$S 25.
 - La reparación tiene 90 días de garantía.
 

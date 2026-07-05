@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { SingleValue } from 'react-select';
 import { useHistory } from "../hooks/useHistory";
 import { enviarEmail, enviarSms, getLocalidadesPorProvincia, getProvinciasSelect, generarPasswordPorDefecto, getEmailForNotifications } from "../utils/utils";
 import { cambiarPasswordPersistencia } from "../persistencia/persistencia";
-import Select from 'react-select';
+import { ComboBox } from './common';
 import { ChangeEvent } from 'react';
-import { InputType, SelectType } from '../types/types';
+import { InputType } from '../types/types';
+import { SelectOption } from '../types/selectOption';
 import { Usuario } from "../types/usuario";
 import { useAppSelector } from "../redux-tool-kit/hooks/useAppSelector";
 import { useAppDispatch } from "../redux-tool-kit/hooks/useAppDispatch";
@@ -282,7 +282,7 @@ export default function UsuarioComponent(): React.ReactElement | null {
         });
     };
 
-    const handleOnChangeProvincias = async (newValue: SingleValue<SelectType>) => {
+    const handleOnChangeProvincias = async (newValue: SelectOption | null) => {
         if (!newValue) return;
         
         await dispatch(getLocalidadesPorProvincia(newValue.value));
@@ -295,7 +295,7 @@ export default function UsuarioComponent(): React.ReactElement | null {
         });
     };
 
-    const handleOnChangeLocalidades = (newValue: SingleValue<SelectType>) => {
+    const handleOnChangeLocalidades = (newValue: SelectOption | null) => {
         if (!newValue) return;
         
         setUsuario({
@@ -460,40 +460,39 @@ export default function UsuarioComponent(): React.ReactElement | null {
                     </div>
                     <div>
                         <label className='form-label'>Rol</label>
-                        <select 
-                            onChange={handleOnChange} 
-                            className='form-select' 
+                        <ComboBox
+                            options={[
+                                { value: 'cliente', label: 'Cliente' },
+                                { value: 'partner', label: 'Partner' },
+                                { value: 'admin', label: 'Administrador' },
+                            ]}
                             id='Role'
                             value={usuario?.data?.Role || 'cliente'}
-                        >
-                            <option value='cliente'>Cliente</option>
-                            <option value='partner'>Partner</option>
-                            <option value='admin'>Administrador</option>
-                        </select>
+                            onChange={(option) => changeInputUsu('Role', option?.value ?? 'cliente')}
+                            placeholder='Seleccionar rol...'
+                        />
                     </div>
                     <div>
                         <label className='form-label'>Provincia</label>
-                        <Select 
+                        <ComboBox
                             options={provinciasSelect || []}
                             onChange={handleOnChangeProvincias}
                             id='ProvinciaUsu'
-                            value={usuario?.data?.ProvinciaUsu ? {
-                                value: usuario?.data?.ProvinciaUsu, 
-                                label: usuario?.data?.ProvinciaUsu
-                            } : null}
+                            value={usuario?.data?.ProvinciaUsu || ''}
+                            placeholder='Seleccionar provincia...'
+                            noOptionsMessage='No se encontraron provincias'
                         />
                     </div>
                     <div>
                         <label className='form-label'>Ciudad</label>
-                        <Select 
+                        <ComboBox
                             options={localidadesSelect || []}
                             onChange={handleOnChangeLocalidades}
                             id='CiudadUsu'
-                            value={usuario?.data?.CiudadUsu ? {
-                                value: usuario?.data?.CiudadUsu, 
-                                label: usuario?.data?.CiudadUsu
-                            } : null}
-                            isDisabled={!provinciasSelect?.length || !usuario?.data?.ProvinciaUsu}
+                            value={usuario?.data?.CiudadUsu || ''}
+                            placeholder='Seleccionar ciudad...'
+                            noOptionsMessage='No se encontraron ciudades'
+                            disabled={!provinciasSelect?.length || !usuario?.data?.ProvinciaUsu}
                         />
                     </div>
                 </div>
