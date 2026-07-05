@@ -23,4 +23,4 @@ ainfo/
 
 .env.development.local
 
-prompts.txt
+prompts.txt..env.development.local
