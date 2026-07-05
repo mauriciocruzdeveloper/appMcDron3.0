@@ -65,6 +65,14 @@ export const guardarPedidoAsync = createAsyncThunk(
             // (el estado anterior en el store no era "arrived")
             const state = getState() as RootState;
             const pedidoAnterior = state.pedidoRepuesto.coleccionPedidos[pedido.id] ?? null;
+
+            // Un pedido ya recibido (arrived) es inmutable: no se permite editarlo
+            // para preservar la integridad del stock que ya sumo al recibirse.
+            if (pedidoAnterior?.data.Estado === 'arrived') {
+                dispatch(isFetchingComplete());
+                throw new Error('Un pedido recibido (arrived) no puede editarse.');
+            }
+
             const esPrimerArrived =
                 pedido.data.Estado === 'arrived' &&
                 pedidoAnterior?.data.Estado !== 'arrived';
@@ -130,9 +138,19 @@ export const guardarPedidoAsync = createAsyncThunk(
 // ELIMINAR PEDIDO
 export const eliminarPedidoAsync = createAsyncThunk(
     'pedidoRepuesto/eliminar',
-    async (id: string, { dispatch }) => {
+    async (id: string, { dispatch, getState }) => {
         try {
             dispatch(isFetchingStart());
+
+            // Un pedido recibido (arrived) no puede eliminarse: ya sumo stock fisico
+            // y borrarlo dejaria stock fantasma.
+            const state = getState() as RootState;
+            const pedido = state.pedidoRepuesto.coleccionPedidos[id] ?? null;
+            if (pedido?.data.Estado === 'arrived') {
+                dispatch(isFetchingComplete());
+                throw new Error('Un pedido recibido (arrived) no puede eliminarse.');
+            }
+
             const eliminadoId = await eliminarPedidoPersistencia(id);
             dispatch(isFetchingComplete());
             return eliminadoId;

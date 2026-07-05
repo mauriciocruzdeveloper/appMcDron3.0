@@ -64,14 +64,17 @@ const obtenerCompromisoPorRepuestoDeReparacion = async (reparacionId: string): P
  */
 const recalcularUnidadesPedidasDesdeReparacionesAceptadas = async (
   state: RootState,
-  dispatch: any
+  dispatch: any,
+  excluirReparacionId?: string
 ): Promise<void> => {
   const { getRepuestoPersistencia, guardarRepuestoPersistencia } = await import('../../persistencia/persistencia');
 
   // Obtener todas las reparaciones del estado
   const coleccion = state.reparacion.coleccionReparaciones || {};
   const reparacionesAceptadas = Object.values(coleccion).filter(
-    (rep: any) => rep?.data?.EstadoRep === 'Aceptado' || rep?.data?.EstadoRep === 'Repuestos'
+    (rep: any) =>
+      rep?.id !== excluirReparacionId &&
+      (rep?.data?.EstadoRep === 'Aceptado' || rep?.data?.EstadoRep === 'Repuestos')
   );
 
   // Calcular demanda consolidada desde todas las reparaciones Aceptadas
@@ -87,9 +90,21 @@ const recalcularUnidadesPedidasDesdeReparacionesAceptadas = async (
     });
   }
 
+  // Repuestos a actualizar: los que tienen demanda vigente MAS los que hoy tienen
+  // backorder > 0 (para poder ponerlos en cero si dejaron de estar comprometidos).
+  const repuestosAActualizar = new Set<string>(demandaConsolidada.keys());
+  Object.values(state.repuesto.coleccionRepuestos || {}).forEach((rep: any) => {
+    if (Number(rep?.data?.UnidadesPedidas || 0) > 0) {
+      repuestosAActualizar.add(rep.id);
+    }
+  });
+
   // Actualizar UnidadesPedidas de cada repuesto con el valor recalculado
-  for (const [repuestoId, demandaTotal] of Array.from(demandaConsolidada.entries())) {
+  for (const repuestoId of Array.from(repuestosAActualizar)) {
+    const demandaTotal = demandaConsolidada.get(repuestoId) || 0;
     const repuesto = await getRepuestoPersistencia(repuestoId);
+
+    if (Number(repuesto.data.UnidadesPedidas || 0) === demandaTotal) continue;
 
     const actualizado = await guardarRepuestoPersistencia({
       ...repuesto,
@@ -351,10 +366,23 @@ export const guardarReparacionAsync = createAsyncThunk(
 // ELIMINAR REPARACION
 export const eliminarReparacionAsync = createAsyncThunk(
   'app/eliminarReparacion',
-  async (id: string, { dispatch }) => {
+  async (id: string, { dispatch, getState }) => {
     try {
       dispatch(isFetchingStart());
+
+      const state = getState() as RootState;
+      const reparacion = state.reparacion.coleccionReparaciones[id];
+      const estabaComprometida =
+        reparacion?.data?.EstadoRep === 'Aceptado' || reparacion?.data?.EstadoRep === 'Repuestos';
+
       const reparacionEliminada = await eliminarReparacionPersistencia(id);
+
+      // Si estaba en un estado con compromiso, liberar backorder recalculando
+      // sin considerar la reparacion eliminada. No se toca StockRepu.
+      if (estabaComprometida) {
+        await recalcularUnidadesPedidasDesdeReparacionesAceptadas(state, dispatch, id);
+      }
+
       dispatch(isFetchingComplete());
       return reparacionEliminada;
     } catch (error: unknown) { // TODO: Hacer tipo de dato para el error
