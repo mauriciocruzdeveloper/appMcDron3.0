@@ -30,6 +30,12 @@ Siguiendo la filosofía Local First, la aplicación almacena y gestiona los dato
 
 - Implementación de optimizaciones en rendimiento y experiencia de usuario.
 - Incorporación de nuevas funcionalidades según las necesidades detectadas.
+- **Gestión de inventario de repuestos con ledger de movimientos**: stock físico y demanda
+  comprometida (`UnidadesComprometidas`) derivados de una tabla append-only `stock_movement`
+  (reserva al aceptar, consumo al reparar, recepción de pedidos, ajuste manual). Detalle y
+  reglas en `openspec/project.md` (Reglas de Negocio) y propuestas en `openspec/changes/`.
+- **Validación de transiciones de estado** según mapa de dominio (`usecases/estadosReparacion.ts`):
+  no se pueden saltear estados; Cobrado/Enviado/Finalizado exigen pasar por Reparado.
 
 ## Versiones
 

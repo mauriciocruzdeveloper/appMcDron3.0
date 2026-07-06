@@ -66,7 +66,7 @@ const ReparacionesLista = ({ reparaciones }: ReparacionesListaProps): React.Reac
                 )}
                 {faltanRepuestos && (
                   <span style={{ backgroundColor: '#dc3545', color: 'white', borderRadius: 4, padding: '2px 6px', fontSize: '0.75rem', marginRight: 6 }}>
-                    ⚠️ Repuesto sin pedido
+                    ⚠️ Repuesto sin cobertura
                   </span>
                 )}
                 {modeloDroneName}

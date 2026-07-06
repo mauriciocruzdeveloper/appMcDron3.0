@@ -88,7 +88,7 @@ export const ReparacionRepuestos: React.FC<ReparacionRepuestosProps> = ({
 
                     {repuestos.length > 0 && repuestosFaltantes.length > 0 && (
                         <div className="alert alert-danger py-2 mb-2" role="alert">
-                            <strong>⚠️ {repuestosFaltantes.length} repuesto{repuestosFaltantes.length !== 1 ? 's' : ''} sin pedido activo:</strong>
+                            <strong>⚠️ {repuestosFaltantes.length} repuesto{repuestosFaltantes.length !== 1 ? 's' : ''} con faltante sin pedido activo:</strong>
                             <span className="ms-2 small">
                                 {repuestosFaltantes.map(r => r.nombre).join(', ')}
                             </span>
@@ -102,9 +102,11 @@ export const ReparacionRepuestos: React.FC<ReparacionRepuestosProps> = ({
                     ) : (
                         <div className="d-flex flex-column gap-2">
                             {repuestos.map(r => {
-                                const borderColor = r.tienePedidoActivo || r.stockRepu > 0
+                                const borderColor = r.stockLibre > 0
                                     ? '#198754'
-                                    : '#dc3545';
+                                    : r.tienePedidoActivo
+                                        ? '#ffc107'
+                                        : '#dc3545';
 
                                 return (
                                     <div
@@ -124,36 +126,50 @@ export const ReparacionRepuestos: React.FC<ReparacionRepuestosProps> = ({
                                             </div>
                                         </div>
 
-                                        {r.stockRepu > 0 ? null : r.pedidos.length === 0 ? (
-                                            <div className="mt-1">
-                                                <span className="badge bg-danger">⚠️ Sin pedido</span>
-                                                <span className="text-muted small ms-2">
-                                                    No está en ningún pedido de compra
+                                        <div className="small text-muted mt-1">
+                                            Stock: {r.stockRepu} | Comprometido: {r.unidadesPedidas} | Libre: {r.stockLibre}
+                                        </div>
+
+                                        {r.requierePedido ? (
+                                            <div className="mt-2 d-flex flex-column gap-1">
+                                                <span className="badge bg-danger">⚠️ Faltante crítico</span>
+                                                <span className="text-muted small">
+                                                    No hay cobertura para la demanda de esta reparación
                                                 </span>
+                                                {r.tienePedidoActivo && (
+                                                    <>
+                                                        <div className="small text-info mt-2">
+                                                            <strong>Pedidos en camino que cubrirán el faltante:</strong>
+                                                        </div>
+                                                        {r.pedidos
+                                                            .filter(p => p.estado === 'pending' || p.estado === 'in_transit')
+                                                            .map(pedido => {
+                                                                const estadoInfo = ESTADOS_PEDIDO.find(e => e.value === pedido.estado);
+                                                                return (
+                                                                    <div key={pedido.pedidoId} className="d-flex align-items-center gap-2 flex-wrap mt-1">
+                                                                        <span className={`badge bg-${estadoInfo?.color || 'secondary'}`}>
+                                                                            {estadoInfo?.label || pedido.estado}
+                                                                        </span>
+                                                                        <span className="small">{pedido.proveedorNombre}</span>
+                                                                        {pedido.numeroPedido && (
+                                                                            <span className="text-muted small">#{pedido.numeroPedido}</span>
+                                                                        )}
+                                                                        <button
+                                                                            type="button"
+                                                                            className="btn btn-sm btn-link p-0 ms-auto text-decoration-none"
+                                                                            onClick={() => history.push(`/inicio/pedidos/${pedido.pedidoId}`)}
+                                                                        >
+                                                                            Ver pedido →
+                                                                        </button>
+                                                                    </div>
+                                                                );
+                                                            })}
+                                                    </>
+                                                )}
                                             </div>
                                         ) : (
-                                            <div className="mt-2 d-flex flex-column gap-1">
-                                                {r.pedidos.map(pedido => {
-                                                    const estadoInfo = ESTADOS_PEDIDO.find(e => e.value === pedido.estado);
-                                                    return (
-                                                        <div key={pedido.pedidoId} className="d-flex align-items-center gap-2 flex-wrap">
-                                                            <span className={`badge bg-${estadoInfo?.color || 'secondary'}`}>
-                                                                {estadoInfo?.label || pedido.estado}
-                                                            </span>
-                                                            <span className="small">{pedido.proveedorNombre}</span>
-                                                            {pedido.numeroPedido && (
-                                                                <span className="text-muted small">#{pedido.numeroPedido}</span>
-                                                            )}
-                                                            <button
-                                                                type="button"
-                                                                className="btn btn-sm btn-link p-0 ms-auto text-decoration-none"
-                                                                onClick={() => history.push(`/inicio/pedidos/${pedido.pedidoId}`)}
-                                                            >
-                                                                Ver pedido →
-                                                            </button>
-                                                        </div>
-                                                    );
-                                                })}
+                                            <div className="mt-2 small text-success">
+                                                ✓ Stock disponible para esta reparación
                                             </div>
                                         )}
                                     </div>

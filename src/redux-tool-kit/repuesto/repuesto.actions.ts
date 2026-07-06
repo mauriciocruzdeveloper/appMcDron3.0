@@ -5,9 +5,12 @@ import {
     getRepuestosPorModeloPersistencia,
     guardarRepuestoPersistencia,
     getRepuestosPorProveedorPersistencia,
+    aplicarMovimientoStockPersistencia,
 } from "../../persistencia/persistencia"; // Actualizado para usar la importación centralizada
 import { isFetchingComplete, isFetchingStart } from "../app/app.slice";
 import { Repuesto } from "../../types/repuesto";
+import { setRepuesto } from "./repuesto.slice";
+import { RootState } from "../store";
 
 // ELIMINAR REPUESTO
 export const eliminarRepuestoAsync = createAsyncThunk(
@@ -26,6 +29,49 @@ export const eliminarRepuestoAsync = createAsyncThunk(
         }
     },
 )
+
+// AJUSTE MANUAL DE STOCK (ledger)
+// Registra un movimiento 'adjustment' que modifica el stock fisico (on_hand) sin
+// tocar el comprometido. Usar para correcciones de conteo, merma o roturas.
+export const ajustarStockManualAsync = createAsyncThunk(
+    'repuesto/ajustarStockManual',
+    async (
+        { repuestoId, delta, nota }: { repuestoId: string; delta: number; nota?: string },
+        { dispatch, getState }
+    ) => {
+        try {
+            dispatch(isFetchingStart());
+
+            const actualizado = await aplicarMovimientoStockPersistencia({
+                partId: repuestoId,
+                onHandDelta: delta,
+                committedDelta: 0,
+                kind: 'adjustment',
+                referenceType: 'manual',
+                referenceId: null,
+                note: nota ?? null,
+            });
+
+            // Mergear con el store para preservar ModelosDroneIds y demas campos.
+            const existente = (getState() as RootState).repuesto.coleccionRepuestos[repuestoId];
+            dispatch(setRepuesto({
+                id: actualizado.id,
+                data: {
+                    ...(existente?.data || {}),
+                    ...actualizado.data,
+                    ModelosDroneIds: existente?.data?.ModelosDroneIds ?? actualizado.data.ModelosDroneIds,
+                },
+            }));
+
+            dispatch(isFetchingComplete());
+            return actualizado;
+        } catch (error: unknown) {
+            console.error("Error al ajustar stock manual:", error);
+            dispatch(isFetchingComplete());
+            throw error;
+        }
+    },
+);
 
 // GUARDAR REPUESTO
 export const guardarRepuestoAsync = createAsyncThunk(

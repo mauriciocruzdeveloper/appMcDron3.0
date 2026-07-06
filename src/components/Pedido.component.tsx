@@ -61,6 +61,8 @@ export default function PedidoComponent(): JSX.Element {
     const pedidoActual = useAppSelector((state) =>
         isNew || !id ? null : selectPedidoPorId(state, id)
     );
+    // Un pedido recibido (arrived) es inmutable: solo lectura, sin guardar ni eliminar.
+    const isArrived = !isNew && pedidoActual?.data.Estado === 'arrived';
     const repuestos = useAppSelector(selectRepuestosArray);
     const modelosDrone = useAppSelector(selectModelosDroneArray);
 
@@ -307,6 +309,14 @@ export default function PedidoComponent(): JSX.Element {
             </div>
 
             {/* --- Datos principales --- */}
+            <fieldset disabled={isArrived} style={{ border: 0, padding: 0, margin: 0, minWidth: 0 }}>
+            {isArrived && (
+                <div className="alert alert-info" role="alert">
+                    <i className="bi bi-lock me-1"></i>
+                    Este pedido fue recibido (arrived). No se puede editar ni eliminar para
+                    preservar la integridad del stock.
+                </div>
+            )}
             <div className="card mb-3">
                 <div className="card-body">
                     <h5 className="card-title">Datos del Pedido</h5>
@@ -507,16 +517,19 @@ export default function PedidoComponent(): JSX.Element {
             </div>
 
             {/* --- Acciones --- */}
-            <div className="d-flex gap-2">
-                <button className="btn bg-bluemcdron text-white flex-grow-1" onClick={handleGuardar}>
-                    <i className="bi bi-floppy me-1"></i> Guardar
-                </button>
-                {!isNew && (
-                    <button className="btn btn-outline-danger" onClick={handleEliminar}>
-                        <i className="bi bi-trash me-1"></i> Eliminar
+            </fieldset>
+            {!isArrived && (
+                <div className="d-flex gap-2">
+                    <button className="btn bg-bluemcdron text-white flex-grow-1" onClick={handleGuardar}>
+                        <i className="bi bi-floppy me-1"></i> Guardar
                     </button>
-                )}
-            </div>
+                    {!isNew && (
+                        <button className="btn btn-outline-danger" onClick={handleEliminar}>
+                            <i className="bi bi-trash me-1"></i> Eliminar
+                        </button>
+                    )}
+                </div>
+            )}
         </div>
     );
 }

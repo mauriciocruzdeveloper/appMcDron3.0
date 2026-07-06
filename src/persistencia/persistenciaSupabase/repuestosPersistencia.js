@@ -39,7 +39,7 @@ export const getRepuestoPersistencia = async (id) => {
         ProveedorRepu: data.provider || '',
         PrecioRepu: data.price || 0,
         StockRepu: data.stock || 0,
-        UnidadesPedidas: data.backorder || 0
+        UnidadesComprometidas: data.committed_units || 0
       }
     };
   } catch (error) {
@@ -85,7 +85,7 @@ export const getRepuestosPorModeloPersistencia = async (modeloDroneId) => {
         ProveedorRepu: item.provider || '',
         PrecioRepu: item.price || 0,
         StockRepu: item.stock || 0,
-        UnidadesPedidas: item.backorder || 0
+        UnidadesComprometidas: item.committed_units || 0
       }
     }));
 
@@ -118,7 +118,7 @@ export const getRepuestosPorProveedorPersistencia = async (proveedor) => {
         ProveedorRepu: item.provider || '',
         PrecioRepu: item.price || 0,
         StockRepu: item.stock || 0,
-        UnidadesPedidas: item.backorder || 0
+        UnidadesComprometidas: item.committed_units || 0
       }
     }));
 
@@ -132,21 +132,21 @@ export const getRepuestosPorProveedorPersistencia = async (proveedor) => {
 // GUARDAR Repuesto - Mejorado para trabajar con IDs o nombres de modelo
 export const guardarRepuestoPersistencia = async (repuesto) => {
   try {
-    // 1. Preparar datos para Supabase
+    // 1. Preparar datos base para Supabase.
+    //    stock y committed_units NO se escriben en update: son gestionados por el
+    //    ledger (stock_movement) via el RPC apply_stock_movement.
     const repuestoData = {
       name: repuesto.data.NombreRepu,
       description: repuesto.data.DescripcionRepu || '',
       provider: repuesto.data.ProveedorRepu || '',
       price: repuesto.data.PrecioRepu || 0,
-      stock: repuesto.data.StockRepu || 0,
-      backorder: repuesto.data.UnidadesPedidas || 0,
     };
 
     let result;
 
     // 2. Insertar o actualizar el repuesto base
     if (repuesto.id) {
-      // Actualización
+      // Actualización (sin tocar stock/committed_units)
       const { data, error } = await supabase
         .from('part')
         .update(repuestoData)
@@ -156,10 +156,14 @@ export const guardarRepuestoPersistencia = async (repuesto) => {
       if (error) throw error;
       result = data[0];
     } else {
-      // Inserción
+      // Inserción: stock inicial permitido; committed arranca en 0.
       const { data, error } = await supabase
         .from('part')
-        .insert(repuestoData)
+        .insert({
+          ...repuestoData,
+          stock: repuesto.data.StockRepu || 0,
+          committed_units: 0,
+        })
         .select();
 
       if (error) throw error;
@@ -202,7 +206,7 @@ export const guardarRepuestoPersistencia = async (repuesto) => {
         ProveedorRepu: result.provider || '',
         PrecioRepu: result.price || 0,
         StockRepu: result.stock || 0,
-        UnidadesPedidas: result.backorder || 0
+        UnidadesComprometidas: result.committed_units || 0
       }
     };
   } catch (error) {
@@ -288,7 +292,7 @@ export const getRepuestosPersistencia = async (setRepuestosToRedux) => {
           ProveedorRepu: repuesto.provider || '',
           PrecioRepu: repuesto.price || 0,
           StockRepu: repuesto.stock || 0,
-          UnidadesPedidas: repuesto.backorder || 0
+          UnidadesComprometidas: repuesto.committed_units || 0
         }
       }));
 
@@ -355,3 +359,46 @@ export const getRepuestosPersistencia = async (setRepuestosToRedux) => {
     supabase.removeChannel(channelRepuestosModelos);
   };
 };
+
+// APLICAR MOVIMIENTO DE STOCK (ledger)
+// Inserta un movimiento append-only y actualiza atomicamente stock/committed_units
+// en la tabla part mediante el RPC apply_stock_movement.
+// Devuelve el repuesto actualizado en formato de dominio.
+export const aplicarMovimientoStockPersistencia = async ({
+  partId,
+  onHandDelta = 0,
+  committedDelta = 0,
+  kind,
+  referenceType = null,
+  referenceId = null,
+  note = null,
+}) => {
+  const { data, error } = await supabase.rpc('apply_stock_movement', {
+    p_part_id: Number(partId),
+    p_on_hand_delta: onHandDelta,
+    p_committed_delta: committedDelta,
+    p_kind: kind,
+    p_reference_type: referenceType,
+    p_reference_id: referenceId != null ? Number(referenceId) : null,
+    p_note: note,
+  });
+
+  if (error) throw error;
+
+  // El RPC devuelve la fila part actualizada
+  const part = Array.isArray(data) ? data[0] : data;
+
+  return {
+    id: String(part.id),
+    data: {
+      NombreRepu: part.name,
+      DescripcionRepu: part.description || '',
+      ModelosDroneIds: [],
+      ProveedorRepu: part.provider || '',
+      PrecioRepu: part.price || 0,
+      StockRepu: part.stock || 0,
+      UnidadesComprometidas: part.committed_units || 0,
+    },
+  };
+};
+

@@ -6,7 +6,7 @@ export interface RepuestoData {
   ProveedorRepu: string;
   PrecioRepu: number;
   StockRepu: number;
-  UnidadesPedidas: number;
+  UnidadesComprometidas: number;
 }
 
 export interface Repuesto {

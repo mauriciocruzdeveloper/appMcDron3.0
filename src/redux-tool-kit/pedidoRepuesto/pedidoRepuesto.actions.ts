@@ -9,13 +9,47 @@ import {
     guardarRepuestoPersistencia,
 } from '../../persistencia/persistencia';
 import { setRepuesto } from '../repuesto/repuesto.slice';
+import { RootState } from '../store';
+
+const agruparCantidadesPorRepuesto = (items: PedidoRepuesto['data']['Items']) => {
+    const cantidades = new Map<string, number>();
+
+    items.forEach((item) => {
+        const repuestoId = item.data.RepuestoId;
+        if (!repuestoId) return;
+
+        const qty = Number(item.data.Cantidad) || 0;
+        if (qty <= 0) return;
+
+        cantidades.set(repuestoId, (cantidades.get(repuestoId) || 0) + qty);
+    });
+
+    return cantidades;
+};
 
 // GUARDAR PEDIDO (crear o actualizar)
 export const guardarPedidoAsync = createAsyncThunk(
     'pedidoRepuesto/guardar',
-    async (pedido: PedidoRepuesto, { dispatch }) => {
+    async (pedido: PedidoRepuesto, { dispatch, getState }) => {
         try {
             dispatch(isFetchingStart());
+
+            // Detectar si el pedido transiciona a "arrived" por primera vez
+            // (el estado anterior en el store no era "arrived")
+            const state = getState() as RootState;
+            const pedidoAnterior = state.pedidoRepuesto.coleccionPedidos[pedido.id] ?? null;
+
+            // Un pedido ya recibido (arrived) es inmutable: no se permite editarlo
+            // para preservar la integridad del stock que ya sumo al recibirse.
+            if (pedidoAnterior?.data.Estado === 'arrived') {
+                dispatch(isFetchingComplete());
+                throw new Error('Un pedido recibido (arrived) no puede editarse.');
+            }
+
+            const esPrimerArrived =
+                pedido.data.Estado === 'arrived' &&
+                pedidoAnterior?.data.Estado !== 'arrived';
+
             const guardado = await guardarPedidoPersistencia(pedido);
             dispatch(isFetchingComplete());
 
@@ -37,6 +71,38 @@ export const guardarPedidoAsync = createAsyncThunk(
                 })
             );
 
+            // Cuando el pedido pasa a "arrived" por primera vez:
+            // registrar un movimiento de recepcion (suma stock fisico, sin tocar comprometido).
+            if (esPrimerArrived) {
+                const { aplicarMovimientoStockPersistencia } = await import('../../persistencia/persistencia');
+                const cantidadesPorRepuesto = agruparCantidadesPorRepuesto(pedido.data.Items);
+
+                await Promise.all(
+                    Array.from(cantidadesPorRepuesto.entries()).map(async ([repuestoId, cantidadRecibida]) => {
+                        const actualizado = await aplicarMovimientoStockPersistencia({
+                            partId: repuestoId,
+                            onHandDelta: cantidadRecibida,
+                            committedDelta: 0,
+                            kind: 'reception',
+                            referenceType: 'purchase_order',
+                            referenceId: pedido.id,
+                            note: null,
+                        });
+
+                        // Mergear con el store para preservar ModelosDroneIds y demas campos.
+                        const existente = (getState() as RootState).repuesto.coleccionRepuestos[repuestoId];
+                        dispatch(setRepuesto({
+                            id: actualizado.id,
+                            data: {
+                                ...(existente?.data || {}),
+                                ...actualizado.data,
+                                ModelosDroneIds: existente?.data?.ModelosDroneIds ?? actualizado.data.ModelosDroneIds,
+                            },
+                        }));
+                    })
+                );
+            }
+
             return guardado;
         } catch (error: unknown) {
             dispatch(isFetchingComplete());
@@ -48,9 +114,19 @@ export const guardarPedidoAsync = createAsyncThunk(
 // ELIMINAR PEDIDO
 export const eliminarPedidoAsync = createAsyncThunk(
     'pedidoRepuesto/eliminar',
-    async (id: string, { dispatch }) => {
+    async (id: string, { dispatch, getState }) => {
         try {
             dispatch(isFetchingStart());
+
+            // Un pedido recibido (arrived) no puede eliminarse: ya sumo stock fisico
+            // y borrarlo dejaria stock fantasma.
+            const state = getState() as RootState;
+            const pedido = state.pedidoRepuesto.coleccionPedidos[id] ?? null;
+            if (pedido?.data.Estado === 'arrived') {
+                dispatch(isFetchingComplete());
+                throw new Error('Un pedido recibido (arrived) no puede eliminarse.');
+            }
+
             const eliminadoId = await eliminarPedidoPersistencia(id);
             dispatch(isFetchingComplete());
             return eliminadoId;
