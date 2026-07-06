@@ -98,7 +98,7 @@ export const selectRepuestosFiltrados = createSelector(
       
       // Filtro por estado
       if (filtroEstado) {
-        const estado = calcularEstadoRepuesto(repuesto.data.StockRepu, repuesto.data.UnidadesPedidas || 0);
+        const estado = calcularEstadoRepuesto(repuesto.data.StockRepu, repuesto.data.UnidadesComprometidas || 0);
         incluirPorEstado = estado === filtroEstado;
       }
       
@@ -117,7 +117,7 @@ export const selectRepuestosDisponibles = createSelector(
 export const selectRepuestosAgotados = createSelector(
   [selectRepuestosArray],
   (repuestos) => repuestos.filter(repuesto => 
-    repuesto.data.StockRepu === 0 && (repuesto.data.UnidadesPedidas || 0) === 0
+    repuesto.data.StockRepu === 0 && (repuesto.data.UnidadesComprometidas || 0) === 0
   )
 );
 
@@ -125,7 +125,7 @@ export const selectRepuestosAgotados = createSelector(
 export const selectRepuestosEnPedido = createSelector(
   [selectRepuestosArray],
   (repuestos) => repuestos.filter(repuesto => 
-    repuesto.data.StockRepu === 0 && (repuesto.data.UnidadesPedidas || 0) > 0
+    repuesto.data.StockRepu === 0 && (repuesto.data.UnidadesComprometidas || 0) > 0
   )
 );
 
@@ -136,10 +136,10 @@ export const selectEstadisticasRepuestos = createSelector(
     const total = repuestos.length;
     const disponibles = repuestos.filter(r => r.data.StockRepu > 0).length;
     const agotados = repuestos.filter(r => 
-      r.data.StockRepu === 0 && (r.data.UnidadesPedidas || 0) === 0
+      r.data.StockRepu === 0 && (r.data.UnidadesComprometidas || 0) === 0
     ).length;
     const enPedido = repuestos.filter(r => 
-      r.data.StockRepu === 0 && (r.data.UnidadesPedidas || 0) > 0
+      r.data.StockRepu === 0 && (r.data.UnidadesComprometidas || 0) > 0
     ).length;
     
     return {
@@ -238,7 +238,7 @@ export const selectRepuestosFaltantes = createSelector(
   [selectRepuestosArray, selectConteoUsoRepuestos],
   (repuestos, conteoUso) => {
     const repuestosFaltantes = repuestos.filter(repuesto => 
-      repuesto.data.StockRepu === 0 && (repuesto.data.UnidadesPedidas || 0) === 0 // Solo repuestos agotados (sin stock ni pedidos)
+      repuesto.data.StockRepu === 0 && (repuesto.data.UnidadesComprometidas || 0) === 0 // Solo repuestos agotados (sin stock ni pedidos)
     );
     
     // Ordenar por cantidad de uso (de mayor a menor)
@@ -256,7 +256,7 @@ export const selectRepuestosPedidos = createSelector(
   [selectRepuestosArray, selectConteoUsoRepuestos],
   (repuestos, conteoUso) => {
     const repuestosPedidos = repuestos.filter(repuesto => 
-      (repuesto.data.UnidadesPedidas || 0) > 0 // Repuestos con unidades pedidas
+      (repuesto.data.UnidadesComprometidas || 0) > 0 // Repuestos con unidades pedidas
     );
     
     // Ordenar por cantidad de uso (de mayor a menor)

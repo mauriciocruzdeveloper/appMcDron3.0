@@ -1145,7 +1145,7 @@ export const selectReparacionesConRepuestoFaltante = createSelector(
       demandaPorRepuesto.forEach((demandaReparacion, repId) => {
         const repuesto = coleccionRepuestos[repId];
         const stockActual = Number(repuesto?.data?.StockRepu ?? 0);
-        const comprometido = Number(repuesto?.data?.UnidadesPedidas ?? 0);
+        const comprometido = Number(repuesto?.data?.UnidadesComprometidas ?? 0);
         const compromisoAjeno = Math.max(0, comprometido - demandaReparacion);
         const disponibleInmediata = stockActual - compromisoAjeno;
 
@@ -1235,7 +1235,7 @@ export const selectRepuestosDeReparacionActual = createSelector(
       const { intervencionesNombre, demandaReparacion } = entry;
       const repuesto = coleccionRepuestos[repuestoId];
       const stockRepu = repuesto?.data?.StockRepu ?? 0;
-      const unidadesPedidas = repuesto?.data?.UnidadesPedidas ?? 0;
+      const unidadesPedidas = repuesto?.data?.UnidadesComprometidas ?? 0;
 
       const stockLibre = stockRepu - unidadesPedidas;
 

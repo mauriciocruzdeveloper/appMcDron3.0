@@ -25,7 +25,7 @@ const repuestosMock: Repuesto[] = [
             ModelosDroneIds: ['modelo-1', 'modelo-2'], // Simulando que es compatible con varios modelos
             PrecioRepu: 15000,
             StockRepu: 5,
-            UnidadesPedidas: 1, // Simulando que hay unidades pedidas
+            UnidadesComprometidas: 1, // Simulando que hay unidades pedidas
         }
     },
     {
@@ -35,7 +35,7 @@ const repuestosMock: Repuesto[] = [
             ProveedorRepu: 'PowerDrones',
             ModelosDroneIds: ['modelo-1'], // Simulando que es compatible con un modelo específico
             PrecioRepu: 38000,
-            UnidadesPedidas: 0, // Simulando que no hay unidades pedidas
+            UnidadesComprometidas: 0, // Simulando que no hay unidades pedidas
             StockRepu: 10,
         }
     },
@@ -47,7 +47,7 @@ const repuestosMock: Repuesto[] = [
             ModelosDroneIds: ['modelo-1', 'modelo-2'], // Simulando que es compatible con varios modelos
             PrecioRepu: 25600,
             StockRepu: 0,
-            UnidadesPedidas: 2, // Simulando que hay unidades pedidas
+            UnidadesComprometidas: 2, // Simulando que hay unidades pedidas
         }
     }
 ];
@@ -83,7 +83,7 @@ export default function ListaRepuestos(): JSX.Element {
     // Función para determinar el estado del repuesto basado en el stock
     const getEstadoRepuesto = (repuesto: Repuesto): string => {
         // Manejar migración de datos
-        const unidadesPedidas = repuesto.data.UnidadesPedidas || 0;
+        const unidadesPedidas = repuesto.data.UnidadesComprometidas || 0;
 
         return calcularEstadoRepuesto(repuesto.data.StockRepu, unidadesPedidas);
     };
@@ -221,8 +221,8 @@ export default function ListaRepuestos(): JSX.Element {
                                         }`}>
                                         {estado}
                                         {estado === 'Disponible' && ` ${repuesto.data.StockRepu}`}
-                                        {estado === 'En Pedido' && repuesto.data.UnidadesPedidas &&
-                                            ` ${repuesto.data.UnidadesPedidas}`}
+                                        {estado === 'En Pedido' && repuesto.data.UnidadesComprometidas &&
+                                            ` ${repuesto.data.UnidadesComprometidas}`}
                                     </small>
                                 </div>
                                 {repuesto.data.ModelosDroneIds.length > 0 && (

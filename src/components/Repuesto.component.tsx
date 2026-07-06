@@ -4,7 +4,7 @@ import { useHistory } from "../hooks/useHistory";
 import { useAppDispatch } from '../redux-tool-kit/hooks/useAppDispatch';
 import { useAppSelector } from '../redux-tool-kit/hooks/useAppSelector';
 import { Repuesto } from '../types/repuesto';
-import { guardarRepuestoAsync, eliminarRepuestoAsync } from '../redux-tool-kit/repuesto/repuesto.actions';
+import { guardarRepuestoAsync, eliminarRepuestoAsync, ajustarStockManualAsync } from '../redux-tool-kit/repuesto/repuesto.actions';
 import { useModal } from './Modal/useModal';
 import { ComboBox } from './common';
 import { SelectOption } from '../types/selectOption';
@@ -59,12 +59,16 @@ export default function RepuestoComponent(): JSX.Element {
       ProveedorRepu: '',
       PrecioRepu: 0,
       StockRepu: 0,
-      UnidadesPedidas: 0
+      UnidadesComprometidas: 0
     }
   });
 
   // Para el selector múltiple de modelos de drone
   const [estadoCalculado, setEstadoCalculado] = useState<string>('Agotado');
+
+  // Ajuste manual de stock (movimiento 'adjustment' en el ledger)
+  const [ajusteDelta, setAjusteDelta] = useState<string>('');
+  const [ajusteNota, setAjusteNota] = useState<string>('');
 
   useEffect(() => {
     if (!isNew && id) {
@@ -92,10 +96,10 @@ export default function RepuestoComponent(): JSX.Element {
   useEffect(() => {
     const nuevoEstado = calcularEstadoRepuesto(
       repuesto.data.StockRepu,
-      repuesto.data.UnidadesPedidas
+      repuesto.data.UnidadesComprometidas
     );
     setEstadoCalculado(nuevoEstado);
-  }, [repuesto.data.StockRepu, repuesto.data.UnidadesPedidas]);
+  }, [repuesto.data.StockRepu, repuesto.data.UnidadesComprometidas]);
 
   // Manejador para campos de texto comunes
   const handleTextInputChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -157,6 +161,39 @@ export default function RepuestoComponent(): JSX.Element {
       titulo: "Guardar Repuesto",
       confirmCallback: confirmaGuardarRepuesto,
     });
+  };
+
+  const handleAjustarStock = async () => {
+    const delta = Number(ajusteDelta);
+    if (!id || isNew) return;
+    if (!Number.isFinite(delta) || delta === 0) {
+      openModal({
+        mensaje: "Ingresá una cantidad distinta de cero (positiva para sumar, negativa para restar).",
+        tipo: "warning",
+        titulo: "Ajuste de stock",
+      });
+      return;
+    }
+    try {
+      await dispatch(ajustarStockManualAsync({
+        repuestoId: id,
+        delta,
+        nota: ajusteNota.trim() || undefined,
+      })).unwrap();
+      setAjusteDelta('');
+      setAjusteNota('');
+      openModal({
+        mensaje: "Stock ajustado correctamente.",
+        tipo: "success",
+        titulo: "Ajuste de stock",
+      });
+    } catch (error: unknown) {
+      openModal({
+        mensaje: "Error al ajustar el stock: " + ((error as { message?: string })?.message ?? ''),
+        tipo: "danger",
+        titulo: "Error",
+      });
+    }
   };
 
   const confirmaGuardarRepuesto = async () => {
@@ -340,7 +377,15 @@ export default function RepuestoComponent(): JSX.Element {
               value={repuesto.data.StockRepu || ''}
               onChange={handleNumberInputChange}
               min="0"
+              readOnly={!isNew}
+              disabled={!isNew}
             />
+            {!isNew && (
+              <small className="form-text text-muted">
+                El stock se modifica mediante recepción de pedidos, consumo en reparaciones
+                o ajuste manual (abajo). No es editable directamente.
+              </small>
+            )}
           </div>
 
           <div className="mb-3">
@@ -348,15 +393,57 @@ export default function RepuestoComponent(): JSX.Element {
             <input
               type="number"
               className="form-control"
-              id="UnidadesPedidas"
-              value={repuesto.data.UnidadesPedidas || ''}
-              onChange={handleNumberInputChange}
+              id="UnidadesComprometidas"
+              value={repuesto.data.UnidadesComprometidas || ''}
+              readOnly
+              disabled
               min="0"
             />
               <small className="form-text text-muted">
-                Cantidad de repuestos comprometidos en reparaciones (demanda)
+                Cantidad comprometida por reparaciones aceptadas (demanda). Se gestiona
+                automáticamente.
               </small>
           </div>
+
+          {!isNew && (
+            <div className="mb-3 border rounded p-3 bg-light">
+              <label className="form-label fw-semibold mb-1">Ajuste manual de stock</label>
+              <div className="row g-2 align-items-end">
+                <div className="col-sm-3">
+                  <label className="form-label small mb-1">Cantidad (+/-)</label>
+                  <input
+                    type="number"
+                    className="form-control"
+                    value={ajusteDelta}
+                    onChange={(e) => setAjusteDelta(e.target.value)}
+                    placeholder="Ej: -1"
+                  />
+                </div>
+                <div className="col-sm-6">
+                  <label className="form-label small mb-1">Motivo (opcional)</label>
+                  <input
+                    type="text"
+                    className="form-control"
+                    value={ajusteNota}
+                    onChange={(e) => setAjusteNota(e.target.value)}
+                    placeholder="Merma, conteo físico, rotura..."
+                  />
+                </div>
+                <div className="col-sm-3">
+                  <button
+                    type="button"
+                    className="btn btn-outline-primary w-100"
+                    onClick={handleAjustarStock}
+                  >
+                    Ajustar
+                  </button>
+                </div>
+              </div>
+              <small className="form-text text-muted">
+                Positivo suma, negativo resta. Queda registrado como movimiento de inventario.
+              </small>
+            </div>
+          )}
 
           <div className="card bg-light mb-3">
             <div className="card-body">
