@@ -919,6 +919,12 @@ export const cambiarEstadoReparacionAsync = createAsyncThunk(
         throw new Error(`Estado desconocido: ${nuevoEstado}`);
       }
 
+      // Defensa en profundidad: rechazar transiciones no permitidas por el mapa de dominio.
+      const { esTransicionValida } = await import('../../usecases/estadosReparacion');
+      if (!esTransicionValida(reparacionActual.data.EstadoRep as any, nuevoEstado as any)) {
+        throw new Error(`Transición no permitida: ${reparacionActual.data.EstadoRep} → ${nuevoEstado}`);
+      }
+
       // Determinar el campo de fecha a actualizar
       type CampoFecha = 'FeConRep' | 'FeFinRep' | 'FeRecRep' | 'FeEntRep';
       let campoFecha: CampoFecha | null = null;

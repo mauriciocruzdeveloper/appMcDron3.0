@@ -5,7 +5,7 @@ import { Filtro } from '../../types/Filtro';
 import { AsignacionIntervencion, EstadoAsignacion } from '../../types/intervencion';
 import { estados } from '../../datos/estados';
 import { obtenerEstadoSeguro, esEstadoLegacy } from '../../utils/estadosHelper';
-import { esReparacionResuelta, EstadoReparacion } from '../../usecases/estadosReparacion';
+import { esReparacionResuelta, esTransicionValida, EstadoReparacion } from '../../usecases/estadosReparacion';
 
 // Constantes para filtros
 /**
@@ -928,7 +928,15 @@ export const selectPuedeAvanzarA = (reparacionId: string, nombreEstadoDestino: s
       if (estadoActual.nombre === 'Aceptado' && nombreEstadoDestino === 'Rechazado') return false;
       if (estadoActual.nombre === 'Rechazado' && nombreEstadoDestino === 'Aceptado') return false;
 
-      return estadoDestino.etapa > estadoActual.etapa;
+      // La transicion debe ser valida segun el mapa de dominio (transicionesPermitidas)
+      // ademas de avanzar en etapa. Esto evita saltear estados (p.ej. Aceptado -> Finalizado).
+      return (
+        estadoDestino.etapa > estadoActual.etapa &&
+        esTransicionValida(
+          estadoActual.nombre as EstadoReparacion,
+          nombreEstadoDestino as EstadoReparacion
+        )
+      );
     }
   );
 
