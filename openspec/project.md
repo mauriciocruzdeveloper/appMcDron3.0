@@ -258,6 +258,39 @@ Component → Action Creator → Async Logic → Dispatch → Reducer → State 
      3. Mismo estado: más antigua primero (fecha de ingreso ascendente)
    - Selector: `selectReparacionesAccionInmediata` en `reparacion.selectors.ts`
 
+6. **Inventario de Repuestos (Ledger de movimientos)**:
+   - Cada repuesto tiene dos valores cacheados: `StockRepu` (stock físico on-hand) y
+     `UnidadesComprometidas` (demanda reservada por reparaciones aceptadas). El campo antes
+     se llamaba `UnidadesPedidas`; la columna en BD es `committed_units` (renombrada desde
+     `backorder`).
+   - **Fuente de verdad**: tabla `stock_movement` (append-only). Todo cambio de stock pasa por
+     el RPC `apply_stock_movement`, que inserta el movimiento y actualiza `stock`/`committed_units`
+     de forma atómica.
+   - Tipos de movimiento: `opening` (backfill inicial), `reception` (pedido a `arrived`, +stock),
+     `reservation` (aceptar presupuesto, +comprometido), `release` (salir sin reparar / rechazar /
+     eliminar reparación, −comprometido), `consumption` (pasar a Reparado, −stock y −comprometido),
+     `adjustment` (ajuste manual de stock).
+   - `stockLibre = StockRepu − UnidadesComprometidas`. La alerta crítica de faltante aparece solo
+     si hay faltante real y **no** hay pedido activo (`pending`/`in_transit`).
+   - En el formulario de repuesto, Stock y Comprometido no se editan directo: el stock se corrige
+     con "Ajuste manual" (movimiento `adjustment`); el comprometido es automático.
+   - Pedidos en estado `arrived` son **inmutables** (no se editan ni eliminan) para preservar el
+     stock recibido.
+   - Código: `redux-tool-kit/reparacion/reparacion.actions.ts`, `pedidoRepuesto/pedidoRepuesto.actions.ts`,
+     `repuesto/repuesto.actions.ts`; persistencia del RPC en
+     `persistenciaSupabase/repuestosPersistencia.js` (`aplicarMovimientoStockPersistencia`).
+   - Migración BD: `sql/migration_inventory_ledger.sql`.
+
+7. **Transiciones de Estado (mapa de dominio único)**:
+   - Fuente única de verdad: `transicionesPermitidas` / `esTransicionValida` en
+     `usecases/estadosReparacion.ts`.
+   - Tanto los botones de la UI (`selectPuedeAvanzarA`) como la acción que aplica el cambio
+     (`cambiarEstadoReparacionAsync`) validan contra ese mapa: **no se puede saltear estados**.
+   - En particular, `Cobrado` / `Enviado` / `Finalizado` requieren pasar antes por `Reparado`
+     (donde se consume el stock). Desde `Aceptado` / `Repuestos` solo se puede ir a `Reparado`
+     o a una salida sin reparar (`Rechazado` / `Cancelado` / `Abandonado`), que libera el
+     comprometido sin tocar el stock.
+
 ## Important Constraints
 
 ### Technical Constraints
