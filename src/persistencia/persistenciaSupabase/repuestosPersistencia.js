@@ -35,6 +35,7 @@ export const getRepuestoPersistencia = async (id) => {
       data: {
         NombreRepu: data.name,
         DescripcionRepu: data.description || '',
+        Obsoleta: data.is_obsolete || false,
         ModelosDroneIds: modelosDroneIds,
         ProveedorRepu: data.provider || '',
         PrecioRepu: data.price || 0,
@@ -81,6 +82,7 @@ export const getRepuestosPorModeloPersistencia = async (modeloDroneId) => {
       data: {
         NombreRepu: item.name,
         DescripcionRepu: item.description || '',
+        Obsoleta: item.is_obsolete || false,
         ModelosDroneIds: [String(modeloDroneId)], // Incluimos el modelo que estamos consultando
         ProveedorRepu: item.provider || '',
         PrecioRepu: item.price || 0,
@@ -115,6 +117,7 @@ export const getRepuestosPorProveedorPersistencia = async (proveedor) => {
       data: {
         NombreRepu: item.name,
         DescripcionRepu: item.description || '',
+        Obsoleta: item.is_obsolete || false,
         ProveedorRepu: item.provider || '',
         PrecioRepu: item.price || 0,
         StockRepu: item.stock || 0,
@@ -138,6 +141,7 @@ export const guardarRepuestoPersistencia = async (repuesto) => {
     const repuestoData = {
       name: repuesto.data.NombreRepu,
       description: repuesto.data.DescripcionRepu || '',
+      is_obsolete: repuesto.data.Obsoleta || false,
       provider: repuesto.data.ProveedorRepu || '',
       price: repuesto.data.PrecioRepu || 0,
     };
@@ -201,6 +205,7 @@ export const guardarRepuestoPersistencia = async (repuesto) => {
       data: {
         NombreRepu: result.name,
         DescripcionRepu: result.description || '',
+        Obsoleta: result.is_obsolete || false,
         ModelosDroneIds: repuesto.data.ModelosDroneIds ?
           repuesto.data.ModelosDroneIds.map(id => String(id)) : [],
         ProveedorRepu: result.provider || '',
@@ -288,6 +293,7 @@ export const getRepuestosPersistencia = async (setRepuestosToRedux) => {
         data: {
           NombreRepu: repuesto.name,
           DescripcionRepu: repuesto.description || '',
+          Obsoleta: repuesto.is_obsolete || false,
           ModelosDroneIds: repuesto.part_drone_model.map(rel => String(rel.drone_model.id)),
           ProveedorRepu: repuesto.provider || '',
           PrecioRepu: repuesto.price || 0,
@@ -393,6 +399,7 @@ export const aplicarMovimientoStockPersistencia = async ({
     data: {
       NombreRepu: part.name,
       DescripcionRepu: part.description || '',
+      Obsoleta: part.is_obsolete || false,
       ModelosDroneIds: [],
       ProveedorRepu: part.provider || '',
       PrecioRepu: part.price || 0,

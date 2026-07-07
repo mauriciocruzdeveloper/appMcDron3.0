@@ -9,7 +9,7 @@ import { useModal } from './Modal/useModal';
 import { ComboBox } from './common';
 import { SelectOption } from '../types/selectOption';
 import { selectModelosDroneArray } from '../redux-tool-kit/modeloDrone/modeloDrone.selectors';
-import { selectColeccionRepuestos, selectRepuestosArray } from '../redux-tool-kit/repuesto/repuesto.selectors';
+import { selectColeccionRepuestos, selectRepuestosSeleccionables } from '../redux-tool-kit/repuesto/repuesto.selectors';
 import { selectIntervencionPorId } from '../redux-tool-kit/intervencion/intervencion.selectors';
 import { selectReparacionesArray } from '../redux-tool-kit/reparacion/reparacion.selectors';
 import { estados } from '../datos/estados';
@@ -31,7 +31,6 @@ export default function IntervencionComponent(): JSX.Element {
   
   const modelosDroneArray = useAppSelector(selectModelosDroneArray);
   const repuestos = useAppSelector(selectColeccionRepuestos);
-  const repuestosArray = useAppSelector(selectRepuestosArray);
   const reparacionesAsociadas = useAppSelector((state) => {
     if (isNew || !id) return [];
 
@@ -59,6 +58,12 @@ export default function IntervencionComponent(): JSX.Element {
   
   // Estado para almacenar los repuestos filtrados por modelo
   const [repuestosFiltrados, setRepuestosFiltrados] = useState<{value: string, label: string, precio: number}[]>([]);
+
+  // Repuestos que pueden ofrecerse como nueva opción: la regla de negocio (excluir
+  // obsoletos, salvo que ya estuvieran elegidos) vive en el selector, no en el componente.
+  const repuestosSeleccionables = useAppSelector((state) =>
+    selectRepuestosSeleccionables(state, selectedRepuestos.map((r) => r.value))
+  );
   
   useEffect(() => {
     if (!isNew && id) {
@@ -93,7 +98,7 @@ export default function IntervencionComponent(): JSX.Element {
   useEffect(() => {
     // Si hay un modelo seleccionado, filtrar repuestos compatibles
     if (intervencion.data.ModeloDroneId) {
-      const compatibles = repuestosArray.filter(repuesto =>
+      const compatibles = repuestosSeleccionables.filter(repuesto =>
         // El repuesto es compatible si el modelo está en ModelosDroneIds
         repuesto.data.ModelosDroneIds.includes(intervencion.data.ModeloDroneId as string)
         // O si es universal (puedes definir la lógica, aquí: si ModelosDroneIds está vacío)
@@ -128,8 +133,8 @@ export default function IntervencionComponent(): JSX.Element {
         }));
       }
     } else {
-      // Si no hay modelo seleccionado, mostrar todos los repuestos
-      const options = repuestosArray.map(repuesto => ({
+      // Si no hay modelo seleccionado, mostrar todos los repuestos seleccionables
+      const options = repuestosSeleccionables.map(repuesto => ({
         value: repuesto.id,
         label: `${repuesto.data.NombreRepu} - ${repuesto.data.PrecioRepu?.toLocaleString('es-AR', { style: 'currency', currency: 'ARS' }) || '$0'}`,
         precio: repuesto.data.PrecioRepu || 0
@@ -137,7 +142,7 @@ export default function IntervencionComponent(): JSX.Element {
       
       setRepuestosFiltrados(options);
     }
-  }, [intervencion.data.ModeloDroneId, repuestosArray, selectedRepuestos]);
+  }, [intervencion.data.ModeloDroneId, repuestosSeleccionables, selectedRepuestos]);
 
   // Calcular el precio total dinámicamente (no se guarda en BD)
   const precioRepuestos = selectedRepuestos.reduce((total, rep) => total + rep.precio, 0);

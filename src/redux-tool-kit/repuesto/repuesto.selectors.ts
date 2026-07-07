@@ -65,6 +65,17 @@ export const selectRepuestosPorModeloDrone = createSelector(
   }
 );
 
+// Selector para repuestos que pueden elegirse en nuevas asociaciones (intervenciones, pedidos).
+// Los repuestos obsoletos quedan excluidos, salvo que ya estuvieran seleccionados previamente
+// (para no romper el valor ya guardado en un formulario que se está editando).
+export const selectRepuestosSeleccionables = createSelector(
+  [selectRepuestosArray, (state: RootState, idsYaSeleccionados: string[] = []) => idsYaSeleccionados],
+  (repuestos, idsYaSeleccionados) =>
+    repuestos.filter(repuesto =>
+      !repuesto.data.Obsoleta || idsYaSeleccionados.includes(repuesto.id)
+    )
+);
+
 // Función para calcular el estado del repuesto
 const calcularEstadoRepuesto = (stock: number, unidadesPedidas: number): string => {
   if (stock > 0) return 'Disponible';

@@ -14,7 +14,7 @@ import {
 } from '../types/pedidoRepuesto';
 import { guardarPedidoAsync, eliminarPedidoAsync } from '../redux-tool-kit/pedidoRepuesto/pedidoRepuesto.actions';
 import { selectPedidoPorId } from '../redux-tool-kit/pedidoRepuesto/pedidoRepuesto.selectors';
-import { selectRepuestosArray } from '../redux-tool-kit/repuesto/repuesto.selectors';
+import { selectRepuestosArray, selectRepuestosSeleccionables } from '../redux-tool-kit/repuesto/repuesto.selectors';
 import { selectModelosDroneArray } from '../redux-tool-kit/modeloDrone/modeloDrone.selectors';
 import { ComboBox } from './common';
 import { SelectOption } from '../types/selectOption';
@@ -70,6 +70,15 @@ export default function PedidoComponent(): JSX.Element {
     const [filtrosModeloItem, setFiltrosModeloItem] = useState<Record<string, string>>({});
 
     const [pedido, setPedido] = useState<PedidoRepuesto>(pedidoVacio());
+
+    // Repuestos que pueden ofrecerse en el combo: se excluyen los obsoletos, salvo
+    // que ya estén referenciados por algún ítem de este pedido (para no romper su valor).
+    const idsRepuestosUsadosEnPedido = pedido.data.Items
+        .map(item => item.data.RepuestoId)
+        .filter((repuestoId): repuestoId is string => Boolean(repuestoId));
+    const repuestosSeleccionables = useAppSelector((state) =>
+        selectRepuestosSeleccionables(state, idsRepuestosUsadosEnPedido)
+    );
 
     useEffect(() => {
         if (!isNew && pedidoActual) {
@@ -456,7 +465,7 @@ export default function PedidoComponent(): JSX.Element {
                                 <div className="mb-2">
                                     <label className="form-label small mb-1">Repuesto del catálogo (opcional)</label>
                                     <ComboBox
-                                        options={repuestos
+                                        options={repuestosSeleccionables
                                             .filter(r =>
                                                 !filtrosModeloItem[item.id] ||
                                                 r.data.ModelosDroneIds.includes(filtrosModeloItem[item.id])

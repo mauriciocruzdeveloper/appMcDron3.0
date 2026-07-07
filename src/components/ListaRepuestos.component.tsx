@@ -209,7 +209,12 @@ export default function ListaRepuestos(): JSX.Element {
                             <div className='card-body p-3'>
                                 <div className='d-flex w-100 justify-content-between'>
                                     <h5 className='mb-1'>{repuesto.data.NombreRepu}</h5>
-                                    <span className='badge bg-bluemcdron'>{formatPrice(repuesto.data.PrecioRepu)}</span>
+                                    <div>
+                                        {repuesto.data.Obsoleta && (
+                                            <span className="badge bg-warning text-dark me-2">Obsoleto</span>
+                                        )}
+                                        <span className='badge bg-bluemcdron'>{formatPrice(repuesto.data.PrecioRepu)}</span>
+                                    </div>
                                 </div>
                                 <div>
                                     <small className='text-muted'>{repuesto.data.ProveedorRepu}</small>

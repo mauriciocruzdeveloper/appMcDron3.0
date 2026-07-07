@@ -55,6 +55,7 @@ export default function RepuestoComponent(): JSX.Element {
     data: {
       NombreRepu: '',
       DescripcionRepu: '',
+      Obsoleta: false,
       ModelosDroneIds: [],
       ProveedorRepu: '',
       PrecioRepu: 0,
@@ -135,6 +136,17 @@ export default function RepuestoComponent(): JSX.Element {
       data: {
         ...prevState.data,
         [id]: value
+      }
+    }));
+  };
+
+  // Manejador para el switch de obsolescencia
+  const handleObsoletaChange = (e: ChangeEvent<HTMLInputElement>) => {
+    setRepuesto(prevState => ({
+      ...prevState,
+      data: {
+        ...prevState.data,
+        Obsoleta: e.target.checked
       }
     }));
   };
@@ -309,6 +321,24 @@ export default function RepuestoComponent(): JSX.Element {
               onChange={handleTextInputChange}
               rows={3}
             />
+          </div>
+
+          <div className="mb-3">
+            <div className="form-check form-switch">
+              <input
+                className="form-check-input"
+                type="checkbox"
+                id="Obsoleta"
+                checked={Boolean(repuesto.data.Obsoleta)}
+                onChange={handleObsoletaChange}
+              />
+              <label className="form-check-label" htmlFor="Obsoleta">
+                Marcar como obsoleto
+              </label>
+            </div>
+            <small className="form-text text-muted">
+              Los repuestos obsoletos se mantienen en el historial y conservan su stock, pero no podrán asociarse a nuevas intervenciones.
+            </small>
           </div>
 
           <div className="mb-3">

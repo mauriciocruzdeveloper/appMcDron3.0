@@ -8,7 +8,7 @@ import { ComboBox } from './common';
 import { setIntervencionesDeReparacionActual } from '../redux-tool-kit/reparacion/reparacion.slice';
 import { selectColeccionModelosDrone } from '../redux-tool-kit/modeloDrone/modeloDrone.selectors';
 import { selectColeccionRepuestos } from '../redux-tool-kit/repuesto/repuesto.selectors';
-import { selectColeccionIntervenciones } from '../redux-tool-kit/intervencion/intervencion.selectors';
+import { selectColeccionIntervenciones, selectIntervencionesAsignables } from '../redux-tool-kit/intervencion/intervencion.selectors';
 import { selectIntervencionesDeReparacionActual } from '../redux-tool-kit/reparacion';
 import { AsignacionIntervencionDetalle } from './AsignacionIntervencionDetalle.component';
 
@@ -25,6 +25,7 @@ export default function IntervencionesReparacion({ reparacionId, readOnly = fals
   // Usar selectores optimizados
   const intervenciones = useAppSelector(selectIntervencionesDeReparacionActual);
   const todasLasIntervenciones = useAppSelector(selectColeccionIntervenciones);
+  const intervencionesAsignables = useAppSelector(selectIntervencionesAsignables);
   const modelosDrone = useAppSelector(selectColeccionModelosDrone);
   const repuestosInventario = useAppSelector(selectColeccionRepuestos);
 
@@ -34,11 +35,10 @@ export default function IntervencionesReparacion({ reparacionId, readOnly = fals
   const [totalGeneral, setTotalGeneral] = useState<number>(0);
 
   // Opciones para el selector de intervenciones - filtrado por modelo de drone
-  // Se permiten múltiples asignaciones de la misma intervención
-  const opcionesIntervenciones = Object.values(todasLasIntervenciones)
+  // Se permiten múltiples asignaciones de la misma intervención. Las obsoletas
+  // ya vienen excluidas por selectIntervencionesAsignables.
+  const opcionesIntervenciones = intervencionesAsignables
     .filter(intervencion => {
-      if (intervencion.data.Obsoleta) return false;
-
       // Si no hay modeloDroneId, mostrar todas las intervenciones
       if (!modeloDroneId) return true;
       // Si la intervención no tiene ModeloDroneId, es compatible con todos los modelos

@@ -37,6 +37,15 @@ export const selectColeccionIntervenciones = createSelector(
   (intervencionState) => intervencionState.coleccionIntervenciones
 );
 
+// Selector para intervenciones que pueden asignarse (a reparaciones, etc.).
+// Las intervenciones obsoletas quedan excluidas de nuevas asignaciones, pero
+// se mantienen en el catálogo y en las asignaciones ya existentes.
+export const selectIntervencionesAsignables = createSelector(
+  [selectColeccionIntervenciones],
+  (coleccionIntervenciones) =>
+    Object.values(coleccionIntervenciones).filter((intervencion) => !intervencion.data.Obsoleta)
+);
+
 // ---------------------------------------------------------
 // SELECTOR CON PRECIOS CALCULADOS
 // ---------------------------------------------------------
