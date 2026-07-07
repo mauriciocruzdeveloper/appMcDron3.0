@@ -4,97 +4,29 @@ import { formatRepairPublicId } from '../../utils/publicIdHelper';
 
 // Agregar una asignación de intervención a una reparación
 // Se permiten múltiples asignaciones de la misma intervención
-export const agregarIntervencionAReparacionPersistencia = async (reparacionId, intervencionId) => {
+// NOTA: los costos (labor_cost, parts_cost, total_cost) y el estado inicial
+// llegan ya calculados/decididos desde el thunk (reparacion.actions.ts). Esta
+// función solo persiste el registro, sin lógica de negocio.
+export const agregarIntervencionAReparacionPersistencia = async (reparacionId, intervencionId, costos) => {
   try {
-    // 1. Verificar que la reparación existe
-    const { data: reparacion, error: reparacionError } = await supabase
-      .from('repair')
-      .select('*')
-      .eq('id', reparacionId)
-      .single();
+    const { laborCost, partsCost, totalCost, estadoInicial } = costos;
 
-    if (reparacionError || !reparacion) {
-      throw new Error('Reparación no encontrada');
-    }
-
-    // 2. Verificar que la intervención existe
-    const { data: intervencion, error: intervencionError } = await supabase
-      .from('intervention')
-      .select('*')
-      .eq('id', intervencionId)
-      .single();
-
-    if (intervencionError || !intervencion) {
-      throw new Error('Intervención no encontrada');
-    }
-
-    if (intervencion.is_obsolete) {
-      throw new Error('Esta intervención está marcada como obsoleta y no puede asignarse a nuevas reparaciones');
-    }
-
-    // 3. Obtener los repuestos asociados a esta intervención para calcular el costo
-    const { data: partInterventions, error: partsError } = await supabase
-      .from('part_intervention')
-      .select(`
-        part_id,
-        quantity,
-        part:part_id (price)
-      `)
-      .eq('intervention_id', intervencionId);
-
-    if (partsError) {
-      console.error('Error al obtener repuestos de intervención:', partsError);
-    }
-
-    // 4. Calcular el costo de repuestos basándose en los precios ACTUALES
-    let parts_cost = 0;
-    if (partInterventions && partInterventions.length > 0) {
-      parts_cost = partInterventions.reduce((sum, item) => {
-        const precio = item.part?.price || 0;
-        const cantidad = item.quantity || 1;
-        return sum + (precio * cantidad);
-      }, 0);
-    }
-
-    // 5. Calcular el costo total
-    const labor_cost = intervencion.labor_cost || 0;
-    const total_cost = labor_cost + parts_cost;
-
-    // 6. Insertar la nueva asignación de intervención con los costos calculados
     const { data: nuevaRelacion, error: insercionError } = await supabase
       .from('repair_intervention')
       .insert([
         {
           repair_id: reparacionId,
           intervention_id: intervencionId,
-          labor_cost: labor_cost,
-          parts_cost: parts_cost,
-          total_cost: total_cost,
-          status: 'pendiente' // Nueva asignación comienza como pendiente
+          labor_cost: laborCost,
+          parts_cost: partsCost,
+          total_cost: totalCost,
+          status: estadoInicial
         }
       ])
       .select();
 
     if (insercionError) {
       throw new Error(`Error al asociar la intervención: ${insercionError.message}`);
-    }
-
-    // 7. Actualizar el precio total de la reparación sumando todos los costos
-    // Primero obtenemos todas las intervenciones de esta reparación
-    const { data: todasIntervenciones, error: consultaError } = await supabase
-      .from('repair_intervention')
-      .select('total_cost')
-      .eq('repair_id', reparacionId);
-
-    if (!consultaError && todasIntervenciones) {
-      // Calculamos el total
-      const nuevoTotal = todasIntervenciones.reduce((sum, item) => sum + (item.total_cost || 0), 0);
-
-      // Actualizamos la reparación con el nuevo total
-      await supabase
-        .from('repair')
-        .update({ price_total: nuevoTotal })
-        .eq('id', reparacionId);
     }
 
     return {
@@ -191,20 +123,9 @@ export const eliminarIntervencionDeReparacionPersistencia = async (reparacionId,
       throw new Error(`Error al eliminar la asignación: ${eliminacionError.message}`);
     }
 
-    // 2. Recalcular el precio total de la reparación
-    const { data: todasIntervenciones, error: recalculoError } = await supabase
-      .from('repair_intervention')
-      .select('total_cost')
-      .eq('repair_id', reparacionId);
-
-    if (!recalculoError) {
-      const nuevoTotal = todasIntervenciones.reduce((sum, item) => sum + (item.total_cost || 0), 0);
-
-      await supabase
-        .from('repair')
-        .update({ price_total: nuevoTotal })
-        .eq('id', reparacionId);
-    }
+    // NOTA: el recálculo de price_total de la reparación lo hace el thunk
+    // eliminarIntervencionDeReparacionAsync (reparacion.actions.ts) a partir del
+    // store, no esta capa de persistencia.
 
     return {
       success: true,
@@ -564,17 +485,11 @@ export const getReparacionPersistencia = async (id) => {
 };
 
 // GUARDAR Reparación
+// NOTA: la validación de límites de negocio (longitud de ObsRepuestos, cantidad
+// de RepuestosSolicitados) se hace en reparacion.actions.ts antes de invocar
+// esta función. Esta capa solo persiste.
 export const guardarReparacionPersistencia = async (reparacion) => {
   try {
-    // Validar campos de repuestos ANTES de guardar
-    if (reparacion.data.ObsRepuestos && reparacion.data.ObsRepuestos.length > 2000) {
-      throw new Error('Las observaciones de repuestos no pueden superar los 2000 caracteres');
-    }
-    
-    if (reparacion.data.RepuestosSolicitados && reparacion.data.RepuestosSolicitados.length > 50) {
-      throw new Error('No se pueden solicitar más de 50 repuestos por reparación');
-    }
-    
     // Transformar el objeto al formato de Supabase
     const reparacionData = {
       state: reparacion.data.EstadoRep,
