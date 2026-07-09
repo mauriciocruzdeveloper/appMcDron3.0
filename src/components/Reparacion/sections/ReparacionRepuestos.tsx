@@ -60,7 +60,7 @@ export const ReparacionRepuestos: React.FC<ReparacionRepuestosProps> = ({
 
     if (!seccionVisible || !reparacion || !isAdmin) return null;
 
-    const repuestosFaltantes = repuestos.filter(r => r.requierePedido);
+    const repuestosFaltantes = repuestos.filter(r => r.requierePedido && !r.tienePedidoActivo);
 
     const avanzarARepuestos = () => {
         dispatch(cambiarEstadoReparacionAsync({ reparacionId, nuevoEstado: 'Repuestos', enviarEmail: false }));
