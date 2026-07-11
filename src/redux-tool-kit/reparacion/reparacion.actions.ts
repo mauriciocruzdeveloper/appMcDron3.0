@@ -5,7 +5,7 @@ import {
   eliminarReparacionPersistencia,
   getReparacionesPersistencia,
   getReparacionPersistencia,
-  guardarReparacionPersistencia,
+  guardarReparacionPersistencia as guardarReparacionPersistenciaSinValidar,
   actualizarEstadoReparacionPersistencia,
   getIntervencionesPorReparacionPersistencia,
   agregarIntervencionAReparacionPersistencia,
@@ -21,6 +21,56 @@ import { RootState } from "../store";
 import { setRepuesto } from "../repuesto/repuesto.slice";
 
 const IDS_INTERVENCIONES_POR_DEFECTO = ['47', '48', '49', '50', '51', '52'];
+
+// Estado inicial de una asignación de intervención recién creada (regla de negocio).
+const ESTADO_INICIAL_ASIGNACION_INTERVENCION = 'pendiente';
+
+// Reglas de negocio de validación para guardar una reparación (límites de campos).
+const validarCamposRepuestosReparacion = (data: DataReparacion): void => {
+  if (data.ObsRepuestos && data.ObsRepuestos.length > 2000) {
+    throw new Error('Las observaciones de repuestos no pueden superar los 2000 caracteres');
+  }
+
+  if (data.RepuestosSolicitados && data.RepuestosSolicitados.length > 50) {
+    throw new Error('No se pueden solicitar más de 50 repuestos por reparación');
+  }
+};
+
+/**
+ * Wrapper de guardarReparacionPersistencia que aplica las reglas de validación
+ * de negocio antes de persistir. Toda la lógica de negocio vive en esta capa
+ * de acciones; la persistencia solo escribe.
+ */
+const guardarReparacionPersistencia = async (reparacion: ReparacionType): Promise<ReparacionType> => {
+  validarCamposRepuestosReparacion(reparacion.data);
+  return guardarReparacionPersistenciaSinValidar(reparacion);
+};
+
+/**
+ * Calcula los costos (mano de obra, repuestos, total) y el estado inicial para
+ * asignar una intervención a una reparación. Regla de negocio: una intervención
+ * obsoleta no puede asignarse a nuevas reparaciones.
+ */
+const calcularCostosAsignacionIntervencion = async (intervencionId: string) => {
+  const { getIntervencionPersistencia } = await import('../../persistencia/persistencia');
+  const intervencion = await getIntervencionPersistencia(intervencionId);
+
+  if (intervencion.data.Obsoleta) {
+    throw new Error('Esta intervención está marcada como obsoleta y no puede asignarse a nuevas reparaciones');
+  }
+
+  const partesRelacionadas = intervencion.data._partsRelations || [];
+  const partsCost = partesRelacionadas.reduce((sum: number, rel: any) => {
+    const precio = rel.part?.price || 0;
+    const cantidad = rel.quantity || 1;
+    return sum + (precio * cantidad);
+  }, 0);
+
+  const laborCost = intervencion.data.PrecioManoObra || 0;
+  const totalCost = laborCost + partsCost;
+
+  return { laborCost, partsCost, totalCost, estadoInicial: ESTADO_INICIAL_ASIGNACION_INTERVENCION };
+};
 
 const consolidarCantidadPorRepuesto = (partsRelations: any[]): Map<string, number> => {
   const requiredByPart = new Map<string, number>();
@@ -140,9 +190,10 @@ const consumirRepuestosDeReparacion = async (
 async function guardarReparacionNueva(reparacion: ReparacionType): Promise<ReparacionType> {
   const reparacionGuardada = await guardarReparacionPersistencia(reparacion);
   await Promise.all(
-    IDS_INTERVENCIONES_POR_DEFECTO.map(id =>
-      agregarIntervencionAReparacionPersistencia(reparacionGuardada.id, id)
-    )
+    IDS_INTERVENCIONES_POR_DEFECTO.map(async (id) => {
+      const costos = await calcularCostosAsignacionIntervencion(id);
+      return agregarIntervencionAReparacionPersistencia(reparacionGuardada.id, id, costos);
+    })
   );
   return reparacionGuardada;
 }
@@ -428,7 +479,15 @@ export const agregarIntervencionAReparacionAsync = createAsyncThunk(
   async ({ reparacionId, intervencionId }: { reparacionId: string, intervencionId: string }, { dispatch, getState }) => {
     try {
       dispatch(isFetchingStart());
-      await agregarIntervencionAReparacionPersistencia(reparacionId, intervencionId);
+
+      // Calcular costos y validar reglas de negocio (intervención obsoleta) ANTES
+      // de persistir. La capa de persistencia solo escribe los valores ya resueltos.
+      const costos = await calcularCostosAsignacionIntervencion(intervencionId);
+      const resultado = await agregarIntervencionAReparacionPersistencia(reparacionId, intervencionId, costos);
+
+      if (!resultado.success) {
+        throw new Error(resultado.error);
+      }
 
       // Recargar intervenciones
       await dispatch(getIntervencionesPorReparacionAsync(reparacionId));
