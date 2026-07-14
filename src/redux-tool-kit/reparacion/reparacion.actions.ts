@@ -177,14 +177,30 @@ const liberarRepuestosDeReparacion = async (
   await aplicarMovimientosDeReparacion(demanda, 'release', reparacionId, dispatch, getState);
 };
 
-/** Consume stock fisico y libera compromiso de una reparacion que pasa a Reparado. */
+/**
+ * Consume stock fisico y libera compromiso de una reparacion que pasa a Reparado.
+ * Regla de negocio: si un repuesto no tiene stock disponible (StockRepu <= 0), no se
+ * descuenta (evita dejar un movimiento de consumo fantasma); igual se libera su
+ * compromiso, ya que la reparacion se esta cerrando.
+ */
 const consumirRepuestosDeReparacion = async (
   reparacionId: string,
   dispatch: any,
   getState: () => RootState
 ): Promise<void> => {
   const demanda = await obtenerCompromisoPorRepuestoDeReparacion(reparacionId);
-  await aplicarMovimientosDeReparacion(demanda, 'consumption', reparacionId, dispatch, getState);
+
+  const coleccionRepuestos = getState().repuesto.coleccionRepuestos;
+  const demandaConStock = new Map<string, number>();
+  const demandaSinStock = new Map<string, number>();
+
+  demanda.forEach((qty, repuestoId) => {
+    const stockActual = Number(coleccionRepuestos[repuestoId]?.data?.StockRepu ?? 0);
+    (stockActual > 0 ? demandaConStock : demandaSinStock).set(repuestoId, qty);
+  });
+
+  await aplicarMovimientosDeReparacion(demandaConStock, 'consumption', reparacionId, dispatch, getState);
+  await aplicarMovimientosDeReparacion(demandaSinStock, 'release', reparacionId, dispatch, getState);
 };
 
 async function guardarReparacionNueva(reparacion: ReparacionType): Promise<ReparacionType> {

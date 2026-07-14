@@ -370,6 +370,17 @@ export const getRepuestosPersistencia = async (setRepuestosToRedux) => {
 // Inserta un movimiento append-only y actualiza atomicamente stock/committed_units
 // en la tabla part mediante el RPC apply_stock_movement.
 // Devuelve el repuesto actualizado en formato de dominio.
+/**
+ * @param {{
+ *   partId: string,
+ *   onHandDelta?: number,
+ *   committedDelta?: number,
+ *   kind: string,
+ *   referenceType?: string | null,
+ *   referenceId?: string | null,
+ *   note?: string | null,
+ * }} params
+ */
 export const aplicarMovimientoStockPersistencia = async ({
   partId,
   onHandDelta = 0,
