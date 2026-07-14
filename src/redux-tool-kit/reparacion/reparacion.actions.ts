@@ -189,12 +189,29 @@ const consumirRepuestosDeReparacion = async (
 
 async function guardarReparacionNueva(reparacion: ReparacionType): Promise<ReparacionType> {
   const reparacionGuardada = await guardarReparacionPersistencia(reparacion);
-  await Promise.all(
+
+  // Nota: IDS_INTERVENCIONES_POR_DEFECTO son IDs de fila hardcodeados del catálogo
+  // 'intervention'. Pueden no existir en todos los ambientes (ej. develop con un
+  // catálogo distinto al de producción). Si una intervención por defecto no existe
+  // o falla, se omite con un warning en vez de abortar el alta de la reparación
+  // (el usuario/drone/reparación ya se guardaron y no deben perderse por esto).
+  const resultados = await Promise.allSettled(
     IDS_INTERVENCIONES_POR_DEFECTO.map(async (id) => {
       const costos = await calcularCostosAsignacionIntervencion(id);
       return agregarIntervencionAReparacionPersistencia(reparacionGuardada.id, id, costos);
     })
   );
+
+  resultados.forEach((resultado, index) => {
+    if (resultado.status === 'rejected') {
+      console.warn(
+        `No se pudo asignar la intervención por defecto id=${IDS_INTERVENCIONES_POR_DEFECTO[index]} ` +
+        `a la reparación ${reparacionGuardada.id}:`,
+        resultado.reason
+      );
+    }
+  });
+
   return reparacionGuardada;
 }
 

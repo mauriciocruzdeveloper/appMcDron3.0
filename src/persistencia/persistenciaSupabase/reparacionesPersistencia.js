@@ -292,6 +292,7 @@ export const getReparacionesPersistencia = (setReparacionesToRedux, usuario) => 
         document_urls,
         photo_before,
         photo_after,
+        informe_photo_urls,
         parts_notes,
         requested_parts_ids,
         parent_repair_id,
@@ -371,6 +372,7 @@ export const getReparacionesPersistencia = (setReparacionesToRedux, usuario) => 
           IntervencionesIds: intervencionesMap[String(item.id)] || [],  // IDs de intervenciones desde la tabla intermedia
           FotoAntes: item.photo_before || undefined,  // Mapeo de BD a frontend
           FotoDespues: item.photo_after || undefined,  // Mapeo de BD a frontend
+          FotosInformeRep: item.informe_photo_urls || [],  // Mapeo de BD a frontend
           ObsRepuestos: item.parts_notes || undefined,  // Mapeo de BD a frontend - NUEVO
           RepuestosSolicitados: item.requested_parts_ids || undefined,  // Mapeo de BD a frontend - NUEVO
           ParentRepairId: item.parent_repair_id ? String(item.parent_repair_id) : undefined
@@ -475,6 +477,7 @@ export const getReparacionPersistencia = async (id) => {
         IntervencionesIds: intervencionesIds,  // IDs de intervenciones asociadas
         FotoAntes: data.photo_before || undefined,  // Mapeo de BD a frontend
         FotoDespues: data.photo_after || undefined,  // Mapeo de BD a frontend
+        FotosInformeRep: data.informe_photo_urls || [],  // Mapeo de BD a frontend
         ParentRepairId: data.parent_repair_id ? String(data.parent_repair_id) : undefined
       }
     };
@@ -516,6 +519,7 @@ export const guardarReparacionPersistencia = async (reparacion) => {
       document_urls: reparacion.data.urlsDocumentos,
       photo_before: reparacion.data.FotoAntes || null,  // Mapeo de frontend a BD
       photo_after: reparacion.data.FotoDespues || null,   // Mapeo de frontend a BD
+      informe_photo_urls: reparacion.data.FotosInformeRep || [],  // Mapeo de frontend a BD
       parts_notes: reparacion.data.ObsRepuestos || null,  // Mapeo de frontend a BD - NUEVO
       requested_parts_ids: reparacion.data.RepuestosSolicitados || null,  // Mapeo de frontend a BD - NUEVO
       parent_repair_id: reparacion.data.ParentRepairId ? parseInt(reparacion.data.ParentRepairId) : null

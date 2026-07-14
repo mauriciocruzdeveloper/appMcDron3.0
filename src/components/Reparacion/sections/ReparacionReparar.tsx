@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useAppSelector } from "../../../redux-tool-kit/hooks/useAppSelector";
 import { useAppDispatch } from "../../../redux-tool-kit/hooks/useAppDispatch";
 import { useModal } from "../../Modal/useModal";
@@ -14,9 +14,11 @@ import {
     getIntervencionesPorReparacionAsync,
     cambiarEstadoAsignacionAsync,
 } from "../../../redux-tool-kit/reparacion/reparacion.actions";
+import { subirFotoInformeAsync, borrarFotoInformeAsync } from "../../../redux-tool-kit/app/app.actions";
 import { selectColeccionIntervenciones } from "../../../redux-tool-kit/intervencion/intervencion.selectors";
 import { EstadoAsignacion } from "../../../types/intervencion";
 import { convertTimestampCORTO } from "../../../utils/utils";
+import { getThumbnailUrl } from "../../../utils/imageUtils";
 import TextareaAutosize from "react-textarea-autosize";
 
 interface ReparacionRepararProps {
@@ -72,6 +74,14 @@ export const ReparacionReparar: React.FC<ReparacionRepararProps> = ({
         valorInicial: reparacion?.data.FeFinRep || "",
         isDateField: true
     });
+
+    const [fotosInforme, setFotosInforme] = useState<string[]>(reparacion?.data.FotosInformeRep || []);
+    const [isUploadingFotoInforme, setIsUploadingFotoInforme] = useState(false);
+
+    // Sincronizar fotos del informe cuando cambian desde el store
+    useEffect(() => {
+        setFotosInforme(reparacion?.data.FotosInformeRep || []);
+    }, [reparacion?.data.FotosInformeRep]);
 
     if (!seccionVisible || !reparacion) return null;
 
@@ -163,6 +173,55 @@ export const ReparacionReparar: React.FC<ReparacionRepararProps> = ({
         }
     };
 
+    const handleAgregarFotoInforme = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (!e.target.files?.length) return;
+        const file = e.target.files[0];
+
+        setIsUploadingFotoInforme(true);
+        try {
+            const response = await dispatch(subirFotoInformeAsync({ reparacionId, file }));
+
+            if (response.meta.requestStatus === 'fulfilled') {
+                const nuevasFotos = response.payload as string[];
+                setFotosInforme(Array.isArray(nuevasFotos) ? nuevasFotos : fotosInforme);
+            } else {
+                throw new Error("Fallo en la respuesta");
+            }
+        } catch (error: unknown) {
+            openModal({
+                mensaje: "No se pudo subir la foto. Intente de nuevo.",
+                tipo: "danger",
+                titulo: "Error de Subida",
+            });
+        } finally {
+            setIsUploadingFotoInforme(false);
+            e.target.value = '';
+        }
+    };
+
+    const handleEliminarFotoInforme = async (url: string) => {
+        openModal({
+            mensaje: '¿Está seguro de que desea eliminar esta foto del informe?',
+            tipo: 'danger',
+            titulo: 'Eliminar Foto',
+            confirmCallback: async () => {
+                try {
+                    const response = await dispatch(borrarFotoInformeAsync({ reparacionId, fotoUrl: url }));
+                    if (response.meta.requestStatus !== 'fulfilled') {
+                        throw new Error("Fallo en la respuesta");
+                    }
+                    setFotosInforme(fotosInforme.filter(f => f !== url));
+                } catch (error: unknown) {
+                    openModal({
+                        mensaje: 'Error al eliminar la foto',
+                        tipo: 'danger',
+                        titulo: 'Error'
+                    });
+                }
+            }
+        });
+    };
+
     return (
         <div className="card mb-3" id="seccion-reparar">
             <div className="card-body">
@@ -222,6 +281,63 @@ export const ReparacionReparar: React.FC<ReparacionRepararProps> = ({
                         rows={5}
                         disabled={!isAdmin}
                     />
+                </div>
+
+                <div className="mt-2 mb-3">
+                    <label className="form-label small fw-bold">Fotos del informe</label>
+
+                    {fotosInforme.length > 0 && (
+                        <div className="row g-2 mb-2">
+                            {fotosInforme.map((url, index) => (
+                                <div key={index} className="col-6 col-md-4 col-lg-3">
+                                    <div className="position-relative">
+                                        <img
+                                            src={getThumbnailUrl(url)}
+                                            alt={`Foto informe ${index + 1}`}
+                                            className="img-fluid rounded"
+                                            style={{ width: '100%', height: '120px', objectFit: 'cover', cursor: 'pointer' }}
+                                            onClick={() => window.open(url, '_blank')}
+                                            onError={(e) => {
+                                                const target = e.target as HTMLImageElement;
+                                                if (target.src !== url) {
+                                                    target.src = url;
+                                                }
+                                            }}
+                                            title="Click para ver en tamaño completo"
+                                        />
+                                        {isAdmin && (
+                                            <button
+                                                type="button"
+                                                className="btn btn-sm btn-danger position-absolute top-0 end-0 m-1"
+                                                onClick={() => handleEliminarFotoInforme(url)}
+                                                style={{ padding: '2px 6px' }}
+                                            >
+                                                <i className="bi bi-x"></i>
+                                            </button>
+                                        )}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+
+                    {isAdmin && (
+                        <div>
+                            <label className="btn btn-outline-secondary btn-sm">
+                                Subir Foto
+                                <input
+                                    type="file"
+                                    accept="image/*"
+                                    onChange={handleAgregarFotoInforme}
+                                    disabled={isUploadingFotoInforme}
+                                    style={{ display: 'none' }}
+                                />
+                            </label>
+                            {isUploadingFotoInforme && (
+                                <small className="text-muted ms-2">Subiendo imagen...</small>
+                            )}
+                        </div>
+                    )}
                 </div>
                 <div>
                     <label className="form-label">

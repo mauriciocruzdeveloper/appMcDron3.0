@@ -414,6 +414,7 @@ export const enviarDroneReparadoAsync = createAsyncThunk(
         fecha_finalizacion: new Date().toLocaleDateString(),
         intervenciones: intervenciones, // Array de intervenciones
         comentarios_tecnico: comentariosTecnico, // Comentarios aparte
+        fotos_informe: reparacion.data.FotosInformeRep || [], // Fotos dedicadas al informe (no incluye fotos de asignaciones)
         monto_total: `$${montoTotal}`,
         monto_pagado: `$${montoPagado}`,
         monto_restante: `$${montoRestante}`,
@@ -464,6 +465,7 @@ export const enviarDroneDiagnosticadoAsync = createAsyncThunk(
         fecha_diagnostico: new Date().toLocaleDateString(),
         diagnostico: reparacion.data.DescripcionTecRep || "Sin diagnóstico",
         costo_diagnostico: `$${reparacion.data.PresuDiRep ?? 0}`,
+        fotos_informe: reparacion.data.FotosInformeRep || [], // Fotos dedicadas al informe (no incluye fotos de asignaciones)
         telefono: reparacion.data.TelefonoUsu,
         email: emailDestino
       };
@@ -585,6 +587,98 @@ export const subirFotoAsignacionAsync = createAsyncThunk(
       dispatch(isFetchingComplete());
       // Importante: rejectWithValue para que el error sea controlado
       return rejectWithValue(error.message || 'Error al subir la foto');
+    }
+  }
+);
+
+// SUBIR FOTO DEL INFORME (sube la imagen y la agrega a FotosInformeRep de la reparación)
+// Array dedicado al informe de reparación/diagnóstico, independiente de urlsFotos
+// (galería general antes/después) y de las fotos de las asignaciones.
+export const subirFotoInformeAsync = createAsyncThunk(
+  'app/subirFotoInforme',
+  async ({ reparacionId, file }: { reparacionId: string, file: File }, { dispatch, getState, rejectWithValue }) => {
+    try {
+      // --- PASO CRÍTICO PARA ANDROID ---
+      // Leemos los bytes inmediatamente para no perder el acceso al archivo en WebViews móviles.
+      const arrayBuffer = await file.arrayBuffer();
+      const stableBlob = new Blob([arrayBuffer], { type: file.type });
+      // ---------------------------------
+
+      dispatch(isFetchingStart());
+
+      const state = getState() as RootState;
+      const reparacionActual = state.reparacion.coleccionReparaciones[reparacionId];
+      if (!reparacionActual) {
+        throw new Error('Reparación no encontrada');
+      }
+      const fotosActuales: string[] = reparacionActual.data.FotosInformeRep || [];
+
+      const safeBase = sanitizeBaseName(file.name);
+      const fileName = addTimestampToBase(safeBase);
+      const path = buildUploadPath({ entityType: 'REPARACIONES', entityId: reparacionId, folder: 'informe', fileName });
+
+      const { originalUrl } = await subirImagenConMiniaturaPersistencia(path, stableBlob);
+
+      const nuevasFotos = [...fotosActuales, originalUrl];
+      const reparacionActualizada = {
+        ...reparacionActual,
+        data: {
+          ...reparacionActual.data,
+          FotosInformeRep: nuevasFotos
+        }
+      };
+
+      const guardarResponse = await dispatch(guardarReparacionAsync(reparacionActualizada));
+      if (guardarResponse.meta.requestStatus !== 'fulfilled') {
+        throw new Error('Error al actualizar fotos del informe');
+      }
+
+      dispatch(isFetchingComplete());
+      return nuevasFotos; // Llega al .payload
+    } catch (error: any) {
+      console.error('Error en subirFotoInformeAsync:', error);
+      dispatch(isFetchingComplete());
+      return rejectWithValue(error.message || 'Error al subir la foto del informe');
+    }
+  }
+);
+
+// BORRAR FOTO DEL INFORME
+export const borrarFotoInformeAsync = createAsyncThunk(
+  'app/borrarFotoInforme',
+  async ({ reparacionId, fotoUrl }: { reparacionId: string, fotoUrl: string }, { dispatch, getState, rejectWithValue }) => {
+    try {
+      dispatch(isFetchingStart());
+
+      const state = getState() as RootState;
+      const reparacionActual = state.reparacion.coleccionReparaciones[reparacionId];
+      if (!reparacionActual) {
+        throw new Error('Reparación no encontrada');
+      }
+
+      await eliminarArchivoPersistencia(fotoUrl);
+
+      const nuevasFotos = (reparacionActual.data.FotosInformeRep || []).filter(url => url !== fotoUrl);
+
+      const reparacionActualizada = {
+        ...reparacionActual,
+        data: {
+          ...reparacionActual.data,
+          FotosInformeRep: nuevasFotos
+        }
+      };
+
+      const guardarResponse = await dispatch(guardarReparacionAsync(reparacionActualizada));
+      if (guardarResponse.meta.requestStatus !== 'fulfilled') {
+        throw new Error('Error al actualizar la reparación');
+      }
+
+      dispatch(isFetchingComplete());
+      return nuevasFotos;
+    } catch (error: any) {
+      console.error('Error al borrar foto del informe:', error);
+      dispatch(isFetchingComplete());
+      return rejectWithValue(error.message || 'Error al borrar la foto del informe');
     }
   }
 );
