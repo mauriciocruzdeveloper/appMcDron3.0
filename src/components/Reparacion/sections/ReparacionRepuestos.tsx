@@ -14,6 +14,7 @@ import {
     getIntervencionesPorReparacionAsync,
 } from "../../../redux-tool-kit/reparacion/reparacion.actions";
 import { ESTADOS_PEDIDO } from "../../../types/pedidoRepuesto";
+import { esReparacionResuelta, EstadoReparacion } from "../../../usecases/estadosReparacion";
 import TextareaAutosize from "react-textarea-autosize";
 
 interface ReparacionRepuestosProps {
@@ -60,7 +61,8 @@ export const ReparacionRepuestos: React.FC<ReparacionRepuestosProps> = ({
 
     if (!seccionVisible || !reparacion || !isAdmin) return null;
 
-    const repuestosFaltantes = repuestos.filter(r => r.requierePedido && !r.tienePedidoActivo);
+    const reparacionResuelta = esReparacionResuelta(reparacion.data.EstadoRep as EstadoReparacion);
+    const repuestosFaltantes = reparacionResuelta ? [] : repuestos.filter(r => r.requierePedido);
 
     const avanzarARepuestos = () => {
         dispatch(cambiarEstadoReparacionAsync({ reparacionId, nuevoEstado: 'Repuestos', enviarEmail: false }));
@@ -102,7 +104,8 @@ export const ReparacionRepuestos: React.FC<ReparacionRepuestosProps> = ({
                     ) : (
                         <div className="d-flex flex-column gap-2">
                             {repuestos.map(r => {
-                                const borderColor = r.stockLibre > 0
+                                const mostrarFaltante = r.requierePedido && !reparacionResuelta;
+                                const borderColor = reparacionResuelta || r.stockLibre > 0
                                     ? '#198754'
                                     : r.tienePedidoActivo
                                         ? '#ffc107'
@@ -130,7 +133,7 @@ export const ReparacionRepuestos: React.FC<ReparacionRepuestosProps> = ({
                                             Stock: {r.stockRepu} | Comprometido: {r.unidadesPedidas} | Libre: {r.stockLibre}
                                         </div>
 
-                                        {r.requierePedido ? (
+                                        {mostrarFaltante ? (
                                             <div className="mt-2 d-flex flex-column gap-1">
                                                 <span className="badge bg-danger">⚠️ Faltante crítico</span>
                                                 <span className="text-muted small">
@@ -169,7 +172,9 @@ export const ReparacionRepuestos: React.FC<ReparacionRepuestosProps> = ({
                                             </div>
                                         ) : (
                                             <div className="mt-2 small text-success">
-                                                ✓ Stock disponible para esta reparación
+                                                {reparacionResuelta
+                                                    ? '✓ Reparación finalizada, repuestos ya utilizados'
+                                                    : '✓ Stock disponible para esta reparación'}
                                             </div>
                                         )}
                                     </div>

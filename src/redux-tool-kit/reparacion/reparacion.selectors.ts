@@ -1221,6 +1221,10 @@ export const selectRepuestosDeReparacionActual = createSelector(
     const repuestoMap = new Map<string, { intervencionesNombre: string[]; demandaReparacion: number }>();
     // repuestoId → intervenciones que lo usan + cantidad requerida por la reparación actual
     asignaciones.forEach(asignacion => {
+      // Si la asignación no incluye el repuesto en el presupuesto (PrecioPiezas === 0),
+      // el cliente lo compra por su cuenta: no se considera para el cálculo de stock/faltante.
+      if ((asignacion.data.PrecioPiezas || 0) <= 0) return;
+
       const iv = catalogoIntervenciones[asignacion.data.intervencionId];
       const repIds: string[] = iv?.data?.RepuestosIds || [];
       repIds.forEach(repId => {
