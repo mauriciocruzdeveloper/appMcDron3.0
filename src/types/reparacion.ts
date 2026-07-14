@@ -34,6 +34,7 @@ export interface DataReparacion {
     IntervencionesIds?: string[]; // Lista de IDs de intervenciones aplicadas en la reparación
     FotoAntes?: string; // URL de la foto "antes" de la reparación
     FotoDespues?: string; // URL de la foto "después" de la reparación
+    FotosInformeRep?: string[]; // URLs de fotos adjuntas al informe de reparación/diagnóstico
     
     // ======================================================
     // CAMPOS PARA ESTADO "REPUESTOS"
