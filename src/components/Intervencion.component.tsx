@@ -1,4 +1,4 @@
-import React, { useEffect, useState, ChangeEvent } from 'react';
+import React, { useEffect, useMemo, useState, ChangeEvent } from 'react';
 import { useParams } from 'react-router-dom';
 import { useHistory } from '../hooks/useHistory';
 import { useAppDispatch } from '../redux-tool-kit/hooks/useAppDispatch';
@@ -61,8 +61,15 @@ export default function IntervencionComponent(): JSX.Element {
 
   // Repuestos que pueden ofrecerse como nueva opción: la regla de negocio (excluir
   // obsoletos, salvo que ya estuvieran elegidos) vive en el selector, no en el componente.
+  // Se memoiza el array de ids para no romper la memoización del selector (createSelector
+  // compara por referencia) y evitar recalcularlo -y disparar el useEffect que depende de
+  // él- en cada render, lo que producía un loop infinito de renders.
+  const selectedRepuestosIds = useMemo(
+    () => selectedRepuestos.map((r) => r.value),
+    [selectedRepuestos]
+  );
   const repuestosSeleccionables = useAppSelector((state) =>
-    selectRepuestosSeleccionables(state, selectedRepuestos.map((r) => r.value))
+    selectRepuestosSeleccionables(state, selectedRepuestosIds)
   );
   
   useEffect(() => {

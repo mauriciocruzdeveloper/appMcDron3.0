@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useHistory } from '../hooks/useHistory';
 import { useAppDispatch } from '../redux-tool-kit/hooks/useAppDispatch';
@@ -73,9 +73,14 @@ export default function PedidoComponent(): JSX.Element {
 
     // Repuestos que pueden ofrecerse en el combo: se excluyen los obsoletos, salvo
     // que ya estén referenciados por algún ítem de este pedido (para no romper su valor).
-    const idsRepuestosUsadosEnPedido = pedido.data.Items
-        .map(item => item.data.RepuestoId)
-        .filter((repuestoId): repuestoId is string => Boolean(repuestoId));
+    // Se memoiza para no romper la memoización del selector (createSelector compara por
+    // referencia) y evitar recalcularlo en cada render.
+    const idsRepuestosUsadosEnPedido = useMemo(
+        () => pedido.data.Items
+            .map(item => item.data.RepuestoId)
+            .filter((repuestoId): repuestoId is string => Boolean(repuestoId)),
+        [pedido.data.Items]
+    );
     const repuestosSeleccionables = useAppSelector((state) =>
         selectRepuestosSeleccionables(state, idsRepuestosUsadosEnPedido)
     );
