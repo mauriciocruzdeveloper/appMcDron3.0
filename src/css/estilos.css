@@ -1,3 +1,269 @@
+:root {
+	--app-max-width: 600px;
+}
+
+@media (min-width: 768px) {
+	:root {
+		--app-max-width: 720px;
+	}
+}
+
+@media (min-width: 992px) {
+	:root {
+		--app-max-width: 960px;
+	}
+}
+
+@media (min-width: 1200px) {
+	:root {
+		--app-max-width: 1140px;
+	}
+}
+
+@media (min-width: 1400px) {
+	:root {
+		--app-max-width: 1320px;
+	}
+}
+
+.app-container {
+	background-color: #EEEEEE;
+	height: 100%;
+	min-height: 100vh;
+	width: 100%;
+	max-width: var(--app-max-width);
+	margin-left: auto;
+	margin-right: auto;
+	box-shadow: 0 0 24px rgba(0, 0, 0, 0.08);
+}
+
+/* El footer usa fixed-bottom (position: fixed) de Bootstrap, que se ubica
+   respecto al viewport y no al contenedor. Lo re-centramos para que
+   acompañe el ancho de .app-container en pantallas grandes. */
+.app-container .fixed-bottom {
+	left: 50%;
+	right: auto;
+	width: 100%;
+	max-width: var(--app-max-width);
+	transform: translateX(-50%);
+}
+
+.app-page {
+	display: flex;
+	flex-direction: column;
+	min-height: calc(100vh - 62px);
+}
+
+.app-page-header {
+	position: sticky;
+	top: 62px;
+	z-index: 100;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	min-height: 82px;
+	padding: 18px 24px 14px;
+	border-bottom: 1px solid #dee2e6;
+	background-color: rgba(255, 255, 255, 0.96);
+}
+
+.app-page-header h3 {
+	text-align: left;
+}
+
+.app-page-header p {
+	font-size: 0.85rem;
+}
+
+.app-page-logo {
+	width: auto;
+	height: 48px;
+	object-fit: contain;
+}
+
+.app-page-content {
+	flex: 1;
+	padding: 20px 24px 28px;
+}
+
+.dashboard-content {
+	display: flex;
+	flex-direction: column;
+	gap: 18px;
+}
+
+.dashboard-actions,
+.dashboard-panel {
+	padding: 20px;
+	border: 1px solid #dfe3e8;
+	border-radius: 8px;
+	background-color: #ffffff;
+}
+
+.dashboard-grid,
+.dashboard-main,
+.dashboard-sidebar {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr);
+	gap: 18px;
+}
+
+.dashboard-section-title {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	margin-bottom: 14px;
+	color: #224194;
+}
+
+.dashboard-action-grid {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr);
+	gap: 12px;
+}
+
+.dashboard-action-button {
+	min-height: 78px;
+	margin: 0;
+	border: 0;
+	font-weight: 600;
+	letter-spacing: 0;
+}
+
+.dashboard-panel > :last-child,
+.dashboard-panel > :last-child > :last-child {
+	margin-bottom: 0 !important;
+}
+
+.dashboard-panel-priority {
+	border-top: 4px solid #de3436;
+}
+
+.client-dashboard-grid {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr);
+	gap: 18px;
+	align-items: start;
+}
+
+.client-repairs-panel,
+.client-quick-panel {
+	padding: 20px;
+	border: 1px solid #dfe3e8;
+	border-radius: 8px;
+	background-color: #ffffff;
+}
+
+.client-quick-panel {
+	text-align: center;
+}
+
+.client-quick-icon {
+	display: block;
+	margin-bottom: 12px;
+	color: #224194;
+	font-size: 2rem;
+}
+
+.entity-card-grid {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr);
+	gap: 14px;
+}
+
+.entity-card-grid > .card,
+.entity-card-grid > div > .card {
+	height: 100%;
+	margin-bottom: 0 !important;
+}
+
+.list-filter-grid {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr);
+	gap: 12px;
+}
+
+@media (min-width: 768px) {
+	.dashboard-action-grid {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+	}
+
+	.list-filter-grid {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+	}
+
+	.list-filter-grid-three {
+		grid-template-columns: repeat(3, minmax(0, 1fr));
+	}
+
+	.list-filter-grid > .form-group {
+		margin-top: 0 !important;
+	}
+}
+
+@media (min-width: 992px) {
+	.app-page-header {
+		padding-right: 32px;
+		padding-left: 32px;
+	}
+
+	.app-page-content {
+		padding: 24px 32px 32px;
+	}
+
+	.dashboard-grid {
+		grid-template-columns: minmax(0, 1.75fr) minmax(310px, 1fr);
+		align-items: start;
+	}
+
+	.dashboard-sidebar {
+		position: sticky;
+		top: 164px;
+	}
+
+	.client-dashboard-grid {
+		grid-template-columns: minmax(0, 2fr) minmax(260px, 0.75fr);
+	}
+
+	.client-quick-panel {
+		position: sticky;
+		top: 164px;
+	}
+
+	.entity-card-grid:not(.entity-card-grid-wide) {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+	}
+}
+
+@media (min-width: 1200px) {
+	.entity-card-grid-wide {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+	}
+}
+
+@media (max-width: 575.98px) {
+	.app-page-header {
+		top: 62px;
+		min-height: 72px;
+		padding: 14px 16px 10px;
+	}
+
+	.app-page-logo {
+		height: 38px;
+	}
+
+	.app-page-content {
+		padding: 16px;
+	}
+
+	.dashboard-actions,
+	.dashboard-panel,
+	.client-repairs-panel,
+	.client-quick-panel {
+		padding: 16px;
+	}
+}
+
 .card-personalizado {
 	width: 90%;
 	margin: auto;
@@ -107,6 +373,7 @@ h3 {
 html,
 body {
   height: 100%;
+  background-color: #d5d8dc;
 }
 
 #body {

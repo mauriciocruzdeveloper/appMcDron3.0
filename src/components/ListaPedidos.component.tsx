@@ -68,7 +68,7 @@ export default function ListaPedidos(): JSX.Element {
                 <div className='p-4 pt-3'>
                     {/* Filtros */}
                     <div className='card mb-3'>
-                        <div className='card-body'>
+                        <div className='card-body list-filter-grid'>
                             <div className='form-group'>
                                 <input
                                     type='text'
@@ -139,7 +139,8 @@ export default function ListaPedidos(): JSX.Element {
                                 : '¡Registrá tu primer pedido de repuestos!'}
                         </div>
                     ) : (
-                        pedidosFiltrados.map((pedido: PedidoRepuesto) => (
+                        <div className="entity-card-grid entity-card-grid-wide">
+                        {pedidosFiltrados.map((pedido: PedidoRepuesto) => (
                             <div
                                 key={pedido.id}
                                 className="card mb-3 cursor-pointer"
@@ -208,7 +209,8 @@ export default function ListaPedidos(): JSX.Element {
                                     )}
                                 </div>
                             </div>
-                        ))
+                        ))}
+                        </div>
                     )}
                 </div>
             </div>

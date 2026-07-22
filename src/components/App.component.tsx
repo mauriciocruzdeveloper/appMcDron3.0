@@ -10,14 +10,7 @@ export default function App(): JSX.Element {
   const isFetching = useAppSelector(state => state.app.isFetching);
 
   return (
-    <div className='mx-auto'
-      style={{
-        backgroundColor: '#EEEEEE',
-        height: '100%',
-        minHeight: '100vh',
-        maxWidth: '600px'
-      }}
-    >
+    <div className='app-container mx-auto'>
         <ModalProvider>
           <ModalComponent />
           <HashRouter>

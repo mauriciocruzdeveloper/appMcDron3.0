@@ -27,63 +27,57 @@ const InicioCliente = (): React.ReactElement => {
   });
 
   return (
-    <div className='d-flex flex-column' style={{ height: '100vh' }}>
-      {/* Header fijo */}
-      <div className='p-4 pb-2 bg-white border-bottom' style={{ position: 'sticky', top: 0, zIndex: 100 }}>
-        <h3 className='mb-0'>Inicio</h3>
-      </div>
-
-      {/* Contenido con scroll */}
-      <div className='flex-grow-1 overflow-auto'>
-        <div className='p-4 pt-3'>
-          <img className='mb-4' src='./img/logo.png' alt='McDron Logo' width='100%' style={{ maxWidth: '100px' }} />
-          
-          {/* Bienvenida */}
-          <div className='mb-4'>
-            <h4 className='text-center'>Mis Reparaciones</h4>
-            <p className='text-muted text-center'>
-              Aquí puedes ver el estado de tus reparaciones en curso
-            </p>
-          </div>
-
-          {/* Lista de reparaciones en curso */}
-          <div className='mb-4'>
-            <h5 className='mb-3'>🔧 Reparaciones en Curso</h5>
-            {reparacionesEnCurso.length > 0 ? (
-              <div className='list-group'>
-                {reparacionesEnCurso.map(reparacion => {
-                  const estado = estados[reparacion.data.EstadoRep];
-                  return (
-                    <ReparacionItem
-                      key={reparacion.id}
-                      reparacion={reparacion}
-                      estado={estado}
-                      onClick={() => history.push(`${match.path}/reparaciones/${reparacion.id}`)}
-                    />
-                  );
-                })}
-              </div>
-            ) : (
-              <div className='text-center p-4 bg-light rounded'>
-                <p className='text-muted mb-0'>No tienes reparaciones en curso</p>
-                <small className='text-muted'>
-                  Puedes ver todas tus reparaciones en el menú &quot;Reparaciones&quot;
-                </small>
-              </div>
-            )}
-          </div>
-
-          {/* Acceso rápido a mensajes */}
-          <div className='mb-4'>
-            <button 
-              className='btn btn-primary w-100'
-              onClick={() => history.push(`${match.path}/mensajes`)}
-            >
-              💬 Ver Mensajes
-            </button>
-          </div>
+    <div className='app-page'>
+      <header className='app-page-header'>
+        <div>
+          <h3 className='mb-1'>Mis reparaciones</h3>
+          <p className='mb-0 text-muted'>Seguimiento de trabajos en curso</p>
         </div>
-      </div>
+        <img className='app-page-logo' src='./img/logo.png' alt='McDron' />
+      </header>
+
+      <main className='app-page-content client-dashboard-grid'>
+        <section className='client-repairs-panel'>
+          <h5 className='dashboard-section-title'>
+            <i className='bi bi-tools'></i>
+            Reparaciones en curso
+          </h5>
+          {reparacionesEnCurso.length > 0 ? (
+            <div className='list-group'>
+              {reparacionesEnCurso.map(reparacion => {
+                const estado = estados[reparacion.data.EstadoRep];
+                return (
+                  <ReparacionItem
+                    key={reparacion.id}
+                    reparacion={reparacion}
+                    estado={estado}
+                    onClick={() => history.push(`${match.path}/reparaciones/${reparacion.id}`)}
+                  />
+                );
+              })}
+            </div>
+          ) : (
+            <div className='text-center p-4 bg-light rounded'>
+              <p className='text-muted mb-0'>No tienes reparaciones en curso</p>
+              <small className='text-muted'>
+                Puedes ver todas tus reparaciones en el menú &quot;Reparaciones&quot;
+              </small>
+            </div>
+          )}
+        </section>
+
+        <aside className='client-quick-panel'>
+          <i className='bi bi-chat-dots client-quick-icon'></i>
+          <h5>Mensajes</h5>
+          <p className='text-muted'>Consultas y novedades sobre tus reparaciones.</p>
+          <button 
+            className='btn bg-bluemcdron text-white w-100'
+            onClick={() => history.push(`${match.path}/mensajes`)}
+          >
+            Ver mensajes
+          </button>
+        </aside>
+      </main>
     </div>
   );
 };

@@ -30,7 +30,7 @@ const ReparacionesLista = ({ reparaciones }: ReparacionesListaProps): React.Reac
   }
 
   return (
-    <>
+    <div className="entity-card-grid entity-card-grid-wide">
       {reparaciones.map(reparacion => {
         const drone = reparacion.data.DroneId ? drones[reparacion.data.DroneId] : undefined;
         let modeloDroneName = reparacion.data.ModeloDroneNameRep;
@@ -109,7 +109,7 @@ const ReparacionesLista = ({ reparaciones }: ReparacionesListaProps): React.Reac
           </div>
         );
       })}
-    </>
+    </div>
   );
 };
 

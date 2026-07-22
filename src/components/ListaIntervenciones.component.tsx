@@ -57,7 +57,7 @@ export default function ListaIntervenciones(): JSX.Element {
       <div className="flex-grow-1 overflow-auto">
         <div className="p-4 pt-3">
           <div className='card mb-3'>
-        <div className='card-body'>
+        <div className='card-body list-filter-grid'>
           <div className='form-group'>
             <input
               type='text'
@@ -101,7 +101,8 @@ export default function ListaIntervenciones(): JSX.Element {
           No hay intervenciones que coincidan con los filtros.
         </div>
       ) : (
-        intervencionesList.map(intervencion => (
+        <div className="entity-card-grid">
+        {intervencionesList.map(intervencion => (
           <div
             key={intervencion.id}
             className='card mb-3'
@@ -142,7 +143,8 @@ export default function ListaIntervenciones(): JSX.Element {
               )}
             </div>
           </div>
-        ))
+        ))}
+        </div>
       )}
         </div>
       </div>

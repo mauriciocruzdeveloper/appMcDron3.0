@@ -12,24 +12,40 @@ import RepuestosPedidosSection from './RepuestosPedidosSection.component';
  */
 const InicioAdmin = (): React.ReactElement => {
   return (
-    <div className='d-flex flex-column' style={{ height: '100vh' }}>
-      {/* Header fijo */}
-      <div className='p-4 pb-2 bg-white border-bottom' style={{ position: 'sticky', top: 0, zIndex: 100 }}>
-        <h3 className='mb-0'>Inicio</h3>
-      </div>
-
-      {/* Contenido con scroll */}
-      <div className='flex-grow-1 overflow-auto'>
-        <div className='p-4 pt-3'>
-          <img className='mb-4' src='./img/logo.png' alt='McDron Logo' width='100%' style={{ maxWidth: '100px' }} />
-          
-          <CasosDeUsoSection />
-          <ReparacionesPrioritariasSection />
-          <ReparacionesEsperandoRepuestosSection />
-          <RepuestosAgotadosSection />
-          <RepuestosPedidosSection />
+    <div className='app-page'>
+      <header className='app-page-header'>
+        <div>
+          <h3 className='mb-1'>Inicio</h3>
+          <p className='mb-0 text-muted'>Panel operativo</p>
         </div>
-      </div>
+        <img className='app-page-logo' src='./img/logo.png' alt='McDron' />
+      </header>
+
+      <main className='app-page-content dashboard-content'>
+        <div className='dashboard-actions'>
+          <CasosDeUsoSection />
+        </div>
+
+        <div className='dashboard-grid'>
+          <section className='dashboard-main' aria-label='Reparaciones'>
+            <div className='dashboard-panel dashboard-panel-priority'>
+              <ReparacionesPrioritariasSection />
+            </div>
+            <div className='dashboard-panel'>
+              <ReparacionesEsperandoRepuestosSection />
+            </div>
+          </section>
+
+          <aside className='dashboard-sidebar' aria-label='Inventario'>
+            <div className='dashboard-panel'>
+              <RepuestosAgotadosSection />
+            </div>
+            <div className='dashboard-panel'>
+              <RepuestosPedidosSection />
+            </div>
+          </aside>
+        </div>
+      </main>
     </div>
   );
 };

@@ -57,20 +57,22 @@ export default function ListaUsuarios(): JSX.Element {
               No hay usuarios disponibles.
             </div>
           ) : (
-            usuariosList.map(usuario => (
-              <div
-                key={usuario.id}
-                className='card mb-3 p-1' 
-                aria-current='true'
-                onClick={() => history.push(`/inicio/usuarios/${usuario.id}`)}
-                style={{ cursor: 'pointer' }}
-              >
-                <div className='d-flex w-100 justify-content-between'>
-                  <h5 className='mb-1'>{usuario.data.NombreUsu}{usuario.data.ApellidoUsu ? ` ${usuario.data.ApellidoUsu}` : ''}</h5>
+            <div className="entity-card-grid">
+              {usuariosList.map(usuario => (
+                <div
+                  key={usuario.id}
+                  className='card mb-3 p-1' 
+                  aria-current='true'
+                  onClick={() => history.push(`/inicio/usuarios/${usuario.id}`)}
+                  style={{ cursor: 'pointer' }}
+                >
+                  <div className='d-flex w-100 justify-content-between'>
+                    <h5 className='mb-1'>{usuario.data.NombreUsu}{usuario.data.ApellidoUsu ? ` ${usuario.data.ApellidoUsu}` : ''}</h5>
+                  </div>
+                  <small>{usuario?.data?.EmailUsu}</small>
                 </div>
-                <small>{usuario?.data?.EmailUsu}</small>
-              </div>
-            ))
+              ))}
+            </div>
           )}
         </div>
       </div>

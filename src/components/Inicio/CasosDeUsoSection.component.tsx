@@ -14,9 +14,8 @@ const CasosDeUsoSection = (): React.ReactElement => {
 
     return (
       <button
-        className='mb-3 btn w-100'
+        className='dashboard-action-button btn w-100'
         style={{
-          height: '100px',
           backgroundColor: estado.color,
           color: estadoKey === 'Recibido' ? 'white' : 'black'
         }}
@@ -28,10 +27,15 @@ const CasosDeUsoSection = (): React.ReactElement => {
   };
 
   return (
-    <div className='mb-4'>
-      <h5 className='mb-3'>🎯 Casos de Uso</h5>
-      {renderEstadoButton('Recibido', 'RECEPCIÓN')}
-      {renderEstadoButton('Transito', 'DRONE EN TRÁNSITO')}
+    <div>
+      <h5 className='dashboard-section-title'>
+        <i className='bi bi-lightning-charge'></i>
+        Acciones rápidas
+      </h5>
+      <div className='dashboard-action-grid'>
+        {renderEstadoButton('Recibido', 'RECEPCIÓN')}
+        {renderEstadoButton('Transito', 'DRONE EN TRÁNSITO')}
+      </div>
     </div>
   );
 };

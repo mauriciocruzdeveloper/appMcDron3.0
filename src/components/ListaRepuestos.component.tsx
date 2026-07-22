@@ -111,7 +111,7 @@ export default function ListaRepuestos(): JSX.Element {
             <div className='flex-grow-1 overflow-auto'>
                 <div className='p-4 pt-3'>
                     <div className='card mb-3'>
-                <div className='card-body'>
+                <div className='card-body list-filter-grid list-filter-grid-three'>
                     <div className='form-group'>
                         <input
                             type='text'
@@ -195,7 +195,8 @@ export default function ListaRepuestos(): JSX.Element {
                     No hay repuestos disponibles. ¡Agregue un nuevo repuesto!
                 </div>
             ) : (
-                repuestosList.map(repuesto => {
+                <div className="entity-card-grid">
+                {repuestosList.map(repuesto => {
                     const estado = getEstadoRepuesto(repuesto);
 
                     return (
@@ -252,7 +253,8 @@ export default function ListaRepuestos(): JSX.Element {
                             </div>
                         </div>
                     );
-                })
+                })}
+                </div>
             )}
                 </div>
             </div>
