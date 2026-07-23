@@ -183,6 +183,44 @@
 	gap: 12px;
 }
 
+/* Lista de reparaciones agrupada por estado. Cada grupo tiene su propia
+   grilla, por lo que las filas nunca mezclan tarjetas de estados distintos. */
+.reparaciones-grupos {
+	display: flex;
+	flex-direction: column;
+	gap: 22px;
+}
+
+.reparaciones-grupo-titulo {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	margin-bottom: 10px;
+	color: #224194;
+	text-transform: uppercase;
+	font-size: 0.8rem;
+	letter-spacing: 0.04em;
+}
+
+.reparaciones-grupo-color {
+	display: inline-block;
+	width: 12px;
+	height: 12px;
+	border-radius: 3px;
+	flex: 0 0 auto;
+}
+
+.reparaciones-grupo-grid {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr);
+	gap: 14px;
+}
+
+.reparaciones-grupo-grid > .card {
+	height: 100%;
+	margin-bottom: 0 !important;
+}
+
 @media (min-width: 768px) {
 	.dashboard-action-grid {
 		grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -233,11 +271,19 @@
 	.entity-card-grid:not(.entity-card-grid-wide) {
 		grid-template-columns: repeat(2, minmax(0, 1fr));
 	}
+
+	.reparaciones-grupo-grid {
+		grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
+	}
 }
 
 @media (min-width: 1200px) {
 	.entity-card-grid-wide {
 		grid-template-columns: repeat(2, minmax(0, 1fr));
+	}
+
+	.reparaciones-grupo-grid {
+		grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
 	}
 }
 
