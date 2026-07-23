@@ -71,37 +71,39 @@ export default function ListaDrones(): JSX.Element {
                             No hay elementos en la lista.
                         </div>
                     ) : (
-                        dronesList.map(drone => (
-                            <div
-                                key={drone.id}
-                                className='card mb-3'
-                                aria-current='true'
-                                onClick={() => history.push(`/inicio/drones/${drone.id}`)}
-                                style={{ cursor: 'pointer' }}
-                            >
-                                <div className='card-body p-3'>
-                                    <div className='d-flex w-100 justify-content-between'>
-                                        <h5 className='mb-1'>{getModeloDroneName(drone.data.ModeloDroneId)}</h5>
+                        <div className="entity-card-grid">
+                            {dronesList.map(drone => (
+                                <div
+                                    key={drone.id}
+                                    className='card mb-3'
+                                    aria-current='true'
+                                    onClick={() => history.push(`/inicio/drones/${drone.id}`)}
+                                    style={{ cursor: 'pointer' }}
+                                >
+                                    <div className='card-body p-3'>
+                                        <div className='d-flex w-100 justify-content-between'>
+                                            <h5 className='mb-1'>{getModeloDroneName(drone.data.ModeloDroneId)}</h5>
+                                        </div>
+                                        <div>
+                                            <small className='text-muted'>
+                                              {(() => {
+                                                const propietarioId = drone.data.Propietario;
+                                                const usuario = usuarios[propietarioId];
+                                                if (!usuario) return propietarioId;
+                                                return usuario.data.ApellidoUsu ? `${usuario.data.NombreUsu} ${usuario.data.ApellidoUsu}` : usuario.data.NombreUsu;
+                                              })()}
+                                            </small>
+                                        </div>
+                                        {drone.data.Observaciones && (
+                                            <div>
+                                                <small className='text-muted'>{drone.data.Observaciones}</small>
+                                            </div>
+                                        )}
                                     </div>
-                            <div>
-                                <small className='text-muted'>
-                                  {(() => {
-                                    const propietarioId = drone.data.Propietario;
-                                    const usuario = usuarios[propietarioId];
-                                    if (!usuario) return propietarioId;
-                                    return usuario.data.ApellidoUsu ? `${usuario.data.NombreUsu} ${usuario.data.ApellidoUsu}` : usuario.data.NombreUsu;
-                                  })()}
-                                </small>
-                            </div>
-                            {drone.data.Observaciones && (
-                                <div>
-                                    <small className='text-muted'>{drone.data.Observaciones}</small>
                                 </div>
-                            )}
+                            ))}
                         </div>
-                    </div>
-                ))
-            )}
+                    )}
                 </div>
             </div>
         </div>

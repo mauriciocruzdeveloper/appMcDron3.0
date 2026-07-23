@@ -4,6 +4,117 @@
     z-index: 1000; /* Asegura que el navbar esté por encima de otros elementos */
 }
 
+.navbar.app-navbar {
+    min-height: 62px;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 12px;
+}
+
+.app-navbar-user {
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.app-navbar-greeting {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    color: #ffffff;
+    line-height: 1.15;
+}
+
+.app-navbar-greeting span {
+    font-size: 0.75rem;
+    opacity: 0.8;
+}
+
+.app-navbar-greeting strong {
+    max-width: 180px;
+    overflow: hidden;
+    font-size: 0.95rem;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.app-navbar-links {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+}
+
+.app-navbar-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 9px 10px;
+    border: 0;
+    border-radius: 6px;
+    background: transparent;
+    color: rgba(255, 255, 255, 0.82);
+    font-size: 0.86rem;
+    white-space: nowrap;
+}
+
+.app-navbar-link:hover,
+.app-navbar-link:focus-visible {
+    background-color: rgba(255, 255, 255, 0.12);
+    color: #ffffff;
+}
+
+.app-navbar-link.active {
+    background-color: #ffffff;
+    color: #224194;
+}
+
+.app-navbar-menu-label {
+    display: flex;
+    align-items: center;
+    justify-self: end;
+    gap: 5px;
+}
+
+.app-navbar-menu-label > span {
+    display: none;
+    color: #ffffff;
+    font-size: 0.88rem;
+}
+
+@media (min-width: 992px) {
+    .navbar.app-navbar {
+        grid-template-columns: minmax(160px, 1fr) auto minmax(160px, 1fr);
+    }
+
+    .app-navbar-links {
+        display: flex;
+        justify-self: center;
+    }
+
+    .app-navbar-menu-label > span {
+        display: inline;
+    }
+}
+
+@media (min-width: 992px) and (max-width: 1199.98px) {
+    .app-navbar-link-wide {
+        display: none;
+    }
+
+    .app-navbar-greeting strong {
+        max-width: 120px;
+    }
+}
+
+@media (max-width: 575.98px) {
+    .app-navbar-greeting strong {
+        max-width: 190px;
+    }
+}
+
 /* Estilos para el dropdown del navbar */
 .navbar .dropdown-toggle::after {
     display: none; /* Oculta la flecha por defecto */
