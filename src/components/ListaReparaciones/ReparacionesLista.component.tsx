@@ -63,32 +63,15 @@ const ReparacionesLista = ({ reparaciones }: ReparacionesListaProps): React.Reac
     return (
       <div
         key={reparacion.id}
-        className="card p-1"
+        className="card p-1 reparaciones-card"
         aria-current="true"
         onClick={() => history.push(`/inicio/reparaciones/${reparacion.id}`)}
         style={{ cursor: 'pointer', borderLeft: urgente ? '4px solid #dc3545' : undefined }}
       >
-        <div className="d-flex w-100 justify-content-between">
-          <h5 className="mb-1">
-            {urgente && (
-              <>
-                <span style={{ backgroundColor: '#dc3545', color: 'white', borderRadius: 4, padding: '2px 6px', fontSize: '0.75rem', marginRight: 6 }}>
-                  ⚡ Urgente
-                </span>
-                <span style={{ color: '#dc3545', fontSize: '0.8rem', marginRight: 6 }}>
-                  {diasAtraso} {diasAtraso === 1 ? 'día' : 'días'}
-                </span>
-              </>
-            )}
-            {faltanRepuestos && (
-              <span style={{ backgroundColor: '#dc3545', color: 'white', borderRadius: 4, padding: '2px 6px', fontSize: '0.75rem', marginRight: 6 }}>
-                ⚠️ Repuesto sin cobertura
-              </span>
-            )}
-            {modeloDroneName}
-          </h5>
+        <div className="d-flex w-100 justify-content-between align-items-start reparaciones-card-header">
+          <h5 className="mb-1 reparaciones-card-title">{modeloDroneName}</h5>
           {reparacion.data.PresuFiRep && (
-            <div className="text-end">
+            <div className="text-end flex-shrink-0 ms-2">
               <strong className="text-success">${reparacion.data.PresuFiRep.toLocaleString()}</strong>
             </div>
           )}
@@ -122,6 +105,23 @@ const ReparacionesLista = ({ reparaciones }: ReparacionesListaProps): React.Reac
             </div>
           );
         })()}
+        <div className={`reparaciones-card-alerts d-flex flex-wrap gap-1 ${urgente || faltanRepuestos ? '' : 'reparaciones-card-alerts-empty'}`}>
+          {urgente && (
+            <>
+              <span style={{ backgroundColor: '#dc3545', color: 'white', borderRadius: 4, padding: '2px 6px', fontSize: '0.75rem' }}>
+                ⚡ Urgente
+              </span>
+              <span style={{ color: '#dc3545', fontSize: '0.8rem' }}>
+                {diasAtraso} {diasAtraso === 1 ? 'día' : 'días'}
+              </span>
+            </>
+          )}
+          {faltanRepuestos && (
+            <span style={{ backgroundColor: '#dc3545', color: 'white', borderRadius: 4, padding: '2px 6px', fontSize: '0.75rem' }}>
+              ⚠️ Repuesto sin cobertura
+            </span>
+          )}
+        </div>
       </div>
     );
   };

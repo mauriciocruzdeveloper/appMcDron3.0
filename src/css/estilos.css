@@ -221,6 +221,25 @@
 	margin-bottom: 0 !important;
 }
 
+.reparaciones-card {
+	display: flex;
+	flex-direction: column;
+}
+
+.reparaciones-card-alerts {
+	align-items: flex-start;
+}
+
+.reparaciones-card-alerts-empty {
+	visibility: hidden;
+}
+
+.reparaciones-card-title {
+	margin-right: 8px;
+	min-width: 0;
+	overflow-wrap: anywhere;
+}
+
 @media (min-width: 768px) {
 	.dashboard-action-grid {
 		grid-template-columns: repeat(2, minmax(0, 1fr));
