@@ -246,10 +246,20 @@ export const selectConteoUsoRepuestos = createSelector(
 
 // Selector para repuestos agotados (stock = 0) ordenados por cantidad de uso
 export const selectRepuestosFaltantes = createSelector(
-  [selectRepuestosArray, selectConteoUsoRepuestos],
-  (repuestos, conteoUso) => {
+  [
+    selectRepuestosArray,
+    selectConteoUsoRepuestos,
+    (state: RootState) => state.pedidoRepuesto.coleccionPedidos,
+  ],
+  (repuestos, conteoUso, pedidos) => {
     const repuestosFaltantes = repuestos.filter(repuesto => 
-      repuesto.data.StockRepu === 0 && (repuesto.data.UnidadesComprometidas || 0) === 0 // Solo repuestos agotados (sin stock ni pedidos)
+      repuesto.data.StockRepu === 0 &&
+      (repuesto.data.UnidadesComprometidas || 0) === 0 &&
+      !repuesto.data.Obsoleta &&
+      !Object.values(pedidos).some(pedido =>
+        pedido.data.Estado !== 'cancelled' &&
+        pedido.data.Items.some(item => item.data.RepuestoId === repuesto.id)
+      )
     );
     
     // Ordenar por cantidad de uso (de mayor a menor)

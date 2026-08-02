@@ -7,12 +7,11 @@ import { useModal } from './Modal/useModal';
 import {
     PedidoRepuesto,
     PedidoRepuestoItem,
-    EstadoPedido,
     PROVEEDORES_PEDIDO,
     ESTADOS_PEDIDO,
     ProveedorId,
 } from '../types/pedidoRepuesto';
-import { guardarPedidoAsync, eliminarPedidoAsync } from '../redux-tool-kit/pedidoRepuesto/pedidoRepuesto.actions';
+import { guardarPedidoAsync, eliminarPedidoAsync, cancelarPedidoAsync } from '../redux-tool-kit/pedidoRepuesto/pedidoRepuesto.actions';
 import { selectPedidoPorId } from '../redux-tool-kit/pedidoRepuesto/pedidoRepuesto.selectors';
 import { selectRepuestosArray, selectRepuestosSeleccionables } from '../redux-tool-kit/repuesto/repuesto.selectors';
 import { selectModelosDroneArray } from '../redux-tool-kit/modeloDrone/modeloDrone.selectors';
@@ -63,6 +62,9 @@ export default function PedidoComponent(): JSX.Element {
     );
     // Un pedido recibido (arrived) es inmutable: solo lectura, sin guardar ni eliminar.
     const isArrived = !isNew && pedidoActual?.data.Estado === 'arrived';
+    // Un pedido cancelado es terminal: solo lectura.
+    const isCancelled = !isNew && pedidoActual?.data.Estado === 'cancelled';
+    const isReadOnly = isArrived || isCancelled;
     const repuestos = useAppSelector(selectRepuestosArray);
     const modelosDrone = useAppSelector(selectModelosDroneArray);
 
@@ -116,19 +118,6 @@ export default function PedidoComponent(): JSX.Element {
                 ProveedorId: provId,
                 ProveedorNombre: proveedor?.nombre ?? '',
             },
-        }));
-    };
-
-    const handleEstadoChange = (option: SelectOption | null) => {
-        const nuevoEstado = (option?.value ?? '') as EstadoPedido;
-        // Si pasa a "arrived" y no tiene fecha real, poner hoy
-        const llegada =
-            nuevoEstado === 'arrived' && !pedido.data.FechaLlegadaReal
-                ? hoy()
-                : pedido.data.FechaLlegadaReal;
-        setPedido(prev => ({
-            ...prev,
-            data: { ...prev.data, Estado: nuevoEstado, FechaLlegadaReal: llegada },
         }));
     };
 
@@ -302,6 +291,27 @@ export default function PedidoComponent(): JSX.Element {
     };
 
     // -------------------------------------------------------
+    // Cancelar
+    // -------------------------------------------------------
+    const handleCancelar = () => {
+        openModal({
+            mensaje: '¿Está seguro de que desea cancelar este pedido?',
+            tipo: 'danger',
+            titulo: 'Cancelar Pedido',
+            confirmCallback: confirmaCancelar,
+        });
+    };
+
+    const confirmaCancelar = async () => {
+        try {
+            await dispatch(cancelarPedidoAsync(pedido.id)).unwrap();
+            openModal({ mensaje: 'Pedido cancelado.', tipo: 'success', titulo: 'Cancelar Pedido' });
+        } catch (error: any) {
+            openModal({ mensaje: error?.message ?? 'Error al cancelar.', tipo: 'danger', titulo: 'Error' });
+        }
+    };
+
+    // -------------------------------------------------------
     // Render
     // -------------------------------------------------------
     const estadoConfig = ESTADOS_PEDIDO.find(e => e.value === pedido.data.Estado);
@@ -323,12 +333,18 @@ export default function PedidoComponent(): JSX.Element {
             </div>
 
             {/* --- Datos principales --- */}
-            <fieldset disabled={isArrived} style={{ border: 0, padding: 0, margin: 0, minWidth: 0 }}>
+            <fieldset disabled={isReadOnly} style={{ border: 0, padding: 0, margin: 0, minWidth: 0 }}>
             {isArrived && (
                 <div className="alert alert-info" role="alert">
                     <i className="bi bi-lock me-1"></i>
                     Este pedido fue recibido (arrived). No se puede editar ni eliminar para
                     preservar la integridad del stock.
+                </div>
+            )}
+            {isCancelled && (
+                <div className="alert alert-secondary" role="alert">
+                    <i className="bi bi-lock me-1"></i>
+                    Este pedido está cancelado. No se puede editar.
                 </div>
             )}
             <div className="card mb-3">
@@ -342,16 +358,6 @@ export default function PedidoComponent(): JSX.Element {
                             options={PROVEEDORES_PEDIDO.map(p => ({ value: String(p.id), label: p.nombre }))}
                             value={String(pedido.data.ProveedorId)}
                             onChange={handleProveedorChange}
-                        />
-                    </div>
-
-                    {/* Estado */}
-                    <div className="mb-3">
-                        <label className="form-label fw-semibold">Estado</label>
-                        <ComboBox
-                            options={ESTADOS_PEDIDO.map(e => ({ value: e.value, label: e.label }))}
-                            value={pedido.data.Estado}
-                            onChange={handleEstadoChange}
                         />
                     </div>
 
@@ -532,11 +538,16 @@ export default function PedidoComponent(): JSX.Element {
 
             {/* --- Acciones --- */}
             </fieldset>
-            {!isArrived && (
+            {!isReadOnly && (
                 <div className="d-flex gap-2">
                     <button className="btn bg-bluemcdron text-white flex-grow-1" onClick={handleGuardar}>
                         <i className="bi bi-floppy me-1"></i> Guardar
                     </button>
+                    {!isNew && (
+                        <button className="btn btn-outline-danger" onClick={handleCancelar}>
+                            <i className="bi bi-x-circle me-1"></i> Cancelar pedido
+                        </button>
+                    )}
                     {!isNew && (
                         <button className="btn btn-outline-danger" onClick={handleEliminar}>
                             <i className="bi bi-trash me-1"></i> Eliminar

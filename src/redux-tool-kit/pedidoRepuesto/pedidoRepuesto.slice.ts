@@ -1,6 +1,6 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { PedidoRepuesto, PedidosRepuesto } from '../../types/pedidoRepuesto';
-import { guardarPedidoAsync, eliminarPedidoAsync } from './pedidoRepuesto.actions';
+import { guardarPedidoAsync, eliminarPedidoAsync, cancelarPedidoAsync } from './pedidoRepuesto.actions';
 
 interface PedidoRepuestoState {
     filter: string;
@@ -36,6 +36,10 @@ const pedidoRepuestoSlice = createSlice({
         });
         builder.addCase(eliminarPedidoAsync.fulfilled, (state, action) => {
             delete state.coleccionPedidos[action.payload];
+        });
+        builder.addCase(cancelarPedidoAsync.fulfilled, (state, action) => {
+            const p = action.payload;
+            state.coleccionPedidos[p.id] = p;
         });
     },
 });

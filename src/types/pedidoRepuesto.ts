@@ -19,7 +19,7 @@ export type EstadoPedido = 'pending' | 'in_transit' | 'arrived' | 'cancelled';
 
 export const ESTADOS_PEDIDO: { value: EstadoPedido; label: string; color: string }[] = [
   { value: 'pending',    label: 'Pendiente',    color: 'secondary' },
-  { value: 'in_transit', label: 'En tránsito',  color: 'warning' },
+  { value: 'in_transit', label: 'En tránsito',  color: 'primary' },
   { value: 'arrived',    label: 'Recibido',     color: 'success' },
   { value: 'cancelled',  label: 'Cancelado',    color: 'danger' },
 ];

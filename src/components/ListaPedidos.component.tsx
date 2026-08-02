@@ -103,7 +103,7 @@ export default function ListaPedidos(): JSX.Element {
                                             </small>
                                         )}
                                         {estadisticas['in_transit'] > 0 && (
-                                            <small className="text-warning">
+                                            <small className="text-primary">
                                                 {estadisticas['in_transit']} en tránsito
                                             </small>
                                         )}

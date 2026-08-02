@@ -1,6 +1,6 @@
 import { createAsyncThunk } from '@reduxjs/toolkit';
 import { isFetchingComplete, isFetchingStart } from '../app/app.slice';
-import { PedidoRepuesto } from '../../types/pedidoRepuesto';
+import { EstadoPedido, PedidoRepuesto, PedidoRepuestoData } from '../../types/pedidoRepuesto';
 import {
     guardarPedidoPersistencia,
     eliminarPedidoPersistencia,
@@ -10,6 +10,18 @@ import {
 } from '../../persistencia/persistencia';
 import { setRepuesto } from '../repuesto/repuesto.slice';
 import { RootState } from '../store';
+
+// Regla de negocio: el estado del pedido no se elige manualmente, se deriva de sus datos.
+// 'arrived' y 'cancelled' son terminales: una vez alcanzados, no se recalculan.
+export const derivarEstadoPedido = (
+    data: PedidoRepuestoData,
+    estadoAnterior?: EstadoPedido | null,
+): EstadoPedido => {
+    if (estadoAnterior === 'cancelled' || estadoAnterior === 'arrived') return estadoAnterior;
+    if (data.FechaLlegadaReal) return 'arrived';
+    if (data.NumeroPedido) return 'in_transit';
+    return 'pending';
+};
 
 const agruparCantidadesPorRepuesto = (items: PedidoRepuesto['data']['Items']) => {
     const cantidades = new Map<string, number>();
@@ -46,15 +58,23 @@ export const guardarPedidoAsync = createAsyncThunk(
                 throw new Error('Un pedido recibido (arrived) no puede editarse.');
             }
 
+            // El estado se recalcula siempre a partir de los datos: no se acepta el valor
+            // de Estado que venga del formulario.
+            const estadoDerivado = derivarEstadoPedido(pedido.data, pedidoAnterior?.data.Estado);
+            const pedidoConEstado: PedidoRepuesto = {
+                ...pedido,
+                data: { ...pedido.data, Estado: estadoDerivado },
+            };
+
             const esPrimerArrived =
-                pedido.data.Estado === 'arrived' &&
+                estadoDerivado === 'arrived' &&
                 pedidoAnterior?.data.Estado !== 'arrived';
 
-            const guardado = await guardarPedidoPersistencia(pedido);
+            const guardado = await guardarPedidoPersistencia(pedidoConEstado);
             dispatch(isFetchingComplete());
 
             // Actualizar precio del repuesto en BD y en el store
-            const itemsConPrecio = pedido.data.Items.filter(
+            const itemsConPrecio = pedidoConEstado.data.Items.filter(
                 i => i.data.RepuestoId && i.data.PrecioUnitario !== null && i.data.PrecioUnitario > 0
             );
             await Promise.all(
@@ -75,7 +95,7 @@ export const guardarPedidoAsync = createAsyncThunk(
             // registrar un movimiento de recepcion (suma stock fisico, sin tocar comprometido).
             if (esPrimerArrived) {
                 const { aplicarMovimientoStockPersistencia } = await import('../../persistencia/persistencia');
-                const cantidadesPorRepuesto = agruparCantidadesPorRepuesto(pedido.data.Items);
+                const cantidadesPorRepuesto = agruparCantidadesPorRepuesto(pedidoConEstado.data.Items);
 
                 await Promise.all(
                     Array.from(cantidadesPorRepuesto.entries()).map(async ([repuestoId, cantidadRecibida]) => {
@@ -85,7 +105,7 @@ export const guardarPedidoAsync = createAsyncThunk(
                             committedDelta: 0,
                             kind: 'reception',
                             referenceType: 'purchase_order',
-                            referenceId: pedido.id,
+                            referenceId: pedidoConEstado.id,
                             note: null,
                         });
 
@@ -130,6 +150,36 @@ export const eliminarPedidoAsync = createAsyncThunk(
             const eliminadoId = await eliminarPedidoPersistencia(id);
             dispatch(isFetchingComplete());
             return eliminadoId;
+        } catch (error: unknown) {
+            dispatch(isFetchingComplete());
+            throw error;
+        }
+    },
+);
+
+// CANCELAR PEDIDO
+export const cancelarPedidoAsync = createAsyncThunk(
+    'pedidoRepuesto/cancelar',
+    async (id: string, { dispatch, getState }) => {
+        try {
+            dispatch(isFetchingStart());
+
+            const state = getState() as RootState;
+            const pedido = state.pedidoRepuesto.coleccionPedidos[id] ?? null;
+            if (!pedido) {
+                throw new Error('Pedido no encontrado.');
+            }
+            if (pedido.data.Estado === 'arrived') {
+                throw new Error('Un pedido recibido (arrived) no puede cancelarse.');
+            }
+
+            const pedidoCancelado: PedidoRepuesto = {
+                ...pedido,
+                data: { ...pedido.data, Estado: 'cancelled' },
+            };
+            const guardado = await guardarPedidoPersistencia(pedidoCancelado);
+            dispatch(isFetchingComplete());
+            return guardado;
         } catch (error: unknown) {
             dispatch(isFetchingComplete());
             throw error;
