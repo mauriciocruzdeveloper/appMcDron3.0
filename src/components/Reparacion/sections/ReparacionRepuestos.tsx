@@ -64,6 +64,8 @@ export const ReparacionRepuestos: React.FC<ReparacionRepuestosProps> = ({
     const reparacionResuelta = esReparacionResuelta(reparacion.data.EstadoRep as EstadoReparacion);
     const previaAceptacion = esEstadoPrevioAAceptacion(reparacion.data.EstadoRep as EstadoReparacion);
     const repuestosFaltantes = (reparacionResuelta || previaAceptacion) ? [] : repuestos.filter(r => r.requierePedido);
+    const repuestosSinPedido = repuestosFaltantes.filter(r => !r.tienePedidoActivo);
+    const repuestosConPedido = repuestosFaltantes.filter(r => r.tienePedidoActivo);
 
     const avanzarARepuestos = () => {
         dispatch(cambiarEstadoReparacionAsync({ reparacionId, nuevoEstado: 'Repuestos', enviarEmail: false }));
@@ -89,11 +91,20 @@ export const ReparacionRepuestos: React.FC<ReparacionRepuestosProps> = ({
                         )}
                     </label>
 
-                    {repuestos.length > 0 && repuestosFaltantes.length > 0 && (
+                    {repuestosSinPedido.length > 0 && (
                         <div className="alert alert-danger py-2 mb-2" role="alert">
-                            <strong>⚠️ {repuestosFaltantes.length} repuesto{repuestosFaltantes.length !== 1 ? 's' : ''} con faltante sin pedido activo:</strong>
+                            <strong>⚠️ {repuestosSinPedido.length} repuesto{repuestosSinPedido.length !== 1 ? 's' : ''} con faltante sin pedido activo:</strong>
                             <span className="ms-2 small">
-                                {repuestosFaltantes.map(r => r.nombre).join(', ')}
+                                {repuestosSinPedido.map(r => r.nombre).join(', ')}
+                            </span>
+                        </div>
+                    )}
+
+                    {repuestosConPedido.length > 0 && (
+                        <div className="alert alert-warning py-2 mb-2" role="alert">
+                            <strong>⏳ {repuestosConPedido.length} repuesto{repuestosConPedido.length !== 1 ? 's' : ''} con faltante, pedido en camino:</strong>
+                            <span className="ms-2 small">
+                                {repuestosConPedido.map(r => r.nombre).join(', ')}
                             </span>
                         </div>
                     )}
