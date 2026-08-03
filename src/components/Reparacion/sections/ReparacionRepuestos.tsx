@@ -14,7 +14,7 @@ import {
     getIntervencionesPorReparacionAsync,
 } from "../../../redux-tool-kit/reparacion/reparacion.actions";
 import { ESTADOS_PEDIDO } from "../../../types/pedidoRepuesto";
-import { esReparacionResuelta, EstadoReparacion } from "../../../usecases/estadosReparacion";
+import { esReparacionResuelta, esEstadoPrevioAAceptacion, EstadoReparacion } from "../../../usecases/estadosReparacion";
 import TextareaAutosize from "react-textarea-autosize";
 
 interface ReparacionRepuestosProps {
@@ -62,7 +62,8 @@ export const ReparacionRepuestos: React.FC<ReparacionRepuestosProps> = ({
     if (!seccionVisible || !reparacion || !isAdmin) return null;
 
     const reparacionResuelta = esReparacionResuelta(reparacion.data.EstadoRep as EstadoReparacion);
-    const repuestosFaltantes = reparacionResuelta ? [] : repuestos.filter(r => r.requierePedido);
+    const previaAceptacion = esEstadoPrevioAAceptacion(reparacion.data.EstadoRep as EstadoReparacion);
+    const repuestosFaltantes = (reparacionResuelta || previaAceptacion) ? [] : repuestos.filter(r => r.requierePedido);
 
     const avanzarARepuestos = () => {
         dispatch(cambiarEstadoReparacionAsync({ reparacionId, nuevoEstado: 'Repuestos', enviarEmail: false }));
@@ -104,8 +105,8 @@ export const ReparacionRepuestos: React.FC<ReparacionRepuestosProps> = ({
                     ) : (
                         <div className="d-flex flex-column gap-2">
                             {repuestos.map(r => {
-                                const mostrarFaltante = r.requierePedido && !reparacionResuelta;
-                                const borderColor = reparacionResuelta || r.stockLibre > 0
+                                const mostrarFaltante = r.requierePedido && !reparacionResuelta && !previaAceptacion;
+                                const borderColor = reparacionResuelta || previaAceptacion || r.stockLibre > 0
                                     ? '#198754'
                                     : r.tienePedidoActivo
                                         ? '#ffc107'
@@ -171,10 +172,12 @@ export const ReparacionRepuestos: React.FC<ReparacionRepuestosProps> = ({
                                                 )}
                                             </div>
                                         ) : (
-                                            <div className="mt-2 small text-success">
+                                            <div className={`mt-2 small ${previaAceptacion ? 'text-muted' : 'text-success'}`}>
                                                 {reparacionResuelta
                                                     ? '✓ Reparación finalizada, repuestos ya utilizados'
-                                                    : '✓ Stock disponible para esta reparación'}
+                                                    : previaAceptacion
+                                                        ? 'ℹ️ Presupuesto aún no aceptado, el faltante se validará al aceptar'
+                                                        : '✓ Stock disponible para esta reparación'}
                                             </div>
                                         )}
                                     </div>

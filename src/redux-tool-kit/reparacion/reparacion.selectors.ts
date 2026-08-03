@@ -5,7 +5,7 @@ import { Filtro } from '../../types/Filtro';
 import { AsignacionIntervencion, EstadoAsignacion } from '../../types/intervencion';
 import { estados } from '../../datos/estados';
 import { obtenerEstadoSeguro, esEstadoLegacy } from '../../utils/estadosHelper';
-import { esReparacionResuelta, esTransicionValida, EstadoReparacion } from '../../usecases/estadosReparacion';
+import { esReparacionResuelta, esEstadoPrevioAAceptacion, esTransicionValida, EstadoReparacion } from '../../usecases/estadosReparacion';
 
 // Constantes para filtros
 /**
@@ -1135,8 +1135,9 @@ export const selectReparacionesConRepuestoFaltante = createSelector(
     const resultado = new Set<string>();
 
     reparaciones.forEach(reparacion => {
-      // No alertar si la reparación ya fue resuelta
+      // No alertar si la reparación ya fue resuelta o aún no fue aceptada (repuestos no relevantes todavía)
       if (esReparacionResuelta(reparacion.data.EstadoRep as EstadoReparacion)) return;
+      if (esEstadoPrevioAAceptacion(reparacion.data.EstadoRep as EstadoReparacion)) return;
 
       const intervencionesIds: string[] = reparacion.data.IntervencionesIds || [];
 

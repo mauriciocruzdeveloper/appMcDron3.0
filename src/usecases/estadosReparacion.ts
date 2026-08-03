@@ -131,16 +131,15 @@ export const esEstadoTerminal = (estado: EstadoReparacion): boolean => {
 };
 
 /**
- * Determina si la reparación ya fue resuelta (reparada o diagnosticada) y por lo tanto
- * los repuestos faltantes ya no son relevantes.
- * Incluye también los estados terminales y rechazados posteriores.
+ * Determina si la reparación ya fue resuelta (reparada, diagnosticada o cerrada) y por lo tanto
+ * los repuestos ya fueron utilizados y el faltante ya no es relevante.
+ * Incluye los estados terminales y rechazados posteriores.
  *
  * @param estado - Estado a verificar
  * @returns true si el problema de la reparación ya fue resuelto
  */
 export const esReparacionResuelta = (estado: EstadoReparacion): boolean => {
   const estadosResueltos: EstadoReparacion[] = [
-    "Presupuestado",  // aún no aceptado → repuestos no son relevantes aún
     "Reparado",
     "Diagnosticado",
     "Cobrado",
@@ -157,6 +156,25 @@ export const esReparacionResuelta = (estado: EstadoReparacion): boolean => {
     "Indefinido",
   ];
   return estadosResueltos.includes(estado);
+};
+
+/**
+ * Determina si la reparación todavía no fue aceptada por el cliente, por lo que el
+ * faltante de repuestos aún no es relevante (recién se necesitarán al reparar).
+ *
+ * @param estado - Estado a verificar
+ * @returns true si la reparación está en una etapa previa a la aceptación
+ */
+export const esEstadoPrevioAAceptacion = (estado: EstadoReparacion): boolean => {
+  const estadosPrevios: EstadoReparacion[] = [
+    "Consulta",
+    "Respondido",
+    "Transito",
+    "Recibido",
+    "Revisado",
+    "Presupuestado",
+  ];
+  return estadosPrevios.includes(estado);
 };
 
 /**
