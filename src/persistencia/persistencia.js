@@ -89,6 +89,16 @@ export const getPedidoPersistencia = backend.getPedidoPersistencia;
 export const guardarPedidoPersistencia = backend.guardarPedidoPersistencia;
 export const eliminarPedidoPersistencia = backend.eliminarPedidoPersistencia;
 
+// PLANTILLAS Y CAMPAÑAS DE EMAIL
+export const getPlantillasEmailPersistencia = backend.getPlantillasEmailPersistencia;
+export const guardarPlantillaEmailPersistencia = backend.guardarPlantillaEmailPersistencia;
+export const eliminarPlantillaEmailPersistencia = backend.eliminarPlantillaEmailPersistencia;
+
+export const getCampanasEmailPersistencia = backend.getCampanasEmailPersistencia;
+export const guardarCampanaEmailPersistencia = backend.guardarCampanaEmailPersistencia;
+export const eliminarCampanaEmailPersistencia = backend.eliminarCampanaEmailPersistencia;
+export const getRunsCampanaEmailPersistencia = backend.getRunsCampanaEmailPersistencia;
+
 // WEBSOCKETS
 export const verificarConexionWebSocket = backend.verificarConexionWebSocket;
 

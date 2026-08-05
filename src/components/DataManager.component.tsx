@@ -8,6 +8,8 @@ import {
     getDronesPersistencia,
     getIntervencionesPersistencia,
     getPedidosPersistencia,
+    getPlantillasEmailPersistencia,
+    getCampanasEmailPersistencia,
     initWebSocketManager,
     stopWebSocketManager,
     verifyAndReconnectChannels
@@ -31,6 +33,10 @@ import { setIntervenciones } from "../redux-tool-kit/intervencion/intervencion.s
 import { setPedidos } from "../redux-tool-kit/pedidoRepuesto/pedidoRepuesto.slice";
 import { PedidoRepuesto } from "../types/pedidoRepuesto";
 import { verificarConexionWebSocketAsync } from "../redux-tool-kit/app/app.actions";
+import { setPlantillasEmail } from "../redux-tool-kit/plantillaEmail/plantillaEmail.slice";
+import { setCampanasEmail } from "../redux-tool-kit/campanaEmail/campanaEmail.slice";
+import { EmailTemplate } from "../types/emailTemplate";
+import { EmailCampaign } from "../types/emailCampaign";
 
 export interface DataManagerProps {
     children: React.ReactNode;
@@ -49,6 +55,8 @@ export function DataManagerComponent({ children }: DataManagerProps): React.Reac
     const [unsubscribeDrones, setUnsubscribeDrones] = useState<Unsubscribe>();
     const [unsubscribeIntervenciones, setUnsubscribeIntervenciones] = useState<Unsubscribe>();
     const [unsubscribePedidos, setUnsubscribePedidos] = useState<Unsubscribe>();
+    const [unsubscribePlantillasEmail, setUnsubscribePlantillasEmail] = useState<Unsubscribe>();
+    const [unsubscribeCampanasEmail, setUnsubscribeCampanasEmail] = useState<Unsubscribe>();
 
     // 🚀 Inicializar WebSocket Manager al montar el componente
     useEffect(() => {
@@ -87,6 +95,8 @@ export function DataManagerComponent({ children }: DataManagerProps): React.Reac
                         getDrones();
                         getIntervenciones();
                         getPedidos();
+                        getPlantillasEmail();
+                        getCampanasEmail();
                     }
                 } else {
                     console.log("⚠️ No se pudo verificar la conexión WebSocket");
@@ -159,6 +169,20 @@ export function DataManagerComponent({ children }: DataManagerProps): React.Reac
         getPedidos();
         return () => {
             unsubscribePedidos?.();
+        };
+    }, []);
+
+    useEffect(() => {
+        getPlantillasEmail();
+        return () => {
+            unsubscribePlantillasEmail?.();
+        };
+    }, []);
+
+    useEffect(() => {
+        getCampanasEmail();
+        return () => {
+            unsubscribeCampanasEmail?.();
         };
     }, []);
 
@@ -281,6 +305,32 @@ export function DataManagerComponent({ children }: DataManagerProps): React.Reac
             setUnsubscribePedidos(() => unsubscribe);
         } catch (error) {
             console.error("Error al obtener pedidos:", error);
+        }
+    };
+
+    const getPlantillasEmail = async () => {
+        try {
+            const unsubscribe = await getPlantillasEmailPersistencia(
+                (plantillas: EmailTemplate[]) => {
+                    dispatch(setPlantillasEmail(plantillas));
+                }
+            );
+            setUnsubscribePlantillasEmail(() => unsubscribe);
+        } catch (error) {
+            console.error("Error al obtener plantillas de email:", error);
+        }
+    };
+
+    const getCampanasEmail = async () => {
+        try {
+            const unsubscribe = await getCampanasEmailPersistencia(
+                (campanas: EmailCampaign[]) => {
+                    dispatch(setCampanasEmail(campanas));
+                }
+            );
+            setUnsubscribeCampanasEmail(() => unsubscribe);
+        } catch (error) {
+            console.error("Error al obtener campanas de email:", error);
         }
     };
 
