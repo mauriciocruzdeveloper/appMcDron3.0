@@ -7,7 +7,10 @@ export {
   guardarCampanaEmailAsync,
   eliminarCampanaEmailAsync,
   getRunsCampanaEmailAsync,
+  getRecipientsRunCampanaEmailAsync,
   ejecutarCampanasVencidasAsync,
+  reintentarRunCampanaEmailAsync,
+  finalizarRunCampanaEmailAsync,
 } from './campanaEmail.actions';
 
 export {

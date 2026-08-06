@@ -1,18 +1,22 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useAppDispatch } from '../redux-tool-kit/hooks/useAppDispatch';
 import { useAppSelector } from '../redux-tool-kit/hooks/useAppSelector';
 import {
   eliminarCampanaEmailAsync,
   ejecutarCampanasVencidasAsync,
+  finalizarRunCampanaEmailAsync,
+  getRecipientsRunCampanaEmailAsync,
   getRunsCampanaEmailAsync,
   guardarCampanaEmailAsync,
+  reintentarRunCampanaEmailAsync,
   selectCampanasEmailFiltradas,
   selectCampanasRunsRecientes,
   selectResumenUltimaEjecucionCampanas,
   setFilterCampanasEmail,
 } from '../redux-tool-kit/campanaEmail';
 import { selectPlantillasEmailArray } from '../redux-tool-kit/plantillaEmail';
-import { EmailCampaign, EmailCampaignFilterDefinition, EmailCampaignFrequency } from '../types/emailCampaign';
+import { EmailCampaign, EmailCampaignFilterDefinition, EmailCampaignFrequency, EmailCampaignRunRecipient } from '../types/emailCampaign';
+import { suscribirseEnviosCampanaEmailPersistencia } from '../persistencia/persistencia';
 import { useModal } from './Modal/useModal';
 import { estados } from '../datos/estados';
 import { selectReparacionesArray } from '../redux-tool-kit/reparacion/reparacion.selectors';
@@ -114,8 +118,70 @@ export default function ListaCampanasEmail(): JSX.Element {
   const resumen = useAppSelector(selectResumenUltimaEjecucionCampanas);
   const usuarios = useAppSelector(selectUsuariosArray);
   const reparaciones = useAppSelector(selectReparacionesArray);
+  const campanasById = useAppSelector((state) => state.campanaEmail.coleccionCampanasEmail);
+  const plantillasById = useAppSelector((state) => state.plantillaEmail.coleccionPlantillasEmail);
 
   const [draft, setDraft] = useState<EmailCampaign>(emptyCampaign);
+  const [viewing, setViewing] = useState<EmailCampaign | null>(null);
+  const [expandedRunId, setExpandedRunId] = useState<string | null>(null);
+  const [liveEvents, setLiveEvents] = useState<EmailCampaignRunRecipient[] | null>(null);
+  const [liveDone, setLiveDone] = useState(false);
+  const recipientsPorRun = useAppSelector((state) => state.campanaEmail.recipientsPorRun);
+
+  const conProgresoEnVivo = async (accion: () => Promise<void>) => {
+    setLiveEvents([]);
+    setLiveDone(false);
+    const unsubscribe = suscribirseEnviosCampanaEmailPersistencia((recipient: EmailCampaignRunRecipient) => {
+      setLiveEvents((prev) => {
+        const list = prev ? [...prev] : [];
+        const idx = list.findIndex((r) => r.id === recipient.id);
+        if (idx >= 0) list[idx] = recipient;
+        else list.push(recipient);
+        return list;
+      });
+    });
+    try {
+      await accion();
+    } finally {
+      unsubscribe();
+      setLiveDone(true);
+    }
+  };
+
+  const toggleRunDetail = async (runId: string) => {
+    if (expandedRunId === runId) {
+      setExpandedRunId(null);
+      return;
+    }
+    setExpandedRunId(runId);
+    if (!recipientsPorRun[runId]) {
+      await dispatch(getRecipientsRunCampanaEmailAsync(runId));
+    }
+  };
+
+  const handleRetryRun = async (runId: string) => {
+    await conProgresoEnVivo(async () => {
+      await dispatch(reintentarRunCampanaEmailAsync(runId));
+      await dispatch(getRunsCampanaEmailAsync(undefined));
+      await dispatch(getRecipientsRunCampanaEmailAsync(runId));
+    });
+  };
+
+  const handleFinalizeRun = (runId: string) => {
+    openModal({
+      titulo: 'Finalizar envio',
+      tipo: 'danger',
+      mensaje: 'La corrida quedara finalizada y no se podran reintentar los envios restantes. Continuar?',
+      confirmCallback: async () => {
+        await dispatch(finalizarRunCampanaEmailAsync(runId));
+        await dispatch(getRunsCampanaEmailAsync(undefined));
+      },
+    });
+  };
+
+  useEffect(() => {
+    dispatch(getRunsCampanaEmailAsync(undefined));
+  }, [dispatch]);
 
   const destinatariosPreview = useMemo(
     () => previewDestinatarios(draft.data.Filtros, usuarios, reparaciones),
@@ -169,15 +235,12 @@ export default function ListaCampanasEmail(): JSX.Element {
   };
 
   const handleRunNow = async (campaignId?: string) => {
-    const result = await dispatch(ejecutarCampanasVencidasAsync(campaignId));
-    if (result.meta.requestStatus === 'fulfilled') {
-      await dispatch(getRunsCampanaEmailAsync(campaignId));
-      openModal({
-        titulo: 'Ejecucion completada',
-        tipo: 'success',
-        mensaje: 'Se ejecuto el proceso de envio. Revisa el resumen e historial.',
-      });
-    }
+    await conProgresoEnVivo(async () => {
+      const result = await dispatch(ejecutarCampanasVencidasAsync(campaignId));
+      if (result.meta.requestStatus === 'fulfilled') {
+        await dispatch(getRunsCampanaEmailAsync(campaignId));
+      }
+    });
   };
 
   const handleEdit = async (campaign: EmailCampaign) => {
@@ -434,6 +497,9 @@ export default function ListaCampanasEmail(): JSX.Element {
                       </span>
                     </div>
                     <div className='mt-3 d-flex gap-2 flex-wrap'>
+                      <button className='btn btn-sm btn-outline-secondary' onClick={() => setViewing(campana)}>
+                        Ver
+                      </button>
                       <button className='btn btn-sm btn-outline-primary' onClick={() => handleEdit(campana)}>
                         Editar
                       </button>
@@ -460,23 +526,94 @@ export default function ListaCampanasEmail(): JSX.Element {
                   <table className='table table-sm table-striped mb-0'>
                     <thead>
                       <tr>
+                        <th></th>
                         <th>Fecha</th>
+                        <th>Campana</th>
+                        <th>Plantilla</th>
                         <th>Estado</th>
                         <th>Destinatarios</th>
                         <th>Enviados</th>
                         <th>Fallidos</th>
+                        <th>Pendientes</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {runs.map((run) => (
-                        <tr key={run.id}>
-                          <td>{new Date(run.data.executedAt).toLocaleString()}</td>
-                          <td>{run.data.status}</td>
-                          <td>{run.data.totalRecipients}</td>
-                          <td>{run.data.totalSent}</td>
-                          <td>{run.data.totalFailed}</td>
-                        </tr>
-                      ))}
+                      {runs.map((run) => {
+                        const campana = campanasById[run.data.campaignId];
+                        const plantilla = campana ? plantillasById[campana.data.PlantillaId] : undefined;
+                        const expanded = expandedRunId === run.id;
+                        const recipients = recipientsPorRun[run.id];
+                        return (
+                          <React.Fragment key={run.id}>
+                            <tr style={{ cursor: 'pointer' }} onClick={() => toggleRunDetail(run.id)}>
+                              <td>{expanded ? '▾' : '▸'}</td>
+                              <td>{new Date(run.data.executedAt).toLocaleString()}</td>
+                              <td>{campana?.data.NombreCampana || `#${run.data.campaignId}`}</td>
+                              <td>{plantilla?.data.NombrePlantilla || '-'}</td>
+                              <td>{run.data.status}</td>
+                              <td>{run.data.totalRecipients}</td>
+                              <td>{run.data.totalSent}</td>
+                              <td>{run.data.totalFailed}</td>
+                              <td>{Math.max(0, run.data.totalRecipients - run.data.totalSent - run.data.totalFailed)}</td>
+                            </tr>
+                            {expanded ? (
+                              <tr>
+                                <td colSpan={9} className='bg-light'>
+                                  {(run.data.status === 'partial' || run.data.status === 'failed') ? (
+                                    <div className='d-flex gap-2 mb-2'>
+                                      <button
+                                        className='btn btn-sm btn-outline-success'
+                                        onClick={(e) => { e.stopPropagation(); handleRetryRun(run.id); }}
+                                      >
+                                        Reintentar pendientes/fallidos
+                                      </button>
+                                      <button
+                                        className='btn btn-sm btn-outline-danger'
+                                        onClick={(e) => { e.stopPropagation(); handleFinalizeRun(run.id); }}
+                                      >
+                                        Finalizar envio
+                                      </button>
+                                    </div>
+                                  ) : null}
+                                  {run.data.errorSummary ? (
+                                    <div className='alert alert-warning py-2 small mb-2'>
+                                      <strong>Resumen de error:</strong> {run.data.errorSummary}
+                                    </div>
+                                  ) : null}
+                                  {!recipients ? (
+                                    <span className='text-muted small'>Cargando destinatarios...</span>
+                                  ) : recipients.length === 0 ? (
+                                    <span className='text-muted small'>
+                                      No hay detalle de destinatarios para esta ejecucion.
+                                    </span>
+                                  ) : (
+                                    <table className='table table-sm mb-0 small'>
+                                      <thead>
+                                        <tr>
+                                          <th>Email</th>
+                                          <th>Estado</th>
+                                          <th>Error</th>
+                                          <th>Enviado</th>
+                                        </tr>
+                                      </thead>
+                                      <tbody>
+                                        {recipients.map((r) => (
+                                          <tr key={r.id} className={r.data.status === 'failed' ? 'table-danger' : ''}>
+                                            <td>{r.data.email}</td>
+                                            <td>{r.data.status}</td>
+                                            <td>{r.data.errorMessage || '-'}</td>
+                                            <td>{r.data.sentAt ? new Date(r.data.sentAt).toLocaleString() : '-'}</td>
+                                          </tr>
+                                        ))}
+                                      </tbody>
+                                    </table>
+                                  )}
+                                </td>
+                              </tr>
+                            ) : null}
+                          </React.Fragment>
+                        );
+                      })}
                     </tbody>
                   </table>
                 </div>
@@ -485,6 +622,90 @@ export default function ListaCampanasEmail(): JSX.Element {
           </div>
         </div>
       </div>
+
+      {viewing ? (
+        <div className='modal d-block' tabIndex={-1} style={{ backgroundColor: 'rgba(0,0,0,0.5)' }} onClick={() => setViewing(null)}>
+          <div className='modal-dialog modal-dialog-centered' onClick={(e) => e.stopPropagation()}>
+            <div className='modal-content'>
+              <div className='modal-header'>
+                <h5 className='modal-title'>{viewing.data.NombreCampana}</h5>
+                <button type='button' className='btn-close' onClick={() => setViewing(null)} />
+              </div>
+              <div className='modal-body'>
+                <p className='mb-1'><strong>Plantilla:</strong> {plantillasById[viewing.data.PlantillaId]?.data.NombrePlantilla || '-'}</p>
+                <p className='mb-1'><strong>Frecuencia:</strong> {viewing.data.Frecuencia} cada {viewing.data.CadaCantidad}</p>
+                <p className='mb-1'><strong>Proxima ejecucion:</strong> {viewing.data.ProximaEjecucion ? new Date(viewing.data.ProximaEjecucion).toLocaleString() : '-'}</p>
+                <p className='mb-1'><strong>Ultima ejecucion:</strong> {viewing.data.UltimaEjecucion ? new Date(viewing.data.UltimaEjecucion).toLocaleString() : '-'}</p>
+                <p className='mb-1'><strong>Estado:</strong> {viewing.data.ActivaCampana ? 'Activa' : 'Inactiva'}</p>
+                <hr />
+                <p className='mb-1'><strong>Filtros:</strong></p>
+                <ul className='mb-0 small'>
+                  <li>Todos los clientes: {viewing.data.Filtros.incluirTodosLosClientes ? 'Si' : 'No'}</li>
+                  <li>Solo con email: {viewing.data.Filtros.soloConEmail ? 'Si' : 'No'}</li>
+                  <li>No pagaron: {viewing.data.Filtros.noPagaron ? 'Si' : 'No'}</li>
+                  <li>Estados: {viewing.data.Filtros.estadosReparacion?.length ? viewing.data.Filtros.estadosReparacion.join(', ') : '-'}</li>
+                  <li>Min. dias desde consulta: {viewing.data.Filtros.minDiasDesdeConsulta ?? '-'}</li>
+                  <li>Min. dias desde recepcion: {viewing.data.Filtros.minDiasDesdeRecepcion ?? '-'}</li>
+                </ul>
+              </div>
+              <div className='modal-footer'>
+                <button className='btn btn-secondary' onClick={() => setViewing(null)}>Cerrar</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : null}
+      {liveEvents !== null ? (
+        <div className='modal d-block' tabIndex={-1} style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
+          <div className='modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable'>
+            <div className='modal-content'>
+              <div className='modal-header'>
+                <h5 className='modal-title'>
+                  {liveDone ? 'Envio finalizado' : 'Enviando emails...'}
+                </h5>
+                {liveDone ? (
+                  <button type='button' className='btn-close' onClick={() => setLiveEvents(null)} />
+                ) : (
+                  <div className='spinner-border spinner-border-sm text-primary' role='status' />
+                )}
+              </div>
+              <div className='modal-body'>
+                <div className='mb-2'>
+                  <span className='badge bg-success me-2'>
+                    Enviados: {liveEvents.filter((e) => e.data.status === 'sent').length}
+                  </span>
+                  <span className='badge bg-danger me-2'>
+                    Fallidos: {liveEvents.filter((e) => e.data.status === 'failed').length}
+                  </span>
+                  <span className='badge bg-secondary'>
+                    Pendientes: {liveEvents.filter((e) => e.data.status === 'pending').length}
+                  </span>
+                </div>
+                {liveEvents.length === 0 ? (
+                  <p className='text-muted mb-0'>Esperando el primer envio...</p>
+                ) : (
+                  <table className='table table-sm small mb-0'>
+                    <tbody>
+                      {[...liveEvents].reverse().map((e) => (
+                        <tr key={e.id} className={e.data.status === 'failed' ? 'table-danger' : e.data.status === 'sent' ? 'table-success' : ''}>
+                          <td>{e.data.email}</td>
+                          <td>{e.data.status}</td>
+                          <td className='text-truncate' style={{ maxWidth: 300 }}>{e.data.errorMessage || ''}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                )}
+              </div>
+              {liveDone ? (
+                <div className='modal-footer'>
+                  <button className='btn btn-secondary' onClick={() => setLiveEvents(null)}>Cerrar</button>
+                </div>
+              ) : null}
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

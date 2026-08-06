@@ -32,9 +32,17 @@
 
 ## 6. Seguridad y operacion
 - [ ] 6.1 Restringir administracion/ejecucion a rol admin
-- [ ] 6.2 Limitar tamano de lote por corrida para proteger SMTP
+- [x] 6.2 Limitar tamano de lote por corrida para proteger SMTP (max 90/corrida por limite 100/hora del hosting)
 - [ ] 6.3 Sanitizar contenido de plantilla y placeholders permitidos
 - [ ] 6.4 Definir trigger cron de hosting DonWeb y fallback desde app
+
+## 8. Reintentos y finalizacion de corridas
+- [x] 8.1 Migracion: estados pending (recipient) y finalized (run)
+- [x] 8.2 Backend: registrar destinatarios excedentes como pending
+- [x] 8.3 Backend: retryCampaignRun reenvia solo pending/failed sin duplicar
+- [x] 8.4 Backend: finalizeCampaignRun cierra la corrida manualmente
+- [x] 8.5 UI: botones Reintentar/Finalizar en detalle de corrida del historial
+- [ ] 8.6 Validar manualmente: corrida >90 destinatarios, reintento tras 1 hora, finalizacion
 
 ## 7. Validacion manual
 - [ ] 7.1 Crear plantilla y campana, ejecutar envio manual y validar destinatarios

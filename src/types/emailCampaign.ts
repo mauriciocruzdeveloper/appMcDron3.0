@@ -38,10 +38,22 @@ export interface EmailCampaignRun {
     campaignId: string;
     scheduledFor?: string | null;
     executedAt: string;
-    status: 'success' | 'partial' | 'failed';
+    status: 'success' | 'partial' | 'failed' | 'finalized';
     totalRecipients: number;
     totalSent: number;
     totalFailed: number;
     errorSummary?: string | null;
+  };
+}
+
+export interface EmailCampaignRunRecipient {
+  id: string;
+  data: {
+    runId: string;
+    userId: string | null;
+    email: string;
+    status: 'sent' | 'failed' | 'pending';
+    errorMessage: string | null;
+    sentAt: string | null;
   };
 }

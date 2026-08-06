@@ -60,3 +60,26 @@ El sistema SHALL restringir la gestion y ejecucion de campanas/plantillas a usua
 #### Scenario: Usuario no admin intenta acceder
 - **WHEN** un usuario sin rol admin intenta abrir la seccion de campanas
 - **THEN** el sistema bloquea el acceso a la seccion y a las acciones de envio
+
+### Requirement: Limite de envio por corrida
+El sistema SHALL limitar la cantidad de emails enviados por corrida para respetar el limite SMTP del hosting (100/hora), y SHALL registrar los destinatarios restantes como pendientes.
+
+#### Scenario: Corrida con mas destinatarios que el limite
+- **WHEN** una corrida tiene mas destinatarios que el limite por hora
+- **THEN** el sistema envia hasta el limite y registra el resto con estado pendiente
+- **AND** la corrida queda en estado parcial
+
+### Requirement: Reintento de pendientes y fallidos
+El sistema SHALL permitir al admin reintentar el envio de los destinatarios pendientes o fallidos de una corrida, sin duplicar envios a quienes ya recibieron.
+
+#### Scenario: Reintento de corrida parcial
+- **WHEN** el admin reintenta una corrida parcial
+- **THEN** el sistema envia solo a destinatarios con estado pendiente o fallido
+- **AND** actualiza las metricas de la corrida
+
+### Requirement: Finalizacion manual de corrida
+El sistema SHALL permitir al admin dar por finalizada una corrida con destinatarios sin enviar, dejando registro de su estado final.
+
+#### Scenario: Finalizar corrida con fallidos persistentes
+- **WHEN** el admin finaliza una corrida con destinatarios pendientes o fallidos
+- **THEN** la corrida queda en estado finalizado y no admite mas reintentos

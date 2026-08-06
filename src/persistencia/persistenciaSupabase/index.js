@@ -123,6 +123,8 @@ export {
   guardarCampanaEmailPersistencia,
   eliminarCampanaEmailPersistencia,
   getRunsCampanaEmailPersistencia,
+  getRecipientsRunCampanaEmailPersistencia,
+  suscribirseEnviosCampanaEmailPersistencia,
 } from './campanasEmailPersistencia.js';
 
 // === WEBSOCKET MANAGER ===

@@ -1,16 +1,18 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { EmailCampaign, EmailCampaignRun, EmailCampaigns } from '../../types/emailCampaign';
+import { EmailCampaign, EmailCampaignRun, EmailCampaignRunRecipient, EmailCampaigns } from '../../types/emailCampaign';
 import {
   eliminarCampanaEmailAsync,
   ejecutarCampanasVencidasAsync,
   guardarCampanaEmailAsync,
   getRunsCampanaEmailAsync,
+  getRecipientsRunCampanaEmailAsync,
 } from './campanaEmail.actions';
 
 interface CampanaEmailState {
   filter: string;
   coleccionCampanasEmail: EmailCampaigns;
   runsRecientes: EmailCampaignRun[];
+  recipientsPorRun: { [runId: string]: EmailCampaignRunRecipient[] };
   ultimoResumenEjecucion: unknown;
 }
 
@@ -18,6 +20,7 @@ const initialState: CampanaEmailState = {
   filter: '',
   coleccionCampanasEmail: {},
   runsRecientes: [],
+  recipientsPorRun: {},
   ultimoResumenEjecucion: null,
 };
 
@@ -45,6 +48,9 @@ const campanaEmailSlice = createSlice({
     });
     builder.addCase(getRunsCampanaEmailAsync.fulfilled, (state, action) => {
       state.runsRecientes = action.payload;
+    });
+    builder.addCase(getRecipientsRunCampanaEmailAsync.fulfilled, (state, action) => {
+      state.recipientsPorRun[action.payload.runId] = action.payload.recipients;
     });
     builder.addCase(ejecutarCampanasVencidasAsync.fulfilled, (state, action) => {
       state.ultimoResumenEjecucion = action.payload;

@@ -98,6 +98,8 @@ export const getCampanasEmailPersistencia = backend.getCampanasEmailPersistencia
 export const guardarCampanaEmailPersistencia = backend.guardarCampanaEmailPersistencia;
 export const eliminarCampanaEmailPersistencia = backend.eliminarCampanaEmailPersistencia;
 export const getRunsCampanaEmailPersistencia = backend.getRunsCampanaEmailPersistencia;
+export const getRecipientsRunCampanaEmailPersistencia = backend.getRecipientsRunCampanaEmailPersistencia;
+export const suscribirseEnviosCampanaEmailPersistencia = backend.suscribirseEnviosCampanaEmailPersistencia;
 
 // WEBSOCKETS
 export const verificarConexionWebSocket = backend.verificarConexionWebSocket;

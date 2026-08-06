@@ -143,3 +143,49 @@ export const getRunsCampanaEmailPersistencia = async (campaignId) => {
 
   return (data || []).map(mapRunToDomain);
 };
+
+export const getRecipientsRunCampanaEmailPersistencia = async (runId) => {
+  const { data, error } = await supabase
+    .from('email_campaign_run_recipient')
+    .select('*')
+    .eq('run_id', runId)
+    .order('status', { ascending: true })
+    .order('email', { ascending: true });
+
+  if (error) throw error;
+
+  return (data || []).map(mapRecipientToDomain);
+};
+
+const mapRecipientToDomain = (item) => ({
+  id: String(item.id),
+  data: {
+    runId: String(item.run_id),
+    userId: item.user_id != null ? String(item.user_id) : null,
+    email: item.email || '',
+    status: item.status || 'failed',
+    errorMessage: item.error_message || null,
+    sentAt: item.sent_at || null,
+  },
+});
+
+// Requiere la tabla en la publicacion realtime:
+// alter publication supabase_realtime add table email_campaign_run_recipient;
+export const suscribirseEnviosCampanaEmailPersistencia = (onEvent) => {
+  const channel = supabase
+    .channel('email-campaign-recipient-live')
+    .on('postgres_changes', {
+      event: '*',
+      schema: 'public',
+      table: 'email_campaign_run_recipient',
+    }, (payload) => {
+      if (payload.new) {
+        onEvent(mapRecipientToDomain(payload.new));
+      }
+    })
+    .subscribe();
+
+  return () => {
+    supabase.removeChannel(channel);
+  };
+};
