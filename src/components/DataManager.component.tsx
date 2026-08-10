@@ -37,6 +37,7 @@ import { setPlantillasEmail } from "../redux-tool-kit/plantillaEmail/plantillaEm
 import { setCampanasEmail } from "../redux-tool-kit/campanaEmail/campanaEmail.slice";
 import { EmailTemplate } from "../types/emailTemplate";
 import { EmailCampaign } from "../types/emailCampaign";
+import { PullToRefresh } from "./PullToRefresh.component";
 
 export interface DataManagerProps {
     children: React.ReactNode;
@@ -334,9 +335,31 @@ export function DataManagerComponent({ children }: DataManagerProps): React.Reac
         }
     };
 
+    // Refresco manual (gesto de deslizar hacia abajo): reintenta la conexión
+    // realtime y vuelve a pedir todos los datos, igual que al volver del segundo plano
+    const refreshAll = async () => {
+        try {
+            await verifyAndReconnectChannels();
+            getUsuarios();
+            getReparaciones();
+            getRepuestos();
+            getModelosDrone();
+            getDrones();
+            getIntervenciones();
+            getPedidos();
+            getPlantillasEmail();
+            getCampanasEmail();
+            if (usuarioIdMessage && otherUserIdMessage) {
+                getMensajes();
+            }
+        } catch (error) {
+            console.error("Error al refrescar datos:", error);
+        }
+    };
+
     return (
-        <div>
+        <PullToRefresh onRefresh={refreshAll}>
             {children}
-        </div>
+        </PullToRefresh>
     );
 }
