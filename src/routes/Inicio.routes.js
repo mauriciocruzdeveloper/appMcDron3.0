@@ -29,6 +29,8 @@ import GaleriaReparaciones from "../components/GaleriaReparaciones.component";
 import ExportarClientesGoogleAds from "../components/ExportarClientesGoogleAds.component";
 import ListaPedidos from "../components/ListaPedidos.component";
 import Pedido from "../components/Pedido.component";
+import ListaPlantillasEmail from "../components/ListaPlantillasEmail.component";
+import ListaCampanasEmail from "../components/ListaCampanasEmail.component";
 import RoleGuard from "../components/RoleGuard.component";
 import { useAppSelector } from "../redux-tool-kit/hooks/useAppSelector";
 
@@ -155,6 +157,16 @@ const InicioRoutes = ({ isLoggedIn, admin }) => {
                 <Route path="exportar-clientes-google-ads" element={
                     <RoleGuard allowedRoles={['admin']} userRole={userRole}>
                         <ExportarClientesGoogleAds />
+                    </RoleGuard>
+                } />
+                <Route path="plantillas-email" element={
+                    <RoleGuard allowedRoles={['admin']} userRole={userRole}>
+                        <ListaPlantillasEmail />
+                    </RoleGuard>
+                } />
+                <Route path="campanas-email" element={
+                    <RoleGuard allowedRoles={['admin']} userRole={userRole}>
+                        <ListaCampanasEmail />
                     </RoleGuard>
                 } />
             </Routes>

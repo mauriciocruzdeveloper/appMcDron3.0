@@ -104,6 +104,12 @@ export const usePermissions = () => {
     
     /** Puede enviar emails */
     canSendEmails: isAdmin,
+
+    /** Puede gestionar plantillas de emails */
+    canManageEmailTemplates: isAdmin,
+
+    /** Puede gestionar campanas de emails */
+    canManageEmailCampaigns: isAdmin,
     
     /** Puede ver mensajes (todos los roles) */
     canViewMensajes: true,

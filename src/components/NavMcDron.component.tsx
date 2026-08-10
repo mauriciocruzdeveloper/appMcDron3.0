@@ -102,6 +102,14 @@ export default function NavMcDron (): JSX.Element {
                             <i className="bi bi-truck"></i>
                             Pedidos
                         </button>
+                        <button
+                            type="button"
+                            className={`app-navbar-link app-navbar-link-wide ${history.location.pathname.startsWith('/inicio/campanas-email') ? 'active' : ''}`}
+                            onClick={() => history.push('/inicio/campanas-email')}
+                        >
+                            <i className="bi bi-envelope-paper"></i>
+                            Campanas Email
+                        </button>
                     </>
                 )}
                 <button
@@ -151,6 +159,12 @@ export default function NavMcDron (): JSX.Element {
                         </NavDropdown.Item>
                         <NavDropdown.Item className="d-xl-none" onClick={() => history.push('/inicio/pedidos')}>
                             Pedidos de Repuestos
+                        </NavDropdown.Item>
+                        <NavDropdown.Item onClick={() => history.push('/inicio/plantillas-email')}>
+                            Plantillas de Email
+                        </NavDropdown.Item>
+                        <NavDropdown.Item className="d-xl-none" onClick={() => history.push('/inicio/campanas-email')}>
+                            Campanas de Email
                         </NavDropdown.Item>
                         <NavDropdown.Divider />
                         <NavDropdown.Item onClick={() => history.push('/inicio/estadisticas')}>

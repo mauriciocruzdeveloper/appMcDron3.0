@@ -9,6 +9,8 @@ import droneReducer from './drone/drone.slice';
 import modeloDroneReducer from './modeloDrone/modeloDrone.slice';
 import intervencionReducer from './intervencion/intervencion.slice';
 import pedidoRepuestoReducer from './pedidoRepuesto/pedidoRepuesto.slice';
+import plantillaEmailReducer from './plantillaEmail/plantillaEmail.slice';
+import campanaEmailReducer from './campanaEmail/campanaEmail.slice';
 // Importa otros reducers según sea necesario
 
 export const store = configureStore({
@@ -22,6 +24,8 @@ export const store = configureStore({
     modeloDrone: modeloDroneReducer,
     intervencion: intervencionReducer,
     pedidoRepuesto: pedidoRepuestoReducer,
+    plantillaEmail: plantillaEmailReducer,
+    campanaEmail: campanaEmailReducer,
     // Agrega otros reducers según sea necesario
   },
   middleware: (getDefaultMiddleware) =>

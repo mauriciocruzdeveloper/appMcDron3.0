@@ -111,6 +111,22 @@ export {
   eliminarPedidoPersistencia
 } from './pedidosPersistencia.js';
 
+// === PLANTILLAS Y CAMPAÑAS DE EMAIL ===
+export {
+  getPlantillasEmailPersistencia,
+  guardarPlantillaEmailPersistencia,
+  eliminarPlantillaEmailPersistencia,
+} from './plantillasEmailPersistencia.js';
+
+export {
+  getCampanasEmailPersistencia,
+  guardarCampanaEmailPersistencia,
+  eliminarCampanaEmailPersistencia,
+  getRunsCampanaEmailPersistencia,
+  getRecipientsRunCampanaEmailPersistencia,
+  suscribirseEnviosCampanaEmailPersistencia,
+} from './campanasEmailPersistencia.js';
+
 // === WEBSOCKET MANAGER ===
 export {
   initWebSocketManager,
