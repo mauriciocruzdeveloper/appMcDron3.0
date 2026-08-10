@@ -1,5 +1,5 @@
 // React Router Dom imports
-import { Route, Routes, Navigate } from "react-router-dom";
+import { Route, Routes, Navigate, useLocation } from "react-router-dom";
 
 // Components
 import Inicio from "../components/Inicio/Inicio.component";
@@ -39,6 +39,7 @@ const InicioRoutes = ({ isLoggedIn, admin }) => {
     console.log("INICIO ROUTES");
     
     const userRole = useAppSelector(state => state.app.usuario?.data.Role || 'cliente');
+    const location = useLocation();
 
     // render renderiza una vez y luego queda en segundo plano
     // component instancia el componenete cada vez
@@ -171,7 +172,8 @@ const InicioRoutes = ({ isLoggedIn, admin }) => {
                 } />
             </Routes>
         </DataManagerComponent>
-        : <Navigate to="/login" replace />        
+        // Guardamos la ruta pedida para volver a ella una vez logueado (login automático o manual)
+        : <Navigate to="/login" replace state={{ from: location.pathname + location.search }} />        
     )
 }
 

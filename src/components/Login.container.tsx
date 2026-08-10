@@ -52,7 +52,8 @@ export default function Login(): JSX.Element | null {
       if (rememberMe) {
         localStorage.setItem('loginData', JSON.stringify(loginData));
       }
-      history.push('/');
+      const from = (history.location.state as { from?: string } | null)?.from;
+      history.push(from || '/');
     } else {
       openModal({
         mensaje: `Error de login: ${result.payload}`,
