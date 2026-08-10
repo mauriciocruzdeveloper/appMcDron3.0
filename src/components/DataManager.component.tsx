@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef } from "react";
 import {
     getMessagesPersistencia,
     getReparacionesPersistencia,
@@ -48,16 +48,17 @@ export function DataManagerComponent({ children }: DataManagerProps): React.Reac
     const usuario = useAppSelector(state => state.app.usuario);
     const usuarioIdMessage = useAppSelector(state => state.mensaje.usuarioIdMessage);
     const otherUserIdMessage = useAppSelector(state => state.mensaje.otherUserIdMessage);
-    const [unsubscribeReparaciones, setUnsubscribeReparaciones] = useState<Unsubscribe>();
-    const [unsubscribeUsuarios, setUnsubscribeUsuarios] = useState<Unsubscribe>();
-    const [unsubscribeMessages, setUnsubscribeMessages] = useState<Unsubscribe>();
-    const [unsubscribeRepuestos, setUnsubscribeRepuestos] = useState<Unsubscribe>();
-    const [unsubscribeModelosDrone, setUnsubscribeModelosDrone] = useState<Unsubscribe>();
-    const [unsubscribeDrones, setUnsubscribeDrones] = useState<Unsubscribe>();
-    const [unsubscribeIntervenciones, setUnsubscribeIntervenciones] = useState<Unsubscribe>();
-    const [unsubscribePedidos, setUnsubscribePedidos] = useState<Unsubscribe>();
-    const [unsubscribePlantillasEmail, setUnsubscribePlantillasEmail] = useState<Unsubscribe>();
-    const [unsubscribeCampanasEmail, setUnsubscribeCampanasEmail] = useState<Unsubscribe>();
+    // Refs (no state) para que cleanups y handlers siempre vean la desuscripción vigente
+    const unsubscribeReparaciones = useRef<Unsubscribe>();
+    const unsubscribeUsuarios = useRef<Unsubscribe>();
+    const unsubscribeMessages = useRef<Unsubscribe>();
+    const unsubscribeRepuestos = useRef<Unsubscribe>();
+    const unsubscribeModelosDrone = useRef<Unsubscribe>();
+    const unsubscribeDrones = useRef<Unsubscribe>();
+    const unsubscribeIntervenciones = useRef<Unsubscribe>();
+    const unsubscribePedidos = useRef<Unsubscribe>();
+    const unsubscribePlantillasEmail = useRef<Unsubscribe>();
+    const unsubscribeCampanasEmail = useRef<Unsubscribe>();
 
     // 🚀 Inicializar WebSocket Manager al montar el componente
     useEffect(() => {
@@ -89,15 +90,7 @@ export function DataManagerComponent({ children }: DataManagerProps): React.Reac
                     // Solo recargar datos si hubo reconexiones
                     if (result.reconnected > 0) {
                         console.log("🔄 Recargando datos después de reconexión...");
-                        getUsuarios();
-                        getReparaciones();
-                        getRepuestos();
-                        getModelosDrone();
-                        getDrones();
-                        getIntervenciones();
-                        getPedidos();
-                        getPlantillasEmail();
-                        getCampanasEmail();
+                        reloadAllData();
                     }
                 } else {
                     console.log("⚠️ No se pudo verificar la conexión WebSocket");
@@ -119,14 +112,14 @@ export function DataManagerComponent({ children }: DataManagerProps): React.Reac
     useEffect(() => {
         getUsuarios();
         return () => {
-            unsubscribeUsuarios?.();
+            unsubscribeUsuarios.current?.();
         };
     }, []);
 
     useEffect(() => {
         getReparaciones();
         return () => {
-            unsubscribeReparaciones?.();
+            unsubscribeReparaciones.current?.();
         };
     }, [usuario]);
 
@@ -134,61 +127,63 @@ export function DataManagerComponent({ children }: DataManagerProps): React.Reac
         if (!usuarioIdMessage || !otherUserIdMessage) return;
         getMensajes();
         return () => {
-            unsubscribeMessages?.();
+            unsubscribeMessages.current?.();
         };
     }, [usuarioIdMessage, otherUserIdMessage]);
 
     useEffect(() => {
         getRepuestos();
         return () => {
-            unsubscribeRepuestos?.();
+            unsubscribeRepuestos.current?.();
         };
     }, []);
 
     useEffect(() => {
         getModelosDrone();
         return () => {
-            unsubscribeModelosDrone?.();
+            unsubscribeModelosDrone.current?.();
         };
     }, []);
 
     useEffect(() => {
         getDrones();
         return () => {
-            unsubscribeDrones?.();
+            unsubscribeDrones.current?.();
         };
     }, []);
 
     useEffect(() => {
         getIntervenciones();
         return () => {
-            unsubscribeIntervenciones?.();
+            unsubscribeIntervenciones.current?.();
         };
     }, []);
 
     useEffect(() => {
         getPedidos();
         return () => {
-            unsubscribePedidos?.();
+            unsubscribePedidos.current?.();
         };
     }, []);
 
     useEffect(() => {
         getPlantillasEmail();
         return () => {
-            unsubscribePlantillasEmail?.();
+            unsubscribePlantillasEmail.current?.();
         };
     }, []);
 
     useEffect(() => {
         getCampanasEmail();
         return () => {
-            unsubscribeCampanasEmail?.();
+            unsubscribeCampanasEmail.current?.();
         };
     }, []);
 
     const getReparaciones = async () => {
         try {
+            // Cerrar el canal anterior antes de crear uno nuevo con el mismo topic
+            unsubscribeReparaciones.current?.();
             const unsubscribe = await getReparacionesPersistencia(
                 (reparaciones: ReparacionType[]) => {
                     dispatch(setReparaciones(reparaciones));
@@ -196,7 +191,7 @@ export function DataManagerComponent({ children }: DataManagerProps): React.Reac
                 usuario
             );
 
-            setUnsubscribeReparaciones(() => unsubscribe);
+            unsubscribeReparaciones.current = unsubscribe;
         } catch (error) {
             console.error("Error al obtener reparaciones:", error);
         }
@@ -204,6 +199,7 @@ export function DataManagerComponent({ children }: DataManagerProps): React.Reac
 
     const getUsuarios = async () => {
         try {
+            unsubscribeUsuarios.current?.();
             const unsubscribe = await getUsuariosPersistencia(
                 (usuarios: Usuario[]) => {
                     dispatch(setUsuarios(usuarios));
@@ -218,7 +214,7 @@ export function DataManagerComponent({ children }: DataManagerProps): React.Reac
                 },
             );
 
-            setUnsubscribeUsuarios(() => unsubscribe);
+            unsubscribeUsuarios.current = unsubscribe;
         } catch (error) {
             console.error("Error al obtener usuarios:", error);
         }
@@ -226,6 +222,7 @@ export function DataManagerComponent({ children }: DataManagerProps): React.Reac
 
     const getMensajes = async () => {
         try {
+            unsubscribeMessages.current?.();
             const unsubscribe = await getMessagesPersistencia(
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 (mensajes: any) => { // TODO: Poner el tipo correcto
@@ -235,7 +232,7 @@ export function DataManagerComponent({ children }: DataManagerProps): React.Reac
                 otherUserIdMessage,
             );
 
-            setUnsubscribeMessages(() => unsubscribe);
+            unsubscribeMessages.current = unsubscribe;
         } catch (error) {
             console.error("Error al obtener mensajes:", error);
         }
@@ -243,13 +240,14 @@ export function DataManagerComponent({ children }: DataManagerProps): React.Reac
 
     const getRepuestos = async () => {
         try {
+            unsubscribeRepuestos.current?.();
             const unsubscribe = await getRepuestosPersistencia(
                 (repuestos: Repuesto[]) => {
                     dispatch(setRepuestos(repuestos));
                 },
             );
 
-            setUnsubscribeRepuestos(() => unsubscribe);
+            unsubscribeRepuestos.current = unsubscribe;
         } catch (error) {
             console.error("Error al obtener repuestos:", error);
         }
@@ -257,13 +255,14 @@ export function DataManagerComponent({ children }: DataManagerProps): React.Reac
 
     const getModelosDrone = async () => {
         try {
+            unsubscribeModelosDrone.current?.();
             const unsubscribe = await getModelosDronePersistencia(
                 (modelosDrone: ModeloDrone[]) => {
                     dispatch(setModelosDrone(modelosDrone));
                 }
             );
 
-            setUnsubscribeModelosDrone(() => unsubscribe);
+            unsubscribeModelosDrone.current = unsubscribe;
         } catch (error) {
             console.error("Error al obtener modelos de drones:", error);
         }
@@ -271,13 +270,14 @@ export function DataManagerComponent({ children }: DataManagerProps): React.Reac
 
     const getDrones = async () => {
         try {
+            unsubscribeDrones.current?.();
             const unsubscribe = await getDronesPersistencia(
                 (drones: Drone[]) => {
                     dispatch(setDrones(drones));
                 }
             );
 
-            setUnsubscribeDrones(() => unsubscribe);
+            unsubscribeDrones.current = unsubscribe;
         } catch (error) {
             console.error("Error al obtener drones:", error);
         }
@@ -285,12 +285,13 @@ export function DataManagerComponent({ children }: DataManagerProps): React.Reac
 
     const getIntervenciones = async () => {
         try {
+            unsubscribeIntervenciones.current?.();
             const unsubscribe = await getIntervencionesPersistencia(
                 (intervenciones: Intervencion[]) => {
                     dispatch(setIntervenciones(intervenciones));
                 }
             );
-            setUnsubscribeIntervenciones(() => unsubscribe);
+            unsubscribeIntervenciones.current = unsubscribe;
         } catch (error) {
             console.error("Error al obtener intervenciones:", error);
         }
@@ -298,12 +299,13 @@ export function DataManagerComponent({ children }: DataManagerProps): React.Reac
 
     const getPedidos = async () => {
         try {
+            unsubscribePedidos.current?.();
             const unsubscribe = await getPedidosPersistencia(
                 (pedidos: PedidoRepuesto[]) => {
                     dispatch(setPedidos(pedidos));
                 }
             );
-            setUnsubscribePedidos(() => unsubscribe);
+            unsubscribePedidos.current = unsubscribe;
         } catch (error) {
             console.error("Error al obtener pedidos:", error);
         }
@@ -311,12 +313,13 @@ export function DataManagerComponent({ children }: DataManagerProps): React.Reac
 
     const getPlantillasEmail = async () => {
         try {
+            unsubscribePlantillasEmail.current?.();
             const unsubscribe = await getPlantillasEmailPersistencia(
                 (plantillas: EmailTemplate[]) => {
                     dispatch(setPlantillasEmail(plantillas));
                 }
             );
-            setUnsubscribePlantillasEmail(() => unsubscribe);
+            unsubscribePlantillasEmail.current = unsubscribe;
         } catch (error) {
             console.error("Error al obtener plantillas de email:", error);
         }
@@ -324,12 +327,13 @@ export function DataManagerComponent({ children }: DataManagerProps): React.Reac
 
     const getCampanasEmail = async () => {
         try {
+            unsubscribeCampanasEmail.current?.();
             const unsubscribe = await getCampanasEmailPersistencia(
                 (campanas: EmailCampaign[]) => {
                     dispatch(setCampanasEmail(campanas));
                 }
             );
-            setUnsubscribeCampanasEmail(() => unsubscribe);
+            unsubscribeCampanasEmail.current = unsubscribe;
         } catch (error) {
             console.error("Error al obtener campanas de email:", error);
         }
@@ -340,20 +344,26 @@ export function DataManagerComponent({ children }: DataManagerProps): React.Reac
     const refreshAll = async () => {
         try {
             await verifyAndReconnectChannels();
-            getUsuarios();
-            getReparaciones();
-            getRepuestos();
-            getModelosDrone();
-            getDrones();
-            getIntervenciones();
-            getPedidos();
-            getPlantillasEmail();
-            getCampanasEmail();
-            if (usuarioIdMessage && otherUserIdMessage) {
-                getMensajes();
-            }
+            reloadAllData();
         } catch (error) {
             console.error("Error al refrescar datos:", error);
+        }
+    };
+
+    // Cada getX() ya cierra su canal anterior antes de crear el nuevo,
+    // por lo que rehacer todo es seguro (sin canales duplicados)
+    const reloadAllData = () => {
+        getUsuarios();
+        getReparaciones();
+        getRepuestos();
+        getModelosDrone();
+        getDrones();
+        getIntervenciones();
+        getPedidos();
+        getPlantillasEmail();
+        getCampanasEmail();
+        if (usuarioIdMessage && otherUserIdMessage) {
+            getMensajes();
         }
     };
 
