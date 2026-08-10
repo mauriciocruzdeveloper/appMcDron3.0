@@ -281,6 +281,7 @@ export const guardarReciboAsync = createAsyncThunk(
         CiudadUsu: presupuesto.CiudadUsu,
         Role: 'cliente', // Por defecto, los usuarios creados desde recibo son clientes
         PasswordUsu: generarPasswordPorDefecto(presupuesto.NombreUsu), // Contraseña generada automáticamente
+        ObservacionesProfesionales: presupuesto.ObservacionesProfesionales,
       }
     }
     const drone: Drone = {
@@ -367,6 +368,7 @@ export const guardarTransitoAsync = createAsyncThunk(
         CiudadUsu: presupuesto.CiudadUsu,
         Role: 'cliente', // Por defecto, los usuarios creados desde tránsito son clientes
         PasswordUsu: generarPasswordPorDefecto(presupuesto.NombreUsu), // Contraseña generada automáticamente
+        ObservacionesProfesionales: presupuesto.ObservacionesProfesionales,
       }
     }
     const drone: Drone = {

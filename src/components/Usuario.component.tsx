@@ -10,6 +10,7 @@ import { SelectOption } from '../types/selectOption';
 import { Usuario } from "../types/usuario";
 import { useAppSelector } from "../redux-tool-kit/hooks/useAppSelector";
 import { useAppDispatch } from "../redux-tool-kit/hooks/useAppDispatch";
+import { usePermissions } from "../hooks/usePermissions";
 import { useModal } from "./Modal/useModal";
 import { eliminarUsuarioAsync, guardarUsuarioAsync } from "../redux-tool-kit/usuario/usuario.actions";
 import { selectUsuarioPorId } from "../redux-tool-kit/usuario/usuario.selectors";
@@ -27,6 +28,7 @@ export default function UsuarioComponent(): React.ReactElement | null {
     const dispatch = useAppDispatch();
     const history = useHistory();
     const { openModal } = useModal();
+    const { canManageUsuarios } = usePermissions();
 
     const { id } = useParams<ParamTypes>();
     const usuarioLogueado = useAppSelector(state => state.app.usuario);
@@ -58,7 +60,8 @@ export default function UsuarioComponent(): React.ReactElement | null {
             Role: 'cliente',
             Nick: '',
             UrlFotoUsu: '',
-            PasswordUsu: ''
+            PasswordUsu: '',
+            ObservacionesProfesionales: ''
         }
     });
     
@@ -132,6 +135,7 @@ export default function UsuarioComponent(): React.ReactElement | null {
             });
             return;
         }
+
         
         // Si es el propio perfil y quiere cambiar la contraseña
         if (esPropioPerfil && nuevaPassword) {
@@ -495,6 +499,22 @@ export default function UsuarioComponent(): React.ReactElement | null {
                             disabled={!provinciasSelect?.length || !usuario?.data?.ProvinciaUsu}
                         />
                     </div>
+                    {canManageUsuarios && (
+                        <div>
+                            <label className='form-label'>Observaciones profesionales</label>
+                            <textarea
+                                onChange={handleOnChange}
+                                className='form-control'
+                                id='ObservacionesProfesionales'
+                                rows={4}
+                                value={usuario?.data?.ObservacionesProfesionales || ''}
+                                placeholder='Notas internas: a qué se dedica, prioridad, valor del cliente...'
+                            />
+                            <small className='text-muted'>
+                                Uso interno/administrativo, no visible para el cliente
+                            </small>
+                        </div>
+                    )}
                 </div>
             </div>
 

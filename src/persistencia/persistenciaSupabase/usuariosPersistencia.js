@@ -18,7 +18,8 @@ export const getUsuariosPersistencia = async (setUsuariosToRedux) => {
           address,
           city,
           state,
-          role
+          role,
+          professional_notes
         `)
         .order('first_name');
 
@@ -36,7 +37,8 @@ export const getUsuariosPersistencia = async (setUsuariosToRedux) => {
           DireccionUsu: item?.address || '',
           CiudadUsu: item?.city || '',
           ProvinciaUsu: item?.state || '',
-          Role: item?.role || 'cliente'
+          Role: item?.role || 'cliente',
+          ObservacionesProfesionales: item?.professional_notes || ''
         }
       }));
 
@@ -97,7 +99,8 @@ export const getClientePersistencia = async (id) => {
         DireccionUsu: data.address || '',
         CiudadUsu: data.city || '',
         ProvinciaUsu: data.state || '',
-        Role: data.role || 'cliente'
+        Role: data.role || 'cliente',
+        ObservacionesProfesionales: data.professional_notes || ''
       }
     };
   } catch (error) {
@@ -137,7 +140,8 @@ export const getClientePorEmailPersistencia = async (email) => {
         DireccionUsu: data.address || '',
         CiudadUsu: data.city || '',
         ProvinciaUsu: data.state || '',
-        Role: data.role || 'cliente'
+        Role: data.role || 'cliente',
+        ObservacionesProfesionales: data.professional_notes || ''
       }
     };
   } catch (error) {
@@ -161,6 +165,7 @@ export const guardarUsuarioPersistencia = async (usuario) => {
       state: usuario.data.ProvinciaUsu || '',
       role: usuario.data.Role || 'cliente',
       nick: usuario.data.EmailUsu,
+      professional_notes: usuario.data.ObservacionesProfesionales || null,
     };
 
     let result;
@@ -209,6 +214,18 @@ export const guardarUsuarioPersistencia = async (usuario) => {
       if (getUserError) throw getUserError;
       
       result = userCreated;
+
+      // El endpoint de registro no acepta professional_notes: se completa con un update aparte
+      if (usuario.data.ObservacionesProfesionales) {
+        const { data: updated, error: updateNotesError } = await supabase
+          .from('user')
+          .update({ professional_notes: usuario.data.ObservacionesProfesionales })
+          .eq('id', result.id)
+          .select();
+
+        if (updateNotesError) throw updateNotesError;
+        result = updated[0];
+      }
     }
 
     return {

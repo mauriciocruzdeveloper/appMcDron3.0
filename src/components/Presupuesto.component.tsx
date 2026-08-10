@@ -34,6 +34,7 @@ export interface PresupuestoProps {
     PrioridadRep: number | null;
     FeConRep: number | null;
     UsuarioRep: string;
+    ObservacionesProfesionales: string;
 }
 
 const INITIAL_PRESUPUESTO: PresupuestoProps = {
@@ -52,6 +53,7 @@ const INITIAL_PRESUPUESTO: PresupuestoProps = {
     EstadoRep: "",
     PrioridadRep: null,
     UsuarioRep: "",
+    ObservacionesProfesionales: "",
 };
 
 export default function Presupuesto(): JSX.Element {
@@ -274,6 +276,7 @@ export default function Presupuesto(): JSX.Element {
                 ProvinciaUsu: response.payload.data?.ProvinciaUsu || "",
                 CiudadUsu: response.payload.data?.CiudadUsu || "",
                 UsuarioRep: response.payload.id || "",
+                ObservacionesProfesionales: response.payload.data?.ObservacionesProfesionales || "",
                 // Limpiar drone seleccionado al cambiar usuario
                 DroneId: "",
                 ModeloDroneIdRep: "",
@@ -408,6 +411,26 @@ export default function Presupuesto(): JSX.Element {
                     </div>
                 </div>
             </div>
+
+            {isAdmin && (
+                <div className="card mb-3">
+                    <div className="card-body">
+                        <h5 className="card-title bluemcdron">OBSERVACIONES PROFESIONALES</h5>
+                        <div>
+                            <label className="form-label">
+                                A qué se dedica el cliente, prioridad, valor, etc.
+                            </label>
+                            <TextareaAutosize
+                                onChange={e => changeInputUsu(e.target.id, e.target.value)}
+                                className="form-control"
+                                id="ObservacionesProfesionales"
+                                value={presupuesto.ObservacionesProfesionales || ""}
+                                minRows={4}
+                            />
+                        </div>
+                    </div>
+                </div>
+            )}
 
             <div className="card mb-3">
                 <div className="card-body">

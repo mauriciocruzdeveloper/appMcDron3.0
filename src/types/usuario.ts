@@ -14,7 +14,8 @@ export interface Usuario {
       Role: UserRole,         // role en Supabase
       Nick?: string,          // nick en Supabase
       UrlFotoUsu?: string,    // url_photo en Supabase
-      PasswordUsu?: string    // Solo para crear nuevos usuarios
+      PasswordUsu?: string,   // Solo para crear nuevos usuarios
+      ObservacionesProfesionales?: string // professional_notes en Supabase (solo admin)
     };
 }
 
