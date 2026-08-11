@@ -149,11 +149,13 @@ export const getMessagesPersistencia = (setMessagesToRedux, usuarioId, otherUser
         }));
 
         setMessagesToRedux(messages);
-      });
-
-      // Devolver función para cancelar la suscripción
-      resolve(() => {
+      }).then(() => {
+        resolve(() => {
+          supabase.removeChannel(channel);
+        });
+      }).catch(error => {
         supabase.removeChannel(channel);
+        reject(error);
       });
     } catch (error) {
       console.error('Error al obtener mensajes:', error);

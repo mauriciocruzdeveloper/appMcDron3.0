@@ -1,5 +1,4 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import './PullToRefresh.styles.css';
 
 interface PullToRefreshProps {
     onRefresh: () => Promise<void> | void;
@@ -14,19 +13,20 @@ const MAX_PULL = 110;
 export function PullToRefresh({ onRefresh, children }: PullToRefreshProps): React.ReactElement {
     const containerRef = useRef<HTMLDivElement>(null);
     const startYRef = useRef<number | null>(null);
+    const refreshingRef = useRef(false);
     const [pullDistance, setPullDistance] = useState(0);
     const [refreshing, setRefreshing] = useState(false);
 
     const handleTouchStart = useCallback((event: TouchEvent) => {
-        if (refreshing || window.scrollY > 0) {
+        if (refreshingRef.current || window.scrollY > 0) {
             startYRef.current = null;
             return;
         }
         startYRef.current = event.touches[0].clientY;
-    }, [refreshing]);
+    }, []);
 
     const handleTouchMove = useCallback((event: TouchEvent) => {
-        if (startYRef.current === null || refreshing) return;
+        if (startYRef.current === null || refreshingRef.current) return;
 
         const diff = event.touches[0].clientY - startYRef.current;
         if (diff <= 0) {
@@ -37,17 +37,19 @@ export function PullToRefresh({ onRefresh, children }: PullToRefreshProps): Reac
         // Evita el rebote nativo del navegador/webview mientras se tira hacia abajo
         if (event.cancelable) event.preventDefault();
         setPullDistance(Math.min(diff, MAX_PULL));
-    }, [refreshing]);
+    }, []);
 
     const handleTouchEnd = useCallback(async () => {
         if (startYRef.current === null) return;
         startYRef.current = null;
 
-        if (pullDistance >= PULL_THRESHOLD) {
+        if (pullDistance >= PULL_THRESHOLD && !refreshingRef.current) {
+            refreshingRef.current = true;
             setRefreshing(true);
             try {
                 await onRefresh();
             } finally {
+                refreshingRef.current = false;
                 setRefreshing(false);
             }
         }

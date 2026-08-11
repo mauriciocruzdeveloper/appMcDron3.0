@@ -219,8 +219,7 @@ export const getModelosDronePersistencia = async (setModelosDroneToRedux) => {
     }
   };
 
-  // Cargar datos iniciales
-  cargarModelosDrone();
+  const cargaInicial = cargarModelosDrone();
 
   // Configurar la suscripción en tiempo real
   const channel = supabase
@@ -235,6 +234,8 @@ export const getModelosDronePersistencia = async (setModelosDroneToRedux) => {
       cargarModelosDrone();
     })
     .subscribe();
+
+  await cargaInicial;
 
   // Devolver función para cancelar la suscripción
   return () => {
@@ -477,8 +478,7 @@ export const getDronesPersistencia = async (setDronesToRedux) => {
     }
   };
 
-  // Cargar datos iniciales
-  cargarDrones();
+  const cargaInicial = cargarDrones();
 
   // Configurar la suscripción en tiempo real
   const channel = supabase
@@ -493,6 +493,8 @@ export const getDronesPersistencia = async (setDronesToRedux) => {
       cargarDrones();
     })
     .subscribe();
+
+  await cargaInicial;
 
   // Devolver función para cancelar la suscripción
   return () => {

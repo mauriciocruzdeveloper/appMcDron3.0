@@ -261,7 +261,7 @@ export const actualizarFotosAsignacionPersistencia = async (asignacionId, fotos)
 };
 
 // GET todas las Reparaciones con suscripción en tiempo real
-export const getReparacionesPersistencia = (setReparacionesToRedux, usuario) => {
+export const getReparacionesPersistencia = async (setReparacionesToRedux, usuario) => {
   // Función para cargar los datos iniciales
   const cargarReparaciones = async () => {
     try {
@@ -386,8 +386,7 @@ export const getReparacionesPersistencia = (setReparacionesToRedux, usuario) => 
     }
   };
 
-  // Cargar datos iniciales
-  cargarReparaciones();
+  const cargaInicial = cargarReparaciones();
 
   // Configurar la suscripción en tiempo real
   const channel = supabase
@@ -403,9 +402,23 @@ export const getReparacionesPersistencia = (setReparacionesToRedux, usuario) => 
     })
     .subscribe();
 
+  const repairInterventionChannel = supabase
+    .channel('reparaciones-intervenciones-changes')
+    .on('postgres_changes', {
+      event: '*',
+      schema: 'public',
+      table: 'repair_intervention'
+    }, () => {
+      cargarReparaciones();
+    })
+    .subscribe();
+
+  await cargaInicial;
+
   // Devolver función para cancelar la suscripción
   return () => {
     supabase.removeChannel(channel);
+    supabase.removeChannel(repairInterventionChannel);
   };
 };
 

@@ -31,50 +31,49 @@ const toFrontend = (row, items = []) => ({
 // -------------------------
 export const getPedidosPersistencia = async (callback) => {
   try {
-    const { data: pedidos, error } = await supabase
-      .from('purchase_order')
-      .select('*')
-      .order('order_date', { ascending: false });
+    const cargarPedidos = async () => {
+      const { data: pedidos, error } = await supabase
+        .from('purchase_order')
+        .select('*')
+        .order('order_date', { ascending: false });
 
-    if (error) throw error;
+      if (error) throw error;
 
-    const pedidosConItems = await Promise.all(
-      (pedidos ?? []).map(async (p) => {
-        const { data: items, error: itemsError } = await supabase
-          .from('purchase_order_item')
-          .select('*')
-          .eq('purchase_order_id', p.id);
-        if (itemsError) throw itemsError;
-        return toFrontend(p, items ?? []);
-      })
-    );
+      const pedidosConItems = await Promise.all(
+        (pedidos ?? []).map(async (pedido) => {
+          const { data: items, error: itemsError } = await supabase
+            .from('purchase_order_item')
+            .select('*')
+            .eq('purchase_order_id', pedido.id);
+          if (itemsError) throw itemsError;
+          return toFrontend(pedido, items ?? []);
+        })
+      );
 
-    callback(pedidosConItems);
+      callback(pedidosConItems);
+    };
+
+    await cargarPedidos();
 
     // Suscripción en tiempo real
     const channel = supabase
       .channel('purchase_order_changes')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'purchase_order' }, async () => {
-        const { data: updated, error: updError } = await supabase
-          .from('purchase_order')
-          .select('*')
-          .order('order_date', { ascending: false });
-        if (updError) return;
-
-        const updatedConItems = await Promise.all(
-          (updated ?? []).map(async (p) => {
-            const { data: items } = await supabase
-              .from('purchase_order_item')
-              .select('*')
-              .eq('purchase_order_id', p.id);
-            return toFrontend(p, items ?? []);
-          })
-        );
-        callback(updatedConItems);
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'purchase_order' }, () => {
+        cargarPedidos();
       })
       .subscribe();
 
-    return () => supabase.removeChannel(channel);
+    const itemsChannel = supabase
+      .channel('purchase_order_items_changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'purchase_order_item' }, () => {
+        cargarPedidos();
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+      supabase.removeChannel(itemsChannel);
+    };
   } catch (error) {
     console.error('Error al obtener pedidos:', error);
     throw error;

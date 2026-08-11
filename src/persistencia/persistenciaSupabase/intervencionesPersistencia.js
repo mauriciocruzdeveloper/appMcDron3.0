@@ -326,8 +326,7 @@ export const getIntervencionesPersistencia = async (setIntervencionesToRedux) =>
     }
   };
 
-  // Cargar datos iniciales
-  cargarIntervenciones();
+  const cargaInicial = cargarIntervenciones();
 
   // Configurar las suscripciones en tiempo real para ambas tablas
   const channel1 = supabase
@@ -355,6 +354,8 @@ export const getIntervencionesPersistencia = async (setIntervencionesToRedux) =>
       cargarIntervenciones();
     })
     .subscribe();
+
+  await cargaInicial;
 
   // Devolver función para cancelar las suscripciones
   return () => {

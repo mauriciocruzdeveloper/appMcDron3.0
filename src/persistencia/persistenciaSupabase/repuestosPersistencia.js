@@ -309,8 +309,7 @@ export const getRepuestosPersistencia = async (setRepuestosToRedux) => {
     }
   };
 
-  // Cargar datos iniciales
-  cargarRepuestos();
+  const cargaInicial = cargarRepuestos();
 
   // Configurar la suscripción en tiempo real
   const channelRepuestos = supabase
@@ -358,6 +357,8 @@ export const getRepuestosPersistencia = async (setRepuestosToRedux) => {
         console.error('- Permisos insuficientes en la tabla');
       }
     });
+
+  await cargaInicial;
 
   // Devolver función para cancelar la suscripción
   return () => {

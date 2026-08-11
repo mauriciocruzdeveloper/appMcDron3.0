@@ -92,7 +92,7 @@ const clearReconnectTimeout = () => {
 /**
  * Verifica el estado de los canales y reconecta los que estén inactivos
  */
-export const verifyAndReconnectChannels = async () => {
+export const verifyAndReconnectChannels = async (notifyReload = true) => {
   try {
     console.log('🔍 Verificando estado de canales WebSocket...');
     
@@ -112,14 +112,14 @@ export const verifyAndReconnectChannels = async () => {
 
       if (estado === REALTIME_CHANNEL_STATES.closed || 
           estado === REALTIME_CHANNEL_STATES.errored) {
-        console.log(`🔄 Reconectando canal: ${nombreCanal}`);
+        console.log(`🔄 Canal inactivo, debe recrearse: ${nombreCanal}`);
         
         try {
-          await canal.subscribe();
+          await supabase.removeChannel(canal);
           reconnected++;
-          console.log(`✅ Canal reconectado: ${nombreCanal}`);
+          console.log(`✅ Canal inactivo eliminado: ${nombreCanal}`);
         } catch (error) {
-          console.error(`❌ Error al reconectar canal ${nombreCanal}:`, error);
+          console.error(`❌ Error al eliminar canal inactivo ${nombreCanal}:`, error);
         }
       } else if (estado === REALTIME_CHANNEL_STATES.joined) {
         console.log(`✅ Canal activo: ${nombreCanal}`);
@@ -129,6 +129,10 @@ export const verifyAndReconnectChannels = async () => {
     }
 
     console.log(`🔄 Reconexión completada: ${reconnected}/${canalesArray.length} canales reconectados`);
+
+    if (reconnected > 0 && notifyReload && typeof window !== 'undefined') {
+      window.dispatchEvent(new Event('mcdron:realtime-reload'));
+    }
     
     return {
       reconnected,
@@ -159,7 +163,7 @@ const startHeartbeat = () => {
       return;
     }
 
-    // Verificar estado de la conexión
+    // Verificar estado de la conexión y de cada canal
     const connectionState = supabase.realtime?.connectionState?.();
     
     if (connectionState !== 'open') {
@@ -167,6 +171,7 @@ const startHeartbeat = () => {
       scheduleReconnect();
     } else {
       console.log('💓 Heartbeat: Conexión activa');
+      verifyAndReconnectChannels();
     }
   }, HEARTBEAT_INTERVAL);
 };

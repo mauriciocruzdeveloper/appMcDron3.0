@@ -48,6 +48,12 @@ export function DataManagerComponent({ children }: DataManagerProps): React.Reac
     const usuario = useAppSelector(state => state.app.usuario);
     const usuarioIdMessage = useAppSelector(state => state.mensaje.usuarioIdMessage);
     const otherUserIdMessage = useAppSelector(state => state.mensaje.otherUserIdMessage);
+    const usuarioRef = useRef(usuario);
+    const usuarioIdMessageRef = useRef(usuarioIdMessage);
+    const otherUserIdMessageRef = useRef(otherUserIdMessage);
+    usuarioRef.current = usuario;
+    usuarioIdMessageRef.current = usuarioIdMessage;
+    otherUserIdMessageRef.current = otherUserIdMessage;
     // Refs (no state) para que cleanups y handlers siempre vean la desuscripción vigente
     const unsubscribeReparaciones = useRef<Unsubscribe>();
     const unsubscribeUsuarios = useRef<Unsubscribe>();
@@ -59,6 +65,7 @@ export function DataManagerComponent({ children }: DataManagerProps): React.Reac
     const unsubscribePedidos = useRef<Unsubscribe>();
     const unsubscribePlantillasEmail = useRef<Unsubscribe>();
     const unsubscribeCampanasEmail = useRef<Unsubscribe>();
+    const refreshInProgress = useRef<Promise<void> | null>(null);
 
     // 🚀 Inicializar WebSocket Manager al montar el componente
     useEffect(() => {
@@ -79,33 +86,19 @@ export function DataManagerComponent({ children }: DataManagerProps): React.Reac
             }
 
             console.log("📱 App en primer plano - Verificando conexión...");
-            
-            try {
-                // Usar el nuevo WebSocket Manager para verificar y reconectar
-                const result = await verifyAndReconnectChannels();
-                
-                if (result.success) {
-                    console.log(`✅ Verificación completada: ${result.reconnected}/${result.total} canales reconectados`);
-                    
-                    // Solo recargar datos si hubo reconexiones
-                    if (result.reconnected > 0) {
-                        console.log("🔄 Recargando datos después de reconexión...");
-                        reloadAllData();
-                    }
-                } else {
-                    console.log("⚠️ No se pudo verificar la conexión WebSocket");
-                }
-            } catch (error) {
-                console.error("❌ Error al verificar conexión al websocket:", error);
-            }
+            await refreshAll();
         };
 
-        handleVisibilityChange();
+        const handleRealtimeReload = () => {
+            refreshAll();
+        };
 
         document.addEventListener("visibilitychange", handleVisibilityChange);
+        window.addEventListener("mcdron:realtime-reload", handleRealtimeReload);
 
         return () => {
             document.removeEventListener("visibilitychange", handleVisibilityChange);
+            window.removeEventListener("mcdron:realtime-reload", handleRealtimeReload);
         };
     }, []);
 
@@ -188,7 +181,7 @@ export function DataManagerComponent({ children }: DataManagerProps): React.Reac
                 (reparaciones: ReparacionType[]) => {
                     dispatch(setReparaciones(reparaciones));
                 },
-                usuario
+                usuarioRef.current
             );
 
             unsubscribeReparaciones.current = unsubscribe;
@@ -228,8 +221,8 @@ export function DataManagerComponent({ children }: DataManagerProps): React.Reac
                 (mensajes: any) => { // TODO: Poner el tipo correcto
                     dispatch(setMessages(mensajes));
                 },
-                usuarioIdMessage,
-                otherUserIdMessage,
+                usuarioIdMessageRef.current,
+                otherUserIdMessageRef.current,
             );
 
             unsubscribeMessages.current = unsubscribe;
@@ -342,29 +335,43 @@ export function DataManagerComponent({ children }: DataManagerProps): React.Reac
     // Refresco manual (gesto de deslizar hacia abajo): reintenta la conexión
     // realtime y vuelve a pedir todos los datos, igual que al volver del segundo plano
     const refreshAll = async () => {
-        try {
-            await verifyAndReconnectChannels();
-            reloadAllData();
-        } catch (error) {
-            console.error("Error al refrescar datos:", error);
+        if (refreshInProgress.current) {
+            return refreshInProgress.current;
         }
+
+        refreshInProgress.current = (async () => {
+            try {
+                await verifyAndReconnectChannels(false);
+                await reloadAllData();
+            } catch (error) {
+                console.error("Error al refrescar datos:", error);
+            } finally {
+                refreshInProgress.current = null;
+            }
+        })();
+
+        return refreshInProgress.current;
     };
 
     // Cada getX() ya cierra su canal anterior antes de crear el nuevo,
     // por lo que rehacer todo es seguro (sin canales duplicados)
-    const reloadAllData = () => {
-        getUsuarios();
-        getReparaciones();
-        getRepuestos();
-        getModelosDrone();
-        getDrones();
-        getIntervenciones();
-        getPedidos();
-        getPlantillasEmail();
-        getCampanasEmail();
-        if (usuarioIdMessage && otherUserIdMessage) {
-            getMensajes();
+    const reloadAllData = async () => {
+        const recargas: Promise<void>[] = [
+            getUsuarios(),
+            getReparaciones(),
+            getRepuestos(),
+            getModelosDrone(),
+            getDrones(),
+            getIntervenciones(),
+            getPedidos(),
+            getPlantillasEmail(),
+            getCampanasEmail(),
+        ];
+        if (usuarioIdMessageRef.current && otherUserIdMessageRef.current) {
+            recargas.push(getMensajes());
         }
+
+        await Promise.all(recargas);
     };
 
     return (

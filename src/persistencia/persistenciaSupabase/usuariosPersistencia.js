@@ -49,8 +49,7 @@ export const getUsuariosPersistencia = async (setUsuariosToRedux) => {
     }
   };
 
-  // Cargar datos iniciales
-  cargarUsuarios();
+  const cargaInicial = cargarUsuarios();
 
   // Configurar la suscripción en tiempo real
   const channel = supabase
@@ -65,6 +64,8 @@ export const getUsuariosPersistencia = async (setUsuariosToRedux) => {
       cargarUsuarios();
     })
     .subscribe();
+
+  await cargaInicial;
 
   // Devolver función para cancelar la suscripción
   return () => {
