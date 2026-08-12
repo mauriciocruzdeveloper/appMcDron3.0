@@ -95,6 +95,11 @@ export const ReparacionConsulta: React.FC<ReparacionConsultaProps> = ({
         history.push(`/inicio/usuarios/${usuario.id}`);
     };
 
+    const handleGoToDrone = () => {
+        if (!reparacion.data.DroneId) return;
+        history.push(`/inicio/drones/${reparacion.data.DroneId}`);
+    };
+
     const handleSendEmail = () => {
         if (!reparacion || !usuario) return;
         enviarEmailVacio(reparacion, usuario);
@@ -133,15 +138,25 @@ export const ReparacionConsulta: React.FC<ReparacionConsultaProps> = ({
     return (
         <div className="card mb-3" id="seccion-consulta">
             <div className="card-body">
-                <div className="d-flex w-100 justify-content-between align-items-center">
+                <div className="d-flex w-100 justify-content-between align-items-center gap-2">
                     <h5 className="card-title bluemcdron">CONSULTA</h5>
-                    <button
-                        type="button"
-                        className="btn btn-outline-secondary bg-bluemcdron text-white"
-                        onClick={handleGoToUser}
-                    >
-                        Ir al Cliente
-                    </button>
+                    <div className="d-flex gap-2">
+                        <button
+                            type="button"
+                            className="btn btn-outline-secondary bg-bluemcdron text-white"
+                            onClick={handleGoToUser}
+                        >
+                            Ir al Cliente
+                        </button>
+                        <button
+                            type="button"
+                            className="btn btn-outline-secondary bg-bluemcdron text-white"
+                            onClick={handleGoToDrone}
+                            disabled={!reparacion.data.DroneId}
+                        >
+                            Ir al Drone
+                        </button>
+                    </div>
                 </div>
                 <div>
                     <label className="form-label">Fecha de Cosulta</label>
