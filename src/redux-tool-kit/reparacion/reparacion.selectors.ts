@@ -925,6 +925,8 @@ export const selectPuedeAvanzarA = (reparacionId: string, nombreEstadoDestino: s
         return estadoActual.nombre === 'Rechazado';
       }
 
+      // El rechazo del presupuesto es una decisión previa a la aceptación. Si la reparación ya fue aceptada,
+      // la salida coherente es cancelación/abandono, no volver a Rechazado.
       if (estadoActual.nombre === 'Aceptado' && nombreEstadoDestino === 'Rechazado') return false;
       if (estadoActual.nombre === 'Rechazado' && nombreEstadoDestino === 'Aceptado') return false;
 

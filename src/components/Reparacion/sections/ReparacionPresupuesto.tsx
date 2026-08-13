@@ -52,6 +52,9 @@ export const ReparacionPresupuesto: React.FC<ReparacionPresupuestoProps> = ({
     const puedeAvanzarARechazado = useAppSelector(state => 
         selectPuedeAvanzarA(reparacionId, 'Rechazado')(state)
     );
+    const puedeAvanzarACancelado = useAppSelector(state => 
+        selectPuedeAvanzarA(reparacionId, 'Cancelado')(state)
+    );
 
     // Bloqueo por estado: una vez presupuestado no se puede modificar el presupuesto
     const isPresupuestado = reparacion
@@ -128,6 +131,14 @@ export const ReparacionPresupuesto: React.FC<ReparacionPresupuestoProps> = ({
         dispatch(cambiarEstadoReparacionAsync({
             reparacionId,
             nuevoEstado: 'Rechazado',
+            enviarEmail: false
+        }));
+    };
+
+    const avanzarACancelado = () => {
+        dispatch(cambiarEstadoReparacionAsync({
+            reparacionId,
+            nuevoEstado: 'Cancelado',
             enviarEmail: false
         }));
     };
@@ -287,7 +298,7 @@ export const ReparacionPresupuesto: React.FC<ReparacionPresupuestoProps> = ({
                             </div>
                         )}
 
-                        {(puedeAvanzarAAceptado || puedeAvanzarARechazado) && (
+                        {(puedeAvanzarAAceptado || puedeAvanzarARechazado || puedeAvanzarACancelado) && (
                             <div className="d-flex flex-wrap gap-2">
                                 {puedeAvanzarAAceptado && (
                                     <button
@@ -307,6 +318,16 @@ export const ReparacionPresupuesto: React.FC<ReparacionPresupuestoProps> = ({
                                         onClick={avanzarARechazado}
                                     >
                                         Presupuesto Rechazado
+                                    </button>
+                                )}
+                                {puedeAvanzarACancelado && (
+                                    <button
+                                        type="button"
+                                        className="btn btn-dark flex-fill"
+                                        style={{ minWidth: '140px' }}
+                                        onClick={avanzarACancelado}
+                                    >
+                                        Cancelar Reparación
                                     </button>
                                 )}
                             </div>

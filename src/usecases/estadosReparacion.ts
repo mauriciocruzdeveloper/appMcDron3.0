@@ -38,10 +38,11 @@ export const transicionesPermitidas: Record<EstadoReparacion, EstadoReparacion[]
   Revisado: ["Presupuestado"],
   Presupuestado: ["Aceptado", "Rechazado", "Cancelado"],
   
-  // ⬇️ MODIFICADO: Aceptado ahora puede ir a Repuestos
-  Aceptado: ["Repuestos", "Reparado", "Rechazado", "Cancelado", "Abandonado"],
+  // Aceptado puede pausar (Repuestos), resolver (Reparado) o cancelar definitivamente (Cancelado).
+  // El rechazo del presupuesto corresponde al flujo previo a la aceptación (Presupuestado -> Rechazado).
+  Aceptado: ["Repuestos", "Reparado", "Cancelado", "Abandonado"],
   
-  // ⬇️ NUEVO: Estado Repuestos con ciclo bidireccional
+  // Repuestos puede reanudar o cerrar definitivamente por cancelación/abandono.
   Repuestos: ["Aceptado", "Cancelado", "Abandonado"],
   
   Rechazado: ["Diagnosticado", "Cancelado", "Abandonado"],
@@ -101,7 +102,7 @@ export const esTransicionValida = (
  * 
  * @example
  * getEstadosPermitidos("Aceptado") 
- * // ["Repuestos", "Reparado", "Rechazado", "Cancelado", "Abandonado"]
+ * // ["Repuestos", "Reparado", "Cancelado", "Abandonado"]
  */
 export const getEstadosPermitidos = (
   estadoActual: EstadoReparacion

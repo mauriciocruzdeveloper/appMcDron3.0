@@ -144,7 +144,8 @@ const puedeAvanzarA = (nombreEstado: string): boolean => {
         return estadoActual.nombre === 'Rechazado';
     }
 
-    // Prevenir cambio entre Aceptado y Rechazado
+    // El rechazo es exclusivo del flujo previo a la aceptación.
+    // Si el cliente desiste después de aceptar, la salida es Cancelado/Abandonado.
     if (estadoActual.nombre === 'Aceptado' && nombreEstado === 'Rechazado') return false;
     if (estadoActual.nombre === 'Rechazado' && nombreEstado === 'Aceptado') return false;
     
@@ -190,9 +191,10 @@ const puedeAvanzarA = (nombreEstado: string): boolean => {
 
 1. **Exclusividad Aceptado/Rechazado**: Una vez en etapa 7 u 8, no se puede ir al estado contrario ✅ **IMPLEMENTADO**
 2. **Flujos Paralelos**: Aceptado solo puede ir a Reparado, Rechazado solo a Diagnosticado ✅ **IMPLEMENTADO**
-3. **Convergencia**: Ambos flujos convergen en Cobrado (etapa 11) ✅ **IMPLEMENTADO**
-4. **Solo Admin**: Solo administradores pueden cambiar estados ✅ **IMPLEMENTADO**
-5. **Progresión**: Solo se puede avanzar a etapas superiores ✅ **IMPLEMENTADO**
+3. **Cancelación post-aceptación**: Si el cliente desiste después de aceptar, la salida es Cancelado (o Abandonado), nunca Rechazado ✅ **IMPLEMENTADO** (ver `openspec/changes/allow-cancel-accepted-repair/`)
+4. **Convergencia**: Ambos flujos convergen en Cobrado (etapa 11) ✅ **IMPLEMENTADO**
+5. **Solo Admin**: Solo administradores pueden cambiar estados ✅ **IMPLEMENTADO**
+6. **Progresión**: Solo se puede avanzar a etapas superiores ✅ **IMPLEMENTADO**
 
 ## Implementación vs Documentación
 

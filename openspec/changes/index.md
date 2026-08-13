@@ -4,6 +4,19 @@ Este directorio contiene todas las propuestas de cambio estructuradas según el 
 
 ## 📋 Active Changes
 
+### `allow-cancel-accepted-repair`
+**Status:** Implemented  
+**Priority:** Medium  
+**Created:** 2026-08-12  
+
+Permite cancelar una reparación ya aceptada (Aceptado → Cancelado) y elimina la transición incoherente Aceptado → Rechazado del mapa de dominio.
+
+- [📝 Proposal](./allow-cancel-accepted-repair/proposal.md)
+- [✅ Tasks](./allow-cancel-accepted-repair/tasks.md)
+- [🔧 Spec](./allow-cancel-accepted-repair/specs/reparaciones-intervenciones/spec.md)
+
+---
+
 ### `user-roles-system`
 **Status:** Draft  
 **Priority:** High  

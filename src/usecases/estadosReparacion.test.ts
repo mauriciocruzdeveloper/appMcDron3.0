@@ -56,11 +56,18 @@ describe('estadosReparacion - Transiciones de Estado', () => {
       expect(permitidos).toContain('Repuestos');
     });
 
-    test('permite todas las transiciones desde Aceptado', () => {
+    test('permite cancelación desde Aceptado', () => {
+      expect(esTransicionValida('Aceptado', 'Cancelado')).toBe(true);
+    });
+
+    test('NO permite cambiar Aceptado a Rechazado', () => {
+      expect(esTransicionValida('Aceptado', 'Rechazado')).toBe(false);
+    });
+
+    test('permite todas las transiciones válidas desde Aceptado', () => {
       const estadosEsperados: EstadoReparacion[] = [
         'Repuestos',
         'Reparado',
-        'Rechazado',
         'Cancelado',
         'Abandonado'
       ];
