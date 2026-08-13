@@ -36,7 +36,8 @@ export const transicionesPermitidas: Record<EstadoReparacion, EstadoReparacion[]
   Transito: ["Recibido", "Cancelado"],
   Recibido: ["Revisado"],
   Revisado: ["Presupuestado"],
-  Presupuestado: ["Aceptado", "Rechazado", "Cancelado"],
+  // Desde Presupuestado el cliente solo decide: acepta o rechaza.
+  Presupuestado: ["Aceptado", "Rechazado"],
   
   // Aceptado puede pausar (Repuestos), resolver (Reparado) o cancelar definitivamente (Cancelado).
   // El rechazo del presupuesto corresponde al flujo previo a la aceptación (Presupuestado -> Rechazado).

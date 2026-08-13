@@ -95,6 +95,10 @@ describe('estadosReparacion - Transiciones de Estado', () => {
       expect(esTransicionValida('Presupuestado', 'Aceptado')).toBe(true);
     });
 
+    test('desde Presupuestado solo se puede aceptar o rechazar', () => {
+      expect(getEstadosPermitidos('Presupuestado')).toEqual(['Aceptado', 'Rechazado']);
+    });
+
     test('transición inválida desde Recibido a Reparado', () => {
       expect(esTransicionValida('Recibido', 'Reparado')).toBe(false);
     });

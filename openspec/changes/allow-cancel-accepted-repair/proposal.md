@@ -11,6 +11,8 @@ que lo bloqueaba (incoherencia entre `transicionesPermitidas` y `selectPuedeAvan
   `Abandonado`), estados terminales existentes.
 - La UI de presupuesto ofrece el botón "Cancelar Reparación" cuando la transición a
   `Cancelado` es válida (incluye estado Aceptado).
+- Desde `Presupuestado` las únicas salidas son `Aceptado` o `Rechazado` (se quita
+  `Cancelado`: el cliente decide sobre el presupuesto, la cancelación viene después o antes).
 - Sin cambios de stock: `cambiarEstadoReparacionAsync` ya libera el compromiso de
   repuestos al salir de Aceptado/Repuestos hacia un estado no reparativo.
 
