@@ -17,6 +17,7 @@ import { selectRepuestosArray, selectRepuestosSeleccionables } from '../redux-to
 import { selectModelosDroneArray } from '../redux-tool-kit/modeloDrone/modeloDrone.selectors';
 import { ComboBox } from './common';
 import { SelectOption } from '../types/selectOption';
+import { buildTrackingUrl } from '../utils/tracking';
 
 interface ParamTypes extends Record<string, string | undefined> {
     id: string;
@@ -315,6 +316,7 @@ export default function PedidoComponent(): JSX.Element {
     // Render
     // -------------------------------------------------------
     const estadoConfig = ESTADOS_PEDIDO.find(e => e.value === pedido.data.Estado);
+    const trackingUrl = buildTrackingUrl(pedido.data.NumeroPedido);
 
     return (
         <div className="p-4">
@@ -364,13 +366,27 @@ export default function PedidoComponent(): JSX.Element {
                     {/* Número de seguimiento */}
                     <div className="mb-3">
                         <label className="form-label fw-semibold">N° de seguimiento / Orden</label>
-                        <input
-                            type="text"
-                            className="form-control"
-                            placeholder="Ej: AE-123456789-ES"
-                            value={pedido.data.NumeroPedido ?? ''}
-                            onChange={e => handleFieldChange('NumeroPedido', e.target.value || null)}
-                        />
+                        <div className="input-group">
+                            <input
+                                type="text"
+                                className="form-control"
+                                placeholder="Ej: AE-123456789-ES"
+                                value={pedido.data.NumeroPedido ?? ''}
+                                onChange={e => handleFieldChange('NumeroPedido', e.target.value || null)}
+                            />
+                            {trackingUrl && (
+                                <a
+                                    href={trackingUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="btn btn-outline-primary"
+                                    title="Abrir seguimiento en 17TRACK"
+                                >
+                                    <i className="bi bi-box-arrow-up-right me-1"></i>
+                                    Seguimiento
+                                </a>
+                            )}
+                        </div>
                     </div>
 
                     {/* Fechas */}

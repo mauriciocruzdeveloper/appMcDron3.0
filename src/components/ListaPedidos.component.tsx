@@ -13,6 +13,7 @@ import { ESTADOS_PEDIDO, EstadoPedido, PedidoRepuesto } from '../types/pedidoRep
 import { selectColeccionRepuestos } from '../redux-tool-kit/repuesto/repuesto.selectors';
 import { selectColeccionModelosDrone } from '../redux-tool-kit/modeloDrone/modeloDrone.selectors';
 import { ComboBox } from './common';
+import { buildTrackingUrl } from '../utils/tracking';
 
 export default function ListaPedidos(): JSX.Element {
     const dispatch = useAppDispatch();
@@ -151,10 +152,21 @@ export default function ListaPedidos(): JSX.Element {
                                     <div className="d-flex justify-content-between align-items-start">
                                         <div>
                                             <h6 className="mb-1 fw-bold">{pedido.data.ProveedorNombre}</h6>
-                                            {pedido.data.NumeroPedido && (
-                                                <small className="text-muted d-block">
-                                                    Seguimiento: {pedido.data.NumeroPedido}
-                                                </small>
+                                            {buildTrackingUrl(pedido.data.NumeroPedido) && (
+                                                <div className="d-flex align-items-center gap-2 flex-wrap">
+                                                    <small className="text-muted d-block">
+                                                        Seguimiento: {pedido.data.NumeroPedido}
+                                                    </small>
+                                                    <a
+                                                        href={buildTrackingUrl(pedido.data.NumeroPedido)!}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="btn btn-link btn-sm p-0 text-primary"
+                                                        onClick={(e) => e.stopPropagation()}
+                                                    >
+                                                        <i className="bi bi-box-arrow-up-right me-1"></i>Ver tracking
+                                                    </a>
+                                                </div>
                                             )}
                                         </div>
                                         {getEstadoBadge(pedido.data.Estado)}
