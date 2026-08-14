@@ -75,6 +75,9 @@ export const ReparacionRepuestos: React.FC<ReparacionRepuestosProps> = ({
         dispatch(cambiarEstadoReparacionAsync({ reparacionId, nuevoEstado: 'Aceptado', enviarEmail: false }));
     };
 
+    const pedidosActivos = (pedidos: { estado: string; pedidoId: string; proveedorNombre: string; numeroPedido: string | null }[]) =>
+        pedidos.filter(p => p.estado === 'pending' || p.estado === 'in_transit');
+
     return (
         <div className="card mb-3" id="seccion-repuestos">
             <div className="card-body">
@@ -103,9 +106,29 @@ export const ReparacionRepuestos: React.FC<ReparacionRepuestosProps> = ({
                     {repuestosConPedido.length > 0 && (
                         <div className="alert alert-warning py-2 mb-2" role="alert">
                             <strong>⏳ {repuestosConPedido.length} repuesto{repuestosConPedido.length !== 1 ? 's' : ''} con faltante, pedido en camino:</strong>
-                            <span className="ms-2 small">
-                                {repuestosConPedido.map(r => r.nombre).join(', ')}
-                            </span>
+                            <div className="mt-2 d-flex flex-column gap-1 small">
+                                {repuestosConPedido.map(r => (
+                                    <div key={r.repuestoId} className="d-flex align-items-center gap-2 flex-wrap">
+                                        <span>{r.nombre}</span>
+                                        {pedidosActivos(r.pedidos).map(pedido => {
+                                            const estadoInfo = ESTADOS_PEDIDO.find(e => e.value === pedido.estado);
+                                            return (
+                                                <button
+                                                    key={pedido.pedidoId}
+                                                    type="button"
+                                                    className="btn btn-sm btn-link p-0 text-decoration-none"
+                                                    onClick={() => history.push(`/inicio/pedidos/${pedido.pedidoId}`)}
+                                                >
+                                                    {pedido.numeroPedido ? `Ver pedido #${pedido.numeroPedido}` : 'Ver pedido'}
+                                                    {estadoInfo && (
+                                                        <span className={`badge bg-${estadoInfo.color} ms-1`}>{estadoInfo.label}</span>
+                                                    )}
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+                                ))}
+                            </div>
                         </div>
                     )}
 
@@ -156,29 +179,27 @@ export const ReparacionRepuestos: React.FC<ReparacionRepuestosProps> = ({
                                                         <div className="small text-info mt-2">
                                                             <strong>Pedidos en camino que cubrirán el faltante:</strong>
                                                         </div>
-                                                        {r.pedidos
-                                                            .filter(p => p.estado === 'pending' || p.estado === 'in_transit')
-                                                            .map(pedido => {
-                                                                const estadoInfo = ESTADOS_PEDIDO.find(e => e.value === pedido.estado);
-                                                                return (
-                                                                    <div key={pedido.pedidoId} className="d-flex align-items-center gap-2 flex-wrap mt-1">
-                                                                        <span className={`badge bg-${estadoInfo?.color || 'secondary'}`}>
-                                                                            {estadoInfo?.label || pedido.estado}
-                                                                        </span>
-                                                                        <span className="small">{pedido.proveedorNombre}</span>
-                                                                        {pedido.numeroPedido && (
-                                                                            <span className="text-muted small">#{pedido.numeroPedido}</span>
-                                                                        )}
-                                                                        <button
-                                                                            type="button"
-                                                                            className="btn btn-sm btn-link p-0 ms-auto text-decoration-none"
-                                                                            onClick={() => history.push(`/inicio/pedidos/${pedido.pedidoId}`)}
-                                                                        >
-                                                                            Ver pedido →
-                                                                        </button>
-                                                                    </div>
-                                                                );
-                                                            })}
+                                                        {pedidosActivos(r.pedidos).map(pedido => {
+                                                            const estadoInfo = ESTADOS_PEDIDO.find(e => e.value === pedido.estado);
+                                                            return (
+                                                                <div key={pedido.pedidoId} className="d-flex align-items-center gap-2 flex-wrap mt-1">
+                                                                    <span className={`badge bg-${estadoInfo?.color || 'secondary'}`}>
+                                                                        {estadoInfo?.label || pedido.estado}
+                                                                    </span>
+                                                                    <span className="small">{pedido.proveedorNombre}</span>
+                                                                    {pedido.numeroPedido && (
+                                                                        <span className="text-muted small">#{pedido.numeroPedido}</span>
+                                                                    )}
+                                                                    <button
+                                                                        type="button"
+                                                                        className="btn btn-sm btn-link p-0 ms-auto text-decoration-none"
+                                                                        onClick={() => history.push(`/inicio/pedidos/${pedido.pedidoId}`)}
+                                                                    >
+                                                                        {pedido.numeroPedido ? `Ver pedido #${pedido.numeroPedido}` : 'Ver pedido'} →
+                                                                    </button>
+                                                                </div>
+                                                            );
+                                                        })}
                                                     </>
                                                 )}
                                             </div>
