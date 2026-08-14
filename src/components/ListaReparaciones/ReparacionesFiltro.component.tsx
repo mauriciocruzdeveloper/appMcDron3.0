@@ -15,13 +15,14 @@ const ESTADOS_REPARACION = [
 interface ReparacionesFiltroProps {
   selectedModelo: string;
   onModeloChange: (modelo: string) => void;
+  onReset: () => void;
 }
 
 /**
  * Componente de filtros para la lista de reparaciones.
  * Solo visible para administradores.
  */
-const ReparacionesFiltro = ({ selectedModelo, onModeloChange }: ReparacionesFiltroProps): React.ReactElement => {
+const ReparacionesFiltro = ({ selectedModelo, onModeloChange, onReset }: ReparacionesFiltroProps): React.ReactElement => {
   const dispatch = useAppDispatch();
   const filter = useAppSelector(selectReparacionFilter);
   const modelosDrone = useAppSelector(selectModelosDroneArray);
@@ -145,6 +146,15 @@ const ReparacionesFiltro = ({ selectedModelo, onModeloChange }: ReparacionesFilt
               onClick={() => dispatch(setFilter({ ...filter, estadosReparacion: [] }))}
             >
               Limpiar estados
+            </button>
+          )}
+          {(filtrosActivos || selectedModelo !== '') && (
+            <button
+              type="button"
+              className="btn btn-link btn-sm p-0 mt-1 text-muted"
+              onClick={onReset}
+            >
+              Restaurar filtros
             </button>
           )}
         </div>

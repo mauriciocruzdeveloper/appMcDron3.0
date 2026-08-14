@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useHistory } from '../hooks/useHistory';
 import { useAppSelector } from '../redux-tool-kit/hooks/useAppSelector';
 import { Repuesto } from '../types/repuesto';
@@ -14,6 +14,20 @@ import {
 import { selectModelosDroneArray } from '../redux-tool-kit/modeloDrone/modeloDrone.selectors';
 import { ComboBox } from './common';
 import { SelectOption } from '../types/selectOption';
+import { clearStoredListFilter, getStoredListFilter, saveStoredListFilter } from '../utils/listFilters';
+
+interface RepuestoFilterState {
+    text: string;
+    modelo: string;
+    estado: string;
+}
+
+const REPUESTOS_FILTER_STORAGE_KEY = 'lista-repuestos-filtros';
+const DEFAULT_REPUESTOS_FILTERS: RepuestoFilterState = {
+    text: '',
+    modelo: '',
+    estado: '',
+};
 
 // Mock de repuestos para mostrar como ejemplo
 const repuestosMock: Repuesto[] = [
@@ -68,8 +82,31 @@ export default function ListaRepuestos(): JSX.Element {
     const estadisticas = useAppSelector(selectEstadisticasRepuestos);
     const modelosDrone = useAppSelector(selectModelosDroneArray);
 
-    const [filtroModeloDrone, setFiltroModeloDrone] = useState<string>('');
-    const [filtroEstado, setFiltroEstado] = useState<string>('');
+    const [filtroModeloDrone, setFiltroModeloDrone] = useState<string>(() =>
+        getStoredListFilter<RepuestoFilterState>(REPUESTOS_FILTER_STORAGE_KEY, DEFAULT_REPUESTOS_FILTERS).modelo
+    );
+    const [filtroEstado, setFiltroEstado] = useState<string>(() =>
+        getStoredListFilter<RepuestoFilterState>(REPUESTOS_FILTER_STORAGE_KEY, DEFAULT_REPUESTOS_FILTERS).estado
+    );
+
+    useEffect(() => {
+        const storedFilters = getStoredListFilter<RepuestoFilterState>(
+            REPUESTOS_FILTER_STORAGE_KEY,
+            DEFAULT_REPUESTOS_FILTERS
+        );
+
+        if (!filter && storedFilters.text) {
+            dispatch(setFilter(storedFilters.text));
+        }
+    }, [dispatch, filter]);
+
+    useEffect(() => {
+        saveStoredListFilter(REPUESTOS_FILTER_STORAGE_KEY, {
+            text: filter,
+            modelo: filtroModeloDrone,
+            estado: filtroEstado,
+        });
+    }, [filter, filtroModeloDrone, filtroEstado]);
 
     // Usar selector para obtener repuestos filtrados
     const repuestosFiltrados = useAppSelector((state) =>
@@ -95,6 +132,13 @@ export default function ListaRepuestos(): JSX.Element {
     const handleModeloChange = (option: SelectOption | null) => {
         setFiltroModeloDrone(option?.value ?? '');
     }
+
+    const resetFilters = () => {
+        dispatch(setFilter(''));
+        setFiltroModeloDrone('');
+        setFiltroEstado('');
+        clearStoredListFilter(REPUESTOS_FILTER_STORAGE_KEY);
+    };
 
     const formatPrice = (precio: number): string => {
         return precio.toLocaleString('es-AR', { style: 'currency', currency: 'ARS' });
@@ -146,6 +190,15 @@ export default function ListaRepuestos(): JSX.Element {
                             isClearable
                         />
                     </div>
+                </div>
+                <div className='d-flex justify-content-end mt-2'>
+                    <button
+                        type='button'
+                        className='btn btn-link btn-sm p-0 text-muted'
+                        onClick={resetFilters}
+                    >
+                        Restaurar filtros
+                    </button>
                 </div>
             </div>
 

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useHistory } from '../hooks/useHistory';
 import { useAppSelector } from '../redux-tool-kit/hooks/useAppSelector';
 import { useAppDispatch } from '../redux-tool-kit/hooks/useAppDispatch';
@@ -6,6 +6,18 @@ import { setFilter } from '../redux-tool-kit/intervencion/intervencion.slice';
 import { selectModelosDroneArray } from '../redux-tool-kit/modeloDrone/modeloDrone.selectors';
 import { selectIntervencionesConPrecios } from '../redux-tool-kit/intervencion/intervencion.selectors';
 import { ComboBox } from './common';
+import { clearStoredListFilter, getStoredListFilter, saveStoredListFilter } from '../utils/listFilters';
+
+interface IntervencionFilterState {
+  text: string;
+  modelo: string;
+}
+
+const INTERVENCIONES_FILTER_STORAGE_KEY = 'lista-intervenciones-filtros';
+const DEFAULT_INTERVENCIONES_FILTERS: IntervencionFilterState = {
+  text: '',
+  modelo: '',
+};
 
 export default function ListaIntervenciones(): JSX.Element {
   const dispatch = useAppDispatch();
@@ -14,7 +26,27 @@ export default function ListaIntervenciones(): JSX.Element {
   const filter = useAppSelector((state) => state.intervencion.filter);
   const modelosDrone = useAppSelector(selectModelosDroneArray);
 
-  const [selectedModelo, setSelectedModelo] = useState<string>('');
+  const [selectedModelo, setSelectedModelo] = useState<string>(() =>
+    getStoredListFilter<IntervencionFilterState>(INTERVENCIONES_FILTER_STORAGE_KEY, DEFAULT_INTERVENCIONES_FILTERS).modelo
+  );
+
+  useEffect(() => {
+    const storedFilters = getStoredListFilter<IntervencionFilterState>(
+      INTERVENCIONES_FILTER_STORAGE_KEY,
+      DEFAULT_INTERVENCIONES_FILTERS
+    );
+
+    if (!filter && storedFilters.text) {
+      dispatch(setFilter(storedFilters.text));
+    }
+  }, [dispatch, filter]);
+
+  useEffect(() => {
+    saveStoredListFilter(INTERVENCIONES_FILTER_STORAGE_KEY, {
+      text: filter,
+      modelo: selectedModelo,
+    });
+  }, [filter, selectedModelo]);
 
   const intervencionesList = intervenciones.filter(intervencion => {
     const searchFilter = !filter ||
@@ -31,6 +63,12 @@ export default function ListaIntervenciones(): JSX.Element {
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     dispatch(setFilter(e.target.value));
   }
+
+  const resetFilters = () => {
+    dispatch(setFilter(''));
+    setSelectedModelo('');
+    clearStoredListFilter(INTERVENCIONES_FILTER_STORAGE_KEY);
+  };
 
   const formatPrice = (precio: number): string => {
     return precio.toLocaleString('es-AR', { style: 'currency', currency: 'ARS' });
@@ -80,6 +118,15 @@ export default function ListaIntervenciones(): JSX.Element {
               isClearable
             />
           </div>
+        </div>
+        <div className='d-flex justify-content-end mt-2'>
+          <button
+            type='button'
+            className='btn btn-link btn-sm p-0 text-muted'
+            onClick={resetFilters}
+          >
+            Restaurar filtros
+          </button>
         </div>
       </div>
 

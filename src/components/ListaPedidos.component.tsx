@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useHistory } from '../hooks/useHistory';
 import { useAppSelector } from '../redux-tool-kit/hooks/useAppSelector';
 import { useAppDispatch } from '../redux-tool-kit/hooks/useAppDispatch';
@@ -14,6 +14,18 @@ import { selectColeccionRepuestos } from '../redux-tool-kit/repuesto/repuesto.se
 import { selectColeccionModelosDrone } from '../redux-tool-kit/modeloDrone/modeloDrone.selectors';
 import { ComboBox } from './common';
 import { buildTrackingUrl } from '../utils/tracking';
+import { clearStoredListFilter, getStoredListFilter, saveStoredListFilter } from '../utils/listFilters';
+
+interface PedidoFilterState {
+    text: string;
+    estado: string;
+}
+
+const PEDIDOS_FILTER_STORAGE_KEY = 'lista-pedidos-filtros';
+const DEFAULT_PEDIDOS_FILTERS: PedidoFilterState = {
+    text: '',
+    estado: '',
+};
 
 export default function ListaPedidos(): JSX.Element {
     const dispatch = useAppDispatch();
@@ -22,7 +34,27 @@ export default function ListaPedidos(): JSX.Element {
     const filter = useAppSelector(selectPedidoFilter);
     const tienePedidos = useAppSelector(selectTienePedidos);
     const estadisticas = useAppSelector(selectEstadisticasPedidos);
-    const [filtroEstado, setFiltroEstado] = useState<string>('');
+    const [filtroEstado, setFiltroEstado] = useState<string>(() =>
+        getStoredListFilter<PedidoFilterState>(PEDIDOS_FILTER_STORAGE_KEY, DEFAULT_PEDIDOS_FILTERS).estado
+    );
+
+    useEffect(() => {
+        const storedFilters = getStoredListFilter<PedidoFilterState>(
+            PEDIDOS_FILTER_STORAGE_KEY,
+            DEFAULT_PEDIDOS_FILTERS
+        );
+
+        if (!filter && storedFilters.text) {
+            dispatch(setFilter(storedFilters.text));
+        }
+    }, [dispatch, filter]);
+
+    useEffect(() => {
+        saveStoredListFilter(PEDIDOS_FILTER_STORAGE_KEY, {
+            text: filter,
+            estado: filtroEstado,
+        });
+    }, [filter, filtroEstado]);
 
     const pedidosFiltrados = useAppSelector((state) =>
         selectPedidosFiltrados(state, filtroEstado)
@@ -42,6 +74,12 @@ export default function ListaPedidos(): JSX.Element {
 
     const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         dispatch(setFilter(e.target.value));
+    };
+
+    const resetFilters = () => {
+        dispatch(setFilter(''));
+        setFiltroEstado('');
+        clearStoredListFilter(PEDIDOS_FILTER_STORAGE_KEY);
     };
 
     const getEstadoBadge = (estado: EstadoPedido) => {
@@ -88,6 +126,15 @@ export default function ListaPedidos(): JSX.Element {
                                     isClearable
                                 />
                             </div>
+                        </div>
+                        <div className='d-flex justify-content-end mt-2'>
+                            <button
+                                type='button'
+                                className='btn btn-link btn-sm p-0 text-muted'
+                                onClick={resetFilters}
+                            >
+                                Restaurar filtros
+                            </button>
                         </div>
                     </div>
 
