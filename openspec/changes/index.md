@@ -56,6 +56,19 @@ Modernizar el estado "Repuestos" de legacy a principal en el flujo de reparacion
 
 ---
 
+### `add-cuit-pedido-cliente`
+**Status:** Draft
+**Priority:** Medium
+**Created:** 2026-08-14
+
+Permite registrar un CUIT opcional en la ficha del cliente y reutilizarlo en los pedidos de repuestos para compras internacionales, con autocompletado desde clientes que ya lo tienen cargado.
+
+- [📝 Proposal](./add-cuit-pedido-cliente/proposal.md)
+- [✅ Tasks](./add-cuit-pedido-cliente/tasks.md)
+- [🔧 Specs](./add-cuit-pedido-cliente/specs/clientes-pedidos/spec.md)
+
+---
+
 ## 📁 Change Structure
 
 Cada cambio sigue esta estructura:

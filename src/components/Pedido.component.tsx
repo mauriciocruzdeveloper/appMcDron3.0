@@ -18,6 +18,7 @@ import { selectModelosDroneArray } from '../redux-tool-kit/modeloDrone/modeloDro
 import { ComboBox } from './common';
 import { SelectOption } from '../types/selectOption';
 import { buildTrackingUrl } from '../utils/tracking';
+import { normalizeCuit, sanitizeCuitInput } from '../utils/cuit';
 
 interface ParamTypes extends Record<string, string | undefined> {
     id: string;
@@ -35,6 +36,7 @@ const pedidoVacio = (): PedidoRepuesto => ({
         FechaLlegadaReal: null,
         Estado: 'pending',
         NumeroPedido: null,
+        CUIT: null,
         Notas: '',
         Items: [],
     },
@@ -68,9 +70,17 @@ export default function PedidoComponent(): JSX.Element {
     const isReadOnly = isArrived || isCancelled;
     const repuestos = useAppSelector(selectRepuestosArray);
     const modelosDrone = useAppSelector(selectModelosDroneArray);
+    const usuarios = useAppSelector(state => state.usuario.coleccionUsuarios);
+    const usuariosConCuit = useMemo(
+        () => Object.values(usuarios)
+            .filter(usuario => Boolean(sanitizeCuitInput(usuario.data.CUIT)))
+            .sort((a, b) => `${a.data.NombreUsu} ${a.data.ApellidoUsu}`.localeCompare(`${b.data.NombreUsu} ${b.data.ApellidoUsu}`)),
+        [usuarios]
+    );
 
     // Filtro de modelo de drone por ítem (map: itemId -> modeloDroneId)
     const [filtrosModeloItem, setFiltrosModeloItem] = useState<Record<string, string>>({});
+    const [clienteCuitSeleccionado, setClienteCuitSeleccionado] = useState<string>('');
 
     const [pedido, setPedido] = useState<PedidoRepuesto>(pedidoVacio());
 
@@ -92,6 +102,11 @@ export default function PedidoComponent(): JSX.Element {
         if (!isNew && pedidoActual) {
             setPedido(pedidoActual);
 
+            const clienteMatch = Object.values(usuarios).find(
+                usuario => sanitizeCuitInput(usuario.data.CUIT ?? '') === sanitizeCuitInput(pedidoActual.data.CUIT ?? '')
+            );
+            setClienteCuitSeleccionado(clienteMatch?.id ?? '');
+
             // Pre-popular el filtro de modelo con el primer modelo de cada repuesto
             const filtrosIniciales: Record<string, string> = {};
             pedidoActual.data.Items.forEach(item => {
@@ -104,7 +119,7 @@ export default function PedidoComponent(): JSX.Element {
             });
             setFiltrosModeloItem(filtrosIniciales);
         }
-    }, [isNew, pedidoActual, repuestos]);
+    }, [isNew, pedidoActual, repuestos, usuarios]);
 
     // -------------------------------------------------------
     // Handlers campos principales
@@ -123,9 +138,24 @@ export default function PedidoComponent(): JSX.Element {
     };
 
     const handleFieldChange = (field: string, value: string | null) => {
+        const nextValue = field === 'CUIT' ? normalizeCuit(value) : value;
         setPedido(prev => ({
             ...prev,
-            data: { ...prev.data, [field]: value },
+            data: { ...prev.data, [field]: nextValue },
+        }));
+        if (field === 'CUIT') {
+            setClienteCuitSeleccionado('');
+        }
+    };
+
+    const handleClienteCuitChange = (option: SelectOption | null) => {
+        const clienteId = option?.value ?? '';
+        const cliente = clienteId ? usuarios[clienteId] : null;
+        setClienteCuitSeleccionado(clienteId);
+        const cuit = cliente ? sanitizeCuitInput(cliente.data.CUIT ?? '') : null;
+        setPedido(prev => ({
+            ...prev,
+            data: { ...prev.data, CUIT: cuit },
         }));
     };
 
@@ -387,6 +417,36 @@ export default function PedidoComponent(): JSX.Element {
                                 </a>
                             )}
                         </div>
+                    </div>
+
+                    <div className="mb-3">
+                        <label className="form-label fw-semibold">CUIT del cliente</label>
+                        <div className="row g-2">
+                            <div className="col-md-6">
+                                <ComboBox
+                                    options={usuariosConCuit.map(usuario => ({
+                                        value: usuario.id,
+                                        label: `${usuario.data.NombreUsu || ''} ${usuario.data.ApellidoUsu || ''}`.trim() || usuario.data.EmailUsu || usuario.data.Nick || 'Cliente',
+                                    }))}
+                                    value={clienteCuitSeleccionado}
+                                    onChange={handleClienteCuitChange}
+                                    placeholder="Seleccionar cliente con CUIT"
+                                    isClearable
+                                    noOptionsMessage="No hay clientes con CUIT cargado"
+                                />
+                            </div>
+                            <div className="col-md-6">
+                                <input
+                                    type="text"
+                                    className="form-control"
+                                    value={pedido.data.CUIT ?? ''}
+                                    onChange={e => handleFieldChange('CUIT', e.target.value)}
+                                    placeholder="20-12345678-6"
+                                    maxLength={13}
+                                />
+                            </div>
+                        </div>
+                        <small className="text-muted">Opcional. Si el cliente ya tiene CUIT cargado, se reutiliza en el pedido.</small>
                     </div>
 
                     {/* Fechas */}

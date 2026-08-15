@@ -12,6 +12,7 @@ const toFrontend = (row, items = []) => ({
     FechaLlegadaReal: row.actual_arrival ?? null,
     Estado: row.status,
     NumeroPedido: row.tracking_number ?? null,
+    CUIT: row.customer_cuit ?? null,
     Notas: row.notes ?? '',
     Items: items.map(item => ({
       id: String(item.id),
@@ -120,6 +121,7 @@ export const guardarPedidoPersistencia = async (pedido) => {
       actual_arrival:     pedido.data.FechaLlegadaReal || null,
       status:             pedido.data.Estado,
       tracking_number:    pedido.data.NumeroPedido || null,
+      customer_cuit:      pedido.data.CUIT || null,
       notes:              pedido.data.Notas || null,
     };
 

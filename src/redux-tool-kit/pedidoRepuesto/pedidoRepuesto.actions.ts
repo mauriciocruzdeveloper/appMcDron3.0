@@ -10,6 +10,7 @@ import {
 } from '../../persistencia/persistencia';
 import { setRepuesto } from '../repuesto/repuesto.slice';
 import { RootState } from '../store';
+import { sanitizeCuitInput } from '../../utils/cuit';
 
 // Regla de negocio: el estado del pedido no se elige manualmente, se deriva de sus datos.
 // 'arrived' y 'cancelled' son terminales: una vez alcanzados, no se recalculan.
@@ -63,7 +64,11 @@ export const guardarPedidoAsync = createAsyncThunk(
             const estadoDerivado = derivarEstadoPedido(pedido.data, pedidoAnterior?.data.Estado);
             const pedidoConEstado: PedidoRepuesto = {
                 ...pedido,
-                data: { ...pedido.data, Estado: estadoDerivado },
+                data: {
+                    ...pedido.data,
+                    CUIT: sanitizeCuitInput(pedido.data.CUIT) || null,
+                    Estado: estadoDerivado,
+                },
             };
 
             const esPrimerArrived =

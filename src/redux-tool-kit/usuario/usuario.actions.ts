@@ -7,6 +7,7 @@ import {
 } from "../../persistencia/persistencia"; // Actualizado para usar la importación centralizada
 import { isFetchingComplete, isFetchingStart } from "../app/app.slice";
 import { Usuario } from "../../types/usuario";
+import { sanitizeCuitInput } from "../../utils/cuit";
 
 // ELIMINAR USUARIO
 export const eliminarUsuarioAsync = createAsyncThunk(
@@ -32,12 +33,19 @@ export const guardarUsuarioAsync = createAsyncThunk(
     async (usuario: Usuario, { dispatch }) => {
         try {
             dispatch(isFetchingStart());
-            const usuarioGuardado = await guardarUsuarioPersistencia(usuario);
+            const usuarioSanitizado: Usuario = {
+                ...usuario,
+                data: {
+                    ...usuario.data,
+                    CUIT: sanitizeCuitInput(usuario.data.CUIT),
+                },
+            };
+            const usuarioGuardado = await guardarUsuarioPersistencia(usuarioSanitizado);
             dispatch(isFetchingComplete());
             return usuarioGuardado;
         } catch (error: any) { // TODO: Hacer tipo de dato para el error
             dispatch(isFetchingComplete());
-            return error;
+            throw error;
         }
     },
 );

@@ -15,6 +15,7 @@ export interface Usuario {
       Nick?: string,          // nick en Supabase
       UrlFotoUsu?: string,    // url_photo en Supabase
       PasswordUsu?: string,   // Solo para crear nuevos usuarios
+      CUIT?: string,          // cuit en Supabase (opcional, usado para compras internacionales)
       ObservacionesProfesionales?: string // professional_notes en Supabase (solo admin)
     };
 }

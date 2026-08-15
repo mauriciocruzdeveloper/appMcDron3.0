@@ -17,6 +17,7 @@ import { selectUsuarioPorId } from "../redux-tool-kit/usuario/usuario.selectors"
 import { selectReparacionesByUsuario } from "../redux-tool-kit/reparacion/reparacion.selectors";
 import { convertTimestampCORTO } from "../utils/utils";
 import { estados } from "../datos/estados";
+import { normalizeCuit } from "../utils/cuit";
 
 interface ParamTypes extends Record<string, string | undefined> {
     id: string;
@@ -61,6 +62,7 @@ export default function UsuarioComponent(): React.ReactElement | null {
             Nick: '',
             UrlFotoUsu: '',
             PasswordUsu: '',
+            CUIT: '',
             ObservacionesProfesionales: ''
         }
     });
@@ -122,6 +124,9 @@ export default function UsuarioComponent(): React.ReactElement | null {
             value = String(Number(new Date(anio, mes, dia).getTime()) + 10800001); // Se agrega este número para que de bien la fecha.
         }
         const field = target.id;
+        if (field === 'CUIT') {
+            value = normalizeCuit(value);
+        }
         changeInputUsu(field, value);
     };
 
@@ -461,6 +466,19 @@ export default function UsuarioComponent(): React.ReactElement | null {
                                <i className='bi bi-chat-left-text'></i>
                             </button>
                         </div>
+                    </div>
+                    <div>
+                        <label className='form-label'>CUIT</label>
+                        <input
+                            onChange={handleOnChange}
+                            type='text'
+                            className='form-control'
+                            id='CUIT'
+                            value={usuario?.data?.CUIT || ''}
+                            placeholder='20-12345678-6'
+                            maxLength={13}
+                        />
+                        <small className='text-muted'>Opcional. Se usa para compras internacionales y se guarda una sola vez en el cliente.</small>
                     </div>
                     <div>
                         <label className='form-label'>Rol</label>

@@ -19,6 +19,7 @@ export const getUsuariosPersistencia = async (setUsuariosToRedux) => {
           city,
           state,
           role,
+          cuit,
           professional_notes
         `)
         .order('first_name');
@@ -38,6 +39,7 @@ export const getUsuariosPersistencia = async (setUsuariosToRedux) => {
           CiudadUsu: item?.city || '',
           ProvinciaUsu: item?.state || '',
           Role: item?.role || 'cliente',
+          CUIT: item?.cuit || '',
           ObservacionesProfesionales: item?.professional_notes || ''
         }
       }));
@@ -101,6 +103,7 @@ export const getClientePersistencia = async (id) => {
         CiudadUsu: data.city || '',
         ProvinciaUsu: data.state || '',
         Role: data.role || 'cliente',
+        CUIT: data.cuit || '',
         ObservacionesProfesionales: data.professional_notes || ''
       }
     };
@@ -142,6 +145,7 @@ export const getClientePorEmailPersistencia = async (email) => {
         CiudadUsu: data.city || '',
         ProvinciaUsu: data.state || '',
         Role: data.role || 'cliente',
+        CUIT: data.cuit || '',
         ObservacionesProfesionales: data.professional_notes || ''
       }
     };
@@ -166,6 +170,7 @@ export const guardarUsuarioPersistencia = async (usuario) => {
       state: usuario.data.ProvinciaUsu || '',
       role: usuario.data.Role || 'cliente',
       nick: usuario.data.EmailUsu,
+      cuit: usuario.data.CUIT || null,
       professional_notes: usuario.data.ObservacionesProfesionales || null,
     };
 
@@ -216,15 +221,22 @@ export const guardarUsuarioPersistencia = async (usuario) => {
       
       result = userCreated;
 
-      // El endpoint de registro no acepta professional_notes: se completa con un update aparte
+      // El endpoint de registro no acepta campos auxiliares; se completan con updates aparte.
+      const updates = {};
       if (usuario.data.ObservacionesProfesionales) {
-        const { data: updated, error: updateNotesError } = await supabase
+        updates.professional_notes = usuario.data.ObservacionesProfesionales;
+      }
+      if (usuario.data.CUIT) {
+        updates.cuit = usuario.data.CUIT;
+      }
+      if (Object.keys(updates).length > 0) {
+        const { data: updated, error: updateDataError } = await supabase
           .from('user')
-          .update({ professional_notes: usuario.data.ObservacionesProfesionales })
+          .update(updates)
           .eq('id', result.id)
           .select();
 
-        if (updateNotesError) throw updateNotesError;
+        if (updateDataError) throw updateDataError;
         result = updated[0];
       }
     }

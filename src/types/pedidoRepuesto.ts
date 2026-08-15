@@ -47,6 +47,7 @@ export interface PedidoRepuestoData {
   FechaLlegadaReal: string | null;
   Estado: EstadoPedido;
   NumeroPedido: string | null; // tracking number
+  CUIT?: string | null;        // CUIT del cliente para compras internacionales
   Notas: string;
   Items: PedidoRepuestoItem[];
 }
