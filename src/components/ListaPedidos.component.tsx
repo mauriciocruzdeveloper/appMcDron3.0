@@ -236,6 +236,12 @@ export default function ListaPedidos(): JSX.Element {
                                                 Llegó: {formatFecha(pedido.data.FechaLlegadaReal)}
                                             </small>
                                         )}
+                                        {pedido.data.CUIT && (
+                                            <small className="text-muted">
+                                                <i className="bi bi-credit-card me-1"></i>
+                                                CUIT: {pedido.data.CUIT}
+                                            </small>
+                                        )}
                                     </div>
 
                                     {/* Ítems del pedido */}
