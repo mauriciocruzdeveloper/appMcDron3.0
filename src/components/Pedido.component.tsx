@@ -15,6 +15,7 @@ import { guardarPedidoAsync, eliminarPedidoAsync, cancelarPedidoAsync } from '..
 import { selectPedidoPorId } from '../redux-tool-kit/pedidoRepuesto/pedidoRepuesto.selectors';
 import { selectRepuestosArray, selectRepuestosSeleccionables } from '../redux-tool-kit/repuesto/repuesto.selectors';
 import { selectModelosDroneArray } from '../redux-tool-kit/modeloDrone/modeloDrone.selectors';
+import { selectClientesConCuitConUso } from '../redux-tool-kit/usuario/usuario.selectors';
 import { ComboBox } from './common';
 import { SelectOption } from '../types/selectOption';
 import { buildTrackingUrl } from '../utils/tracking';
@@ -71,11 +72,15 @@ export default function PedidoComponent(): JSX.Element {
     const repuestos = useAppSelector(selectRepuestosArray);
     const modelosDrone = useAppSelector(selectModelosDroneArray);
     const usuarios = useAppSelector(state => state.usuario.coleccionUsuarios);
-    const usuariosConCuit = useMemo(
-        () => Object.values(usuarios)
-            .filter(usuario => Boolean(sanitizeCuitInput(usuario.data.CUIT)))
-            .sort((a, b) => `${a.data.NombreUsu} ${a.data.ApellidoUsu}`.localeCompare(`${b.data.NombreUsu} ${b.data.ApellidoUsu}`)),
-        [usuarios]
+    const usuariosConCuit = useAppSelector(selectClientesConCuitConUso);
+    const opcionesClientesConCuit = useMemo(
+        () => usuariosConCuit.map(usuario => ({
+            value: usuario.id,
+            label: `${usuario.data.NombreUsu || ''} ${usuario.data.ApellidoUsu || ''}`.trim() || usuario.data.EmailUsu || usuario.data.Nick || 'Cliente',
+            badgeText: usuario.badgeText,
+            badgeColor: usuario.badgeColor,
+        })),
+        [usuariosConCuit]
     );
 
     // Filtro de modelo de drone por ítem (map: itemId -> modeloDroneId)
@@ -424,10 +429,7 @@ export default function PedidoComponent(): JSX.Element {
                         <div className="row g-2">
                             <div className="col-md-6">
                                 <ComboBox
-                                    options={usuariosConCuit.map(usuario => ({
-                                        value: usuario.id,
-                                        label: `${usuario.data.NombreUsu || ''} ${usuario.data.ApellidoUsu || ''}`.trim() || usuario.data.EmailUsu || usuario.data.Nick || 'Cliente',
-                                    }))}
+                                    options={opcionesClientesConCuit}
                                     value={clienteCuitSeleccionado}
                                     onChange={handleClienteCuitChange}
                                     placeholder="Seleccionar cliente con CUIT"

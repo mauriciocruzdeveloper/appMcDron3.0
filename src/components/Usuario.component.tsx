@@ -239,8 +239,9 @@ export default function UsuarioComponent(): React.ReactElement | null {
                 setTimeout(() => history.goBack(), 3000);
             }
         } else {
+            const resp = response as { error?: { message?: string } };
             openModal({
-                mensaje: "Error al guardar el usuario.",
+                mensaje: resp.error?.message || "Error al guardar el usuario.",
                 tipo: "danger",
                 titulo: "Guardar Usuario",
             });

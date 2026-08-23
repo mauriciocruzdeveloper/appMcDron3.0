@@ -54,12 +54,11 @@ describe('guardarPedidoAsync CUIT', () => {
         }));
     });
 
-    it('persiste null cuando el CUIT es inválido', async () => {
+    it('rechaza la action cuando el CUIT es inválido, sin persistir', async () => {
         const store = crearStore();
-        await store.dispatch(guardarPedidoAsync(crearPedido('20123456789')) as any);
+        const result = await store.dispatch(guardarPedidoAsync(crearPedido('20123456789')) as any);
 
-        expect(guardarPedidoMock).toHaveBeenCalledWith(expect.objectContaining({
-            data: expect.objectContaining({ CUIT: null }),
-        }));
+        expect(result.meta.requestStatus).toBe('rejected');
+        expect(guardarPedidoMock).not.toHaveBeenCalled();
     });
 });

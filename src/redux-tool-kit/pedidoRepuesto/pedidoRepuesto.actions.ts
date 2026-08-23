@@ -10,7 +10,7 @@ import {
 } from '../../persistencia/persistencia';
 import { setRepuesto } from '../repuesto/repuesto.slice';
 import { RootState } from '../store';
-import { sanitizeCuitInput } from '../../utils/cuit';
+import { isValidCuit, sanitizeCuitInput } from '../../utils/cuit';
 
 // Regla de negocio: el estado del pedido no se elige manualmente, se deriva de sus datos.
 // 'arrived' y 'cancelled' son terminales: una vez alcanzados, no se recalculan.
@@ -57,6 +57,11 @@ export const guardarPedidoAsync = createAsyncThunk(
             if (pedidoAnterior?.data.Estado === 'arrived') {
                 dispatch(isFetchingComplete());
                 throw new Error('Un pedido recibido (arrived) no puede editarse.');
+            }
+
+            if (pedido.data.CUIT?.trim() && !isValidCuit(pedido.data.CUIT)) {
+                dispatch(isFetchingComplete());
+                throw new Error('El CUIT ingresado no es válido. Verifique el formato y los dígitos.');
             }
 
             // El estado se recalcula siempre a partir de los datos: no se acepta el valor

@@ -104,6 +104,14 @@ export default function NavMcDron (): JSX.Element {
                         </button>
                         <button
                             type="button"
+                            className={`app-navbar-link app-navbar-link-wide ${history.location.pathname.startsWith('/inicio/intervenciones') ? 'active' : ''}`}
+                            onClick={() => history.push('/inicio/intervenciones')}
+                        >
+                            <i className="bi bi-wrench"></i>
+                            Intervenciones
+                        </button>
+                        <button
+                            type="button"
                             className={`app-navbar-link app-navbar-link-wide ${history.location.pathname.startsWith('/inicio/campanas-email') ? 'active' : ''}`}
                             onClick={() => history.push('/inicio/campanas-email')}
                         >
@@ -112,14 +120,6 @@ export default function NavMcDron (): JSX.Element {
                         </button>
                     </>
                 )}
-                <button
-                    type="button"
-                    className={`app-navbar-link ${history.location.pathname.startsWith('/inicio/mensajes') ? 'active' : ''}`}
-                    onClick={() => history.push('/inicio/mensajes')}
-                >
-                    <i className="bi bi-chat-dots"></i>
-                    Mensajes
-                </button>
             </nav>
 
             <NavDropdown 
@@ -137,7 +137,7 @@ export default function NavMcDron (): JSX.Element {
                     Perfil
                 </NavDropdown.Item>
                 <NavDropdown.Divider />
-                <NavDropdown.Item className="d-lg-none" onClick={() => history.push('/inicio/reparaciones')}>
+                <NavDropdown.Item onClick={() => history.push('/inicio/reparaciones')}>
                     Reparaciones
                 </NavDropdown.Item>
                 {admin && (
@@ -145,7 +145,7 @@ export default function NavMcDron (): JSX.Element {
                         <NavDropdown.Item onClick={() => history.push('/inicio/usuarios')}>
                             Usuarios
                         </NavDropdown.Item>
-                        <NavDropdown.Item className="d-xl-none" onClick={() => history.push('/inicio/repuestos')}>
+                        <NavDropdown.Item onClick={() => history.push('/inicio/repuestos')}>
                             Repuestos
                         </NavDropdown.Item>
                         <NavDropdown.Item onClick={() => history.push('/inicio/modelos-drone')}>
@@ -157,13 +157,13 @@ export default function NavMcDron (): JSX.Element {
                         <NavDropdown.Item onClick={() => history.push('/inicio/intervenciones')}>
                             Intervenciones
                         </NavDropdown.Item>
-                        <NavDropdown.Item className="d-xl-none" onClick={() => history.push('/inicio/pedidos')}>
+                        <NavDropdown.Item onClick={() => history.push('/inicio/pedidos')}>
                             Pedidos de Repuestos
                         </NavDropdown.Item>
                         <NavDropdown.Item onClick={() => history.push('/inicio/plantillas-email')}>
                             Plantillas de Email
                         </NavDropdown.Item>
-                        <NavDropdown.Item className="d-xl-none" onClick={() => history.push('/inicio/campanas-email')}>
+                        <NavDropdown.Item onClick={() => history.push('/inicio/campanas-email')}>
                             Campanas de Email
                         </NavDropdown.Item>
                         <NavDropdown.Divider />
@@ -189,7 +189,7 @@ export default function NavMcDron (): JSX.Element {
                         <NavDropdown.Divider />
                     </>
                 )}
-                <NavDropdown.Item className="d-lg-none" onClick={() => history.push('/inicio/mensajes')}>
+                <NavDropdown.Item onClick={() => history.push('/inicio/mensajes')}>
                     Mensajes
                 </NavDropdown.Item>
             </NavDropdown>

@@ -7,7 +7,7 @@ import {
 } from "../../persistencia/persistencia"; // Actualizado para usar la importación centralizada
 import { isFetchingComplete, isFetchingStart } from "../app/app.slice";
 import { Usuario } from "../../types/usuario";
-import { sanitizeCuitInput } from "../../utils/cuit";
+import { isValidCuit, sanitizeCuitInput } from "../../utils/cuit";
 
 // ELIMINAR USUARIO
 export const eliminarUsuarioAsync = createAsyncThunk(
@@ -33,6 +33,10 @@ export const guardarUsuarioAsync = createAsyncThunk(
     async (usuario: Usuario, { dispatch }) => {
         try {
             dispatch(isFetchingStart());
+            if (usuario.data.CUIT?.trim() && !isValidCuit(usuario.data.CUIT)) {
+                dispatch(isFetchingComplete());
+                throw new Error('El CUIT ingresado no es válido. Verifique el formato y los dígitos.');
+            }
             const usuarioSanitizado: Usuario = {
                 ...usuario,
                 data: {

@@ -74,7 +74,21 @@ const ReparacionesFiltro = ({ selectedModelo, onModeloChange, onReset }: Reparac
             </span>
           )}
         </span>
-        <span>{abierto ? '▲' : '▼'}</span>
+        <div className="d-flex align-items-center gap-2">
+          {(filtrosActivos || selectedModelo !== '') && (
+            <button
+              type="button"
+              className="btn btn-link btn-sm p-0 text-muted"
+              onClick={(e) => {
+                e.stopPropagation();
+                onReset();
+              }}
+            >
+              Restaurar filtros
+            </button>
+          )}
+          <span>{abierto ? '▲' : '▼'}</span>
+        </div>
       </div>
       {abierto && (
       <div className="card-body">
@@ -146,15 +160,6 @@ const ReparacionesFiltro = ({ selectedModelo, onModeloChange, onReset }: Reparac
               onClick={() => dispatch(setFilter({ ...filter, estadosReparacion: [] }))}
             >
               Limpiar estados
-            </button>
-          )}
-          {(filtrosActivos || selectedModelo !== '') && (
-            <button
-              type="button"
-              className="btn btn-link btn-sm p-0 mt-1 text-muted"
-              onClick={onReset}
-            >
-              Restaurar filtros
             </button>
           )}
         </div>

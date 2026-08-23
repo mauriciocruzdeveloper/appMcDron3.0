@@ -1,6 +1,7 @@
 import { createSelector } from '@reduxjs/toolkit';
 import { RootState } from '../store';
 import { Usuarios } from '../../types/usuario';
+import { sanitizeCuitInput } from '../../utils/cuit';
 
 // Selector base para el estado de usuarios
 const selectUsuarioState = (state: RootState) => state.usuario;
@@ -206,6 +207,53 @@ export const selectUsuariosAdmin = createSelector(
 export const selectUsuariosNoAdmin = createSelector(
   [selectUsuariosArray],
   (usuarios) => usuarios.filter(usuario => usuario.data.Role !== 'admin')
+);
+
+// Selector para clientes con CUIT y contador de reutilización del valor.
+// La regla visual se centraliza aquí para que la UI solo renderice el badge y
+// la memoización quede en un selector de Redux.
+export const selectClientesConCuitConUso = createSelector(
+  [selectUsuariosArray, (state: RootState) => state.pedidoRepuesto.coleccionPedidos],
+  (usuarios, coleccionPedidos) => {
+    const usosPorCuit = Object.values(coleccionPedidos).reduce((acc, pedido) => {
+      const cuit = sanitizeCuitInput(pedido.data.CUIT ?? '');
+      if (!cuit) return acc;
+      acc[cuit] = (acc[cuit] ?? 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+
+    return usuarios
+      .map(usuario => {
+        const cuit = sanitizeCuitInput(usuario.data.CUIT ?? '');
+        const usos = cuit ? (usosPorCuit[cuit] ?? 0) : 0;
+
+        if (!cuit || usos >= 5) {
+          return null;
+        }
+
+        let badgeColor: 'success' | 'warning' | 'danger';
+        if (usos <= 1) {
+          badgeColor = 'success';
+        } else if (usos <= 3) {
+          badgeColor = 'warning';
+        } else {
+          badgeColor = 'danger';
+        }
+
+        return {
+          ...usuario,
+          usos,
+          badgeColor,
+          badgeText: String(usos),
+        };
+      })
+      .filter((usuario): usuario is NonNullable<typeof usuario> => usuario !== null)
+      .sort((a, b) => {
+        const nombreA = `${a.data.NombreUsu || ''} ${a.data.ApellidoUsu || ''}`.trim();
+        const nombreB = `${b.data.NombreUsu || ''} ${b.data.ApellidoUsu || ''}`.trim();
+        return nombreA.localeCompare(nombreB);
+      });
+  }
 );
 
 // Selector para usuarios por rol

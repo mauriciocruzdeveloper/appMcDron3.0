@@ -41,15 +41,14 @@ describe('guardarUsuarioAsync', () => {
         }));
     });
 
-    it('trata un CUIT inválido como campo opcional vacío', async () => {
+    it('rechaza la action cuando el CUIT es inválido, sin persistir', async () => {
         guardarUsuarioMock.mockImplementation(async (usuario: Usuario) => usuario);
 
         const store = crearStore();
-        await store.dispatch(guardarUsuarioAsync(crearUsuario('20123456789')) as any);
+        const result = await store.dispatch(guardarUsuarioAsync(crearUsuario('20123456789')) as any);
 
-        expect(guardarUsuarioMock).toHaveBeenCalledWith(expect.objectContaining({
-            data: expect.objectContaining({ CUIT: '' }),
-        }));
+        expect(result.meta.requestStatus).toBe('rejected');
+        expect(guardarUsuarioMock).not.toHaveBeenCalled();
     });
 
     it('rechaza la action cuando falla la persistencia', async () => {

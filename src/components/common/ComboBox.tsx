@@ -314,7 +314,17 @@ export function ComboBox({
                                 handleSelect(option);
                             }}
                         >
-                            {option.label}
+                            <div className="d-flex justify-content-between align-items-center gap-2">
+                                <span>{option.label}</span>
+                                {option.badgeText && (
+                                    <span
+                                        className={`badge bg-${option.badgeColor ?? 'secondary'} ${option.badgeColor === 'warning' ? 'text-dark' : ''}`}
+                                        style={{ minWidth: '1.6rem', fontSize: '0.7rem' }}
+                                    >
+                                        {option.badgeText}
+                                    </span>
+                                )}
+                            </div>
                         </li>
                     ))
                 )}
