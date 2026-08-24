@@ -11,7 +11,8 @@ import { SelectOption } from '../types/selectOption';
 import { selectModelosDroneArray } from '../redux-tool-kit/modeloDrone/modeloDrone.selectors';
 import { selectColeccionRepuestos, selectRepuestosSeleccionables } from '../redux-tool-kit/repuesto/repuesto.selectors';
 import { selectIntervencionPorId } from '../redux-tool-kit/intervencion/intervencion.selectors';
-import { selectReparacionesArray } from '../redux-tool-kit/reparacion/reparacion.selectors';
+import { selectEstadoReparacionesPorIntervencionId, selectReparacionesPorIntervencionId } from '../redux-tool-kit/reparacion/reparacion.selectors';
+import { getReparacionesPorIntervencionAsync } from '../redux-tool-kit/reparacion/reparacion.actions';
 import { estados } from '../datos/estados';
 
 interface ParamTypes extends Record<string, string | undefined> {
@@ -31,13 +32,17 @@ export default function IntervencionComponent(): JSX.Element {
   
   const modelosDroneArray = useAppSelector(selectModelosDroneArray);
   const repuestos = useAppSelector(selectColeccionRepuestos);
-  const reparacionesAsociadas = useAppSelector((state) => {
-    if (isNew || !id) return [];
+  const reparacionesAsociadas = useAppSelector((state) =>
+    selectReparacionesPorIntervencionId(state, id || '')
+  );
+  const estadoReparacionesAsociadas = useAppSelector((state) =>
+    selectEstadoReparacionesPorIntervencionId(state, id || '')
+  );
 
-    return selectReparacionesArray(state).filter((reparacion) =>
-      (reparacion.data.IntervencionesIds || []).includes(id)
-    );
-  });
+  useEffect(() => {
+    if (isNew || !id) return;
+    dispatch(getReparacionesPorIntervencionAsync(id));
+  }, [dispatch, id, isNew]);
   
   const [intervencion, setIntervencion] = useState<Intervencion>({
     id: '',
@@ -487,18 +492,32 @@ export default function IntervencionComponent(): JSX.Element {
                 <div>
                   <h6 className="card-title mb-1">Reparaciones donde se usó esta intervención</h6>
                   <p className="mb-0 small text-muted">
-                    {reparacionesAsociadas.length === 0
+                    {estadoReparacionesAsociadas === 'loading'
+                      ? 'Cargando reparaciones asociadas...'
+                      : estadoReparacionesAsociadas === 'failed'
+                        ? 'No se pudieron cargar las reparaciones asociadas.'
+                        : reparacionesAsociadas.length === 0
                       ? 'No hay reparaciones asociadas.'
                       : `${reparacionesAsociadas.length} reparación${reparacionesAsociadas.length === 1 ? '' : 'es'} asociada${reparacionesAsociadas.length === 1 ? '' : 's'}.`}
                   </p>
                 </div>
                 <span className="badge bg-bluemcdron text-white">
-                  {reparacionesAsociadas.length}
+                  {estadoReparacionesAsociadas === 'loading'
+                    ? '...'
+                    : estadoReparacionesAsociadas === 'failed'
+                      ? '!'
+                      : reparacionesAsociadas.length}
                 </span>
               </summary>
 
               <div className="card-body border-top pt-3">
-                {reparacionesAsociadas.length === 0 ? (
+                {estadoReparacionesAsociadas === 'loading' ? (
+                  <p className="mb-0 text-muted">Cargando reparaciones asociadas...</p>
+                ) : estadoReparacionesAsociadas === 'failed' ? (
+                  <p className="mb-0 text-danger">
+                    No se pudieron cargar las reparaciones asociadas. Volvé a abrir la intervención para reintentar.
+                  </p>
+                ) : reparacionesAsociadas.length === 0 ? (
                   <p className="mb-0 text-muted">
                     Esta intervención todavía no está vinculada a ninguna reparación.
                   </p>

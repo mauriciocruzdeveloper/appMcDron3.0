@@ -30,6 +30,7 @@ export {
 export {
   guardarReparacionAsync,
   eliminarReparacionAsync,
+  getReparacionesPorIntervencionAsync,
 } from './reparacion.actions';
 
 // Re-exportar todos los selectores
@@ -41,6 +42,8 @@ export {
   
   // Selectores de acceso por ID
   selectReparacionById,
+  selectReparacionesPorIntervencionId,
+  selectEstadoReparacionesPorIntervencionId,
   selectReparacionesByIds,
   
   // Selectores de transformación

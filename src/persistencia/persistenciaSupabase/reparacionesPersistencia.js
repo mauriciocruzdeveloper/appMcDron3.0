@@ -500,6 +500,59 @@ export const getReparacionPersistencia = async (id) => {
   }
 };
 
+// GET Reparaciones donde se usó una intervención (consulta directa, sin depender
+// de que IntervencionesIds ya esté cargado/actualizado en el store).
+export const getReparacionesPorIntervencionPersistencia = async (intervencionId) => {
+  try {
+    const { data: relaciones, error: relacionesError } = await supabase
+      .from('repair_intervention')
+      .select('repair_id')
+      .eq('intervention_id', intervencionId);
+
+    if (relacionesError) throw relacionesError;
+
+    const repairIds = Array.from(new Set((relaciones || []).map(rel => rel.repair_id)));
+    if (repairIds.length === 0) return [];
+
+    const { data, error } = await supabase
+      .from('repair')
+      .select(`
+        id,
+        state,
+        priority,
+        created_at,
+        public_id,
+        drone_name,
+        contact_date,
+        price_labor,
+        price_total,
+        owner:owner_id (first_name, last_name)
+      `)
+      .in('id', repairIds);
+
+    if (error) throw error;
+
+    return (data || []).map(item => ({
+      id: String(item.id),
+      data: {
+        EstadoRep: item.state,
+        PrioridadRep: item.priority,
+        FeAltaRep: item.created_at ? new Date(item.created_at).getTime() : null,
+        IdPublicoRep: item.public_id || (item.created_at ? formatRepairPublicId(item.id, item.created_at) : undefined),
+        ModeloDroneNameRep: item.drone_name || '',
+        NombreUsu: item.owner?.first_name || '',
+        ApellidoUsu: item.owner?.last_name || '',
+        FeConRep: item.contact_date,
+        PresuMoRep: item.price_labor || 0,
+        PresuFiRep: item.price_total || 0,
+      }
+    }));
+  } catch (error) {
+    console.error('Error en getReparacionesPorIntervencionPersistencia:', error);
+    throw error;
+  }
+};
+
 // GUARDAR Reparación
 // NOTA: la validación de límites de negocio (longitud de ObsRepuestos, cantidad
 // de RepuestosSolicitados) se hace en reparacion.actions.ts antes de invocar

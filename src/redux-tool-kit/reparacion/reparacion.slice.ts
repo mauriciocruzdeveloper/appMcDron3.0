@@ -1,15 +1,24 @@
 // features/appSlice.ts
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { ReparacionType, Reparaciones } from '../../types/reparacion';
+import { ReparacionRelacionada, ReparacionType, Reparaciones } from '../../types/reparacion';
 import { Filtro } from '../../types/Filtro';
 import { AsignacionIntervencion } from '../../types/intervencion';
-import { guardarReparacionAsync, eliminarReparacionAsync } from './reparacion.actions';
+import {
+  eliminarReparacionAsync,
+  getReparacionesPorIntervencionAsync,
+  guardarReparacionAsync,
+} from './reparacion.actions';
 
 // Tipos para el estado inicial
 interface ReparacionState {
   coleccionReparaciones: Reparaciones;
   filter: Filtro;
   intervencionesDeReparacionActual: AsignacionIntervencion[]; // Asignaciones, no intervenciones
+  reparacionesPorIntervencion: Record<string, {
+    reparaciones: ReparacionRelacionada[];
+    status: 'loading' | 'succeeded' | 'failed';
+    requestId: string;
+  }>;
 }
 
 // Estado inicial
@@ -21,6 +30,7 @@ const initialState: ReparacionState = {
   },
   coleccionReparaciones: {},
   intervencionesDeReparacionActual: [],
+  reparacionesPorIntervencion: {},
 };
 
 // ---------------------------------------------------------
@@ -66,6 +76,27 @@ const reparacionSlice = createSlice({
     builder.addCase(eliminarReparacionAsync.fulfilled, (state, action) => {
       // Eliminación O(1) por ID en lugar de filter O(n)
       delete state.coleccionReparaciones[action.payload];
+    });
+    builder.addCase(getReparacionesPorIntervencionAsync.pending, (state, action) => {
+      state.reparacionesPorIntervencion[action.meta.arg] = {
+        reparaciones: [],
+        status: 'loading',
+        requestId: action.meta.requestId,
+      };
+    });
+    builder.addCase(getReparacionesPorIntervencionAsync.fulfilled, (state, action) => {
+      const resultadoActual = state.reparacionesPorIntervencion[action.payload.intervencionId];
+      if (resultadoActual?.requestId !== action.meta.requestId) return;
+
+      resultadoActual.reparaciones = action.payload.reparaciones;
+      resultadoActual.status = 'succeeded';
+    });
+    builder.addCase(getReparacionesPorIntervencionAsync.rejected, (state, action) => {
+      const resultadoActual = state.reparacionesPorIntervencion[action.meta.arg];
+      if (resultadoActual?.requestId !== action.meta.requestId) return;
+
+      resultadoActual.reparaciones = [];
+      resultadoActual.status = 'failed';
     });
   },
 });

@@ -1,6 +1,6 @@
 import { createSelector } from '@reduxjs/toolkit';
 import { RootState } from '../store';
-import { ReparacionType, Reparaciones } from '../../types/reparacion';
+import { ReparacionRelacionada, ReparacionType, Reparaciones } from '../../types/reparacion';
 import { Filtro } from '../../types/Filtro';
 import { AsignacionIntervencion, EstadoAsignacion } from '../../types/intervencion';
 import { estados } from '../../datos/estados';
@@ -64,6 +64,18 @@ export const selectReparacionFilter = (state: RootState): Filtro =>
  */
 export const selectIntervencionesDeReparacionActual = (state: RootState): AsignacionIntervencion[] =>
   state.reparacion.intervencionesDeReparacionActual;
+
+export const selectReparacionesPorIntervencionId = (
+  state: RootState,
+  intervencionId: string,
+): ReparacionRelacionada[] =>
+  state.reparacion.reparacionesPorIntervencion[intervencionId]?.reparaciones || [];
+
+export const selectEstadoReparacionesPorIntervencionId = (
+  state: RootState,
+  intervencionId: string,
+): 'idle' | 'loading' | 'succeeded' | 'failed' =>
+  state.reparacion.reparacionesPorIntervencion[intervencionId]?.status || 'idle';
 
 // ============================================================================
 // SELECTORES DE ACCESO POR ID

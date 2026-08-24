@@ -16,6 +16,7 @@ export {
   actualizarPreciosPiezasAsignacionPersistencia,
   getReparacionesPersistencia,
   getReparacionPersistencia,
+  getReparacionesPorIntervencionPersistencia,
   guardarReparacionPersistencia,
   actualizarEstadoReparacionPersistencia,
   eliminarReparacionPersistencia,

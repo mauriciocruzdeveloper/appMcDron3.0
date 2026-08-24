@@ -1,6 +1,6 @@
 import { createAsyncThunk, Unsubscribe } from "@reduxjs/toolkit";
-import { ReparacionType, DataReparacion } from "../../types/reparacion";
-import { setReparaciones, setIntervencionesDeReparacionActual } from "./reparacion.slice";
+import { ReparacionType, DataReparacion, ReparacionRelacionada } from "../../types/reparacion";
+import { setReparaciones, setIntervencionesDeReparacionActual, updateReparacion } from "./reparacion.slice";
 import {
   eliminarReparacionPersistencia,
   getReparacionesPersistencia,
@@ -8,6 +8,7 @@ import {
   guardarReparacionPersistencia as guardarReparacionPersistenciaSinValidar,
   actualizarEstadoReparacionPersistencia,
   getIntervencionesPorReparacionPersistencia,
+  getReparacionesPorIntervencionPersistencia,
   agregarIntervencionAReparacionPersistencia,
   eliminarIntervencionDeReparacionPersistencia
 } from "../../persistencia/persistencia";
@@ -24,6 +25,35 @@ const IDS_INTERVENCIONES_POR_DEFECTO = ['47', '48', '49', '50', '51', '52'];
 
 // Estado inicial de una asignación de intervención recién creada (regla de negocio).
 const ESTADO_INICIAL_ASIGNACION_INTERVENCION = 'pendiente';
+
+const sincronizarIntervencionesIdsDeReparacion = (
+  reparacionId: string,
+  intervencionId: string | undefined,
+  operacion: 'add' | 'remove',
+  dispatch: any,
+  getState: () => RootState,
+) => {
+  if (!intervencionId) return;
+
+  const state = getState();
+  const reparacionActual = state.reparacion.coleccionReparaciones[reparacionId];
+  if (!reparacionActual) return;
+
+  const idsActuales = new Set(reparacionActual.data.IntervencionesIds || []);
+  if (operacion === 'add') {
+    idsActuales.add(intervencionId);
+  } else {
+    idsActuales.delete(intervencionId);
+  }
+
+  dispatch(updateReparacion({
+    ...reparacionActual,
+    data: {
+      ...reparacionActual.data,
+      IntervencionesIds: Array.from(idsActuales),
+    },
+  }));
+};
 
 // Reglas de negocio de validación para guardar una reparación (límites de campos).
 const validarCamposRepuestosReparacion = (data: DataReparacion): void => {
@@ -508,6 +538,23 @@ export const getIntervencionesPorReparacionAsync = createAsyncThunk(
   },
 );
 
+// GET Reparaciones donde se usó una intervención (consulta directa a persistencia,
+// no depende de que IntervencionesIds ya esté sincronizado en el store global).
+export const getReparacionesPorIntervencionAsync = createAsyncThunk(
+  'app/getReparacionesPorIntervencion',
+  async (intervencionId: string, { dispatch }) => {
+    try {
+      dispatch(isFetchingStart());
+      const reparaciones: ReparacionRelacionada[] = await getReparacionesPorIntervencionPersistencia(intervencionId);
+      dispatch(isFetchingComplete());
+      return { intervencionId, reparaciones };
+    } catch (error: unknown) { // TODO: Hacer tipo de dato para el error
+      dispatch(isFetchingComplete());
+      throw error;
+    }
+  },
+);
+
 // Agregar Intervención a una Reparación
 export const agregarIntervencionAReparacionAsync = createAsyncThunk(
   'app/agregarIntervencionAReparacion',
@@ -523,6 +570,8 @@ export const agregarIntervencionAReparacionAsync = createAsyncThunk(
       if (!resultado.success) {
         throw new Error(resultado.error);
       }
+
+      sincronizarIntervencionesIdsDeReparacion(reparacionId, intervencionId, 'add', dispatch, getState as () => RootState);
 
       // Recargar intervenciones
       await dispatch(getIntervencionesPorReparacionAsync(reparacionId));
@@ -556,6 +605,17 @@ export const eliminarIntervencionDeReparacionAsync = createAsyncThunk(
       dispatch(isFetchingStart());
 
       await eliminarIntervencionDeReparacionPersistencia(reparacionId, intervencionId);
+
+      const stateAntes = getState() as RootState;
+      const asignacionEliminada = stateAntes.reparacion.intervencionesDeReparacionActual.find(a => a.id === intervencionId);
+      const intervencionCatalogId = asignacionEliminada?.data?.intervencionId;
+      sincronizarIntervencionesIdsDeReparacion(
+        reparacionId,
+        intervencionCatalogId,
+        'remove',
+        dispatch,
+        getState as () => RootState,
+      );
 
       // Recargar intervenciones
       await dispatch(getIntervencionesPorReparacionAsync(reparacionId));

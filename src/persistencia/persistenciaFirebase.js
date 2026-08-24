@@ -350,6 +350,31 @@ export const eliminarIntervencionDeReparacionPersistencia = (reparacionId, inter
   });
 };
 
+// GET Reparaciones donde se usó una intervención (consulta directa)
+export const getReparacionesPorIntervencionPersistencia = (intervencionId) => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      const reparacionesRef = collection(firestore, collectionNames.REPARACIONES);
+            const reparacionesQuery = query(
+                reparacionesRef,
+                where('IntervencionesIds', 'array-contains', intervencionId)
+            );
+            const snapshot = await getDocs(reparacionesQuery);
+
+      const reparaciones = [];
+      snapshot.forEach(docSnap => {
+        const data = docSnap.data();
+                reparaciones.push({ id: docSnap.id, data });
+      });
+
+      resolve(reparaciones);
+    } catch (error) {
+      console.error('Error en getReparacionesPorIntervencionPersistencia:', error);
+      reject(error);
+    }
+  });
+};
+
 ///////////////////// CLIENTES/USUARIOS ///////////////////////////////////////////////////////////////////////////
 
 // GET todos los clientes

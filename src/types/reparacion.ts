@@ -72,6 +72,23 @@ export interface ReparacionType {
   data: DataReparacion;
 }
 
+export interface ReparacionRelacionada {
+  id: string;
+  data: Pick<DataReparacion,
+    | 'EstadoRep'
+    | 'PrioridadRep'
+    | 'FeConRep'
+    | 'ModeloDroneNameRep'
+  > & Partial<Pick<DataReparacion,
+    | 'FeAltaRep'
+    | 'IdPublicoRep'
+    | 'NombreUsu'
+    | 'ApellidoUsu'
+    | 'PresuMoRep'
+    | 'PresuFiRep'
+  >>;
+}
+
 // Tipo para colección de reparaciones como diccionario (optimización O(1))
 export interface Reparaciones {
   [id: string]: ReparacionType;
