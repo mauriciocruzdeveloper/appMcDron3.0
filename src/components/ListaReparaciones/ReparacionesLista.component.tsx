@@ -5,7 +5,7 @@ import { useAppSelector } from "redux-tool-kit/hooks/useAppSelector";
 import { selectColeccionModelosDrone } from "redux-tool-kit/modeloDrone/modeloDrone.selectors";
 import { selectDronesDictionary } from "redux-tool-kit/drone/drone.selectors";
 import { ReparacionType } from "types/reparacion";
-import { esUrgente, getDiasAtrasoUrgencia, selectReparacionesConRepuestoFaltante } from "redux-tool-kit/reparacion/reparacion.selectors";
+import { esUrgente, getDiasAtrasoUrgencia, getPrecioParaListaReparaciones, selectReparacionesConRepuestoFaltante } from "redux-tool-kit/reparacion/reparacion.selectors";
 
 interface ReparacionesListaProps {
   reparaciones: ReparacionType[];
@@ -53,6 +53,7 @@ const ReparacionesLista = ({ reparaciones }: ReparacionesListaProps): React.Reac
     const urgente = esUrgente(reparacion);
     const diasAtraso = getDiasAtrasoUrgencia(reparacion);
     const faltanRepuestos = reparacionesConRepuestoFaltante.has(reparacion.id);
+    const precioMostrado = getPrecioParaListaReparaciones(reparacion);
     if (drone) {
       const modelo = modelosDroneDictionary[drone.data.ModeloDroneId];
       if (modelo) {
@@ -70,9 +71,9 @@ const ReparacionesLista = ({ reparaciones }: ReparacionesListaProps): React.Reac
       >
         <div className="d-flex w-100 justify-content-between align-items-start reparaciones-card-header">
           <h5 className="mb-1 reparaciones-card-title">{modeloDroneName}</h5>
-          {reparacion.data.PresuFiRep && (
+          {precioMostrado > 0 && (
             <div className="text-end flex-shrink-0 ms-2">
-              <strong className="text-success">${reparacion.data.PresuFiRep.toLocaleString()}</strong>
+              <strong className="text-success">${precioMostrado.toLocaleString()}</strong>
             </div>
           )}
         </div>
