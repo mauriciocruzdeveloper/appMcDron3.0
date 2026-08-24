@@ -86,4 +86,50 @@ describe('ReparacionesLista', () => {
     expect(screen.getByText('$120')).toBeInTheDocument();
     expect(screen.queryByText('$450')).not.toBeInTheDocument();
   });
+
+  it.each(['Cobrado', 'Enviado', 'Finalizado', 'Abandonado', 'Cancelado'])(
+    'prioriza el precio del diagnóstico en estado %s cuando tiene valor',
+    (estado) => {
+    const store = createStore();
+
+    render(
+      <Provider store={store}>
+        <ReparacionesLista reparaciones={[{
+          id: `rep-${estado}`,
+          data: {
+            EstadoRep: estado,
+            ModeloDroneNameRep: 'Mini 4 Pro',
+            NombreUsu: 'Juan Perez',
+            PresuFiRep: 450,
+            PresuDiRep: 120,
+          },
+        }]} />
+      </Provider>
+    );
+
+    expect(screen.getByText('$120')).toBeInTheDocument();
+    expect(screen.queryByText('$450')).not.toBeInTheDocument();
+    }
+  );
+
+  it('muestra el precio total cuando no existe precio de diagnóstico', () => {
+    const store = createStore();
+
+    render(
+      <Provider store={store}>
+        <ReparacionesLista reparaciones={[{
+          id: 'rep-aceptada',
+          data: {
+            EstadoRep: 'Finalizado',
+            ModeloDroneNameRep: 'Mini 4 Pro',
+            NombreUsu: 'Juan Perez',
+            PresuFiRep: 450,
+            PresuDiRep: 0,
+          },
+        }]} />
+      </Provider>
+    );
+
+    expect(screen.getByText('$450')).toBeInTheDocument();
+  });
 });

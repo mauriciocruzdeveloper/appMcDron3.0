@@ -24,12 +24,12 @@ const normalizeString = (str: string | undefined): string => {
   return str.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
 };
 
-const ESTADOS_CON_PRECIO_DIAGNOSTICO = new Set(['Rechazado', 'Diagnosticado']);
-
-export const getPrecioParaListaReparaciones = (reparacion: ReparacionType): number =>
-  ESTADOS_CON_PRECIO_DIAGNOSTICO.has(reparacion.data.EstadoRep)
-    ? Number(reparacion.data.PresuDiRep ?? 0)
+export const getPrecioParaListaReparaciones = (reparacion: ReparacionType): number => {
+  const precioDiagnostico = Number(reparacion.data.PresuDiRep ?? 0);
+  return precioDiagnostico > 0
+    ? precioDiagnostico
     : Number(reparacion.data.PresuFiRep ?? 0);
+};
 
 // Tipos para los selectores
 type ReparacionSelector = (state: RootState) => ReparacionType | undefined;
