@@ -43,6 +43,26 @@ const createStore = () => configureStore({
 });
 
 describe('ReparacionesLista', () => {
+  it('muestra el nombre y apellido del cliente', () => {
+    const store = createStore();
+
+    render(
+      <Provider store={store}>
+        <ReparacionesLista reparaciones={[{
+          id: 'rep-cliente',
+          data: {
+            EstadoRep: 'Diagnosticado',
+            ModeloDroneNameRep: 'Mini 4 Pro',
+            NombreUsu: 'Juan',
+            ApellidoUsu: 'Perez',
+          },
+        }]} />
+      </Provider>
+    );
+
+    expect(screen.getByText('Juan Perez')).toBeInTheDocument();
+  });
+
   it('muestra el precio del diagnóstico cuando la reparación está rechazada', () => {
     const store = createStore();
 

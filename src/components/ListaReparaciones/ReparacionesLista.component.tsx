@@ -77,7 +77,9 @@ const ReparacionesLista = ({ reparaciones }: ReparacionesListaProps): React.Reac
             </div>
           )}
         </div>
-        <small>{reparacion.data?.NombreUsu || reparacion.data?.UsuarioRep}</small>
+        <small>
+          {`${reparacion.data.NombreUsu || ''} ${reparacion.data.ApellidoUsu || ''}`.trim() || reparacion.data.UsuarioRep}
+        </small>
         {(() => {
           const estadoInfo = obtenerEstadoSeguro(reparacion.data.EstadoRep);
           const isLegacy = esEstadoLegacy(reparacion.data.EstadoRep);
