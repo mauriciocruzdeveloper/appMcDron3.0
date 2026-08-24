@@ -4,10 +4,14 @@ import { configureStore } from '@reduxjs/toolkit';
 import { getReparacionesPorIntervencionPersistencia } from '../../persistencia/persistencia';
 import { ReparacionRelacionada } from '../../types/reparacion';
 import appReducer from '../app/app.slice';
-import { getReparacionesPorIntervencionAsync } from './reparacion.actions';
-import reparacionReducer from './reparacion.slice';
+import {
+  cambiarEstadoReparacionAsync,
+  getReparacionesPorIntervencionAsync,
+} from './reparacion.actions';
+import reparacionReducer, { setReparaciones } from './reparacion.slice';
 import {
   selectEstadoReparacionesPorIntervencionId,
+  selectPuedeAvanzarA,
   selectReparacionesPorIntervencionId,
 } from './reparacion.selectors';
 
@@ -80,5 +84,47 @@ describe('reparaciones por intervención', () => {
     expect(selectReparacionesPorIntervencionId(store.getState() as any, 'int-1')).toEqual([]);
     expect(selectEstadoReparacionesPorIntervencionId(store.getState() as any, 'int-1'))
       .toBe('failed');
+  });
+});
+
+describe('seguimiento requerido para enviar', () => {
+  const cargarReparacionCobrada = (seguimiento: string) => {
+    const store = crearStore();
+    store.dispatch(setReparaciones([{
+      ...crearReparacion('rep-envio'),
+      data: {
+        ...crearReparacion('rep-envio').data,
+        EstadoRep: 'Cobrado',
+        SeguimientoEntregaRep: seguimiento,
+      },
+    }]));
+    return store;
+  };
+
+  it('no permite avanzar a Enviado con seguimiento vacío', () => {
+    const store = cargarReparacionCobrada('   ');
+
+    expect(selectPuedeAvanzarA('rep-envio', 'Enviado')(store.getState() as any))
+      .toBe(false);
+  });
+
+  it('permite avanzar a Enviado con seguimiento informado', () => {
+    const store = cargarReparacionCobrada('360003067941120');
+
+    expect(selectPuedeAvanzarA('rep-envio', 'Enviado')(store.getState() as any))
+      .toBe(true);
+  });
+
+  it('rechaza desde el thunk un intento de envío sin seguimiento', async () => {
+    const store = cargarReparacionCobrada('');
+
+    const resultado = await store.dispatch(cambiarEstadoReparacionAsync({
+      reparacionId: 'rep-envio',
+      nuevoEstado: 'Enviado',
+    }) as any);
+
+    expect(resultado.meta.requestStatus).toBe('rejected');
+    expect((resultado.payload as Error).message)
+      .toBe('El número de seguimiento es obligatorio para marcar la reparación como Enviado');
   });
 });

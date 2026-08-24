@@ -926,6 +926,13 @@ export const selectPuedeAvanzarA = (reparacionId: string, nombreEstadoDestino: s
 
       if (!estadoDestino) return false;
 
+      if (
+        nombreEstadoDestino === 'Enviado' &&
+        !reparacion.data.SeguimientoEntregaRep?.trim()
+      ) {
+        return false;
+      }
+
       // Lógica especial para transiciones bidireccionales Repuestos ⇄ Aceptado
       if (estadoActual.nombre === 'Aceptado' && nombreEstadoDestino === 'Repuestos') {
         return true;

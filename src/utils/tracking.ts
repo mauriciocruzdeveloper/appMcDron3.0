@@ -9,3 +9,15 @@ export const buildTrackingUrl = (trackingNumber?: string | null): string | null 
 
   return `https://t.17track.net/es#nums=${encodeURIComponent(tracking)}`;
 };
+
+export const isAndreaniTrackingNumber = (trackingNumber?: string | null): boolean => {
+  const tracking = normalizeTrackingNumber(trackingNumber);
+  return /^\d{15}$/.test(tracking);
+};
+
+export const buildAndreaniTrackingUrl = (trackingNumber?: string | null): string | null => {
+  if (!isAndreaniTrackingNumber(trackingNumber)) return null;
+
+  const tracking = normalizeTrackingNumber(trackingNumber);
+  return `https://www.andreani.com/envio/${encodeURIComponent(tracking)}`;
+};

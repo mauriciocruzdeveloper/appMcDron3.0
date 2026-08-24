@@ -1079,6 +1079,10 @@ export const cambiarEstadoReparacionAsync = createAsyncThunk(
         throw new Error(`Transición no permitida: ${reparacionActual.data.EstadoRep} → ${nuevoEstado}`);
       }
 
+      if (nuevoEstado === 'Enviado' && !reparacionActual.data.SeguimientoEntregaRep?.trim()) {
+        throw new Error('El número de seguimiento es obligatorio para marcar la reparación como Enviado');
+      }
+
       // Determinar el campo de fecha a actualizar
       type CampoFecha = 'FeConRep' | 'FeFinRep' | 'FeRecRep' | 'FeEntRep';
       let campoFecha: CampoFecha | null = null;

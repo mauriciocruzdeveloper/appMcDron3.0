@@ -12,7 +12,9 @@ import {
     cambiarEstadoReparacionAsync,
 } from "../../../redux-tool-kit/reparacion/reparacion.actions";
 import { convertTimestampCORTO } from "../../../utils/utils";
+import { buildAndreaniTrackingUrl } from "../../../utils/tracking";
 import TextareaAutosize from "react-textarea-autosize";
+import { BoxArrowUpRight } from "react-bootstrap-icons";
 
 interface ReparacionEntregaProps {
     reparacionId: string;
@@ -64,6 +66,11 @@ export const ReparacionEntrega: React.FC<ReparacionEntregaProps> = ({
     });
 
     if (!seccionVisible || !reparacion) return null;
+
+    const seguimientoLocalValido = Boolean(seguimiento.value.trim());
+    const andreaniTrackingUrl = buildAndreaniTrackingUrl(seguimiento.value);
+    const puedeMostrarAccionEnviado =
+        reparacion.data.EstadoRep === 'Cobrado' || puedeAvanzarAEnviado;
 
     const avanzarACobrado = () => {
         dispatch(cambiarEstadoReparacionAsync({
@@ -153,14 +160,33 @@ export const ReparacionEntrega: React.FC<ReparacionEntregaProps> = ({
                         Nro. de Seguimiento
                         {seguimiento.isSaving && <small className="text-muted ms-2">Guardando...</small>}
                     </label>
-                    <input
-                        onChange={(e) => seguimiento.onChange(e.target.value)}
-                        type="text"
-                        className="form-control"
-                        id="SeguimientoEntregaRep"
-                        value={seguimiento.value}
-                        disabled={!isAdmin}
-                    />
+                    <div className="d-flex flex-column flex-sm-row gap-2">
+                        <input
+                            onChange={(e) => seguimiento.onChange(e.target.value)}
+                            type="text"
+                            className="form-control"
+                            id="SeguimientoEntregaRep"
+                            value={seguimiento.value}
+                            disabled={!isAdmin}
+                        />
+                        {andreaniTrackingUrl && (
+                            <a
+                                href={andreaniTrackingUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="btn btn-outline-primary text-nowrap"
+                                title="Abrir seguimiento oficial de Andreani"
+                            >
+                                <BoxArrowUpRight className="me-1" aria-hidden="true" />
+                                Consultar Andreani
+                            </a>
+                        )}
+                    </div>
+                    {andreaniTrackingUrl && (
+                        <small className="text-success d-block mt-1">
+                            Envío Andreani detectado
+                        </small>
+                    )}
                 </div>
 
                 {isAdmin && (
@@ -176,12 +202,20 @@ export const ReparacionEntrega: React.FC<ReparacionEntregaProps> = ({
                                     Marcar como Cobrado
                                 </button>
                             )}
-                            {puedeAvanzarAEnviado && (
+                            {puedeMostrarAccionEnviado && (
                                 <button
                                     type="button"
                                     className="btn btn-warning flex-fill"
                                     style={{ minWidth: '140px' }}
                                     onClick={avanzarAEnviado}
+                                    disabled={
+                                        !seguimientoLocalValido ||
+                                        seguimiento.isSaving ||
+                                        !puedeAvanzarAEnviado
+                                    }
+                                    title={!seguimientoLocalValido
+                                        ? 'Ingresá un número de seguimiento para marcar como Enviado'
+                                        : undefined}
                                 >
                                     Marcar como Enviado
                                 </button>
