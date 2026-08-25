@@ -20,6 +20,7 @@ import { ComboBox } from './common';
 import { SelectOption } from '../types/selectOption';
 import { buildTrackingUrl } from '../utils/tracking';
 import { normalizeCuit, sanitizeCuitInput } from '../utils/cuit';
+import { agregarItemEnInicio, hayItemEnBlanco } from '../utils/pedidoRepuestoItems';
 
 interface ParamTypes extends Record<string, string | undefined> {
     id: string;
@@ -40,17 +41,6 @@ const pedidoVacio = (): PedidoRepuesto => ({
         CUIT: null,
         Notas: '',
         Items: [],
-    },
-});
-
-const itemVacio = (pedidoId: string): PedidoRepuestoItem => ({
-    id: `temp-${Date.now()}`,
-    data: {
-        PedidoId: pedidoId,
-        RepuestoId: null,
-        NombreRepuesto: '',
-        Cantidad: 1,
-        PrecioUnitario: null,
     },
 });
 
@@ -168,11 +158,15 @@ export default function PedidoComponent(): JSX.Element {
     // Handlers ítems
     // -------------------------------------------------------
     const handleAgregarItem = () => {
+        if (hayItemEnBlanco(pedido.data.Items)) {
+            return;
+        }
+
         setPedido(prev => ({
             ...prev,
             data: {
                 ...prev.data,
-                Items: [...prev.data.Items, itemVacio(prev.id)],
+                Items: agregarItemEnInicio(prev.data.Items, prev.id),
             },
         }));
     };
@@ -504,6 +498,7 @@ export default function PedidoComponent(): JSX.Element {
                         <button
                             className="btn btn-sm bg-bluemcdron text-white"
                             onClick={handleAgregarItem}
+                            disabled={hayItemEnBlanco(pedido.data.Items)}
                         >
                             <i className="bi bi-plus-circle me-1"></i> Agregar repuesto
                         </button>
