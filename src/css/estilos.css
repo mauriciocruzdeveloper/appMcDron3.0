@@ -429,6 +429,27 @@ body {
 	border-color: var(--app-border);
 }
 
+/* Bootstrap pinta el hover/focus/active de .list-group-item-action con blanco fijo (#f8f9fa),
+   con más especificidad que .list-group-item; lo pisamos para que respete el tema oscuro. */
+.list-group-item-action:hover,
+.list-group-item-action:focus,
+.list-group-item-action.active {
+	background-color: var(--app-surface-muted);
+	color: var(--app-text);
+	border-color: var(--app-border);
+}
+
+/* Bootstrap fija fondo #e9ecef en :disabled/[readonly], con más especificidad que .form-control;
+   sin esto el texto queda casi invisible en tema oscuro. */
+.form-control:disabled,
+.form-control[readonly],
+.form-select:disabled {
+	background-color: var(--app-surface-muted);
+	color: var(--app-text-muted);
+	border-color: var(--app-border);
+	opacity: 1;
+}
+
 .btn-outline-secondary {
 	color: var(--app-text);
 }
