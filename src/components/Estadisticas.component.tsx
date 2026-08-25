@@ -76,8 +76,6 @@ export default function Estadisticas(): JSX.Element {
         };
     });
 
-    console.log('!!! estadisticas por mes', estadisticasPorMes);
-
     const totalAnual = estadisticasPorMes.reduce((total, mes) => total + mes.ingresos, 0);
     const totalReparaciones = estadisticasPorMes.reduce((total, mes) => total + mes.cantidad, 0);
 

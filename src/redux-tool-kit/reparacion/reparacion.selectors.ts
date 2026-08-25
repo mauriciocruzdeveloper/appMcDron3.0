@@ -6,6 +6,7 @@ import { AsignacionIntervencion, EstadoAsignacion } from '../../types/intervenci
 import { estados } from '../../datos/estados';
 import { obtenerEstadoSeguro, esEstadoLegacy } from '../../utils/estadosHelper';
 import { esReparacionResuelta, esEstadoPrevioAAceptacion, esTransicionValida, EstadoReparacion } from '../../usecases/estadosReparacion';
+import { calcularRankingModelosDrone } from '../../usecases/estadisticasModelosDrone';
 
 // Constantes para filtros
 /**
@@ -127,6 +128,19 @@ export const selectReparacionesByIds = (reparacionIds: string[]): ReparacionArra
 export const selectReparacionesArray = createSelector(
   [selectReparacionesDictionary],
   (reparaciones): ReparacionType[] => Object.values(reparaciones)
+);
+
+export const selectRankingModelosDrone = createSelector(
+  [
+    selectReparacionesArray,
+    (state: RootState) => state.drone.coleccionDrones,
+    (state: RootState) => state.modeloDrone.coleccionModelosDrone,
+  ],
+  (reparaciones, drones, modelosDrone) => calcularRankingModelosDrone(
+    reparaciones,
+    drones,
+    modelosDrone,
+  )
 );
 
 /**

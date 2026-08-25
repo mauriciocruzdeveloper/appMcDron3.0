@@ -84,6 +84,7 @@ export {
   selectTotalReparaciones,
   selectEstadisticasPorEstado,
   selectEstadisticasPorPrioridad,
+  selectRankingModelosDrone,
   selectTotalPresupuestos,
   
   // Selectores de filtrado por fechas

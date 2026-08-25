@@ -210,6 +210,9 @@ export default function NavMcDron ({ themeMode, resolvedTheme, onThemeChange }):
                         <NavDropdown.Item onClick={() => history.push('/inicio/estadisticas-semanales')}>
                             Estadísticas (Recepción Semanal)
                         </NavDropdown.Item>
+                        <NavDropdown.Item onClick={() => history.push('/inicio/estadisticas-modelos')}>
+                            Estadísticas (Modelos de Drone)
+                        </NavDropdown.Item>
                         <NavDropdown.Item onClick={() => history.push('/inicio/galeria-reparaciones')}>
                             Galería de Reparaciones
                         </NavDropdown.Item>

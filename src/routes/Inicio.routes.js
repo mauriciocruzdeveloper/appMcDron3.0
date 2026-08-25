@@ -24,6 +24,7 @@ import Intervencion from "../components/Intervencion.component";
 import Estadisticas from "../components/Estadisticas.component";
 import EstadisticasLocacion from "../components/EstadisticasLocacion.component";
 import EstadisticasSemanales from "../components/EstadisticasSemanales.component";
+import EstadisticasModelosDrone from "../components/EstadisticasModelosDrone.component";
 import EstadosLegacyManager from "../components/EstadosLegacyManager.component";
 import GaleriaReparaciones from "../components/GaleriaReparaciones.component";
 import ExportarClientesGoogleAds from "../components/ExportarClientesGoogleAds.component";
@@ -143,6 +144,11 @@ const InicioRoutes = ({ isLoggedIn, admin, themeMode, resolvedTheme, onThemeChan
                 <Route path="estadisticas-semanales" element={
                     <RoleGuard allowedRoles={['admin']} userRole={userRole}>
                         <EstadisticasSemanales />
+                    </RoleGuard>
+                } />
+                <Route path="estadisticas-modelos" element={
+                    <RoleGuard allowedRoles={['admin']} userRole={userRole}>
+                        <EstadisticasModelosDrone />
                     </RoleGuard>
                 } />
                 <Route path="galeria-reparaciones" element={
