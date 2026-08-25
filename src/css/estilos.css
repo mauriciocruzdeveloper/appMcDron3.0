@@ -1,5 +1,26 @@
 :root {
 	--app-max-width: 600px;
+	--app-bg: #EEEEEE;
+	--app-surface: #ffffff;
+	--app-surface-muted: #f8f9fa;
+	--app-text: #1f2937;
+	--app-text-muted: #4b5563;
+	--app-border: #dee2e6;
+	--app-primary: #224194;
+	--app-primary-contrast: #ffffff;
+	--app-shadow: rgba(0, 0, 0, 0.08);
+}
+
+:root[data-theme='dark'] {
+	--app-bg: #111827;
+	--app-surface: #1f2937;
+	--app-surface-muted: #374151;
+	--app-text: #f9fafb;
+	--app-text-muted: #d1d5db;
+	--app-border: #4b5563;
+	--app-primary: #5b8cff;
+	--app-primary-contrast: #111827;
+	--app-shadow: rgba(0, 0, 0, 0.35);
 }
 
 .pull-to-refresh__indicator {
@@ -53,14 +74,15 @@
 }
 
 .app-container {
-	background-color: #EEEEEE;
+	background-color: var(--app-bg);
+	color: var(--app-text);
 	height: 100%;
 	min-height: 100vh;
 	width: 100%;
 	max-width: var(--app-max-width);
 	margin-left: auto;
 	margin-right: auto;
-	box-shadow: 0 0 24px rgba(0, 0, 0, 0.08);
+	box-shadow: 0 0 24px var(--app-shadow);
 }
 
 /* El footer usa fixed-bottom (position: fixed) de Bootstrap, que se ubica
@@ -89,8 +111,9 @@
 	justify-content: space-between;
 	min-height: 82px;
 	padding: 18px 24px 14px;
-	border-bottom: 1px solid #dee2e6;
-	background-color: rgba(255, 255, 255, 0.96);
+	border-bottom: 1px solid var(--app-border);
+	background-color: color-mix(in srgb, var(--app-surface) 90%, transparent);
+	color: var(--app-text);
 }
 
 .app-page-header h3 {
@@ -121,9 +144,10 @@
 .dashboard-actions,
 .dashboard-panel {
 	padding: 20px;
-	border: 1px solid #dfe3e8;
+	border: 1px solid var(--app-border);
 	border-radius: 8px;
-	background-color: #ffffff;
+	background-color: var(--app-surface);
+	color: var(--app-text);
 }
 
 .dashboard-grid,
@@ -175,9 +199,10 @@
 .client-repairs-panel,
 .client-quick-panel {
 	padding: 20px;
-	border: 1px solid #dfe3e8;
+	border: 1px solid var(--app-border);
 	border-radius: 8px;
-	background-color: #ffffff;
+	background-color: var(--app-surface);
+	color: var(--app-text);
 }
 
 .client-quick-panel {
@@ -382,8 +407,40 @@ h1 {
 	text-align: center;
 }
 h3 {
-	color: #224194;
+	color: var(--app-primary);
 	text-align: center;
+}
+
+body {
+	background-color: var(--app-bg);
+	color: var(--app-text);
+}
+
+.card,
+.table,
+.form-control,
+.form-select,
+.input-group-text,
+.alert,
+.list-group-item,
+.modal-content {
+	background-color: var(--app-surface);
+	color: var(--app-text);
+	border-color: var(--app-border);
+}
+
+.btn-outline-secondary {
+	color: var(--app-text);
+}
+
+.bg-bluemcdron {
+	background-color: var(--app-primary);
+}
+
+.text-muted,
+.small,
+.form-text {
+	color: var(--app-text-muted) !important;
 }
 .btnEstados{
 	font-size: 10px;

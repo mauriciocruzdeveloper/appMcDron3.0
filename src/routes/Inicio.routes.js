@@ -34,7 +34,7 @@ import ListaCampanasEmail from "../components/ListaCampanasEmail.component";
 import RoleGuard from "../components/RoleGuard.component";
 import { useAppSelector } from "../redux-tool-kit/hooks/useAppSelector";
 
-const InicioRoutes = ({ isLoggedIn, admin }) => {
+const InicioRoutes = ({ isLoggedIn, admin, themeMode, resolvedTheme, onThemeChange }) => {
 
     console.log("INICIO ROUTES");
     
@@ -47,7 +47,7 @@ const InicioRoutes = ({ isLoggedIn, admin }) => {
         isLoggedIn ?
         <DataManagerComponent>
             {/* TODO: Verificar si Nav debe ir acá, quizás en App */}
-            <NavMcDron /> 
+            <NavMcDron themeMode={themeMode} resolvedTheme={resolvedTheme} onThemeChange={onThemeChange} /> 
             <Routes>
                 {/* Rutas accesibles para todos los usuarios autenticados */}
                 <Route index element={<Inicio admin={admin}/>} />

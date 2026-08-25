@@ -3,8 +3,15 @@ import Login from '../components/Login.container';
 import Registro from '../components/Registro.container';
 import InicioRoutes from "./Inicio.routes";
 import { useAppSelector } from "../redux-tool-kit/hooks/useAppSelector";
+import type { ThemeMode } from '../utils/theme';
 
-export default function Routes(): JSX.Element {
+type RoutesProps = {
+    themeMode: ThemeMode;
+    resolvedTheme: 'light' | 'dark';
+    onThemeChange: (mode: ThemeMode) => void;
+};
+
+export default function Routes({ themeMode, resolvedTheme, onThemeChange }: RoutesProps): JSX.Element {
     console.log("ROUTES");
     const isLoggedIn = useAppSelector(state => state.app.isLoggedIn);
     const isAdmin = useAppSelector(state => state.app.usuario?.data.Role === 'admin');
@@ -19,11 +26,11 @@ export default function Routes(): JSX.Element {
 
             <Route path="/login" element={<Login />} />
 
-            <Route path="/inicio/*" element={<InicioRoutes isLoggedIn={isLoggedIn} admin={isAdmin} />} />
+            <Route path="/inicio/*" element={<InicioRoutes isLoggedIn={isLoggedIn} admin={isAdmin} themeMode={themeMode} resolvedTheme={resolvedTheme} onThemeChange={onThemeChange} />} />
 
             <Route path="/registro" element={
                 isLoggedIn
-                    ? <InicioRoutes isLoggedIn={isLoggedIn} admin={isAdmin} />
+                    ? <InicioRoutes isLoggedIn={isLoggedIn} admin={isAdmin} themeMode={themeMode} resolvedTheme={resolvedTheme} onThemeChange={onThemeChange} />
                     : <Registro />
             } />
 

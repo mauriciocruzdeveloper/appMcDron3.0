@@ -1,6 +1,6 @@
 import React from 'react';
-import { Navbar, NavDropdown } from 'react-bootstrap';
-import { List } from 'react-bootstrap-icons';
+import { Navbar, NavDropdown, ButtonGroup, Button } from 'react-bootstrap';
+import { List, Sun, Moon, CircleHalf } from 'react-bootstrap-icons';
 import { useHistory } from '../hooks/useHistory';
 import { logout } from "../redux-tool-kit/app/app.slice";
 import { useAppSelector } from "../redux-tool-kit/hooks/useAppSelector";
@@ -10,7 +10,7 @@ import { notificacionesPorMensajesPersistencia } from '../persistencia/persisten
 import '../styles/navbar.css'; // Importa el archivo CSS
 
 
-export default function NavMcDron (): JSX.Element {
+export default function NavMcDron ({ themeMode, resolvedTheme, onThemeChange }): JSX.Element {
     console.log("NavMcDron");
 
     const usuario = useAppSelector(state => state.app.usuario);
@@ -50,8 +50,14 @@ export default function NavMcDron (): JSX.Element {
 
     const isActive = (path: string): boolean => history.location.pathname === path;
 
+    const toggleTheme = (nextMode: 'light' | 'dark' | 'system') => {
+        if (onThemeChange) {
+            onThemeChange(nextMode);
+        }
+    };
+
     return (
-        <Navbar sticky="top" className="app-navbar navbar-shadow bg-bluemcdron px-2 px-lg-3">
+        <Navbar sticky="top" className={`app-navbar navbar-shadow bg-bluemcdron px-2 px-lg-3 ${resolvedTheme === 'dark' ? 'theme-dark' : 'theme-light'}`}>
             <div className="app-navbar-user">
                 <img
                     src={usuario?.data?.UrlFotoUsu || "./img/logo1.png"}
@@ -122,17 +128,45 @@ export default function NavMcDron (): JSX.Element {
                 )}
             </nav>
 
-            <NavDropdown 
-                title={
-                    <span className="app-navbar-menu-label">
-                        <List width="32" height="32" color="white" />
-                        <span>Más</span>
-                    </span>
-                }
-                id="nav-dropdown"
-                drop="down"
-                align="end"
-            >
+            <div className="app-navbar-actions">
+                <ButtonGroup size="sm" className="theme-toggle-group">
+                    <Button
+                        variant={themeMode === 'light' ? 'light' : 'outline-light'}
+                        className="theme-toggle-button"
+                        onClick={() => toggleTheme('light')}
+                        aria-label="Tema claro"
+                    >
+                        <Sun size={16} />
+                    </Button>
+                    <Button
+                        variant={themeMode === 'dark' ? 'light' : 'outline-light'}
+                        className="theme-toggle-button"
+                        onClick={() => toggleTheme('dark')}
+                        aria-label="Tema oscuro"
+                    >
+                        <Moon size={16} />
+                    </Button>
+                    <Button
+                        variant={themeMode === 'system' ? 'light' : 'outline-light'}
+                        className="theme-toggle-button"
+                        onClick={() => toggleTheme('system')}
+                        aria-label="Tema del sistema"
+                    >
+                        <CircleHalf size={16} />
+                    </Button>
+                </ButtonGroup>
+
+                <NavDropdown 
+                    title={
+                        <span className="app-navbar-menu-label">
+                            <List width="32" height="32" color="white" />
+                            <span>Más</span>
+                        </span>
+                    }
+                    id="nav-dropdown"
+                    drop="down"
+                    align="end"
+                >
                 <NavDropdown.Item onClick={() => history.push('/inicio/perfil')}>
                     Perfil
                 </NavDropdown.Item>
@@ -192,7 +226,8 @@ export default function NavMcDron (): JSX.Element {
                 <NavDropdown.Item onClick={() => history.push('/inicio/mensajes')}>
                     Mensajes
                 </NavDropdown.Item>
-            </NavDropdown>
+                </NavDropdown>
+            </div>
         </Navbar>
     )
 }
