@@ -6,11 +6,14 @@ import {
     guardarRepuestoPersistencia,
     getRepuestosPorProveedorPersistencia,
     aplicarMovimientoStockPersistencia,
+    subirImagenConMiniaturaPersistencia,
+    eliminarArchivoPersistencia,
 } from "../../persistencia/persistencia"; // Actualizado para usar la importación centralizada
 import { isFetchingComplete, isFetchingStart } from "../app/app.slice";
 import { Repuesto } from "../../types/repuesto";
 import { setRepuesto } from "./repuesto.slice";
 import { RootState } from "../store";
+import { sanitizeBaseName, addTimestampToBase, buildUploadPath } from "../../utils/fileUtils";
 
 // ELIMINAR REPUESTO
 export const eliminarRepuestoAsync = createAsyncThunk(
@@ -138,20 +141,88 @@ export const getRepuestosPorProveedorAsync = createAsyncThunk(
     },
 );
 
-// // GET todos los repuestos
-// export const getRepuestosAsync = createAsyncThunk(
-//     'app/getRepuestos',
-//     async (_, { dispatch }) => {
-//         try {
-//             dispatch(isFetchingStart());
-//             const unsubscribe = getRepuestosPersistencia((repuestos) => {
-//                 dispatch(setRepuestos(repuestos));
-//                 dispatch(isFetchingComplete());
-//             });
-//             return unsubscribe;
-//         } catch (error: any) { // TODO: Hacer tipo de dato para el error
-//             dispatch(isFetchingComplete());
-//             return error;
-//         }
-//     },
-// );
+// SUBIR FOTO DE REPUESTO
+export const subirFotoRepuestoAsync = createAsyncThunk(
+    'repuesto/subirFoto',
+    async ({ repuestoId, file }: { repuestoId: string; file: File }, { dispatch, getState, rejectWithValue }) => {
+        try {
+            // Android stability blob
+            const arrayBuffer = await file.arrayBuffer();
+            const stableBlob = new Blob([arrayBuffer], { type: file.type });
+
+            dispatch(isFetchingStart());
+
+            const state = getState() as RootState;
+            const repuestoActual = state.repuesto.coleccionRepuestos[repuestoId];
+            if (!repuestoActual) {
+                throw new Error('Repuesto no encontrado');
+            }
+
+            const safeBase = sanitizeBaseName(file.name);
+            const fileName = addTimestampToBase(safeBase);
+            const path = buildUploadPath({ entityType: 'REPUESTOS', entityId: repuestoId, folder: 'foto', fileName });
+
+            const { originalUrl } = await subirImagenConMiniaturaPersistencia(path, stableBlob);
+
+            const repuestoActualizado: Repuesto = {
+                ...repuestoActual,
+                data: {
+                    ...repuestoActual.data,
+                    FotoRepu: originalUrl,
+                }
+            };
+
+            const guardarResponse = await dispatch(guardarRepuestoAsync(repuestoActualizado));
+            if (guardarResponse.meta.requestStatus !== 'fulfilled') {
+                throw new Error('Error al actualizar foto del repuesto');
+            }
+
+            dispatch(isFetchingComplete());
+            return originalUrl;
+        } catch (error: any) {
+            console.error('Error al subir foto del repuesto:', error);
+            dispatch(isFetchingComplete());
+            return rejectWithValue(error.message || 'Error al subir la foto del repuesto');
+        }
+    }
+);
+
+// BORRAR FOTO DE REPUESTO
+export const borrarFotoRepuestoAsync = createAsyncThunk(
+    'repuesto/borrarFoto',
+    async ({ repuestoId, fotoUrl }: { repuestoId: string; fotoUrl: string }, { dispatch, getState, rejectWithValue }) => {
+        try {
+            dispatch(isFetchingStart());
+
+            const state = getState() as RootState;
+            const repuestoActual = state.repuesto.coleccionRepuestos[repuestoId];
+            if (!repuestoActual) {
+                throw new Error('Repuesto no encontrado');
+            }
+
+            if (fotoUrl) {
+                await eliminarArchivoPersistencia(fotoUrl);
+            }
+
+            const repuestoActualizado: Repuesto = {
+                ...repuestoActual,
+                data: {
+                    ...repuestoActual.data,
+                    FotoRepu: '',
+                }
+            };
+
+            const guardarResponse = await dispatch(guardarRepuestoAsync(repuestoActualizado));
+            if (guardarResponse.meta.requestStatus !== 'fulfilled') {
+                throw new Error('Error al actualizar el repuesto');
+            }
+
+            dispatch(isFetchingComplete());
+            return '';
+        } catch (error: any) {
+            console.error('Error al borrar foto del repuesto:', error);
+            dispatch(isFetchingComplete());
+            return rejectWithValue(error.message || 'Error al borrar la foto del repuesto');
+        }
+    }
+);

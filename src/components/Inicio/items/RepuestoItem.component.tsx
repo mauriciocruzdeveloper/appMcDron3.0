@@ -17,7 +17,15 @@ const RepuestoItem = ({ repuesto, onClick }: RepuestoItemProps): React.ReactElem
       onClick={onClick}
       style={{ cursor: 'pointer' }}
     >
-      <div className='d-flex justify-content-between align-items-center'>
+      <div className='d-flex justify-content-between align-items-center gap-2'>
+        {repuesto.data?.FotoRepu && (
+          <img
+            src={repuesto.data.FotoRepu}
+            alt={repuesto.data.NombreRepu}
+            className='rounded me-1'
+            style={{ width: '48px', height: '48px', objectFit: 'cover' }}
+          />
+        )}
         <div style={{ flex: 1 }}>
           <h6 className='mb-1'>{repuesto.data.NombreRepu}</h6>
           <p className='mb-1 text-muted'>{repuesto.data.ProveedorRepu}</p>

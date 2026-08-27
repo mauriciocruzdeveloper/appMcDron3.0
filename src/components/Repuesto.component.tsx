@@ -4,7 +4,7 @@ import { useHistory } from "../hooks/useHistory";
 import { useAppDispatch } from '../redux-tool-kit/hooks/useAppDispatch';
 import { useAppSelector } from '../redux-tool-kit/hooks/useAppSelector';
 import { Repuesto } from '../types/repuesto';
-import { guardarRepuestoAsync, eliminarRepuestoAsync, ajustarStockManualAsync } from '../redux-tool-kit/repuesto/repuesto.actions';
+import { guardarRepuestoAsync, eliminarRepuestoAsync, ajustarStockManualAsync, subirFotoRepuestoAsync, borrarFotoRepuestoAsync } from '../redux-tool-kit/repuesto/repuesto.actions';
 import { useModal } from './Modal/useModal';
 import { ComboBox } from './common';
 import { SelectOption } from '../types/selectOption';
@@ -56,6 +56,7 @@ export default function RepuestoComponent(): JSX.Element {
       NombreRepu: '',
       DescripcionRepu: '',
       Obsoleta: false,
+      FotoRepu: '',
       ModelosDroneIds: [],
       ProveedorRepu: '',
       PrecioRepu: 0,
@@ -66,6 +67,9 @@ export default function RepuestoComponent(): JSX.Element {
 
   // Para el selector múltiple de modelos de drone
   const [estadoCalculado, setEstadoCalculado] = useState<string>('Agotado');
+
+  // Estado para la subida de foto
+  const [isUploadingFoto, setIsUploadingFoto] = useState(false);
 
   // Ajuste manual de stock (movimiento 'adjustment' en el ledger)
   const [ajusteDelta, setAjusteDelta] = useState<string>('');
@@ -164,6 +168,47 @@ export default function RepuestoComponent(): JSX.Element {
         ModelosDroneIds: modelosIds,
       }
     }));
+  };
+
+  // Manejador para la subida de foto
+  const handleAgregarFoto = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !repuesto.id) return;
+
+    setIsUploadingFoto(true);
+    try {
+      const response = await dispatch(subirFotoRepuestoAsync({ repuestoId: repuesto.id, file }));
+      if (response.meta.requestStatus === 'fulfilled') {
+        openModal({ mensaje: 'Foto cargada correctamente', tipo: 'success', titulo: 'Éxito' });
+      } else {
+        openModal({ mensaje: 'No se pudo subir la foto. Intente de nuevo.', tipo: 'danger', titulo: 'Error' });
+      }
+    } catch (error) {
+      console.error('Error al subir foto:', error);
+      openModal({ mensaje: 'Error al subir la foto', tipo: 'danger', titulo: 'Error' });
+    } finally {
+      setIsUploadingFoto(false);
+    }
+  };
+
+  const handleEliminarFoto = () => {
+    if (!repuesto.id || !repuesto.data.FotoRepu) return;
+    openModal({
+      mensaje: '¿Está seguro de que desea eliminar la foto de este repuesto?',
+      tipo: 'danger',
+      titulo: 'Eliminar Foto',
+      confirmCallback: confirmaEliminarFoto,
+    });
+  };
+
+  const confirmaEliminarFoto = async () => {
+    try {
+      await dispatch(borrarFotoRepuestoAsync({ repuestoId: repuesto.id, fotoUrl: repuesto.data.FotoRepu || '' })).unwrap();
+      openModal({ mensaje: 'Foto eliminada correctamente', tipo: 'success', titulo: 'Éxito' });
+    } catch (error) {
+      console.error('Error al eliminar foto:', error);
+      openModal({ mensaje: 'Error al eliminar la foto', tipo: 'danger', titulo: 'Error' });
+    }
   };
 
   const handleGuardarRepuesto = async () => {
@@ -321,6 +366,54 @@ export default function RepuestoComponent(): JSX.Element {
               onChange={handleTextInputChange}
               rows={3}
             />
+          </div>
+
+          <div className="mb-3">
+            <label className="form-label fw-bold">Foto del Repuesto</label>
+            {isNew ? (
+              <p className="text-muted small mb-0">
+                Guarde el repuesto primero para poder adjuntar una foto identificatoria.
+              </p>
+            ) : (
+              <div>
+                {repuesto.data.FotoRepu ? (
+                  <div className="d-flex align-items-center gap-3 mb-2 p-2 border rounded bg-light">
+                    <img
+                      src={repuesto.data.FotoRepu}
+                      alt={repuesto.data.NombreRepu}
+                      className="img-thumbnail"
+                      style={{ maxHeight: '120px', maxWidth: '160px', objectFit: 'contain' }}
+                    />
+                    <div>
+                      <button
+                        type="button"
+                        className="btn btn-outline-danger btn-sm"
+                        onClick={handleEliminarFoto}
+                      >
+                        <i className="bi bi-trash me-1"></i> Eliminar Foto
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <p className="text-muted small mb-2">Sin foto cargada.</p>
+                )}
+
+                <div className="d-flex align-items-center gap-2">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="form-control form-control-sm"
+                    onChange={handleAgregarFoto}
+                    disabled={isUploadingFoto}
+                  />
+                  {isUploadingFoto && (
+                    <div className="spinner-border spinner-border-sm text-primary" role="status">
+                      <span className="visually-hidden">Cargando...</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="mb-3">

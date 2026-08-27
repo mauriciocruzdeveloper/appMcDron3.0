@@ -261,8 +261,18 @@ export default function ListaRepuestos(): JSX.Element {
                             style={{ cursor: 'pointer' }}
                         >
                             <div className='card-body p-3'>
-                                <div className='d-flex w-100 justify-content-between'>
-                                    <h5 className='mb-1'>{repuesto.data.NombreRepu}</h5>
+                                <div className='d-flex w-100 justify-content-between align-items-start gap-2'>
+                                    <div className='d-flex align-items-center gap-2'>
+                                        {repuesto.data.FotoRepu && (
+                                            <img
+                                                src={repuesto.data.FotoRepu}
+                                                alt={repuesto.data.NombreRepu}
+                                                className='rounded'
+                                                style={{ width: '44px', height: '44px', objectFit: 'cover' }}
+                                            />
+                                        )}
+                                        <h5 className='mb-1'>{repuesto.data.NombreRepu}</h5>
+                                    </div>
                                     <div>
                                         {repuesto.data.Obsoleta && (
                                             <span className="badge bg-warning text-dark me-2">Obsoleto</span>

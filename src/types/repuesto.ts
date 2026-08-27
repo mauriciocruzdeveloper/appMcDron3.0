@@ -3,6 +3,7 @@ export interface RepuestoData {
   NombreRepu: string;
   DescripcionRepu: string;
   Obsoleta?: boolean;
+  FotoRepu?: string;
   ModelosDroneIds: string[]; // Nuevo array de IDs de modelos
   ProveedorRepu: string;
   PrecioRepu: number;
