@@ -11,6 +11,7 @@ import { SelectOption } from '../types/selectOption';
 import { selectModelosDroneArray } from '../redux-tool-kit/modeloDrone/modeloDrone.selectors';
 import { selectRepuestoPorId } from '../redux-tool-kit/repuesto/repuesto.selectors';
 import { selectIntervencionesPorRepuesto } from '../redux-tool-kit/intervencion/intervencion.selectors';
+import { ImageGallery } from './ImageGallery';
 
 interface ParamTypes extends Record<string, string | undefined> {
   id: string;
@@ -369,7 +370,22 @@ export default function RepuestoComponent(): JSX.Element {
           </div>
 
           <div className="mb-3">
-            <label className="form-label fw-bold">Foto del Repuesto</label>
+            <div className="d-flex justify-content-between align-items-center mb-2">
+              <label className="form-label fw-bold mb-0">Foto del Repuesto</label>
+              {!isNew && (
+                <label className="btn btn-sm btn-outline-secondary bg-bluemcdron text-white mb-0 cursor-pointer">
+                  <i className="bi bi-cloud-upload me-1"></i> {repuesto.data.FotoRepu ? "Cambiar Foto" : "Subir Foto"}
+                  <input
+                    type="file"
+                    onChange={handleAgregarFoto}
+                    style={{ display: "none" }}
+                    accept="image/*"
+                    disabled={isUploadingFoto}
+                  />
+                </label>
+              )}
+            </div>
+
             {isNew ? (
               <p className="text-muted small mb-0">
                 Guarde el repuesto primero para poder adjuntar una foto identificatoria.
@@ -377,41 +393,25 @@ export default function RepuestoComponent(): JSX.Element {
             ) : (
               <div>
                 {repuesto.data.FotoRepu ? (
-                  <div className="d-flex align-items-center gap-3 mb-2 p-2 border rounded bg-light">
-                    <img
-                      src={repuesto.data.FotoRepu}
-                      alt={repuesto.data.NombreRepu}
-                      className="img-thumbnail"
-                      style={{ maxHeight: '120px', maxWidth: '160px', objectFit: 'contain' }}
+                  <div className="mb-2 p-2 border rounded bg-light">
+                    <ImageGallery
+                      images={[repuesto.data.FotoRepu]}
+                      onDelete={() => handleEliminarFoto()}
+                      isAdmin={true}
                     />
-                    <div>
-                      <button
-                        type="button"
-                        className="btn btn-outline-danger btn-sm"
-                        onClick={handleEliminarFoto}
-                      >
-                        <i className="bi bi-trash me-1"></i> Eliminar Foto
-                      </button>
-                    </div>
                   </div>
                 ) : (
                   <p className="text-muted small mb-2">Sin foto cargada.</p>
                 )}
 
-                <div className="d-flex align-items-center gap-2">
-                  <input
-                    type="file"
-                    accept="image/*"
-                    className="form-control form-control-sm"
-                    onChange={handleAgregarFoto}
-                    disabled={isUploadingFoto}
-                  />
-                  {isUploadingFoto && (
+                {isUploadingFoto && (
+                  <div className="d-flex align-items-center gap-2 mt-2">
                     <div className="spinner-border spinner-border-sm text-primary" role="status">
                       <span className="visually-hidden">Cargando...</span>
                     </div>
-                  )}
-                </div>
+                    <span className="small text-primary">Subiendo e incluyendo la miniatura...</span>
+                  </div>
+                )}
               </div>
             )}
           </div>

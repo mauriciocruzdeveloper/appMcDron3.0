@@ -15,6 +15,8 @@ import { selectModelosDroneArray } from '../redux-tool-kit/modeloDrone/modeloDro
 import { ComboBox } from './common';
 import { SelectOption } from '../types/selectOption';
 import { clearStoredListFilter, getStoredListFilter, saveStoredListFilter } from '../utils/listFilters';
+import { ImageGallery } from './ImageGallery';
+import { getThumbnailUrl } from '../utils/imageUtils';
 
 interface RepuestoFilterState {
     text: string;
@@ -88,6 +90,7 @@ export default function ListaRepuestos(): JSX.Element {
     const [filtroEstado, setFiltroEstado] = useState<string>(() =>
         getStoredListFilter<RepuestoFilterState>(REPUESTOS_FILTER_STORAGE_KEY, DEFAULT_REPUESTOS_FILTERS).estado
     );
+    const [selectedFotoModal, setSelectedFotoModal] = useState<{ url: string; nombre: string } | null>(null);
 
     useEffect(() => {
         const storedFilters = getStoredListFilter<RepuestoFilterState>(
@@ -264,12 +267,28 @@ export default function ListaRepuestos(): JSX.Element {
                                 <div className='d-flex w-100 justify-content-between align-items-start gap-2'>
                                     <div className='d-flex align-items-center gap-2'>
                                         {repuesto.data.FotoRepu && (
-                                            <img
-                                                src={repuesto.data.FotoRepu}
-                                                alt={repuesto.data.NombreRepu}
-                                                className='rounded'
-                                                style={{ width: '44px', height: '44px', objectFit: 'cover' }}
-                                            />
+                                            <div
+                                                className="position-relative"
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    setSelectedFotoModal({ url: repuesto.data.FotoRepu!, nombre: repuesto.data.NombreRepu });
+                                                }}
+                                                title="Haga clic para ver la foto"
+                                                style={{ cursor: 'pointer' }}
+                                            >
+                                                <img
+                                                    src={getThumbnailUrl(repuesto.data.FotoRepu)}
+                                                    alt={repuesto.data.NombreRepu}
+                                                    className='rounded border shadow-sm'
+                                                    style={{ width: '48px', height: '48px', objectFit: 'cover' }}
+                                                    onError={(e) => {
+                                                        const target = e.target as HTMLImageElement;
+                                                        if (target.src !== repuesto.data.FotoRepu) {
+                                                            target.src = repuesto.data.FotoRepu!;
+                                                        }
+                                                    }}
+                                                />
+                                            </div>
                                         )}
                                         <h5 className='mb-1'>{repuesto.data.NombreRepu}</h5>
                                     </div>
@@ -321,6 +340,37 @@ export default function ListaRepuestos(): JSX.Element {
             )}
                 </div>
             </div>
+
+            {selectedFotoModal && (
+                <div
+                    className="modal fade show d-block"
+                    tabIndex={-1}
+                    style={{ backgroundColor: 'rgba(0,0,0,0.85)', zIndex: 1050 }}
+                    onClick={() => setSelectedFotoModal(null)}
+                >
+                    <div
+                        className="modal-dialog modal-dialog-centered modal-lg"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <div className="modal-content bg-dark text-white border-0 shadow-lg">
+                            <div className="modal-header border-bottom border-secondary py-2">
+                                <h6 className="modal-title mb-0">{selectedFotoModal.nombre}</h6>
+                                <button
+                                    type="button"
+                                    className="btn-close btn-close-white"
+                                    onClick={() => setSelectedFotoModal(null)}
+                                ></button>
+                            </div>
+                            <div className="modal-body p-3 text-center">
+                                <ImageGallery
+                                    images={[selectedFotoModal.url]}
+                                    isAdmin={false}
+                                />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
