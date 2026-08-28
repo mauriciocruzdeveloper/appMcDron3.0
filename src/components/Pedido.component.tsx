@@ -411,10 +411,10 @@ export default function PedidoComponent(): JSX.Element {
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     className="btn btn-outline-primary"
-                                    title={isMailAmericas ? "Abrir seguimiento oficial de MailAmericas" : isAndreani ? "Abrir seguimiento oficial de Andreani" : "Abrir seguimiento en 17TRACK"}
+                                    title="Abrir seguimiento en ParcelsApp"
                                 >
                                     <i className="bi bi-box-arrow-up-right me-1"></i>
-                                    {isMailAmericas ? "Consultar MailAmericas" : isAndreani ? "Consultar Andreani" : "Seguimiento"}
+                                    Consultar tracking
                                 </a>
                             )}
                         </div>

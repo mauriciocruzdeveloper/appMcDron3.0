@@ -32,12 +32,12 @@ export const buildTrackingUrl = (trackingNumber?: string | null): string | null 
   const tracking = normalizeTrackingNumber(trackingNumber);
   if (!tracking) return null;
 
-  if (isAndreaniTrackingNumber(tracking)) {
-    return buildAndreaniTrackingUrl(tracking);
-  }
   if (isMailAmericasTrackingNumber(tracking)) {
     return buildMailAmericasTrackingUrl(tracking);
   }
+  if (isAndreaniTrackingNumber(tracking)) {
+    return buildAndreaniTrackingUrl(tracking);
+  }
 
-  return `https://t.17track.net/es#nums=${encodeURIComponent(tracking)}`;
+  return `https://parcelsapp.com/es/tracking/${encodeURIComponent(tracking)}`;
 };
