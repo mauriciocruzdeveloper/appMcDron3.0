@@ -12,14 +12,17 @@
 }
 
 .image-gallery-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
     gap: 1rem;
     padding: 0.5rem 0;
 }
 
 .image-gallery-item {
     position: relative;
+    width: 220px;
+    max-width: 100%;
     border-radius: 8px;
     overflow: hidden;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
@@ -246,6 +249,9 @@
     justify-content: center;
     overflow: auto;
     padding: 1rem;
+    touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
 }
 
 .image-gallery-fullscreen-image-container img {
@@ -253,6 +259,8 @@
     max-height: 100%;
     object-fit: contain;
     cursor: grab;
+    user-select: none;
+    -webkit-user-drag: none;
 }
 
 .image-gallery-fullscreen-image-container img:active {

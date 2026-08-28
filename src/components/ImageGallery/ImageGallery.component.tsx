@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import './ImageGallery.styles.css';
 import { getThumbnailUrl } from '../../utils/imageUtils';
 
@@ -27,6 +27,21 @@ export const ImageGallery: React.FC<ImageGalleryProps> = ({
     const [isFullscreen, setIsFullscreen] = useState(false);
     const [zoomLevel, setZoomLevel] = useState(1);
 
+    const imageContainerRef = useRef<HTMLDivElement>(null);
+    const zoomLevelRef = useRef(zoomLevel);
+    const touchStateRef = useRef<{
+        initialDistance: number | null;
+        initialZoom: number;
+        startX: number | null;
+        startY: number | null;
+    }>({
+        initialDistance: null,
+        initialZoom: 1,
+        startX: null,
+        startY: null,
+    });
+    const lastTapRef = useRef<number>(0);
+
     const openFullscreen = (index: number) => {
         setSelectedIndex(index);
         setIsFullscreen(true);
@@ -54,7 +69,7 @@ export const ImageGallery: React.FC<ImageGalleryProps> = ({
     }, [selectedIndex]);
 
     const handleZoomIn = () => {
-        setZoomLevel(prev => Math.min(prev + 0.5, 3));
+        setZoomLevel(prev => Math.min(prev + 0.5, 3.5));
     };
 
     const handleZoomOut = () => {
@@ -87,6 +102,83 @@ export const ImageGallery: React.FC<ImageGalleryProps> = ({
 
     const isSelectedBefore = (url: string) => photoBeforeUrl === url;
     const isSelectedAfter = (url: string) => photoAfterUrl === url;
+
+    // Sincronizar ref de zoom
+    useEffect(() => {
+        zoomLevelRef.current = zoomLevel;
+    }, [zoomLevel]);
+
+    // Gestos táctiles: Pinch-to-zoom, doble tap y swipe
+    useEffect(() => {
+        const container = imageContainerRef.current;
+        if (!container || !isFullscreen) return;
+
+        const handleTouchStart = (e: TouchEvent) => {
+            if (e.touches.length === 2) {
+                const dist = Math.hypot(
+                    e.touches[0].clientX - e.touches[1].clientX,
+                    e.touches[0].clientY - e.touches[1].clientY
+                );
+                touchStateRef.current.initialDistance = dist;
+                touchStateRef.current.initialZoom = zoomLevelRef.current;
+            } else if (e.touches.length === 1) {
+                touchStateRef.current.startX = e.touches[0].clientX;
+                touchStateRef.current.startY = e.touches[0].clientY;
+
+                // Doble tap para alternar zoom (1x <-> 2.2x)
+                const now = Date.now();
+                if (now - lastTapRef.current < 300) {
+                    setZoomLevel(prev => (prev > 1 ? 1 : 2.2));
+                }
+                lastTapRef.current = now;
+            }
+        };
+
+        const handleTouchMove = (e: TouchEvent) => {
+            if (e.touches.length === 2 && touchStateRef.current.initialDistance !== null) {
+                if (e.cancelable) e.preventDefault();
+                const currentDist = Math.hypot(
+                    e.touches[0].clientX - e.touches[1].clientX,
+                    e.touches[0].clientY - e.touches[1].clientY
+                );
+                const scaleFactor = currentDist / touchStateRef.current.initialDistance;
+                const newZoom = Math.min(Math.max(touchStateRef.current.initialZoom * scaleFactor, 0.8), 3.5);
+                setZoomLevel(newZoom);
+            }
+        };
+
+        const handleTouchEnd = (e: TouchEvent) => {
+            if (touchStateRef.current.initialDistance !== null) {
+                touchStateRef.current.initialDistance = null;
+            }
+
+            if (
+                touchStateRef.current.startX !== null &&
+                zoomLevelRef.current <= 1.1 &&
+                e.changedTouches.length === 1
+            ) {
+                const endX = e.changedTouches[0].clientX;
+                const deltaX = touchStateRef.current.startX - endX;
+                if (deltaX > 60) {
+                    goToNext();
+                } else if (deltaX < -60) {
+                    goToPrevious();
+                }
+            }
+            touchStateRef.current.startX = null;
+            touchStateRef.current.startY = null;
+        };
+
+        container.addEventListener('touchstart', handleTouchStart, { passive: true });
+        container.addEventListener('touchmove', handleTouchMove, { passive: false });
+        container.addEventListener('touchend', handleTouchEnd, { passive: true });
+
+        return () => {
+            container.removeEventListener('touchstart', handleTouchStart);
+            container.removeEventListener('touchmove', handleTouchMove);
+            container.removeEventListener('touchend', handleTouchEnd);
+        };
+    }, [isFullscreen, goToNext, goToPrevious]);
 
     // Navegación con teclado
     useEffect(() => {
@@ -282,7 +374,7 @@ export const ImageGallery: React.FC<ImageGalleryProps> = ({
                         </div>
 
                         {/* Imagen principal */}
-                        <div className="image-gallery-fullscreen-image-container">
+                        <div className="image-gallery-fullscreen-image-container" ref={imageContainerRef}>
                             <img
                                 src={images[selectedIndex]}
                                 alt={`Imagen ${selectedIndex + 1}`}

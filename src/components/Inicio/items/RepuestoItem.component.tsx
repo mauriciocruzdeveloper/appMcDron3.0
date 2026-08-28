@@ -78,10 +78,11 @@ const RepuestoItem = ({ repuesto, onClick }: RepuestoItemProps): React.ReactElem
           onClick={() => setShowFotoModal(false)}
         >
           <div
-            className="modal-dialog modal-dialog-centered modal-lg"
+            className="modal-dialog modal-dialog-centered"
+            style={{ maxWidth: '440px' }}
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="modal-content bg-dark text-white border-0 shadow-lg">
+            <div className="modal-content bg-dark text-white border-0 shadow-lg" style={{ borderRadius: '12px' }}>
               <div className="modal-header border-bottom border-secondary py-2">
                 <h6 className="modal-title mb-0">{repuesto.data.NombreRepu}</h6>
                 <button
@@ -90,7 +91,7 @@ const RepuestoItem = ({ repuesto, onClick }: RepuestoItemProps): React.ReactElem
                   onClick={() => setShowFotoModal(false)}
                 ></button>
               </div>
-              <div className="modal-body p-3 text-center">
+              <div className="modal-body p-3 d-flex justify-content-center">
                 <ImageGallery
                   images={[repuesto.data.FotoRepu]}
                   isAdmin={false}
