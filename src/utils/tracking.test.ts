@@ -1,7 +1,9 @@
 import {
   buildAndreaniTrackingUrl,
+  buildMailAmericasTrackingUrl,
   buildTrackingUrl,
   isAndreaniTrackingNumber,
+  isMailAmericasTrackingNumber,
   normalizeTrackingNumber,
 } from './tracking';
 
@@ -37,6 +39,33 @@ describe('tracking helpers', () => {
 
   it('genera la URL oficial de seguimiento Andreani', () => {
     expect(buildAndreaniTrackingUrl(' 360003067941120 '))
+      .toBe('https://www.andreani.com/envio/360003067941120');
+  });
+
+  it('detecta un número de seguimiento MailAmericas', () => {
+    expect(isMailAmericasTrackingNumber(' MLAR048983277EX ')).toBe(true);
+    expect(isMailAmericasTrackingNumber('mlar048983277ex')).toBe(true);
+  });
+
+  it.each([
+    '123456',
+    'AE-123456789-ES',
+    '',
+    null,
+  ])('no identifica como MailAmericas el seguimiento %p', (tracking) => {
+    expect(isMailAmericasTrackingNumber(tracking)).toBe(false);
+    expect(buildMailAmericasTrackingUrl(tracking)).toBeNull();
+  });
+
+  it('genera la URL oficial de seguimiento MailAmericas', () => {
+    expect(buildMailAmericasTrackingUrl(' MLAR048983277EX '))
+      .toBe('https://mailamericas.com/tracking?number_id=MLAR048983277EX');
+  });
+
+  it('buildTrackingUrl devuelve la URL directa de MailAmericas o Andreani según el proveedor', () => {
+    expect(buildTrackingUrl('MLAR048983277EX'))
+      .toBe('https://mailamericas.com/tracking?number_id=MLAR048983277EX');
+    expect(buildTrackingUrl('360003067941120'))
       .toBe('https://www.andreani.com/envio/360003067941120');
   });
 });

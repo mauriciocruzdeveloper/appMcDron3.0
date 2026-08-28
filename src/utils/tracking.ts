@@ -3,13 +3,6 @@ export const normalizeTrackingNumber = (value?: string | null): string => {
   return value.trim().replace(/\s+/g, '');
 };
 
-export const buildTrackingUrl = (trackingNumber?: string | null): string | null => {
-  const tracking = normalizeTrackingNumber(trackingNumber);
-  if (!tracking) return null;
-
-  return `https://t.17track.net/es#nums=${encodeURIComponent(tracking)}`;
-};
-
 export const isAndreaniTrackingNumber = (trackingNumber?: string | null): boolean => {
   const tracking = normalizeTrackingNumber(trackingNumber);
   return /^\d{15}$/.test(tracking);
@@ -20,4 +13,31 @@ export const buildAndreaniTrackingUrl = (trackingNumber?: string | null): string
 
   const tracking = normalizeTrackingNumber(trackingNumber);
   return `https://www.andreani.com/envio/${encodeURIComponent(tracking)}`;
+};
+
+export const isMailAmericasTrackingNumber = (trackingNumber?: string | null): boolean => {
+  const tracking = normalizeTrackingNumber(trackingNumber);
+  if (!tracking) return false;
+  return /^MLAR[A-Z0-9]+$/i.test(tracking) || /^ML[A-Z0-9]{8,25}$/i.test(tracking);
+};
+
+export const buildMailAmericasTrackingUrl = (trackingNumber?: string | null): string | null => {
+  if (!isMailAmericasTrackingNumber(trackingNumber)) return null;
+
+  const tracking = normalizeTrackingNumber(trackingNumber);
+  return `https://mailamericas.com/tracking?number_id=${encodeURIComponent(tracking)}`;
+};
+
+export const buildTrackingUrl = (trackingNumber?: string | null): string | null => {
+  const tracking = normalizeTrackingNumber(trackingNumber);
+  if (!tracking) return null;
+
+  if (isAndreaniTrackingNumber(tracking)) {
+    return buildAndreaniTrackingUrl(tracking);
+  }
+  if (isMailAmericasTrackingNumber(tracking)) {
+    return buildMailAmericasTrackingUrl(tracking);
+  }
+
+  return `https://t.17track.net/es#nums=${encodeURIComponent(tracking)}`;
 };

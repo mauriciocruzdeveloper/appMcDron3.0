@@ -12,7 +12,7 @@ import {
     cambiarEstadoReparacionAsync,
 } from "../../../redux-tool-kit/reparacion/reparacion.actions";
 import { convertTimestampCORTO } from "../../../utils/utils";
-import { buildAndreaniTrackingUrl } from "../../../utils/tracking";
+import { buildAndreaniTrackingUrl, buildMailAmericasTrackingUrl } from "../../../utils/tracking";
 import TextareaAutosize from "react-textarea-autosize";
 import { BoxArrowUpRight } from "react-bootstrap-icons";
 
@@ -69,6 +69,7 @@ export const ReparacionEntrega: React.FC<ReparacionEntregaProps> = ({
 
     const seguimientoLocalValido = Boolean(seguimiento.value.trim());
     const andreaniTrackingUrl = buildAndreaniTrackingUrl(seguimiento.value);
+    const mailAmericasTrackingUrl = buildMailAmericasTrackingUrl(seguimiento.value);
     const puedeMostrarAccionEnviado =
         reparacion.data.EstadoRep === 'Cobrado' || puedeAvanzarAEnviado;
 
@@ -181,10 +182,27 @@ export const ReparacionEntrega: React.FC<ReparacionEntregaProps> = ({
                                 Consultar Andreani
                             </a>
                         )}
+                        {mailAmericasTrackingUrl && (
+                            <a
+                                href={mailAmericasTrackingUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="btn btn-outline-primary text-nowrap"
+                                title="Abrir seguimiento oficial de MailAmericas"
+                            >
+                                <BoxArrowUpRight className="me-1" aria-hidden="true" />
+                                Consultar MailAmericas
+                            </a>
+                        )}
                     </div>
                     {andreaniTrackingUrl && (
                         <small className="text-success d-block mt-1">
                             Envío Andreani detectado
+                        </small>
+                    )}
+                    {mailAmericasTrackingUrl && (
+                        <small className="text-success d-block mt-1">
+                            Envío MailAmericas detectado
                         </small>
                     )}
                 </div>

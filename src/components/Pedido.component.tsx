@@ -18,7 +18,7 @@ import { selectModelosDroneArray } from '../redux-tool-kit/modeloDrone/modeloDro
 import { selectClientesConCuitConUso } from '../redux-tool-kit/usuario/usuario.selectors';
 import { ComboBox } from './common';
 import { SelectOption } from '../types/selectOption';
-import { buildTrackingUrl } from '../utils/tracking';
+import { buildTrackingUrl, isAndreaniTrackingNumber, isMailAmericasTrackingNumber } from '../utils/tracking';
 import { normalizeCuit, sanitizeCuitInput } from '../utils/cuit';
 import { agregarItemEnInicio, hayItemEnBlanco } from '../utils/pedidoRepuestoItems';
 
@@ -346,6 +346,8 @@ export default function PedidoComponent(): JSX.Element {
     // -------------------------------------------------------
     const estadoConfig = ESTADOS_PEDIDO.find(e => e.value === pedido.data.Estado);
     const trackingUrl = buildTrackingUrl(pedido.data.NumeroPedido);
+    const isMailAmericas = isMailAmericasTrackingNumber(pedido.data.NumeroPedido);
+    const isAndreani = isAndreaniTrackingNumber(pedido.data.NumeroPedido);
 
     return (
         <div className="p-4">
@@ -399,7 +401,7 @@ export default function PedidoComponent(): JSX.Element {
                             <input
                                 type="text"
                                 className="form-control"
-                                placeholder="Ej: AE-123456789-ES"
+                                placeholder="Ej: MLAR048983277EX o AE-123456789-ES"
                                 value={pedido.data.NumeroPedido ?? ''}
                                 onChange={e => handleFieldChange('NumeroPedido', e.target.value || null)}
                             />
@@ -409,13 +411,23 @@ export default function PedidoComponent(): JSX.Element {
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     className="btn btn-outline-primary"
-                                    title="Abrir seguimiento en 17TRACK"
+                                    title={isMailAmericas ? "Abrir seguimiento oficial de MailAmericas" : isAndreani ? "Abrir seguimiento oficial de Andreani" : "Abrir seguimiento en 17TRACK"}
                                 >
                                     <i className="bi bi-box-arrow-up-right me-1"></i>
-                                    Seguimiento
+                                    {isMailAmericas ? "Consultar MailAmericas" : isAndreani ? "Consultar Andreani" : "Seguimiento"}
                                 </a>
                             )}
                         </div>
+                        {isMailAmericas && (
+                            <small className="text-success d-block mt-1">
+                                Envío MailAmericas detectado
+                            </small>
+                        )}
+                        {isAndreani && (
+                            <small className="text-success d-block mt-1">
+                                Envío Andreani detectado
+                            </small>
+                        )}
                     </div>
 
                     <div className="mb-3">
