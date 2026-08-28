@@ -421,7 +421,6 @@ body {
 .form-control,
 .form-select,
 .input-group-text,
-.alert,
 .list-group-item,
 .modal-content {
 	background-color: var(--app-surface);
