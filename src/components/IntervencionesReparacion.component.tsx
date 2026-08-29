@@ -202,9 +202,9 @@ export default function IntervencionesReparacion({ reparacionId, readOnly = fals
               return (
               <div
                 key={asignacion.id}
-                className="card mb-3"
+                className="card mb-3 intervencion-asignada-card"
               >
-                <div className="card-body">
+                <div className="card-body intervencion-asignada-card-body">
                   <div className="d-flex w-100 justify-content-between mb-2">
                     <h6 className="mb-1">
                       {intervencion.data.NombreInt}

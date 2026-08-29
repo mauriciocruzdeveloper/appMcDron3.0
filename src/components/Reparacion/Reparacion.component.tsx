@@ -107,7 +107,7 @@ export default function ReparacionComponent(): React.ReactElement | null {
     // UI RENDER - Componente contenedor simple que orquesta las secciones
     return (
         <div
-            className="p-4"
+            className="reparacion-page"
             style={{
                 backgroundColor: obtenerEstadoSeguro(reparacion.data.EstadoRep).color
             }}

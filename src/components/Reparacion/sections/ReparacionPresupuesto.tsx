@@ -183,7 +183,7 @@ export const ReparacionPresupuesto: React.FC<ReparacionPresupuestoProps> = ({
 
     return (
         <div className="card mb-3" id="seccion-presupuesto">
-            <div className="card-body">
+            <div className="card-body reparacion-presupuesto-body">
                 <h5 className="card-title bluemcdron">PRESUPUESTO</h5>
                 <h6 className="card-title bluemcdron">INTERVENCIONES</h6>
                 <IntervencionesReparacion

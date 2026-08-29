@@ -150,7 +150,7 @@ export default function ListaRepuestos(): JSX.Element {
     return (
         <div className='d-flex flex-column' style={{ height: '100vh' }}>
             {/* Header fijo */}
-            <div className='p-4 pb-2 bg-white border-bottom' style={{ position: 'sticky', top: 0, zIndex: 100 }}>
+            <div className='list-page-header p-4 pb-2 border-bottom' style={{ position: 'sticky', top: 0, zIndex: 100 }}>
                 <h3 className='mb-0'>Repuestos</h3>
             </div>
 

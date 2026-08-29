@@ -135,6 +135,12 @@
 	padding: 20px 24px 28px;
 }
 
+.list-page-header {
+	background-color: var(--app-surface);
+	color: var(--app-text);
+	border-color: var(--app-border) !important;
+}
+
 .dashboard-content {
 	display: flex;
 	flex-direction: column;
@@ -377,6 +383,25 @@
 	.client-repairs-panel,
 	.client-quick-panel {
 		padding: 16px;
+	}
+}
+
+.reparacion-page {
+	padding: 1.5rem;
+}
+
+@media (max-width: 575.98px) {
+	.reparacion-page {
+		padding: 0.5rem;
+	}
+
+	.reparacion-presupuesto-body,
+	.intervencion-asignada-card-body {
+		padding: 0.75rem;
+	}
+
+	.intervencion-asignada-card {
+		margin-bottom: 0.75rem !important;
 	}
 }
 
