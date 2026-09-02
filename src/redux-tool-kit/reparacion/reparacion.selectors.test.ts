@@ -1,9 +1,9 @@
 /// <reference types="jest" />
 
 import { configureStore } from '@reduxjs/toolkit';
-import { getReparacionesPorIntervencionPersistencia } from '../../persistencia/persistencia';
+import { actualizarEstadoReparacionPersistencia, getReparacionesPorIntervencionPersistencia } from '../../persistencia/persistencia';
 import { ReparacionRelacionada } from '../../types/reparacion';
-import appReducer from '../app/app.slice';
+import { enviarDroneEnviadoAsync, enviarReparacionFinalizadaAsync } from '../app/app.actions';
 import {
   cambiarEstadoReparacionAsync,
   getReparacionesPorIntervencionAsync,
@@ -16,16 +16,38 @@ import {
 } from './reparacion.selectors';
 
 jest.mock('../../persistencia/persistencia', () => ({
+  actualizarEstadoReparacionPersistencia: jest.fn().mockResolvedValue(undefined),
   getReparacionesPorIntervencionPersistencia: jest.fn(),
 }));
 
+jest.mock('../app/app.actions', () => {
+  return {
+    enviarReciboAsync: jest.fn(),
+    enviarDroneReparadoAsync: jest.fn(),
+    enviarDroneDiagnosticadoAsync: jest.fn(),
+    enviarDroneEnviadoAsync: jest.fn(),
+    enviarReparacionFinalizadaAsync: jest.fn(),
+  };
+});
+
 const getReparacionesMock = getReparacionesPorIntervencionPersistencia as jest.Mock;
+const actualizarEstadoMock = actualizarEstadoReparacionPersistencia as jest.Mock;
+const enviarDroneEnviadoMock = enviarDroneEnviadoAsync as unknown as jest.Mock;
+const enviarReparacionFinalizadaMock = enviarReparacionFinalizadaAsync as unknown as jest.Mock;
+
+const crearResultadoEmail = () => () => {
+  const resultado: any = Promise.resolve({});
+  resultado.unwrap = () => Promise.resolve({});
+  return resultado;
+};
 
 const crearStore = () => configureStore({
   reducer: {
-    app: appReducer,
     reparacion: reparacionReducer,
   },
+  middleware: getDefaultMiddleware => getDefaultMiddleware({
+    serializableCheck: false,
+  }),
 });
 
 const crearReparacion = (id: string): ReparacionRelacionada => ({
@@ -88,6 +110,12 @@ describe('reparaciones por intervención', () => {
 });
 
 describe('seguimiento requerido para enviar', () => {
+  beforeEach(() => {
+    actualizarEstadoMock.mockClear();
+    enviarDroneEnviadoMock.mockImplementation(crearResultadoEmail);
+    enviarReparacionFinalizadaMock.mockImplementation(crearResultadoEmail);
+  });
+
   const cargarReparacionCobrada = (seguimiento: string) => {
     const store = crearStore();
     store.dispatch(setReparaciones([{
@@ -126,5 +154,61 @@ describe('seguimiento requerido para enviar', () => {
     expect(resultado.meta.requestStatus).toBe('rejected');
     expect((resultado.payload as Error).message)
       .toBe('El número de seguimiento es obligatorio para marcar la reparación como Enviado');
+  });
+
+  it('envía solamente el email de drone enviado al pasar a Enviado', async () => {
+    const store = cargarReparacionCobrada('360003067941120');
+
+    const resultado = await store.dispatch(cambiarEstadoReparacionAsync({
+      reparacionId: 'rep-envio',
+      nuevoEstado: 'Enviado',
+      enviarEmail: true,
+    }) as any);
+
+    expect(resultado.meta.requestStatus).toBe('fulfilled');
+    expect(enviarDroneEnviadoMock).toHaveBeenCalledTimes(1);
+    expect(enviarReparacionFinalizadaMock).not.toHaveBeenCalled();
+  });
+
+  it('informa el fallo del email después de persistir el estado Enviado', async () => {
+    enviarDroneEnviadoMock.mockImplementationOnce(() => () => {
+      const resultado: any = Promise.resolve({});
+      resultado.unwrap = () => Promise.reject(new Error('falló el email'));
+      return resultado;
+    });
+    const store = cargarReparacionCobrada('360003067941120');
+
+    const resultado = await store.dispatch(cambiarEstadoReparacionAsync({
+      reparacionId: 'rep-envio',
+      nuevoEstado: 'Enviado',
+      enviarEmail: true,
+    }) as any);
+
+    expect(actualizarEstadoMock).toHaveBeenCalledTimes(1);
+    expect(resultado.meta.requestStatus).toBe('rejected');
+    expect(resultado.payload).toEqual({ emailFailed: true });
+  });
+
+  it('envía solamente el email de cierre al pasar de Enviado a Finalizado', async () => {
+    const store = cargarReparacionCobrada('360003067941120');
+    store.dispatch(setReparaciones([{
+      ...crearReparacion('rep-envio'),
+      data: {
+        ...crearReparacion('rep-envio').data,
+        EstadoRep: 'Enviado',
+        SeguimientoEntregaRep: '360003067941120',
+        FeEntRep: Date.now(),
+      },
+    }]));
+
+    const resultado = await store.dispatch(cambiarEstadoReparacionAsync({
+      reparacionId: 'rep-envio',
+      nuevoEstado: 'Finalizado',
+      enviarEmail: true,
+    }) as any);
+
+    expect(resultado.meta.requestStatus).toBe('fulfilled');
+    expect(enviarReparacionFinalizadaMock).toHaveBeenCalledTimes(1);
+    expect(enviarDroneEnviadoMock).not.toHaveBeenCalled();
   });
 });

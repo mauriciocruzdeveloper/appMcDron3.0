@@ -17,6 +17,26 @@ import { EstadoAsignacion } from '../../types/intervencion';
 import { sanitizeBaseName, buildUploadPath, addTimestampToBase } from '../../utils/fileUtils';
 import { supabaseAuthErrors } from "../../persistencia/persistenciaSupabase/supabaseAuthErrors";
 import { RootState } from "../store";
+import { buildAndreaniTrackingUrl, normalizeTrackingNumber } from "../../utils/tracking";
+
+interface PayloadEmailEstadoReparacion {
+  cliente?: string;
+  nro_reparacion: string;
+  equipo: string;
+  telefono?: string;
+  email?: string;
+}
+
+interface PayloadDroneEnviado extends PayloadEmailEstadoReparacion {
+  fecha_envio: string;
+  seguimiento: string;
+  url_seguimiento: string | null;
+}
+
+interface PayloadReparacionFinalizada extends PayloadEmailEstadoReparacion {
+  fecha_ingreso: string;
+  fecha_finalizacion: string;
+}
 
 // LOGIN
 export const loginAsync = createAsyncThunk(
@@ -439,6 +459,107 @@ export const enviarDroneReparadoAsync = createAsyncThunk(
       return response;
     } catch (error: any) { // TODO: Hacer tipo de dato para el error
       console.error("Error en enviarDroneReparadoAsync:", error);
+      dispatch(isFetchingComplete());
+      throw error;
+    }
+  },
+);
+
+export const construirPayloadDroneEnviado = (
+  reparacion: ReparacionType,
+  emailDestino: string | undefined,
+  equipo: string,
+): PayloadDroneEnviado => {
+  const seguimiento = normalizeTrackingNumber(reparacion.data.SeguimientoEntregaRep);
+
+  return {
+    cliente: reparacion.data.ApellidoUsu
+      ? `${reparacion.data.NombreUsu} ${reparacion.data.ApellidoUsu}`
+      : reparacion.data.NombreUsu,
+    nro_reparacion: reparacion.data.IdPublicoRep || reparacion.id,
+    equipo,
+    fecha_envio: new Date(Number(reparacion.data.FeEntRep || Date.now())).toLocaleDateString(),
+    seguimiento,
+    url_seguimiento: buildAndreaniTrackingUrl(seguimiento),
+    telefono: reparacion.data.TelefonoUsu,
+    email: emailDestino,
+  };
+};
+
+export const enviarDroneEnviadoAsync = createAsyncThunk(
+  'app/enviarDroneEnviado',
+  async (reparacion: ReparacionType, { dispatch, getState }) => {
+    try {
+      dispatch(isFetchingStart());
+      const state = getState() as RootState;
+      const usuario = state.usuario.coleccionUsuarios[reparacion.data.UsuarioRep];
+      const emailDestino = usuario?.data?.EmailContacto || reparacion.data.EmailUsu;
+      let equipo = reparacion.data.ModeloDroneNameRep;
+
+      if (!equipo && reparacion.data.DroneId) {
+        const drone = state.drone.coleccionDrones[reparacion.data.DroneId];
+        equipo = drone
+          ? state.modeloDrone.coleccionModelosDrone[drone.data.ModeloDroneId]?.data.NombreModelo
+          : undefined;
+      }
+
+      const response = await callEndpoint({
+        url: process.env.REACT_APP_API_URL + '/send_drone_enviado',
+        method: HttpMethod.POST,
+        body: construirPayloadDroneEnviado(reparacion, emailDestino, equipo || 'Drone'),
+      });
+
+      dispatch(isFetchingComplete());
+      return response;
+    } catch (error: unknown) {
+      dispatch(isFetchingComplete());
+      throw error;
+    }
+  },
+);
+
+export const construirPayloadReparacionFinalizada = (
+  reparacion: ReparacionType,
+  emailDestino: string | undefined,
+  equipo: string,
+): PayloadReparacionFinalizada => ({
+  cliente: reparacion.data.ApellidoUsu
+    ? `${reparacion.data.NombreUsu} ${reparacion.data.ApellidoUsu}`
+    : reparacion.data.NombreUsu,
+  nro_reparacion: reparacion.data.IdPublicoRep || reparacion.id,
+  equipo,
+  fecha_ingreso: new Date(Number(reparacion.data.FeRecRep)).toLocaleDateString(),
+  fecha_finalizacion: new Date().toLocaleDateString(),
+  telefono: reparacion.data.TelefonoUsu,
+  email: emailDestino,
+});
+
+export const enviarReparacionFinalizadaAsync = createAsyncThunk(
+  'app/enviarReparacionFinalizada',
+  async (reparacion: ReparacionType, { dispatch, getState }) => {
+    try {
+      dispatch(isFetchingStart());
+      const state = getState() as RootState;
+      const usuario = state.usuario.coleccionUsuarios[reparacion.data.UsuarioRep];
+      const emailDestino = usuario?.data?.EmailContacto || reparacion.data.EmailUsu;
+      let equipo: string | undefined = reparacion.data.ModeloDroneNameRep;
+
+      if (!equipo && reparacion.data.DroneId) {
+        const drone = state.drone.coleccionDrones[reparacion.data.DroneId];
+        equipo = drone
+          ? state.modeloDrone.coleccionModelosDrone[drone.data.ModeloDroneId]?.data.NombreModelo
+          : undefined;
+      }
+
+      const response = await callEndpoint({
+        url: process.env.REACT_APP_API_URL + '/send_reparacion_finalizada',
+        method: HttpMethod.POST,
+        body: construirPayloadReparacionFinalizada(reparacion, emailDestino, equipo || 'Drone'),
+      });
+
+      dispatch(isFetchingComplete());
+      return response;
+    } catch (error: unknown) {
       dispatch(isFetchingComplete());
       throw error;
     }
