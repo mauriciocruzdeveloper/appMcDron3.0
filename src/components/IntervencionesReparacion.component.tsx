@@ -306,7 +306,7 @@ export default function IntervencionesReparacion({ reparacionId, readOnly = fals
             );})}
           </div>
 
-          <div className="card bg-light">
+          <div className="card resumen-presupuesto-card">
             <div className="card-body">
               <h6 className="card-title">Resumen</h6>
               <div className="row">
