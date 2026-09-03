@@ -81,19 +81,37 @@ export const ReparacionEntrega: React.FC<ReparacionEntregaProps> = ({
         }));
     };
 
-    const avanzarAEnviado = () => {
-        dispatch(cambiarEstadoReparacionAsync({
+    const avanzarAEnviado = async () => {
+        const response = await dispatch(cambiarEstadoReparacionAsync({
             reparacionId,
             nuevoEstado: 'Enviado',
-            enviarEmail: false
+            enviarEmail: true
         }));
+
+        if (response.meta.requestStatus === 'fulfilled') {
+            openModal({
+                mensaje: "Drone marcado como enviado y email enviado correctamente.",
+                tipo: "success",
+                titulo: "Drone Enviado",
+            });
+            return;
+        }
+
+        const emailFailed = Boolean((response.payload as { emailFailed?: boolean } | undefined)?.emailFailed);
+        openModal({
+            mensaje: emailFailed
+                ? "El drone fue marcado como enviado, pero no se pudo enviar el email."
+                : "No se pudo marcar el drone como enviado.",
+            tipo: "danger",
+            titulo: "Error",
+        });
     };
 
     const avanzarAFinalizado = async () => {
         const response = await dispatch(cambiarEstadoReparacionAsync({
             reparacionId,
             nuevoEstado: 'Finalizado',
-            enviarEmail: false
+            enviarEmail: true
         }));
 
         // Verificar si se usó la fecha de entrega como fallback para la fecha de finalización
@@ -102,18 +120,28 @@ export const ReparacionEntrega: React.FC<ReparacionEntregaProps> = ({
             
             if (payload.usedDeliveryDateAsFallback) {
                 openModal({
-                    mensaje: "⚠️ La reparación no tenía fecha de finalización. Se ha usado la fecha de entrega como fecha de finalización automáticamente.",
+                    mensaje: "La reparación no tenía fecha de finalización. Se usó la fecha de entrega y el email fue enviado correctamente.",
                     tipo: "warning",
                     titulo: "Fecha de Finalización Ajustada",
                 });
             } else {
                 openModal({
-                    mensaje: "Reparación finalizada correctamente.",
+                    mensaje: "Reparación finalizada y email enviado correctamente.",
                     tipo: "success",
                     titulo: "Reparación Finalizada",
                 });
             }
+            return;
         }
+
+        const emailFailed = Boolean((response.payload as { emailFailed?: boolean } | undefined)?.emailFailed);
+        openModal({
+            mensaje: emailFailed
+                ? "La reparación fue finalizada, pero no se pudo enviar el email."
+                : "No se pudo finalizar la reparación.",
+            tipo: "danger",
+            titulo: "Error",
+        });
     };
 
     const avanzarAAbandonado = () => {

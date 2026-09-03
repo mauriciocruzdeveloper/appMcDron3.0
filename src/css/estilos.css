@@ -418,6 +418,11 @@
 .bg-bluemcdron {
 	background-color: #224194;
 }
+.resumen-presupuesto-card {
+	background-color: var(--app-surface-muted);
+	color: var(--app-text);
+	border-color: var(--app-border);
+}
 .bg-red {
 	background-color: #c90e17;
 }
@@ -451,6 +456,13 @@ body {
 	background-color: var(--app-surface);
 	color: var(--app-text);
 	border-color: var(--app-border);
+}
+
+.form-control:focus,
+.form-select:focus {
+	background-color: var(--app-surface);
+	color: var(--app-text);
+	border-color: var(--app-primary);
 }
 
 /* Bootstrap pinta el hover/focus/active de .list-group-item-action con blanco fijo (#f8f9fa),

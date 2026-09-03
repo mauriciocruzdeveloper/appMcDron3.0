@@ -14,7 +14,7 @@ import {
 } from "../../persistencia/persistencia";
 import { AppState, isFetchingComplete, isFetchingStart } from "../app/app.slice";
 import { Usuario } from "../../types/usuario";
-import { enviarDroneDiagnosticadoAsync, enviarDroneReparadoAsync, enviarReciboAsync } from "../app/app.actions";
+import { enviarDroneDiagnosticadoAsync, enviarDroneEnviadoAsync, enviarDroneReparadoAsync, enviarReciboAsync, enviarReparacionFinalizadaAsync } from "../app/app.actions";
 import { generarAutoDiagnostico, generarNombreUnico, generarPasswordPorDefecto } from "../../utils/utils";
 import { PresupuestoProps } from "../../components/Presupuesto.component";
 import { Drone } from "../../types/drone";
@@ -1216,9 +1216,15 @@ export const cambiarEstadoReparacionAsync = createAsyncThunk(
             case 'Diagnosticado':
               await dispatch(enviarDroneDiagnosticadoAsync(reparacionGuardada)).unwrap();
               break;
+            case 'Enviado':
+              await dispatch(enviarDroneEnviadoAsync(reparacionGuardada)).unwrap();
+              break;
+            case 'Finalizado':
+              await dispatch(enviarReparacionFinalizadaAsync(reparacionGuardada)).unwrap();
+              break;
           }
-        } catch (err) {
-          return rejectWithValue(err);
+        } catch (_err) {
+          return rejectWithValue({ emailFailed: true });
         }
       }
 
