@@ -460,7 +460,7 @@ export default function IntervencionComponent(): JSX.Element {
             />
           </div>
           
-          <div className="mt-4 card bg-light">
+          <div className="mt-4 card app-surface-muted">
             <div className="card-body">
               <h6 className="card-title">Resumen</h6>
               <div className="row">
@@ -487,7 +487,7 @@ export default function IntervencionComponent(): JSX.Element {
           </div>
 
           {!isNew && (
-            <details className="card bg-light mt-3 mb-0">
+            <details className="card app-surface-muted mt-3 mb-0">
               <summary className="card-body d-flex justify-content-between align-items-center cursor-pointer">
                 <div>
                   <h6 className="card-title mb-1">Reparaciones donde se usó esta intervención</h6>

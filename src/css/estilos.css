@@ -234,6 +234,19 @@
 	margin-bottom: 0 !important;
 }
 
+.intervencion-list-card {
+	max-height: 220px;
+	overflow: hidden;
+}
+
+.intervencion-list-card-description {
+	display: -webkit-box;
+	overflow: hidden;
+	overflow-wrap: anywhere;
+	-webkit-box-orient: vertical;
+	-webkit-line-clamp: 3;
+}
+
 .list-filter-grid {
 	display: grid;
 	grid-template-columns: minmax(0, 1fr);
@@ -454,6 +467,12 @@ body {
 .list-group-item,
 .modal-content {
 	background-color: var(--app-surface);
+	color: var(--app-text);
+	border-color: var(--app-border);
+}
+
+.app-surface-muted {
+	background-color: var(--app-surface-muted);
 	color: var(--app-text);
 	border-color: var(--app-border);
 }

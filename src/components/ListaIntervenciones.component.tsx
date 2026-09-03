@@ -152,7 +152,7 @@ export default function ListaIntervenciones(): JSX.Element {
         {intervencionesList.map(intervencion => (
           <div
             key={intervencion.id}
-            className='card mb-3'
+            className='card mb-3 intervencion-list-card'
             aria-current='true'
             onClick={() => history.push(`/inicio/intervenciones/${intervencion.id}`)}
             style={{ cursor: 'pointer' }}
@@ -181,7 +181,9 @@ export default function ListaIntervenciones(): JSX.Element {
                 <small className='text-muted'>Tiempo est.: {intervencion.data.DuracionEstimada} min</small>
               </div>
               <div>
-                <small className='text-muted'>{intervencion.data.DescripcionInt}</small>
+                <small className='text-muted intervencion-list-card-description'>
+                  {intervencion.data.DescripcionInt}
+                </small>
               </div>
               {intervencion.data.PrecioManoObra < 0 && (
                 <div className="mt-1">
