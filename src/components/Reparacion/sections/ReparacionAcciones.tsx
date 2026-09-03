@@ -62,7 +62,7 @@ export const ReparacionAcciones: React.FC<ReparacionAccionesProps> = ({
                         tipo: "success",
                         titulo: "Eliminar Reparación",
                     });
-                    history.goBack();
+                    history.replace("/inicio/reparaciones");
                 } catch (error: unknown) {
                     console.error("Error al eliminar la reparación:", error);
                     openModal({
