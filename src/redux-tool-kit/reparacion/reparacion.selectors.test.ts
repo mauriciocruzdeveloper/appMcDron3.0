@@ -1,9 +1,17 @@
 /// <reference types="jest" />
 
 import { configureStore } from '@reduxjs/toolkit';
-import { actualizarEstadoReparacionPersistencia, getReparacionesPorIntervencionPersistencia } from '../../persistencia/persistencia';
-import { ReparacionRelacionada } from '../../types/reparacion';
+import {
+  actualizarEstadoReparacionPersistencia,
+  aplicarMovimientoStockPersistencia,
+  getIntervencionPersistencia,
+  getIntervencionesPorReparacionPersistencia,
+  getReparacionesPorIntervencionPersistencia,
+} from '../../persistencia/persistencia';
+import { EstadoAsignacion } from '../../types/intervencion';
+import { ReparacionRelacionada, ReparacionType } from '../../types/reparacion';
 import { enviarDroneEnviadoAsync, enviarReparacionFinalizadaAsync } from '../app/app.actions';
+import repuestoReducer, { setRepuestos } from '../repuesto/repuesto.slice';
 import {
   cambiarEstadoReparacionAsync,
   getReparacionesPorIntervencionAsync,
@@ -17,6 +25,9 @@ import {
 
 jest.mock('../../persistencia/persistencia', () => ({
   actualizarEstadoReparacionPersistencia: jest.fn().mockResolvedValue(undefined),
+  aplicarMovimientoStockPersistencia: jest.fn(),
+  getIntervencionPersistencia: jest.fn(),
+  getIntervencionesPorReparacionPersistencia: jest.fn(),
   getReparacionesPorIntervencionPersistencia: jest.fn(),
 }));
 
@@ -31,7 +42,10 @@ jest.mock('../app/app.actions', () => {
 });
 
 const getReparacionesMock = getReparacionesPorIntervencionPersistencia as jest.Mock;
+const getIntervencionesMock = getIntervencionesPorReparacionPersistencia as jest.Mock;
+const getIntervencionMock = getIntervencionPersistencia as jest.Mock;
 const actualizarEstadoMock = actualizarEstadoReparacionPersistencia as jest.Mock;
+const aplicarMovimientoStockMock = aplicarMovimientoStockPersistencia as jest.Mock;
 const enviarDroneEnviadoMock = enviarDroneEnviadoAsync as unknown as jest.Mock;
 const enviarReparacionFinalizadaMock = enviarReparacionFinalizadaAsync as unknown as jest.Mock;
 
@@ -44,19 +58,22 @@ const crearResultadoEmail = () => () => {
 const crearStore = () => configureStore({
   reducer: {
     reparacion: reparacionReducer,
+    repuesto: repuestoReducer,
   },
   middleware: getDefaultMiddleware => getDefaultMiddleware({
     serializableCheck: false,
   }),
 });
 
-const crearReparacion = (id: string): ReparacionRelacionada => ({
+const crearReparacion = (id: string): ReparacionType => ({
   id,
   data: {
     EstadoRep: 'Recibido',
     PrioridadRep: 1,
     FeConRep: null,
     ModeloDroneNameRep: 'Mavic Mini',
+    DescripcionUsuRep: '',
+    UsuarioRep: 'usuario-test',
   },
 });
 
@@ -210,5 +227,110 @@ describe('seguimiento requerido para enviar', () => {
     expect(resultado.meta.requestStatus).toBe('fulfilled');
     expect(enviarReparacionFinalizadaMock).toHaveBeenCalledTimes(1);
     expect(enviarDroneEnviadoMock).not.toHaveBeenCalled();
+  });
+});
+
+describe('consumo de repuestos al reparar', () => {
+  beforeEach(() => {
+    actualizarEstadoMock.mockClear();
+    getIntervencionesMock.mockReset();
+    getIntervencionMock.mockReset();
+    aplicarMovimientoStockMock.mockReset();
+    aplicarMovimientoStockMock.mockImplementation(({ partId, onHandDelta, committedDelta }) =>
+      Promise.resolve({
+        id: partId,
+        data: {
+          NombreRepu: partId,
+          DescripcionRepu: '',
+          ModelosDroneIds: [],
+          ProveedorRepu: '',
+          PrecioRepu: 0,
+          StockRepu: 10 + onHandDelta,
+          UnidadesComprometidas: Math.max(0, 10 + committedDelta),
+        },
+      })
+    );
+  });
+
+  it('consume solo las asignaciones completadas y libera las pendientes', async () => {
+    getIntervencionesMock.mockResolvedValue([
+      {
+        id: 'asignacion-completada',
+        data: {
+          reparacionId: 'rep-stock',
+          intervencionId: 'intervencion-completada',
+          estado: EstadoAsignacion.COMPLETADA,
+        },
+      },
+      {
+        id: 'asignacion-pendiente',
+        data: {
+          reparacionId: 'rep-stock',
+          intervencionId: 'intervencion-pendiente',
+          estado: EstadoAsignacion.PENDIENTE,
+        },
+      },
+    ]);
+    getIntervencionMock.mockImplementation((intervencionId: string) => Promise.resolve({
+      id: intervencionId,
+      data: {
+        _partsRelations: intervencionId === 'intervencion-completada'
+          ? [{ part_id: 'parte-completada', quantity: 2 }, { part_id: 'parte-compartida', quantity: 1 }]
+          : [{ part_id: 'parte-pendiente', quantity: 3 }, { part_id: 'parte-compartida', quantity: 4 }],
+      },
+    }));
+
+    const store = crearStore();
+    store.dispatch(setReparaciones([{
+      ...crearReparacion('rep-stock'),
+      data: {
+        ...crearReparacion('rep-stock').data,
+        EstadoRep: 'Aceptado',
+      },
+    }]));
+    store.dispatch(setRepuestos(['parte-completada', 'parte-pendiente', 'parte-compartida'].map(id => ({
+      id,
+      data: {
+        NombreRepu: id,
+        DescripcionRepu: '',
+        ModelosDroneIds: [],
+        ProveedorRepu: '',
+        PrecioRepu: 0,
+        StockRepu: 10,
+        UnidadesComprometidas: 10,
+      },
+    }))));
+
+    const resultado = await store.dispatch(cambiarEstadoReparacionAsync({
+      reparacionId: 'rep-stock',
+      nuevoEstado: 'Reparado',
+    }) as any);
+
+    expect(resultado.meta.requestStatus).toBe('fulfilled');
+    expect(aplicarMovimientoStockMock).toHaveBeenCalledWith(expect.objectContaining({
+      partId: 'parte-completada',
+      onHandDelta: -2,
+      committedDelta: -2,
+      kind: 'consumption',
+    }));
+    expect(aplicarMovimientoStockMock).toHaveBeenCalledWith(expect.objectContaining({
+      partId: 'parte-compartida',
+      onHandDelta: -1,
+      committedDelta: -1,
+      kind: 'consumption',
+    }));
+    expect(aplicarMovimientoStockMock).toHaveBeenCalledWith(expect.objectContaining({
+      partId: 'parte-pendiente',
+      onHandDelta: 0,
+      committedDelta: -3,
+      kind: 'release',
+    }));
+    expect(aplicarMovimientoStockMock).toHaveBeenCalledWith(expect.objectContaining({
+      partId: 'parte-compartida',
+      onHandDelta: 0,
+      committedDelta: -4,
+      kind: 'release',
+    }));
+    expect(aplicarMovimientoStockMock).toHaveBeenCalledTimes(4);
   });
 });

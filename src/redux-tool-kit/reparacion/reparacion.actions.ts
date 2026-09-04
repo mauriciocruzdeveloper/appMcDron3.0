@@ -20,6 +20,7 @@ import { PresupuestoProps } from "../../components/Presupuesto.component";
 import { Drone } from "../../types/drone";
 import { RootState } from "../store";
 import { setRepuesto } from "../repuesto/repuesto.slice";
+import { EstadoAsignacion } from "../../types/intervencion";
 
 const IDS_INTERVENCIONES_POR_DEFECTO = ['47', '48', '49', '50', '51', '52'];
 
@@ -116,10 +117,14 @@ const consolidarCantidadPorRepuesto = (partsRelations: any[]): Map<string, numbe
   return requiredByPart;
 };
 
-const obtenerCompromisoPorRepuestoDeReparacion = async (reparacionId: string): Promise<Map<string, number>> => {
+const obtenerDemandaPorEstadoDeAsignacion = async (reparacionId: string): Promise<{
+  completada: Map<string, number>;
+  noCompletada: Map<string, number>;
+}> => {
   const { getIntervencionPersistencia } = await import('../../persistencia/persistencia');
   const asignaciones = await getIntervencionesPorReparacionPersistencia(reparacionId);
-  const requiredByPart = new Map<string, number>();
+  const demandaCompletada = new Map<string, number>();
+  const demandaNoCompletada = new Map<string, number>();
 
   for (const asignacion of asignaciones) {
     const intervencionId = asignacion?.data?.intervencionId;
@@ -129,13 +134,27 @@ const obtenerCompromisoPorRepuestoDeReparacion = async (reparacionId: string): P
     const requiredByIntervention = consolidarCantidadPorRepuesto(
       intervencion?.data?._partsRelations || []
     );
+    const demandaDestino = asignacion.data.estado === EstadoAsignacion.COMPLETADA
+      ? demandaCompletada
+      : demandaNoCompletada;
 
     Array.from(requiredByIntervention.entries()).forEach(([partId, qty]) => {
-      requiredByPart.set(partId, (requiredByPart.get(partId) || 0) + qty);
+      demandaDestino.set(partId, (demandaDestino.get(partId) || 0) + qty);
     });
   }
 
-  return requiredByPart;
+  return { completada: demandaCompletada, noCompletada: demandaNoCompletada };
+};
+
+const obtenerCompromisoPorRepuestoDeReparacion = async (reparacionId: string): Promise<Map<string, number>> => {
+  const demandaPorEstado = await obtenerDemandaPorEstadoDeAsignacion(reparacionId);
+  const demandaTotal = new Map(demandaPorEstado.completada);
+
+  demandaPorEstado.noCompletada.forEach((qty, repuestoId) => {
+    demandaTotal.set(repuestoId, (demandaTotal.get(repuestoId) || 0) + qty);
+  });
+
+  return demandaTotal;
 };
 
 /**
@@ -208,7 +227,8 @@ const liberarRepuestosDeReparacion = async (
 };
 
 /**
- * Consume stock fisico y libera compromiso de una reparacion que pasa a Reparado.
+ * Al pasar a Reparado, consume solo las asignaciones completadas y libera el
+ * compromiso de las no completadas sin descontar su stock fisico.
  * Regla de negocio: si un repuesto no tiene stock disponible (StockRepu <= 0), no se
  * descuenta (evita dejar un movimiento de consumo fantasma); igual se libera su
  * compromiso, ya que la reparacion se esta cerrando.
@@ -218,19 +238,20 @@ const consumirRepuestosDeReparacion = async (
   dispatch: any,
   getState: () => RootState
 ): Promise<void> => {
-  const demanda = await obtenerCompromisoPorRepuestoDeReparacion(reparacionId);
+  const demanda = await obtenerDemandaPorEstadoDeAsignacion(reparacionId);
 
   const coleccionRepuestos = getState().repuesto.coleccionRepuestos;
   const demandaConStock = new Map<string, number>();
   const demandaSinStock = new Map<string, number>();
 
-  demanda.forEach((qty, repuestoId) => {
+  demanda.completada.forEach((qty, repuestoId) => {
     const stockActual = Number(coleccionRepuestos[repuestoId]?.data?.StockRepu ?? 0);
     (stockActual > 0 ? demandaConStock : demandaSinStock).set(repuestoId, qty);
   });
 
   await aplicarMovimientosDeReparacion(demandaConStock, 'consumption', reparacionId, dispatch, getState);
   await aplicarMovimientosDeReparacion(demandaSinStock, 'release', reparacionId, dispatch, getState);
+  await aplicarMovimientosDeReparacion(demanda.noCompletada, 'release', reparacionId, dispatch, getState);
 };
 
 async function guardarReparacionNueva(reparacion: ReparacionType): Promise<ReparacionType> {
@@ -271,7 +292,7 @@ export const getReparacionesAsync = createAsyncThunk(
       }
       const state = getState() as { app: AppState };
       const usuario = state.app.usuario;
-      const unsubscribe = getReparacionesPersistencia(callbackReparaciones, usuario);
+      const unsubscribe = await getReparacionesPersistencia(callbackReparaciones, usuario);
       return unsubscribe as Unsubscribe;
     } catch (error: unknown) { // TODO: Hacer tipo de dato para el error
       return;
