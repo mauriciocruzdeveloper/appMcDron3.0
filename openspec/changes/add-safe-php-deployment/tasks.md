@@ -13,6 +13,7 @@
 - [x] 3.2 Implementar deploy aditivo que preserve `.env`, logs y datos remotos no versionados.
 - [x] 3.3 Implementar rollback explicito desde un snapshot validado.
 - [x] 3.4 Verificar sitio publicado y denegacion HTTP de `.env`.
+- [x] 3.5 Verificar por SHA-256 cada archivo publicado y ofrecer un comando `verify` de solo lectura.
 
 ## 4. Verificacion y documentacion
 - [ ] 4.1 Probar fallas de conexion, backup vacio, repo sucio y destino incorrecto.

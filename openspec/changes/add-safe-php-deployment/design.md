@@ -26,6 +26,9 @@ posibles archivos mutables, por lo que no es seguro reemplazarlo sin snapshot.
 - El rollback SHALL aceptar un snapshot concreto, validar su metadata y requerir
   confirmacion. Restaurara el snapshot completo para recuperar el estado previo.
 - El modo `--dry-run` SHALL mostrar operaciones previstas sin modificar el servidor.
+- La verificacion posterior SHALL descargar solamente los archivos administrados por
+  el paquete y comparar sus SHA-256 con el manifiesto local. Los archivos remotos
+  adicionales no se consideraran un error porque el despliegue es aditivo.
 - El script SHALL rechazar un arbol Git sucio, una rama distinta de `main` o un HEAD
   no sincronizado con `origin/main`.
 - FTPS SHALL verificar el certificado. El script no incluira una opcion silenciosa

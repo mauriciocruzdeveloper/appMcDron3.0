@@ -38,7 +38,18 @@ no formen parte del paquete, preservando especialmente `.env` y datos mutables.
 - **WHEN** el backup y el paquete fueron validados y el operador confirma
 - **THEN** el sistema sube los archivos versionados por FTPS con certificado verificado
 - **AND** conserva `.env` y archivos remotos no administrados por Git
+- **AND** vuelve a descargar cada archivo del paquete y valida su checksum SHA-256
 - **AND** ejecuta verificaciones HTTP posteriores
+
+#### Scenario: Integridad remota invalida
+- **WHEN** un archivo publicado falta o su contenido no coincide con el paquete local
+- **THEN** el sistema marca el despliegue como fallido
+- **AND** informa el snapshot disponible para rollback
+
+#### Scenario: Verificacion independiente
+- **WHEN** el operador ejecuta el comando `verify` sobre un commit sincronizado
+- **THEN** el sistema compara todos los archivos del paquete con produccion
+- **AND** ejecuta las verificaciones HTTP sin modificar el servidor
 
 #### Scenario: Previsualizacion
 - **WHEN** el operador ejecuta `--dry-run`
