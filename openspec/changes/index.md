@@ -4,6 +4,20 @@ Este directorio contiene todas las propuestas de cambio estructuradas según el 
 
 ## 📋 Active Changes
 
+### `add-safe-php-deployment`
+**Status:** Testing  
+**Priority:** High  
+**Created:** 2026-09-11
+
+Automatiza el despliegue de `mcdron-web-php` con backup local completo obligatorio,
+modo dry-run, preservacion de secretos y rollback validado.
+
+- [📝 Proposal](./add-safe-php-deployment/proposal.md)
+- [✅ Tasks](./add-safe-php-deployment/tasks.md)
+- [🔧 Spec](./add-safe-php-deployment/specs/php-deployment/spec.md)
+
+---
+
 ### `allow-cancel-accepted-repair`
 **Status:** Implemented  
 **Priority:** Medium  
