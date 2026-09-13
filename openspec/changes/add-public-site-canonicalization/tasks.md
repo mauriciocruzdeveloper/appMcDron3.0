@@ -5,5 +5,5 @@
 
 ## 2. Verificacion
 - [x] 2.1 Validar sintaxis, sitemap, canonical y ausencia de secretos.
-- [ ] 2.2 Desplegar mediante el flujo con backup e integridad SHA-256.
-- [ ] 2.3 Comprobar las ocho variantes de dominio y los archivos SEO en produccion.
+- [x] 2.2 Desplegar mediante el flujo con backup e integridad SHA-256.
+- [x] 2.3 Comprobar las ocho variantes de dominio y los archivos SEO en produccion.

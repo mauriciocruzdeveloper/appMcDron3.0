@@ -5,7 +5,7 @@ Este directorio contiene todas las propuestas de cambio estructuradas según el 
 ## 📋 Active Changes
 
 ### `add-public-site-canonicalization`
-**Status:** In Progress
+**Status:** Complete
 **Priority:** High
 **Created:** 2026-09-13
 
