@@ -4,6 +4,20 @@ Este directorio contiene todas las propuestas de cambio estructuradas según el 
 
 ## 📋 Active Changes
 
+### `add-public-site-canonicalization`
+**Status:** In Progress
+**Priority:** High
+**Created:** 2026-09-13
+
+Unifica las variantes `.com`, `.com.ar`, HTTP y `www` bajo el origen canonico
+HTTPS `.com.ar` para consolidar la indexacion del sitio publico.
+
+- [📝 Proposal](./add-public-site-canonicalization/proposal.md)
+- [✅ Tasks](./add-public-site-canonicalization/tasks.md)
+- [🔧 Spec](./add-public-site-canonicalization/specs/public-site-seo/spec.md)
+
+---
+
 ### `add-safe-php-deployment`
 **Status:** Testing  
 **Priority:** High  
