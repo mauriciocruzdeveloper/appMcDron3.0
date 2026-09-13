@@ -21,6 +21,10 @@ import { Drone } from "../../types/drone";
 import { RootState } from "../store";
 import { setRepuesto } from "../repuesto/repuesto.slice";
 import { EstadoAsignacion } from "../../types/intervencion";
+import {
+  esTelefonoArgentinoValido,
+  MENSAJE_TELEFONO_ARGENTINO_INVALIDO,
+} from "../../usecases/validarTelefonoArgentino";
 
 const IDS_INTERVENCIONES_POR_DEFECTO = ['47', '48', '49', '50', '51', '52'];
 
@@ -304,6 +308,10 @@ export const getReparacionesAsync = createAsyncThunk(
 export const guardarReciboAsync = createAsyncThunk(
   'app/guardarPresupuesto',
   async (presupuesto: PresupuestoProps, { dispatch, rejectWithValue, getState }) => {
+    if (!esTelefonoArgentinoValido(presupuesto.TelefonoUsu)) {
+      return rejectWithValue(MENSAJE_TELEFONO_ARGENTINO_INVALIDO);
+    }
+
     const state = getState() as RootState;
     const drones = state.drone.coleccionDrones;
     const dronesArray = Object.values(drones);
@@ -392,6 +400,10 @@ export const guardarReciboAsync = createAsyncThunk(
 export const guardarTransitoAsync = createAsyncThunk(
   'app/guardarTransito',
   async (presupuesto: PresupuestoProps, { dispatch, rejectWithValue, getState }) => {
+    if (!esTelefonoArgentinoValido(presupuesto.TelefonoUsu)) {
+      return rejectWithValue(MENSAJE_TELEFONO_ARGENTINO_INVALIDO);
+    }
+
     const state = getState() as RootState;
     const drones = state.drone.coleccionDrones;
     const dronesArray = Object.values(drones);
@@ -803,6 +815,10 @@ export const actualizarIncluirRepuestoAsignacionAsync = createAsyncThunk(
 export const guardarPresupuestadoAsync = createAsyncThunk(
   'app/guardarPresupuestado',
   async (presupuesto: PresupuestoProps, { dispatch, rejectWithValue, getState }) => {
+    if (!esTelefonoArgentinoValido(presupuesto.TelefonoUsu)) {
+      return rejectWithValue(MENSAJE_TELEFONO_ARGENTINO_INVALIDO);
+    }
+
     const state = getState() as RootState;
     const drones = state.drone.coleccionDrones;
     const dronesArray = Object.values(drones);
