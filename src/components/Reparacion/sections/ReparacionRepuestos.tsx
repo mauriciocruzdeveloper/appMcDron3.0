@@ -16,6 +16,7 @@ import {
 import { ESTADOS_PEDIDO } from "../../../types/pedidoRepuesto";
 import { esReparacionResuelta, esEstadoPrevioAAceptacion, EstadoReparacion } from "../../../usecases/estadosReparacion";
 import TextareaAutosize from "react-textarea-autosize";
+import { ReparacionSeccionColapsable } from "./ReparacionSeccionColapsable";
 
 interface ReparacionRepuestosProps {
     reparacionId: string;
@@ -79,9 +80,7 @@ export const ReparacionRepuestos: React.FC<ReparacionRepuestosProps> = ({
         pedidos.filter(p => p.estado === 'pending' || p.estado === 'in_transit');
 
     return (
-        <div className="card mb-3" id="seccion-repuestos">
-            <div className="card-body">
-                <h5 className="card-title bluemcdron">REPUESTOS</h5>
+        <ReparacionSeccionColapsable id="seccion-repuestos" titulo="REPUESTOS">
 
                 {/* Repuestos derivados de las intervenciones */}
                 <div className="mb-3">
@@ -294,7 +293,6 @@ export const ReparacionRepuestos: React.FC<ReparacionRepuestosProps> = ({
                         )}
                     </div>
                 )}
-            </div>
-        </div>
+        </ReparacionSeccionColapsable>
     );
 };

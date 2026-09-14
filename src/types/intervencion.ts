@@ -30,6 +30,16 @@ export enum EstadoAsignacion {
   COMPLETADA = 'completada'
 }
 
+export enum OrigenAsignacion {
+  PRESUPUESTADA = 'presupuestada',
+  ADICIONAL = 'adicional'
+}
+
+export interface RepuestoAsignacionSnapshot {
+  partId: string;
+  quantity: number;
+}
+
 export interface AsignacionIntervencionData {
   // IDs de relación
   reparacionId: string; // ID de la reparación a la que pertenece
@@ -37,6 +47,8 @@ export interface AsignacionIntervencionData {
   
   // Estado de la tarea
   estado: EstadoAsignacion; // Estado actual de la asignación
+  origen: OrigenAsignacion;
+  repuestosSnapshot?: RepuestoAsignacionSnapshot[];
   
   // Precios congelados al momento de la asignación
   PrecioManoObra: number; // Labor cost congelado

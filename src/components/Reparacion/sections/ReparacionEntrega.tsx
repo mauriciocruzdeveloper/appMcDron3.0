@@ -15,6 +15,7 @@ import { convertTimestampCORTO } from "../../../utils/utils";
 import { buildAndreaniTrackingUrl, buildMailAmericasTrackingUrl } from "../../../utils/tracking";
 import TextareaAutosize from "react-textarea-autosize";
 import { BoxArrowUpRight } from "react-bootstrap-icons";
+import { ReparacionSeccionColapsable } from "./ReparacionSeccionColapsable";
 
 interface ReparacionEntregaProps {
     reparacionId: string;
@@ -153,9 +154,7 @@ export const ReparacionEntrega: React.FC<ReparacionEntregaProps> = ({
     };
 
     return (
-        <div className="card mb-3" id="seccion-entrega">
-            <div className="card-body">
-                <h5 className="card-title bluemcdron">ENTREGA</h5>
+        <ReparacionSeccionColapsable id="seccion-entrega" titulo="ENTREGA">
                 <div>
                     <label className="form-label">
                         Fecha Entrega
@@ -292,7 +291,6 @@ export const ReparacionEntrega: React.FC<ReparacionEntregaProps> = ({
                         </div>
                     </div>
                 )}
-            </div>
-        </div>
+        </ReparacionSeccionColapsable>
     );
 };

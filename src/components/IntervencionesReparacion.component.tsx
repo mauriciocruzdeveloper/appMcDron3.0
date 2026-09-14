@@ -9,7 +9,7 @@ import { setIntervencionesDeReparacionActual } from '../redux-tool-kit/reparacio
 import { selectColeccionModelosDrone } from '../redux-tool-kit/modeloDrone/modeloDrone.selectors';
 import { selectColeccionRepuestos } from '../redux-tool-kit/repuesto/repuesto.selectors';
 import { selectColeccionIntervenciones, selectIntervencionesAsignables } from '../redux-tool-kit/intervencion/intervencion.selectors';
-import { selectIntervencionesDeReparacionActual } from '../redux-tool-kit/reparacion';
+import { selectIntervencionesPresupuestadas } from '../redux-tool-kit/reparacion';
 import { AsignacionIntervencionDetalle } from './AsignacionIntervencionDetalle.component';
 
 interface IntervencionesReparacionProps {
@@ -23,7 +23,7 @@ export default function IntervencionesReparacion({ reparacionId, readOnly = fals
   const { openModal } = useModal();
 
   // Usar selectores optimizados
-  const intervenciones = useAppSelector(selectIntervencionesDeReparacionActual);
+  const intervenciones = useAppSelector(selectIntervencionesPresupuestadas);
   const todasLasIntervenciones = useAppSelector(selectColeccionIntervenciones);
   const intervencionesAsignables = useAppSelector(selectIntervencionesAsignables);
   const modelosDrone = useAppSelector(selectColeccionModelosDrone);

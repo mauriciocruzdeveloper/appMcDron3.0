@@ -13,7 +13,7 @@ import { isFetchingComplete, isFetchingStart } from "./app.slice";
 import { callEndpoint } from "../../utils/utils";
 import { HttpMethod } from "../../types/httpMethods";
 import { guardarReparacionAsync, getIntervencionesPorReparacionAsync, actualizarFotosAsignacionAsync } from '../reparacion/reparacion.actions';
-import { EstadoAsignacion } from '../../types/intervencion';
+import { EstadoAsignacion, OrigenAsignacion } from '../../types/intervencion';
 import { sanitizeBaseName, buildUploadPath, addTimestampToBase } from '../../utils/fileUtils';
 import { supabaseAuthErrors } from "../../persistencia/persistenciaSupabase/supabaseAuthErrors";
 import { RootState } from "../store";
@@ -166,7 +166,9 @@ export const enviarPresupuestoAsync = createAsyncThunk(
 
       // Construir array de intervenciones con descripción, fotos y precio
       const catalogoRepuestos = state.repuesto.coleccionRepuestos;
-      const intervenciones = asignacionesIntervenciones.map((asignacion) => {
+      const intervenciones = asignacionesIntervenciones
+      .filter(asignacion => asignacion.data.origen !== OrigenAsignacion.ADICIONAL)
+      .map((asignacion) => {
         const intervencion = catalogoIntervenciones[asignacion.data.intervencionId];
         const tienePiezas = (intervencion?.data?.RepuestosIds || []).length > 0;
         const conRepuesto = (asignacion.data.PrecioPiezas || 0) > 0;
@@ -242,7 +244,10 @@ export const generarPDFPresupuestoAsync = createAsyncThunk(
       ]);
 
       // Fetch paralelo: catálogo de intervenciones involucradas + usuario
-      const intervencionIds = Array.from(new Set(asignacionesIntervenciones.map((a: any) => a.data.intervencionId))) as string[];
+      const asignacionesPresupuestadas = asignacionesIntervenciones.filter(
+        (asignacion: any) => asignacion.data.origen !== OrigenAsignacion.ADICIONAL
+      );
+      const intervencionIds = Array.from(new Set(asignacionesPresupuestadas.map((a: any) => a.data.intervencionId))) as string[];
       const [intervencionesArr, usuarioFresh] = await Promise.all([
         Promise.all(intervencionIds.map((id: string) => getIntervencionPersistencia(id))),
         reparacionFresh.data.UsuarioRep ? getClientePersistencia(reparacionFresh.data.UsuarioRep) : Promise.resolve(null),
@@ -264,7 +269,7 @@ export const generarPDFPresupuestoAsync = createAsyncThunk(
       }
 
       // Construir array de intervenciones con descripción, fotos y precio
-      const intervenciones = asignacionesIntervenciones.map((asignacion: any) => {
+      const intervenciones = asignacionesPresupuestadas.map((asignacion: any) => {
         const intervencion = catalogoIntervencionFresh[asignacion.data.intervencionId];
         const tienePiezas = (intervencion?.data?.RepuestosIds || []).length > 0;
         const conRepuesto = (asignacion.data.PrecioPiezas || 0) > 0;
@@ -414,7 +419,8 @@ export const enviarDroneReparadoAsync = createAsyncThunk(
           const intervencion = catalogoIntervenciones[asignacion.data.intervencionId];
           return {
             nombre: intervencion?.data?.NombreInt || 'Intervención',
-            precio: asignacion.data.PrecioTotal || 0
+            precio: asignacion.data.PrecioTotal || 0,
+            origen: asignacion.data.origen || OrigenAsignacion.PRESUPUESTADA,
           };
         });
 

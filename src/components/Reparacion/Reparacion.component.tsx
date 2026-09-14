@@ -15,8 +15,11 @@ import {
     ReparacionEntrega,
     ReparacionFotos,
     ReparacionDocumentos,
-    ReparacionDriveYAnotaciones,
+    ReparacionAnotacionesConfidenciales,
+    ReparacionDrive,
     ReparacionAcciones,
+    ReparacionSeccionesProvider,
+    obtenerSeccionIdPorEstado,
 } from './sections';
 
 interface ParamTypes extends Record<string, string | undefined> {
@@ -39,53 +42,11 @@ export default function ReparacionComponent(): React.ReactElement | null {
 
         const scrollToSection = () => {
             const estadoActual = obtenerEstadoSeguro(reparacion.data.EstadoRep);
-            let sectionId = '';
-
-            // Determinar a qué sección hacer scroll según el estado
-            switch (estadoActual.nombre) {
-                case 'Consulta':
-                case 'Respondido':
-                    sectionId = 'seccion-consulta';
-                    break;
-                case 'Transito':
-                    sectionId = 'seccion-recepcion';
-                    break;
-                case 'Recibido':
-                    sectionId = 'seccion-revision';
-                    break;
-                case 'Revisado':
-                case 'Presupuestado':
-                    sectionId = 'seccion-presupuesto';
-                    break;
-                case 'Aceptado':
-                case 'Rechazado':
-                    sectionId = 'seccion-reparar';
-                    break;
-                case 'Reparado':
-                case 'Diagnosticado':
-                case 'Cobrado':
-                case 'Enviado':
-                    sectionId = 'seccion-entrega';
-                    break;
-                case 'Finalizado':
-                case 'Abandonado':
-                case 'Cancelado':
-                    break; // No hacer scroll
-                // Estados legacy
-                case 'Reparar':
-                case 'Repuestos':
-                    sectionId = 'seccion-reparar';
-                    break;
-                case 'Entregado':
-                    sectionId = 'seccion-entrega';
-                    break;
-                default:
-                    sectionId = 'seccion-consulta';
-                    break;
-            }
+            const sectionId = obtenerSeccionIdPorEstado(estadoActual.nombre);
 
             // Hacer scroll suave a la sección con offset para compensar el NavMcDron
             setTimeout(() => {
+                if (!sectionId) return;
                 const element = document.getElementById(sectionId);
                 if (element) {
                     const navHeight = 80; // Altura aproximada del NavMcDron + padding
@@ -103,13 +64,15 @@ export default function ReparacionComponent(): React.ReactElement | null {
     }, [reparacion?.data.EstadoRep, isNew]);
 
     if (!reparacion) return null;
+    const estadoActual = obtenerEstadoSeguro(reparacion.data.EstadoRep);
+    const seccionActivaId = obtenerSeccionIdPorEstado(estadoActual.nombre);
 
     // UI RENDER - Componente contenedor simple que orquesta las secciones
     return (
         <div
             className="reparacion-page"
             style={{
-                backgroundColor: obtenerEstadoSeguro(reparacion.data.EstadoRep).color
+                backgroundColor: estadoActual.color
             }}
         >
             {/* Header con información básica */}
@@ -118,8 +81,15 @@ export default function ReparacionComponent(): React.ReactElement | null {
             {/* Indicador de progreso */}
             <ReparacionProgreso reparacionId={id || ""} />
 
-            {/* Drive y Anotaciones (solo admin) */}
-            <ReparacionDriveYAnotaciones reparacionId={id || ""} isAdmin={isAdmin} />
+            {/* Anotaciones confidenciales siempre visibles (solo admin) */}
+            <ReparacionAnotacionesConfidenciales reparacionId={id || ""} isAdmin={isAdmin} />
+
+                        <ReparacionSeccionesProvider
+                                seccionActivaId={seccionActivaId}
+                                colorEstado={estadoActual.color}
+                        >
+                            {/* Drive colapsable (solo admin) */}
+                            <ReparacionDrive reparacionId={id || ""} isAdmin={isAdmin} />
 
             {/* Sección de Consulta */}
             <ReparacionConsulta reparacionId={id || ""} isAdmin={isAdmin} />
@@ -149,7 +119,8 @@ export default function ReparacionComponent(): React.ReactElement | null {
             <ReparacionDocumentos reparacionId={id || ""} isAdmin={isAdmin} />
 
             {/* Botón de eliminar (solo admin) */}
-            <ReparacionAcciones reparacionId={id || ""} isAdmin={isAdmin} />
+                            <ReparacionAcciones reparacionId={id || ""} isAdmin={isAdmin} />
+                        </ReparacionSeccionesProvider>
         </div>
     );
 }

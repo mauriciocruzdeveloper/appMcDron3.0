@@ -6,7 +6,7 @@ import {
     selectReparacionById, 
     selectSeccionesVisibles,
     selectPuedeAvanzarA,
-    selectIntervencionesDeReparacionActual,
+    selectIntervencionesPresupuestadas,
     selectTotalIntervenciones,
     selectPrecioManualDifiere,
 } from "../../../redux-tool-kit/reparacion";
@@ -18,6 +18,7 @@ import { obtenerEstadoSeguro } from "../../../utils/estadosHelper";
 import { selectDroneById } from "../../../redux-tool-kit/drone/drone.selectors";
 import IntervencionesReparacion from '../../IntervencionesReparacion.component';
 import { useModal } from "../../Modal/useModal";
+import { ReparacionSeccionColapsable } from "./ReparacionSeccionColapsable";
 
 interface ReparacionPresupuestoProps {
     reparacionId: string;
@@ -35,7 +36,7 @@ export const ReparacionPresupuesto: React.FC<ReparacionPresupuestoProps> = ({
     const drone = useAppSelector(state => 
         selectDroneById(reparacion?.data.DroneId || "")(state)
     );
-    const intervencionesAplicadas = useAppSelector(selectIntervencionesDeReparacionActual);
+    const intervencionesAplicadas = useAppSelector(selectIntervencionesPresupuestadas);
     const totalIntervenciones = useAppSelector(selectTotalIntervenciones);
     const precioManualDifiere = useAppSelector(state => 
         selectPrecioManualDifiere(reparacionId)(state)
@@ -182,9 +183,8 @@ export const ReparacionPresupuesto: React.FC<ReparacionPresupuestoProps> = ({
     };
 
     return (
-        <div className="card mb-3" id="seccion-presupuesto">
-            <div className="card-body reparacion-presupuesto-body">
-                <h5 className="card-title bluemcdron">PRESUPUESTO</h5>
+        <ReparacionSeccionColapsable id="seccion-presupuesto" titulo="PRESUPUESTO">
+            <div className="reparacion-presupuesto-body">
                 <h6 className="card-title bluemcdron">INTERVENCIONES</h6>
                 <IntervencionesReparacion
                     reparacionId={reparacionId}
@@ -335,6 +335,6 @@ export const ReparacionPresupuesto: React.FC<ReparacionPresupuestoProps> = ({
                     </div>
                 )}
             </div>
-        </div>
+        </ReparacionSeccionColapsable>
     );
 };

@@ -9,5 +9,6 @@ export { ReparacionReparar } from './ReparacionReparar';
 export { ReparacionEntrega } from './ReparacionEntrega';
 export { ReparacionFotos } from './ReparacionFotos';
 export { ReparacionDocumentos } from './ReparacionDocumentos';
-export { ReparacionDriveYAnotaciones } from './ReparacionDriveYAnotaciones';
+export { ReparacionAnotacionesConfidenciales, ReparacionDrive } from './ReparacionDriveYAnotaciones';
 export { ReparacionAcciones } from './ReparacionAcciones';
+export { ReparacionSeccionesProvider, obtenerSeccionIdPorEstado } from './ReparacionSeccionColapsable';
