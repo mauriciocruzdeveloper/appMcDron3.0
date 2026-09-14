@@ -8,6 +8,7 @@ import {
 import { isFetchingComplete, isFetchingStart } from "../app/app.slice";
 import { Usuario } from "../../types/usuario";
 import { isValidCuit, sanitizeCuitInput } from "../../utils/cuit";
+import { validarTelefonoArgentino } from "../../usecases/validarTelefonoArgentino";
 
 // ELIMINAR USUARIO
 export const eliminarUsuarioAsync = createAsyncThunk(
@@ -32,6 +33,7 @@ export const guardarUsuarioAsync = createAsyncThunk(
     'app/guardarUsuario',
     async (usuario: Usuario, { dispatch }) => {
         try {
+            validarTelefonoArgentino(usuario.data.TelefonoUsu);
             dispatch(isFetchingStart());
             if (usuario.data.CUIT?.trim() && !isValidCuit(usuario.data.CUIT)) {
                 dispatch(isFetchingComplete());

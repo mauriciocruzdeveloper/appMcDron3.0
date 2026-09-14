@@ -4,6 +4,20 @@ Este directorio contiene todas las propuestas de cambio estructuradas según el 
 
 ## 📋 Active Changes
 
+### `add-argentina-phone-validation`
+**Status:** Complete
+**Priority:** High
+**Created:** 2026-09-13
+
+Valida los teléfonos opcionales de clientes con formatos argentinos antes de
+persistir altas directas, recepciones, tránsitos o presupuestos.
+
+- [📝 Proposal](./add-argentina-phone-validation/proposal.md)
+- [✅ Tasks](./add-argentina-phone-validation/tasks.md)
+- [🔧 Spec](./add-argentina-phone-validation/specs/clientes/spec.md)
+
+---
+
 ### `add-public-site-canonicalization`
 **Status:** Complete
 **Priority:** High
