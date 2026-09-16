@@ -20,7 +20,7 @@ import { PresupuestoProps } from "../../components/Presupuesto.component";
 import { Drone } from "../../types/drone";
 import { RootState } from "../store";
 import { setRepuesto } from "../repuesto/repuesto.slice";
-import { EstadoAsignacion } from "../../types/intervencion";
+import { EstadoAsignacion, OrigenAsignacion, RepuestoAsignacionSnapshot } from "../../types/intervencion";
 import {
   esTelefonoArgentinoValido,
   MENSAJE_TELEFONO_ARGENTINO_INVALIDO,
@@ -30,6 +30,13 @@ const IDS_INTERVENCIONES_POR_DEFECTO = ['47', '48', '49', '50', '51', '52'];
 
 // Estado inicial de una asignación de intervención recién creada (regla de negocio).
 const ESTADO_INICIAL_ASIGNACION_INTERVENCION = 'pendiente';
+
+interface RelacionRepuestoIntervencion {
+  part_id?: string | number;
+  partId?: string | number;
+  quantity?: number | string;
+  part?: { price?: number };
+}
 
 const sincronizarIntervencionesIdsDeReparacion = (
   reparacionId: string,
@@ -86,7 +93,10 @@ const guardarReparacionPersistencia = async (reparacion: ReparacionType): Promis
  * asignar una intervención a una reparación. Regla de negocio: una intervención
  * obsoleta no puede asignarse a nuevas reparaciones.
  */
-const calcularCostosAsignacionIntervencion = async (intervencionId: string) => {
+const calcularCostosAsignacionIntervencion = async (
+  intervencionId: string,
+  origen: OrigenAsignacion = OrigenAsignacion.PRESUPUESTADA,
+) => {
   const { getIntervencionPersistencia } = await import('../../persistencia/persistencia');
   const intervencion = await getIntervencionPersistencia(intervencionId);
 
@@ -94,24 +104,38 @@ const calcularCostosAsignacionIntervencion = async (intervencionId: string) => {
     throw new Error('Esta intervención está marcada como obsoleta y no puede asignarse a nuevas reparaciones');
   }
 
-  const partesRelacionadas = intervencion.data._partsRelations || [];
-  const partsCost = partesRelacionadas.reduce((sum: number, rel: any) => {
+  const partesRelacionadas = (intervencion.data._partsRelations || []) as RelacionRepuestoIntervencion[];
+  const partsCost = partesRelacionadas.reduce((sum: number, rel) => {
     const precio = rel.part?.price || 0;
-    const cantidad = rel.quantity || 1;
+    const cantidad = Number(rel.quantity) || 1;
     return sum + (precio * cantidad);
   }, 0);
 
   const laborCost = intervencion.data.PrecioManoObra || 0;
   const totalCost = laborCost + partsCost;
+  const repuestosSnapshot: RepuestoAsignacionSnapshot[] = partesRelacionadas
+    .filter(rel => rel.part_id)
+    .map(rel => ({
+      partId: String(rel.part_id),
+      quantity: Number(rel.quantity) || 1,
+    }));
 
-  return { laborCost, partsCost, totalCost, estadoInicial: ESTADO_INICIAL_ASIGNACION_INTERVENCION };
+  return {
+    laborCost,
+    partsCost,
+    totalCost,
+    estadoInicial: ESTADO_INICIAL_ASIGNACION_INTERVENCION,
+    origen,
+    repuestosSnapshot,
+  };
 };
 
-const consolidarCantidadPorRepuesto = (partsRelations: any[]): Map<string, number> => {
+const consolidarCantidadPorRepuesto = (partsRelations: RelacionRepuestoIntervencion[]): Map<string, number> => {
   const requiredByPart = new Map<string, number>();
 
-  (partsRelations || []).forEach((rel: any) => {
-    const partId = rel?.part_id ? String(rel.part_id) : null;
+  (partsRelations || []).forEach(rel => {
+    const rawPartId = rel?.partId ?? rel?.part_id;
+    const partId = rawPartId ? String(rawPartId) : null;
     if (!partId) return;
 
     const qty = Number(rel?.quantity) || 1;
@@ -134,10 +158,12 @@ const obtenerDemandaPorEstadoDeAsignacion = async (reparacionId: string): Promis
     const intervencionId = asignacion?.data?.intervencionId;
     if (!intervencionId) continue;
 
-    const intervencion = await getIntervencionPersistencia(intervencionId);
-    const requiredByIntervention = consolidarCantidadPorRepuesto(
-      intervencion?.data?._partsRelations || []
-    );
+    let repuestosAsignados = asignacion.data.repuestosSnapshot;
+    if (!Array.isArray(repuestosAsignados)) {
+      const intervencion = await getIntervencionPersistencia(intervencionId);
+      repuestosAsignados = (intervencion?.data?._partsRelations || []) as RelacionRepuestoIntervencion[];
+    }
+    const requiredByIntervention = consolidarCantidadPorRepuesto(repuestosAsignados);
     const demandaDestino = asignacion.data.estado === EstadoAsignacion.COMPLETADA
       ? demandaCompletada
       : demandaNoCompletada;
@@ -176,27 +202,30 @@ const aplicarMovimientosDeReparacion = async (
   getState: () => RootState
 ): Promise<void> => {
   const { aplicarMovimientoStockPersistencia } = await import('../../persistencia/persistencia');
+  const aplicados: Array<[string, number]> = [];
 
-  for (const [repuestoId, qty] of Array.from(demanda.entries())) {
-    if (!qty) continue;
-
+  const aplicarMovimiento = async (
+    repuestoId: string,
+    qty: number,
+    movimiento: 'reservation' | 'release' | 'consumption',
+    compensacion = false,
+  ) => {
     let onHandDelta = 0;
     let committedDelta = 0;
-    if (kind === 'reservation') committedDelta = qty;
-    else if (kind === 'release') committedDelta = -qty;
-    else if (kind === 'consumption') { onHandDelta = -qty; committedDelta = -qty; }
+    if (movimiento === 'reservation') committedDelta = qty;
+    else if (movimiento === 'release') committedDelta = -qty;
+    else if (movimiento === 'consumption') { onHandDelta = -qty; committedDelta = -qty; }
 
     const actualizado = await aplicarMovimientoStockPersistencia({
       partId: repuestoId,
       onHandDelta,
       committedDelta,
-      kind,
+      kind: movimiento,
       referenceType: 'repair',
       referenceId: reparacionId,
-      note: null,
+      note: compensacion ? 'Compensación por fallo en movimiento de asignación' : null,
     });
 
-    // Mergear con el store para preservar ModelosDroneIds y demas campos.
     const existente = getState().repuesto.coleccionRepuestos[repuestoId];
     dispatch(setRepuesto({
       id: actualizado.id,
@@ -206,6 +235,22 @@ const aplicarMovimientosDeReparacion = async (
         ModelosDroneIds: existente?.data?.ModelosDroneIds ?? actualizado.data.ModelosDroneIds,
       },
     }));
+  };
+
+  try {
+    for (const [repuestoId, qty] of Array.from(demanda.entries())) {
+      if (!qty) continue;
+      await aplicarMovimiento(repuestoId, qty, kind);
+      aplicados.push([repuestoId, qty]);
+    }
+  } catch (error) {
+    if (kind === 'reservation' || kind === 'release') {
+      const inverso = kind === 'reservation' ? 'release' : 'reservation';
+      for (const [repuestoId, qty] of aplicados.reverse()) {
+        await aplicarMovimiento(repuestoId, qty, inverso, true);
+      }
+    }
+    throw error;
   }
 };
 
@@ -591,17 +636,45 @@ export const getReparacionesPorIntervencionAsync = createAsyncThunk(
 // Agregar Intervención a una Reparación
 export const agregarIntervencionAReparacionAsync = createAsyncThunk(
   'app/agregarIntervencionAReparacion',
-  async ({ reparacionId, intervencionId }: { reparacionId: string, intervencionId: string }, { dispatch, getState }) => {
+  async ({ reparacionId, intervencionId, origen = OrigenAsignacion.PRESUPUESTADA }: {
+    reparacionId: string,
+    intervencionId: string,
+    origen?: OrigenAsignacion,
+  }, { dispatch, getState }) => {
     try {
       dispatch(isFetchingStart());
 
+      const stateInicial = getState() as RootState;
+      const reparacion = stateInicial.reparacion.coleccionReparaciones[reparacionId];
+      if (origen === OrigenAsignacion.ADICIONAL &&
+          reparacion?.data.EstadoRep !== 'Aceptado' &&
+          reparacion?.data.EstadoRep !== 'Repuestos') {
+        throw new Error('Solo se pueden agregar intervenciones adicionales en reparaciones aceptadas o esperando repuestos');
+      }
+
       // Calcular costos y validar reglas de negocio (intervención obsoleta) ANTES
       // de persistir. La capa de persistencia solo escribe los valores ya resueltos.
-      const costos = await calcularCostosAsignacionIntervencion(intervencionId);
+      const costos = await calcularCostosAsignacionIntervencion(intervencionId, origen);
       const resultado = await agregarIntervencionAReparacionPersistencia(reparacionId, intervencionId, costos);
 
       if (!resultado.success) {
         throw new Error(resultado.error);
+      }
+
+      if (origen === OrigenAsignacion.ADICIONAL) {
+        try {
+          const demandaAdicional = consolidarCantidadPorRepuesto(costos.repuestosSnapshot);
+          await aplicarMovimientosDeReparacion(
+            demandaAdicional,
+            'reservation',
+            reparacionId,
+            dispatch,
+            getState as () => RootState,
+          );
+        } catch (error) {
+          await eliminarIntervencionDeReparacionPersistencia(reparacionId, String(resultado.data.id));
+          throw error;
+        }
       }
 
       sincronizarIntervencionesIdsDeReparacion(reparacionId, intervencionId, 'add', dispatch, getState as () => RootState);
@@ -609,17 +682,18 @@ export const agregarIntervencionAReparacionAsync = createAsyncThunk(
       // Recargar intervenciones
       await dispatch(getIntervencionesPorReparacionAsync(reparacionId));
       
-      // Calcular el nuevo total de intervenciones y actualizar el precio final
-      const state = getState() as RootState;
-      const asignaciones = state.reparacion.intervencionesDeReparacionActual;
-      const totalIntervenciones = asignaciones.reduce((sum, a) => sum + (a.data.PrecioTotal || 0), 0);
-      
-      // Actualizar el precio final en la reparación
-      await dispatch(actualizarCampoReparacionAsync({
-        reparacionId,
-        campo: 'PresuFiRep',
-        valor: totalIntervenciones
-      }));
+      if (origen !== OrigenAsignacion.ADICIONAL) {
+        const state = getState() as RootState;
+        const totalIntervenciones = state.reparacion.intervencionesDeReparacionActual
+          .filter(a => a.data.origen !== OrigenAsignacion.ADICIONAL)
+          .reduce((sum, a) => sum + (a.data.PrecioTotal || 0), 0);
+
+        await dispatch(actualizarCampoReparacionAsync({
+          reparacionId,
+          campo: 'PresuFiRep',
+          valor: totalIntervenciones
+        }));
+      }
       
       dispatch(isFetchingComplete());
       return true;
@@ -637,10 +711,41 @@ export const eliminarIntervencionDeReparacionAsync = createAsyncThunk(
     try {
       dispatch(isFetchingStart());
 
-      await eliminarIntervencionDeReparacionPersistencia(reparacionId, intervencionId);
-
       const stateAntes = getState() as RootState;
       const asignacionEliminada = stateAntes.reparacion.intervencionesDeReparacionActual.find(a => a.id === intervencionId);
+      const esAdicional = asignacionEliminada?.data?.origen === OrigenAsignacion.ADICIONAL;
+      const demandaAdicional = esAdicional
+        ? consolidarCantidadPorRepuesto(asignacionEliminada?.data?.repuestosSnapshot || [])
+        : null;
+
+      if (esAdicional && asignacionEliminada?.data?.estado === EstadoAsignacion.COMPLETADA) {
+        throw new Error('No se puede eliminar una intervención adicional completada');
+      }
+
+      if (demandaAdicional) {
+        await aplicarMovimientosDeReparacion(
+          demandaAdicional,
+          'release',
+          reparacionId,
+          dispatch,
+          getState as () => RootState,
+        );
+      }
+
+      const resultadoEliminacion = await eliminarIntervencionDeReparacionPersistencia(reparacionId, intervencionId);
+      if (!resultadoEliminacion.success) {
+        if (demandaAdicional) {
+          await aplicarMovimientosDeReparacion(
+            demandaAdicional,
+            'reservation',
+            reparacionId,
+            dispatch,
+            getState as () => RootState,
+          );
+        }
+        throw new Error(resultadoEliminacion.error);
+      }
+
       const intervencionCatalogId = asignacionEliminada?.data?.intervencionId;
       sincronizarIntervencionesIdsDeReparacion(
         reparacionId,
@@ -653,17 +758,18 @@ export const eliminarIntervencionDeReparacionAsync = createAsyncThunk(
       // Recargar intervenciones
       await dispatch(getIntervencionesPorReparacionAsync(reparacionId));
       
-      // Calcular el nuevo total de intervenciones y actualizar el precio final
-      const state = getState() as RootState;
-      const asignaciones = state.reparacion.intervencionesDeReparacionActual;
-      const totalIntervenciones = asignaciones.reduce((sum, a) => sum + (a.data.PrecioTotal || 0), 0);
-      
-      // Actualizar el precio final en la reparación
-      await dispatch(actualizarCampoReparacionAsync({
-        reparacionId,
-        campo: 'PresuFiRep',
-        valor: totalIntervenciones
-      }));
+      if (!esAdicional) {
+        const state = getState() as RootState;
+        const totalIntervenciones = state.reparacion.intervencionesDeReparacionActual
+          .filter(a => a.data.origen !== OrigenAsignacion.ADICIONAL)
+          .reduce((sum, a) => sum + (a.data.PrecioTotal || 0), 0);
+
+        await dispatch(actualizarCampoReparacionAsync({
+          reparacionId,
+          campo: 'PresuFiRep',
+          valor: totalIntervenciones
+        }));
+      }
       
       dispatch(isFetchingComplete());
       return true;
@@ -793,10 +899,13 @@ export const actualizarIncluirRepuestoAsignacionAsync = createAsyncThunk(
     const total_cost = (asignacion.data.PrecioManoObra || 0) + parts_cost;
     const reparacionId = asignacion.data.reparacionId;
 
-    // Calcular nuevo precio total de la reparación desde el store (sin query adicional)
-    const nuevoPrecioReparacion = asignaciones.reduce((sum, a) => {
-      return sum + (a.id === asignacionId ? total_cost : (a.data.PrecioTotal || 0));
-    }, 0);
+    const nuevoPrecioReparacion = asignacion.data.origen === OrigenAsignacion.ADICIONAL
+      ? null
+      : asignaciones
+        .filter(a => a.data.origen !== OrigenAsignacion.ADICIONAL)
+        .reduce((sum, a) => {
+          return sum + (a.id === asignacionId ? total_cost : (a.data.PrecioTotal || 0));
+        }, 0);
 
     const { actualizarPreciosPiezasAsignacionPersistencia } = await import('../../persistencia/persistencia');
     const resultado = await actualizarPreciosPiezasAsignacionPersistencia(

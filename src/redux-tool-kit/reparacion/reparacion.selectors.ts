@@ -2,7 +2,7 @@ import { createSelector } from '@reduxjs/toolkit';
 import { RootState } from '../store';
 import { ReparacionRelacionada, ReparacionType, Reparaciones } from '../../types/reparacion';
 import { Filtro } from '../../types/Filtro';
-import { AsignacionIntervencion, EstadoAsignacion } from '../../types/intervencion';
+import { AsignacionIntervencion, EstadoAsignacion, OrigenAsignacion } from '../../types/intervencion';
 import { estados } from '../../datos/estados';
 import { obtenerEstadoSeguro, esEstadoLegacy } from '../../utils/estadosHelper';
 import { esReparacionResuelta, esEstadoPrevioAAceptacion, esTransicionValida, EstadoReparacion } from '../../usecases/estadosReparacion';
@@ -72,6 +72,13 @@ export const selectReparacionFilter = (state: RootState): Filtro =>
  */
 export const selectIntervencionesDeReparacionActual = (state: RootState): AsignacionIntervencion[] =>
   state.reparacion.intervencionesDeReparacionActual;
+
+export const selectIntervencionesPresupuestadas = createSelector(
+  [selectIntervencionesDeReparacionActual],
+  (intervenciones): AsignacionIntervencion[] => intervenciones.filter(
+    asignacion => asignacion.data.origen !== OrigenAsignacion.ADICIONAL
+  )
+);
 
 export const selectReparacionesPorIntervencionId = (
   state: RootState,
@@ -1041,7 +1048,7 @@ export const selectSeccionesVisibles = (reparacionId: string, isAdmin: boolean) 
  * Selector que calcula el total de intervenciones de una reparación
  */
 export const selectTotalIntervenciones = createSelector(
-  [selectIntervencionesDeReparacionActual],
+  [selectIntervencionesPresupuestadas],
   (intervenciones): number => {
     return intervenciones.reduce((total, intervencion) =>
       total + (intervencion.data.PrecioTotal || 0), 0);

@@ -23,6 +23,7 @@ import { convertTimestampCORTO } from "../../../utils/utils";
 import TextareaAutosize from "react-textarea-autosize";
 import { ComboBox } from "../../common";
 import { SelectOption } from "../../../types/selectOption";
+import { ReparacionSeccionColapsable } from "./ReparacionSeccionColapsable";
 
 interface ReparacionConsultaProps {
     reparacionId: string;
@@ -136,10 +137,8 @@ export const ReparacionConsulta: React.FC<ReparacionConsultaProps> = ({
     };
 
     return (
-        <div className="card mb-3" id="seccion-consulta">
-            <div className="card-body">
+        <ReparacionSeccionColapsable id="seccion-consulta" titulo="CONSULTA">
                 <div className="d-flex w-100 justify-content-between align-items-center gap-2">
-                    <h5 className="card-title bluemcdron">CONSULTA</h5>
                     <div className="d-flex gap-2">
                         <button
                             type="button"
@@ -314,7 +313,6 @@ export const ReparacionConsulta: React.FC<ReparacionConsultaProps> = ({
                         )}
                     </div>
                 )}
-            </div>
-        </div>
+        </ReparacionSeccionColapsable>
     );
 };

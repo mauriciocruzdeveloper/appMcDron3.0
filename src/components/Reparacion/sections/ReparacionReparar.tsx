@@ -10,16 +10,21 @@ import {
     selectIntervencionesDeReparacionActual,
 } from "../../../redux-tool-kit/reparacion";
 import { 
+    agregarIntervencionAReparacionAsync,
     cambiarEstadoReparacionAsync,
+    eliminarIntervencionDeReparacionAsync,
     getIntervencionesPorReparacionAsync,
     cambiarEstadoAsignacionAsync,
 } from "../../../redux-tool-kit/reparacion/reparacion.actions";
 import { subirFotoInformeAsync, borrarFotoInformeAsync } from "../../../redux-tool-kit/app/app.actions";
-import { selectColeccionIntervenciones } from "../../../redux-tool-kit/intervencion/intervencion.selectors";
-import { EstadoAsignacion } from "../../../types/intervencion";
+import { selectColeccionIntervenciones, selectIntervencionesAsignables } from "../../../redux-tool-kit/intervencion/intervencion.selectors";
+import { selectDroneById } from "../../../redux-tool-kit/drone/drone.selectors";
+import { EstadoAsignacion, OrigenAsignacion } from "../../../types/intervencion";
 import { convertTimestampCORTO } from "../../../utils/utils";
 import { getThumbnailUrl } from "../../../utils/imageUtils";
+import { ComboBox } from "../../common";
 import TextareaAutosize from "react-textarea-autosize";
+import { ReparacionSeccionColapsable } from "./ReparacionSeccionColapsable";
 
 interface ReparacionRepararProps {
     reparacionId: string;
@@ -34,6 +39,7 @@ export const ReparacionReparar: React.FC<ReparacionRepararProps> = ({
     const { openModal } = useModal();
     
     const reparacion = useAppSelector(state => selectReparacionById(reparacionId)(state));
+    const drone = useAppSelector(state => selectDroneById(reparacion?.data.DroneId || "")(state));
     const seccionVisible = useAppSelector(state => 
         selectSeccionesVisibles(reparacionId, isAdmin)(state).reparar
     );
@@ -53,6 +59,8 @@ export const ReparacionReparar: React.FC<ReparacionRepararProps> = ({
     // Obtener asignaciones de intervenciones
     const asignaciones = useAppSelector(selectIntervencionesDeReparacionActual);
     const catalogoIntervenciones = useAppSelector(selectColeccionIntervenciones);
+    const intervencionesAsignables = useAppSelector(selectIntervencionesAsignables);
+    const [intervencionAdicionalSeleccionada, setIntervencionAdicionalSeleccionada] = useState<string | null>(null);
 
     // Cargar asignaciones al montar
     useEffect(() => {
@@ -173,6 +181,47 @@ export const ReparacionReparar: React.FC<ReparacionRepararProps> = ({
         }
     };
 
+    const handleAgregarIntervencionAdicional = async () => {
+        if (!intervencionAdicionalSeleccionada) return;
+
+        try {
+            await dispatch(agregarIntervencionAReparacionAsync({
+                reparacionId,
+                intervencionId: intervencionAdicionalSeleccionada,
+                origen: OrigenAsignacion.ADICIONAL,
+            })).unwrap();
+            setIntervencionAdicionalSeleccionada(null);
+        } catch (error: unknown) {
+            openModal({
+                mensaje: (error as { message?: string })?.message || "No se pudo agregar la intervención adicional.",
+                tipo: "danger",
+                titulo: "Error",
+            });
+        }
+    };
+
+    const handleEliminarIntervencionAdicional = (asignacionId: string, nombre: string) => {
+        openModal({
+            mensaje: `¿Eliminar la intervención adicional "${nombre}" y liberar sus repuestos reservados?`,
+            tipo: "warning",
+            titulo: "Eliminar Intervención Adicional",
+            confirmCallback: async () => {
+                try {
+                    await dispatch(eliminarIntervencionDeReparacionAsync({
+                        reparacionId,
+                        intervencionId: asignacionId,
+                    })).unwrap();
+                } catch (error: unknown) {
+                    openModal({
+                        mensaje: (error as { message?: string })?.message || "No se pudo eliminar la intervención adicional.",
+                        tipo: "danger",
+                        titulo: "Error",
+                    });
+                }
+            },
+        });
+    };
+
     const handleAgregarFotoInforme = async (e: React.ChangeEvent<HTMLInputElement>) => {
         if (!e.target.files?.length) return;
         const file = e.target.files[0];
@@ -223,9 +272,44 @@ export const ReparacionReparar: React.FC<ReparacionRepararProps> = ({
     };
 
     return (
-        <div className="card mb-3" id="seccion-reparar">
-            <div className="card-body">
-                <h5 className="card-title bluemcdron">REPARAR</h5>
+        <ReparacionSeccionColapsable id="seccion-reparar" titulo="REPARAR">
+
+                {isAdmin && (estadoActual === 'Aceptado' || estadoActual === 'Repuestos') && (
+                    <div className="mb-4">
+                        <h6 className="mb-2">Agregar intervención adicional</h6>
+                        <div className="row g-2 align-items-center">
+                            <div className="col">
+                                <ComboBox
+                                    options={intervencionesAsignables
+                                        .filter(intervencion =>
+                                            !intervencion.data.ModeloDroneId ||
+                                            intervencion.data.ModeloDroneId === drone?.data.ModeloDroneId
+                                        )
+                                        .map(intervencion => ({
+                                            value: intervencion.id,
+                                            label: intervencion.data.NombreInt,
+                                        }))}
+                                    value={intervencionAdicionalSeleccionada || ''}
+                                    onChange={(selected) => setIntervencionAdicionalSeleccionada(selected?.value || null)}
+                                    placeholder="Seleccionar una intervención..."
+                                    noOptionsMessage="No se encontraron intervenciones"
+                                    isClearable
+                                />
+                            </div>
+                            <div className="col-auto">
+                                <button
+                                    type="button"
+                                    className="btn bg-bluemcdron text-white"
+                                    onClick={handleAgregarIntervencionAdicional}
+                                    disabled={!intervencionAdicionalSeleccionada}
+                                >
+                                    <i className="bi bi-plus-circle me-1"></i>
+                                    Agregar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
                 
                 {/* Lista simplificada de intervenciones con checks */}
                 {asignaciones.length > 0 && (
@@ -259,8 +343,27 @@ export const ReparacionReparar: React.FC<ReparacionRepararProps> = ({
                                                 style={{ cursor: isAdmin ? 'pointer' : 'default' }}
                                             >
                                                 {intervencion?.data?.NombreInt || 'Intervención'}
+                                                {asignacion.data.origen === OrigenAsignacion.ADICIONAL && (
+                                                    <span className="badge bg-info text-dark ms-2">Adicional</span>
+                                                )}
                                             </label>
                                         </div>
+                                        {isAdmin &&
+                                            asignacion.data.origen === OrigenAsignacion.ADICIONAL &&
+                                            asignacion.data.estado === EstadoAsignacion.PENDIENTE && (
+                                                <button
+                                                    type="button"
+                                                    className="btn btn-sm btn-outline-danger ms-2"
+                                                    title="Eliminar intervención adicional"
+                                                    aria-label={`Eliminar ${intervencion?.data?.NombreInt || 'intervención adicional'}`}
+                                                    onClick={() => handleEliminarIntervencionAdicional(
+                                                        asignacion.id,
+                                                        intervencion?.data?.NombreInt || 'Intervención adicional',
+                                                    )}
+                                                >
+                                                    <i className="bi bi-trash"></i>
+                                                </button>
+                                            )}
                                     </div>
                                 );
                             })}
@@ -386,7 +489,6 @@ export const ReparacionReparar: React.FC<ReparacionRepararProps> = ({
                         )}
                     </div>
                 )}
-            </div>
-        </div>
+        </ReparacionSeccionColapsable>
     );
 };

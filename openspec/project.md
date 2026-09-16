@@ -221,6 +221,9 @@ Component → Action Creator → Async Logic → Dispatch → Reducer → State 
 6. **Intervención** (`Intervencion`)
    - Registro de trabajos técnicos
    - Asociado a reparaciones vía `IntervencionesIds`
+  - Cada asignación persiste su origen (`presupuestada` o `adicional`) y un snapshot de los repuestos/cantidades definidos al asignarla
+  - Las adicionales se agregan durante `Aceptado` o `Repuestos`; reservan stock al crearse y liberan la reserva si se eliminan pendientes
+  - Las adicionales se gestionan en Reparar y no aparecen ni suman en la sección, email, PDF o total del presupuesto aceptado (`PresuFiRep`)
 
 #### Reglas de Negocio
 
@@ -270,6 +273,8 @@ Component → Action Creator → Async Logic → Dispatch → Reducer → State 
      `reservation` (aceptar presupuesto, +comprometido), `release` (salir sin reparar / rechazar /
      eliminar reparación, −comprometido), `consumption` (pasar a Reparado, −stock y −comprometido),
      `adjustment` (ajuste manual de stock).
+   - Las intervenciones adicionales reservan sus repuestos al agregarse. El cierre consume solamente
+     snapshots de asignaciones completadas y libera los de asignaciones pendientes.
    - `stockLibre = StockRepu − UnidadesComprometidas`. La alerta crítica de faltante aparece solo
      si hay faltante real y **no** hay pedido activo (`pending`/`in_transit`).
    - En el formulario de repuesto, Stock y Comprometido no se editan directo: el stock se corrige

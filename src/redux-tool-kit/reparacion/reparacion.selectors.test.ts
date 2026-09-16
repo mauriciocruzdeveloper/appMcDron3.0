@@ -2,33 +2,47 @@
 
 import { configureStore } from '@reduxjs/toolkit';
 import {
+  agregarIntervencionAReparacionPersistencia,
   actualizarEstadoReparacionPersistencia,
   aplicarMovimientoStockPersistencia,
+  actualizarPreciosPiezasAsignacionPersistencia,
+  eliminarIntervencionDeReparacionPersistencia,
   getIntervencionPersistencia,
   getIntervencionesPorReparacionPersistencia,
   getReparacionesPorIntervencionPersistencia,
+  guardarReparacionPersistencia,
 } from '../../persistencia/persistencia';
-import { EstadoAsignacion } from '../../types/intervencion';
+import { EstadoAsignacion, OrigenAsignacion } from '../../types/intervencion';
 import { ReparacionRelacionada, ReparacionType } from '../../types/reparacion';
 import { enviarDroneEnviadoAsync, enviarReparacionFinalizadaAsync } from '../app/app.actions';
 import repuestoReducer, { setRepuestos } from '../repuesto/repuesto.slice';
+import { RootState } from '../store';
 import {
+  agregarIntervencionAReparacionAsync,
+  actualizarIncluirRepuestoAsignacionAsync,
   cambiarEstadoReparacionAsync,
+  eliminarIntervencionDeReparacionAsync,
   getReparacionesPorIntervencionAsync,
 } from './reparacion.actions';
-import reparacionReducer, { setReparaciones } from './reparacion.slice';
+import reparacionReducer, { setIntervencionesDeReparacionActual, setReparaciones } from './reparacion.slice';
 import {
   selectEstadoReparacionesPorIntervencionId,
+  selectIntervencionesPresupuestadas,
   selectPuedeAvanzarA,
   selectReparacionesPorIntervencionId,
+  selectTotalIntervenciones,
 } from './reparacion.selectors';
 
 jest.mock('../../persistencia/persistencia', () => ({
+  agregarIntervencionAReparacionPersistencia: jest.fn(),
   actualizarEstadoReparacionPersistencia: jest.fn().mockResolvedValue(undefined),
   aplicarMovimientoStockPersistencia: jest.fn(),
+  actualizarPreciosPiezasAsignacionPersistencia: jest.fn(),
+  eliminarIntervencionDeReparacionPersistencia: jest.fn(),
   getIntervencionPersistencia: jest.fn(),
   getIntervencionesPorReparacionPersistencia: jest.fn(),
   getReparacionesPorIntervencionPersistencia: jest.fn(),
+  guardarReparacionPersistencia: jest.fn(),
 }));
 
 jest.mock('../app/app.actions', () => {
@@ -44,8 +58,12 @@ jest.mock('../app/app.actions', () => {
 const getReparacionesMock = getReparacionesPorIntervencionPersistencia as jest.Mock;
 const getIntervencionesMock = getIntervencionesPorReparacionPersistencia as jest.Mock;
 const getIntervencionMock = getIntervencionPersistencia as jest.Mock;
+const agregarIntervencionMock = agregarIntervencionAReparacionPersistencia as jest.Mock;
+const eliminarIntervencionMock = eliminarIntervencionDeReparacionPersistencia as jest.Mock;
+const guardarReparacionMock = guardarReparacionPersistencia as jest.Mock;
 const actualizarEstadoMock = actualizarEstadoReparacionPersistencia as jest.Mock;
 const aplicarMovimientoStockMock = aplicarMovimientoStockPersistencia as jest.Mock;
+const actualizarPreciosPiezasMock = actualizarPreciosPiezasAsignacionPersistencia as jest.Mock;
 const enviarDroneEnviadoMock = enviarDroneEnviadoAsync as unknown as jest.Mock;
 const enviarReparacionFinalizadaMock = enviarReparacionFinalizadaAsync as unknown as jest.Mock;
 
@@ -260,6 +278,11 @@ describe('consumo de repuestos al reparar', () => {
           reparacionId: 'rep-stock',
           intervencionId: 'intervencion-completada',
           estado: EstadoAsignacion.COMPLETADA,
+          origen: OrigenAsignacion.PRESUPUESTADA,
+          repuestosSnapshot: [
+            { partId: 'parte-completada', quantity: 2 },
+            { partId: 'parte-compartida', quantity: 1 },
+          ],
         },
       },
       {
@@ -268,17 +291,14 @@ describe('consumo de repuestos al reparar', () => {
           reparacionId: 'rep-stock',
           intervencionId: 'intervencion-pendiente',
           estado: EstadoAsignacion.PENDIENTE,
+          origen: OrigenAsignacion.PRESUPUESTADA,
+          repuestosSnapshot: [
+            { partId: 'parte-pendiente', quantity: 3 },
+            { partId: 'parte-compartida', quantity: 4 },
+          ],
         },
       },
     ]);
-    getIntervencionMock.mockImplementation((intervencionId: string) => Promise.resolve({
-      id: intervencionId,
-      data: {
-        _partsRelations: intervencionId === 'intervencion-completada'
-          ? [{ part_id: 'parte-completada', quantity: 2 }, { part_id: 'parte-compartida', quantity: 1 }]
-          : [{ part_id: 'parte-pendiente', quantity: 3 }, { part_id: 'parte-compartida', quantity: 4 }],
-      },
-    }));
 
     const store = crearStore();
     store.dispatch(setReparaciones([{
@@ -332,5 +352,231 @@ describe('consumo de repuestos al reparar', () => {
       kind: 'release',
     }));
     expect(aplicarMovimientoStockMock).toHaveBeenCalledTimes(4);
+    expect(getIntervencionMock).not.toHaveBeenCalled();
+  });
+});
+
+describe('intervenciones adicionales', () => {
+  beforeEach(() => {
+    agregarIntervencionMock.mockReset();
+    eliminarIntervencionMock.mockReset();
+    getIntervencionesMock.mockReset();
+    getIntervencionMock.mockReset();
+    guardarReparacionMock.mockReset();
+    aplicarMovimientoStockMock.mockReset();
+    actualizarPreciosPiezasMock.mockReset();
+    guardarReparacionMock.mockImplementation((reparacion: ReparacionType) => Promise.resolve(reparacion));
+    actualizarPreciosPiezasMock.mockResolvedValue({ success: true, data: {} });
+    aplicarMovimientoStockMock.mockImplementation(({ partId, onHandDelta, committedDelta }) =>
+      Promise.resolve({
+        id: partId,
+        data: {
+          NombreRepu: partId,
+          DescripcionRepu: '',
+          ModelosDroneIds: [],
+          ProveedorRepu: '',
+          PrecioRepu: 0,
+          StockRepu: 10 + onHandDelta,
+          UnidadesComprometidas: Math.max(0, committedDelta),
+        },
+      })
+    );
+  });
+
+  it('persiste el origen, congela los repuestos y reserva la demanda adicional', async () => {
+    getIntervencionMock.mockResolvedValue({
+      id: 'intervencion-extra',
+      data: {
+        PrecioManoObra: 100,
+        _partsRelations: [
+          { part_id: 'parte-a', quantity: 2, part: { price: 50 } },
+          { part_id: 'parte-b', quantity: 1, part: { price: 25 } },
+        ],
+      },
+    });
+    agregarIntervencionMock.mockResolvedValue({ success: true, data: { id: 'asignacion-extra' } });
+    getIntervencionesMock.mockResolvedValue([{
+      id: 'asignacion-extra',
+      data: {
+        reparacionId: 'rep-adicional',
+        intervencionId: 'intervencion-extra',
+        estado: EstadoAsignacion.PENDIENTE,
+        origen: OrigenAsignacion.ADICIONAL,
+        repuestosSnapshot: [
+          { partId: 'parte-a', quantity: 2 },
+          { partId: 'parte-b', quantity: 1 },
+        ],
+        PrecioManoObra: 100,
+        PrecioPiezas: 125,
+        PrecioTotal: 225,
+      },
+    }]);
+
+    const store = crearStore();
+    store.dispatch(setReparaciones([{
+      ...crearReparacion('rep-adicional'),
+      data: { ...crearReparacion('rep-adicional').data, EstadoRep: 'Aceptado' },
+    }]));
+    store.dispatch(setRepuestos(['parte-a', 'parte-b'].map(id => ({
+      id,
+      data: {
+        NombreRepu: id,
+        DescripcionRepu: '',
+        ModelosDroneIds: [],
+        ProveedorRepu: '',
+        PrecioRepu: 0,
+        StockRepu: 10,
+        UnidadesComprometidas: 0,
+      },
+    }))));
+
+    const resultado = await store.dispatch(agregarIntervencionAReparacionAsync({
+      reparacionId: 'rep-adicional',
+      intervencionId: 'intervencion-extra',
+      origen: OrigenAsignacion.ADICIONAL,
+    }) as any);
+
+    expect(resultado.meta.requestStatus).toBe('fulfilled');
+    expect(agregarIntervencionMock).toHaveBeenCalledWith(
+      'rep-adicional',
+      'intervencion-extra',
+      expect.objectContaining({
+        origen: OrigenAsignacion.ADICIONAL,
+        repuestosSnapshot: [
+          { partId: 'parte-a', quantity: 2 },
+          { partId: 'parte-b', quantity: 1 },
+        ],
+      }),
+    );
+    expect(aplicarMovimientoStockMock).toHaveBeenCalledWith(expect.objectContaining({
+      partId: 'parte-a',
+      committedDelta: 2,
+      kind: 'reservation',
+    }));
+    expect(aplicarMovimientoStockMock).toHaveBeenCalledWith(expect.objectContaining({
+      partId: 'parte-b',
+      committedDelta: 1,
+      kind: 'reservation',
+    }));
+    expect(guardarReparacionMock).not.toHaveBeenCalled();
+  });
+
+  it('libera la reserva al eliminar una intervención adicional pendiente', async () => {
+    eliminarIntervencionMock.mockResolvedValue({ success: true });
+    getIntervencionesMock.mockResolvedValue([]);
+
+    const store = crearStore();
+    store.dispatch(setReparaciones([{
+      ...crearReparacion('rep-adicional'),
+      data: { ...crearReparacion('rep-adicional').data, EstadoRep: 'Aceptado' },
+    }]));
+    store.dispatch(setIntervencionesDeReparacionActual([{
+      id: 'asignacion-extra',
+      data: {
+        reparacionId: 'rep-adicional',
+        intervencionId: 'intervencion-extra',
+        estado: EstadoAsignacion.PENDIENTE,
+        origen: OrigenAsignacion.ADICIONAL,
+        repuestosSnapshot: [{ partId: 'parte-a', quantity: 2 }],
+        PrecioManoObra: 100,
+        PrecioPiezas: 100,
+        PrecioTotal: 200,
+      },
+    }]));
+    store.dispatch(setRepuestos([{
+      id: 'parte-a',
+      data: {
+        NombreRepu: 'parte-a',
+        DescripcionRepu: '',
+        ModelosDroneIds: [],
+        ProveedorRepu: '',
+        PrecioRepu: 0,
+        StockRepu: 10,
+        UnidadesComprometidas: 2,
+      },
+    }]));
+
+    const resultado = await store.dispatch(eliminarIntervencionDeReparacionAsync({
+      reparacionId: 'rep-adicional',
+      intervencionId: 'asignacion-extra',
+    }) as any);
+
+    expect(resultado.meta.requestStatus).toBe('fulfilled');
+    expect(aplicarMovimientoStockMock).toHaveBeenCalledWith(expect.objectContaining({
+      partId: 'parte-a',
+      onHandDelta: 0,
+      committedDelta: -2,
+      kind: 'release',
+    }));
+    expect(eliminarIntervencionMock).toHaveBeenCalledWith('rep-adicional', 'asignacion-extra');
+    expect(guardarReparacionMock).not.toHaveBeenCalled();
+  });
+
+  it('excluye las adicionales de la lista y del total del presupuesto', () => {
+    const store = crearStore();
+    store.dispatch(setIntervencionesDeReparacionActual([
+      {
+        id: 'asignacion-presupuestada',
+        data: {
+          reparacionId: 'rep-adicional',
+          intervencionId: 'intervencion-original',
+          estado: EstadoAsignacion.PENDIENTE,
+          origen: OrigenAsignacion.PRESUPUESTADA,
+          PrecioManoObra: 100,
+          PrecioPiezas: 50,
+          PrecioTotal: 150,
+        },
+      },
+      {
+        id: 'asignacion-extra',
+        data: {
+          reparacionId: 'rep-adicional',
+          intervencionId: 'intervencion-extra',
+          estado: EstadoAsignacion.PENDIENTE,
+          origen: OrigenAsignacion.ADICIONAL,
+          PrecioManoObra: 200,
+          PrecioPiezas: 75,
+          PrecioTotal: 275,
+        },
+      },
+    ]));
+
+    const state = store.getState() as unknown as RootState;
+    expect(selectIntervencionesPresupuestadas(state)).toHaveLength(1);
+    expect(selectIntervencionesPresupuestadas(state)[0].id).toBe('asignacion-presupuestada');
+    expect(selectTotalIntervenciones(state)).toBe(150);
+  });
+
+  it('actualiza el costo propio de una adicional sin modificar el presupuesto final', async () => {
+    const store = crearStore();
+    const asignacionAdicional = {
+      id: 'asignacion-extra',
+      data: {
+        reparacionId: 'rep-adicional',
+        intervencionId: 'intervencion-extra',
+        estado: EstadoAsignacion.PENDIENTE,
+        origen: OrigenAsignacion.ADICIONAL,
+        PrecioManoObra: 100,
+        PrecioPiezas: 50,
+        PrecioTotal: 150,
+      },
+    };
+    store.dispatch(setIntervencionesDeReparacionActual([asignacionAdicional]));
+    getIntervencionesMock.mockResolvedValue([asignacionAdicional]);
+
+    const resultado = await store.dispatch(actualizarIncluirRepuestoAsignacionAsync({
+      asignacionId: 'asignacion-extra',
+      intervencionId: 'intervencion-extra',
+      incluirRepuesto: false,
+    }) as any);
+
+    expect(resultado.meta.requestStatus).toBe('fulfilled');
+    expect(actualizarPreciosPiezasMock).toHaveBeenCalledWith(
+      'asignacion-extra',
+      'rep-adicional',
+      0,
+      100,
+      null,
+    );
   });
 });

@@ -13,6 +13,7 @@ import {
 } from "../../../redux-tool-kit/reparacion/reparacion.actions";
 import { enviarReciboAsync } from "../../../redux-tool-kit/app/app.actions";
 import { estados } from "../../../datos/estados";
+import { ReparacionSeccionColapsable } from "./ReparacionSeccionColapsable";
 
 interface ReparacionRecepcionProps {
     reparacionId: string;
@@ -106,9 +107,7 @@ export const ReparacionRecepcion: React.FC<ReparacionRecepcionProps> = ({ repara
     };
 
     return (
-        <div className="card mb-3" id="seccion-recepcion">
-            <div className="card-body">
-                <h5 className="card-title bluemcdron">RECEPCIÓN</h5>
+        <ReparacionSeccionColapsable id="seccion-recepcion" titulo="RECEPCIÓN">
 
                 {estaPendienteDeRecepcion && (
                     <div className="alert alert-info mb-3">
@@ -173,7 +172,6 @@ export const ReparacionRecepcion: React.FC<ReparacionRecepcionProps> = ({ repara
                         )}
                     </div>
                 )}
-            </div>
-        </div>
+        </ReparacionSeccionColapsable>
     );
 };

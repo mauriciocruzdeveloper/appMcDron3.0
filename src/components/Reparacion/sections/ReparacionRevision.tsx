@@ -14,6 +14,7 @@ import {
     generarYGuardarDiagnosticoAsync,
 } from "../../../redux-tool-kit/reparacion/reparacion.actions";
 import TextareaAutosize from "react-textarea-autosize";
+import { ReparacionSeccionColapsable } from "./ReparacionSeccionColapsable";
 
 interface ReparacionRevisionProps {
     reparacionId: string;
@@ -70,9 +71,7 @@ export const ReparacionRevision: React.FC<ReparacionRevisionProps> = ({
     };
 
     return (
-        <div className="card mb-3" id="seccion-revision">
-            <div className="card-body">
-                <h5 className="card-title bluemcdron">REVISIÓN</h5>
+        <ReparacionSeccionColapsable id="seccion-revision" titulo="REVISIÓN">
                 <div>
                     <label className="form-label">
                         Número de Serie
@@ -125,7 +124,6 @@ export const ReparacionRevision: React.FC<ReparacionRevisionProps> = ({
                         </button>
                     </div>
                 )}
-            </div>
-        </div>
+        </ReparacionSeccionColapsable>
     );
 };

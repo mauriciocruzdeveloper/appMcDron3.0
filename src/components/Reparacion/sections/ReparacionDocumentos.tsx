@@ -10,6 +10,7 @@ import {
     subirDocumentoYActualizarReparacionAsync,
     borrarDocumentoAsync,
 } from "../../../redux-tool-kit/app/app.actions";
+import { ReparacionSeccionColapsable } from "./ReparacionSeccionColapsable";
 
 interface ReparacionDocumentosProps {
     reparacionId: string;
@@ -68,10 +69,8 @@ export const ReparacionDocumentos: React.FC<ReparacionDocumentosProps> = ({
     };
 
     return (
-        <div className="card mb-3">
-            <div className="card-body">
-                <div className="d-flex w-100 justify-content-between align-items-center">
-                    <h5 className="card-title bluemcdron">DOCUMENTOS</h5>
+        <ReparacionSeccionColapsable id="seccion-documentos" titulo="DOCUMENTOS">
+                <div className="d-flex w-100 justify-content-end align-items-center">
                     {isAdmin && (
                         <div className="d-flex justify-content-start mb-2">
                             <label className="btn btn-outline-secondary bg-bluemcdron text-white">
@@ -133,7 +132,6 @@ export const ReparacionDocumentos: React.FC<ReparacionDocumentosProps> = ({
                         </div>
                     )}
                 </div>
-            </div>
-        </div>
+        </ReparacionSeccionColapsable>
     );
 };

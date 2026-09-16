@@ -39,6 +39,7 @@ export {
   selectReparacionesDictionary,
   selectReparacionFilter,
   selectIntervencionesDeReparacionActual,
+  selectIntervencionesPresupuestadas,
   
   // Selectores de acceso por ID
   selectReparacionById,

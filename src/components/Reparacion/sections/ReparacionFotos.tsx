@@ -15,6 +15,7 @@ import {
     borrarFotoAsync,
 } from "../../../redux-tool-kit/app/app.actions";
 import { ImageGallery } from '../../ImageGallery';
+import { ReparacionSeccionColapsable } from "./ReparacionSeccionColapsable";
 
 interface ReparacionFotosProps {
     reparacionId: string;
@@ -105,10 +106,8 @@ export const ReparacionFotos: React.FC<ReparacionFotosProps> = ({
     };
 
     return (
-        <div className="card mb-3">
-            <div className="card-body">
-                <div className="d-flex w-100 justify-content-between align-items-center mb-3">
-                    <h5 className="card-title bluemcdron">FOTOS</h5>
+        <ReparacionSeccionColapsable id="seccion-fotos" titulo="FOTOS">
+                <div className="d-flex w-100 justify-content-end align-items-center mb-3">
                     {isAdmin && (
                         <div className="d-flex justify-content-start">
                             <label className="btn btn-outline-secondary bg-bluemcdron text-white">
@@ -149,7 +148,6 @@ export const ReparacionFotos: React.FC<ReparacionFotosProps> = ({
                     onSelectAfter={isAdmin ? handleSelectFotoDespues : undefined}
                     enableSelection={isAdmin}
                 />
-            </div>
-        </div>
+        </ReparacionSeccionColapsable>
     );
 };

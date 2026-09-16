@@ -9,7 +9,7 @@ import { formatRepairPublicId } from '../../utils/publicIdHelper';
 // función solo persiste el registro, sin lógica de negocio.
 export const agregarIntervencionAReparacionPersistencia = async (reparacionId, intervencionId, costos) => {
   try {
-    const { laborCost, partsCost, totalCost, estadoInicial } = costos;
+    const { laborCost, partsCost, totalCost, estadoInicial, origen, repuestosSnapshot } = costos;
 
     const { data: nuevaRelacion, error: insercionError } = await supabase
       .from('repair_intervention')
@@ -20,7 +20,9 @@ export const agregarIntervencionAReparacionPersistencia = async (reparacionId, i
           labor_cost: laborCost,
           parts_cost: partsCost,
           total_cost: totalCost,
-          status: estadoInicial
+          status: estadoInicial,
+          origin: origen,
+          parts_snapshot: repuestosSnapshot
         }
       ])
       .select();
@@ -67,6 +69,13 @@ export const getIntervencionesPorReparacionPersistencia = async (reparacionId) =
           reparacionId: String(reparacionId),
           intervencionId: String(item.intervention.id),
           estado: item.status || 'pendiente', // Estado de la asignación
+          origen: item.origin || 'presupuestada',
+          repuestosSnapshot: Array.isArray(item.parts_snapshot)
+            ? item.parts_snapshot.map(repuesto => ({
+                partId: String(repuesto.partId),
+                quantity: Number(repuesto.quantity) || 1
+              }))
+            : undefined,
           PrecioManoObra: item.labor_cost || 0,
           PrecioPiezas: item.parts_cost || 0, // 0 significa sin repuesto en el presupuesto
           PrecioTotal: item.total_cost || 0,
@@ -214,10 +223,16 @@ export const actualizarPreciosPiezasAsignacionPersistencia = async (asignacionId
       throw new Error(`Error al actualizar precios: ${error.message}`);
     }
 
-    await supabase
-      .from('repair')
-      .update({ price_total: nuevoPrecioReparacion })
-      .eq('id', reparacionId);
+    if (nuevoPrecioReparacion !== null && nuevoPrecioReparacion !== undefined) {
+      const { error: reparacionError } = await supabase
+        .from('repair')
+        .update({ price_total: nuevoPrecioReparacion })
+        .eq('id', reparacionId);
+
+      if (reparacionError) {
+        throw new Error(`Error al actualizar el precio de la reparación: ${reparacionError.message}`);
+      }
+    }
 
     return { success: true, data };
   } catch (error) {

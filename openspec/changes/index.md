@@ -4,6 +4,33 @@ Este directorio contiene todas las propuestas de cambio estructuradas según el 
 
 ## 📋 Active Changes
 
+### `add-collapsible-repair-sections`
+**Status:** Implemented
+**Priority:** Medium
+**Created:** 2026-09-14
+
+Organiza la página de reparación con secciones colapsables, mantiene visibles los bloques operativos fijos y destaca la sección correspondiente al estado actual.
+
+- [📝 Proposal](./add-collapsible-repair-sections/proposal.md)
+- [✅ Tasks](./add-collapsible-repair-sections/tasks.md)
+- [🔧 Spec](./add-collapsible-repair-sections/specs/reparacion-ui/spec.md)
+
+---
+
+### `add-additional-repair-interventions`
+**Status:** Implemented
+**Priority:** High
+**Created:** 2026-09-13
+
+Permite registrar intervenciones adicionales durante una reparación, conservar su origen y composición de repuestos, mantener sus reservas y distinguirlas en el email de finalización sin alterar el presupuesto aceptado.
+
+- [📝 Proposal](./add-additional-repair-interventions/proposal.md)
+- [✅ Tasks](./add-additional-repair-interventions/tasks.md)
+- [🔧 Specs](./add-additional-repair-interventions/specs/)
+- [🗄️ SQL Migration](../../sql/add_additional_repair_interventions.sql)
+
+---
+
 ### `add-argentina-phone-validation`
 **Status:** Complete
 **Priority:** High
