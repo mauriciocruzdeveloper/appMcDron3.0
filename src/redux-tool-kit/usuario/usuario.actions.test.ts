@@ -12,11 +12,11 @@ jest.mock('../../persistencia/persistencia');
 
 const guardarUsuarioMock = guardarUsuarioPersistencia as ReturnType<typeof jest.fn>;
 
-const crearUsuario = (cuit: string): Usuario => ({
+const crearUsuario = (cuit: string, telefono = ''): Usuario => ({
     id: 'usuario-1',
     data: {
         NombreUsu: 'Cliente',
-        TelefonoUsu: '',
+        TelefonoUsu: telefono,
         Role: 'cliente',
         CUIT: cuit,
     },
@@ -48,6 +48,19 @@ describe('guardarUsuarioAsync', () => {
         const result = await store.dispatch(guardarUsuarioAsync(crearUsuario('20123456789')) as any);
 
         expect(result.meta.requestStatus).toBe('rejected');
+        expect(guardarUsuarioMock).not.toHaveBeenCalled();
+    });
+
+    it('rechaza la action cuando el teléfono es inválido, sin persistir', async () => {
+        guardarUsuarioMock.mockImplementation(async (usuario: Usuario) => usuario);
+
+        const store = crearStore();
+        const result = await store.dispatch(guardarUsuarioAsync(crearUsuario('27123456780', '12345')) as any);
+
+        expect(result).toMatchObject({
+            error: { message: expect.stringContaining('teléfono ingresado no es válido') },
+            meta: { requestStatus: 'rejected' },
+        });
         expect(guardarUsuarioMock).not.toHaveBeenCalled();
     });
 
