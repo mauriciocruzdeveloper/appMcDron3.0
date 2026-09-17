@@ -15,8 +15,11 @@ import { REALTIME_CHANNEL_STATES } from '@supabase/supabase-js';
 let isAppVisible = true;
 let reconnectTimeout = null;
 let heartbeatInterval = null;
+let reloadNotificationTimeout = null;
+let lastReloadNotificationAt = 0;
 const HEARTBEAT_INTERVAL = 30000; // 30 segundos
 const RECONNECT_DELAY = 2000; // 2 segundos
+const RELOAD_NOTIFICATION_COOLDOWN = 5 * 60 * 1000; // 5 minutos
 
 /**
  * Inicializa el WebSocket Manager
@@ -51,6 +54,8 @@ export const stopWebSocketManager = () => {
   
   stopHeartbeat();
   clearReconnectTimeout();
+  clearReloadNotificationTimeout();
+  lastReloadNotificationAt = 0;
 };
 
 /**
@@ -86,6 +91,39 @@ const clearReconnectTimeout = () => {
   if (reconnectTimeout) {
     clearTimeout(reconnectTimeout);
     reconnectTimeout = null;
+  }
+};
+
+const dispatchRealtimeReload = () => {
+  if (typeof window === 'undefined') return;
+
+  lastReloadNotificationAt = Date.now();
+  window.dispatchEvent(new Event('mcdron:realtime-reload'));
+};
+
+const scheduleRealtimeReload = () => {
+  const elapsed = Date.now() - lastReloadNotificationAt;
+
+  if (lastReloadNotificationAt === 0 || elapsed >= RELOAD_NOTIFICATION_COOLDOWN) {
+    clearReloadNotificationTimeout();
+    dispatchRealtimeReload();
+    return;
+  }
+
+  if (reloadNotificationTimeout) return;
+
+  const delay = RELOAD_NOTIFICATION_COOLDOWN - elapsed;
+  console.log(`⏳ Recarga global agrupada por ${Math.ceil(delay / 1000)} segundos`);
+  reloadNotificationTimeout = setTimeout(() => {
+    reloadNotificationTimeout = null;
+    dispatchRealtimeReload();
+  }, delay);
+};
+
+const clearReloadNotificationTimeout = () => {
+  if (reloadNotificationTimeout) {
+    clearTimeout(reloadNotificationTimeout);
+    reloadNotificationTimeout = null;
   }
 };
 
@@ -130,8 +168,8 @@ export const verifyAndReconnectChannels = async (notifyReload = true) => {
 
     console.log(`🔄 Reconexión completada: ${reconnected}/${canalesArray.length} canales reconectados`);
 
-    if (reconnected > 0 && notifyReload && typeof window !== 'undefined') {
-      window.dispatchEvent(new Event('mcdron:realtime-reload'));
+    if (reconnected > 0 && notifyReload) {
+      scheduleRealtimeReload();
     }
     
     return {

@@ -1,6 +1,7 @@
 import { supabase } from './supabaseClient.js';
 import { eliminarArchivoPersistencia } from './archivosPersistencia.js';
 import { formatRepairPublicId } from '../../utils/publicIdHelper';
+import { createRealtimeReloadScheduler } from './realtimeReloadScheduler.js';
 
 // Agregar una asignación de intervención a una reparación
 // Se permiten múltiples asignaciones de la misma intervención
@@ -401,6 +402,7 @@ export const getReparacionesPersistencia = async (setReparacionesToRedux, usuari
     }
   };
 
+  const realtimeReload = createRealtimeReloadScheduler(cargarReparaciones);
   const cargaInicial = cargarReparaciones();
 
   // Configurar la suscripción en tiempo real
@@ -412,8 +414,7 @@ export const getReparacionesPersistencia = async (setReparacionesToRedux, usuari
       table: 'repair'
     }, (payload) => {
       console.log('Cambio detectado en reparaciones:', payload);
-      // Cuando hay cambios, recargamos todos los datos
-      cargarReparaciones();
+      realtimeReload.scheduleReload();
     })
     .subscribe();
 
@@ -424,7 +425,7 @@ export const getReparacionesPersistencia = async (setReparacionesToRedux, usuari
       schema: 'public',
       table: 'repair_intervention'
     }, () => {
-      cargarReparaciones();
+      realtimeReload.scheduleReload();
     })
     .subscribe();
 
@@ -432,6 +433,7 @@ export const getReparacionesPersistencia = async (setReparacionesToRedux, usuari
 
   // Devolver función para cancelar la suscripción
   return () => {
+    realtimeReload.stop();
     supabase.removeChannel(channel);
     supabase.removeChannel(repairInterventionChannel);
   };
