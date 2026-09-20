@@ -3,6 +3,7 @@
 import { configureStore } from '@reduxjs/toolkit';
 import {
   agregarIntervencionAReparacionPersistencia,
+  actualizarFechaAvisoAbandonoPersistencia,
   actualizarEstadoReparacionPersistencia,
   aplicarMovimientoStockPersistencia,
   actualizarPreciosPiezasAsignacionPersistencia,
@@ -14,14 +15,16 @@ import {
 } from '../../persistencia/persistencia';
 import { EstadoAsignacion, OrigenAsignacion } from '../../types/intervencion';
 import { ReparacionRelacionada, ReparacionType } from '../../types/reparacion';
-import { enviarDroneEnviadoAsync, enviarReparacionFinalizadaAsync } from '../app/app.actions';
+import { enviarEmailAvisoAbandonoAsync, enviarDroneEnviadoAsync, enviarReparacionFinalizadaAsync } from '../app/app.actions';
 import repuestoReducer, { setRepuestos } from '../repuesto/repuesto.slice';
 import { RootState } from '../store';
 import {
   agregarIntervencionAReparacionAsync,
   actualizarIncluirRepuestoAsignacionAsync,
+  cancelarAvisoAbandonoAsync,
   cambiarEstadoReparacionAsync,
   eliminarIntervencionDeReparacionAsync,
+  enviarAvisoAbandonoAsync,
   getReparacionesPorIntervencionAsync,
 } from './reparacion.actions';
 import reparacionReducer, { setIntervencionesDeReparacionActual, setReparaciones } from './reparacion.slice';
@@ -29,12 +32,14 @@ import {
   selectEstadoReparacionesPorIntervencionId,
   selectIntervencionesPresupuestadas,
   selectPuedeAvanzarA,
+  selectReparacionesListasParaAvisoAbandono,
   selectReparacionesPorIntervencionId,
   selectTotalIntervenciones,
 } from './reparacion.selectors';
 
 jest.mock('../../persistencia/persistencia', () => ({
   agregarIntervencionAReparacionPersistencia: jest.fn(),
+  actualizarFechaAvisoAbandonoPersistencia: jest.fn().mockResolvedValue(undefined),
   actualizarEstadoReparacionPersistencia: jest.fn().mockResolvedValue(undefined),
   aplicarMovimientoStockPersistencia: jest.fn(),
   actualizarPreciosPiezasAsignacionPersistencia: jest.fn(),
@@ -50,6 +55,7 @@ jest.mock('../app/app.actions', () => {
     enviarReciboAsync: jest.fn(),
     enviarDroneReparadoAsync: jest.fn(),
     enviarDroneDiagnosticadoAsync: jest.fn(),
+    enviarEmailAvisoAbandonoAsync: jest.fn(),
     enviarDroneEnviadoAsync: jest.fn(),
     enviarReparacionFinalizadaAsync: jest.fn(),
   };
@@ -62,9 +68,11 @@ const agregarIntervencionMock = agregarIntervencionAReparacionPersistencia as je
 const eliminarIntervencionMock = eliminarIntervencionDeReparacionPersistencia as jest.Mock;
 const guardarReparacionMock = guardarReparacionPersistencia as jest.Mock;
 const actualizarEstadoMock = actualizarEstadoReparacionPersistencia as jest.Mock;
+const actualizarFechaAvisoMock = actualizarFechaAvisoAbandonoPersistencia as jest.Mock;
 const aplicarMovimientoStockMock = aplicarMovimientoStockPersistencia as jest.Mock;
 const actualizarPreciosPiezasMock = actualizarPreciosPiezasAsignacionPersistencia as jest.Mock;
 const enviarDroneEnviadoMock = enviarDroneEnviadoAsync as unknown as jest.Mock;
+const enviarDroneAbandonadoMock = enviarEmailAvisoAbandonoAsync as unknown as jest.Mock;
 const enviarReparacionFinalizadaMock = enviarReparacionFinalizadaAsync as unknown as jest.Mock;
 
 const crearResultadoEmail = () => () => {
@@ -245,6 +253,253 @@ describe('seguimiento requerido para enviar', () => {
     expect(resultado.meta.requestStatus).toBe('fulfilled');
     expect(enviarReparacionFinalizadaMock).toHaveBeenCalledTimes(1);
     expect(enviarDroneEnviadoMock).not.toHaveBeenCalled();
+  });
+});
+
+describe('abandono de reparación', () => {
+  beforeEach(() => {
+    actualizarEstadoMock.mockClear();
+    actualizarFechaAvisoMock.mockClear();
+    actualizarFechaAvisoMock.mockResolvedValue(undefined);
+    enviarDroneAbandonadoMock.mockReset();
+    enviarDroneAbandonadoMock.mockImplementation(crearResultadoEmail);
+  });
+
+  const puedeAbandonarDesde = (estado: string) => {
+    const store = crearStore();
+    store.dispatch(setReparaciones([{
+      ...crearReparacion('rep-abandono'),
+      data: {
+        ...crearReparacion('rep-abandono').data,
+        EstadoRep: estado,
+        FechaAvisoAbandono: Date.now() - 8 * 24 * 60 * 60 * 1000,
+      },
+    }]));
+
+    return selectPuedeAvanzarA('rep-abandono', 'Abandonado')(store.getState() as any);
+  };
+
+  it.each(['Respondido', 'Transito', 'Presupuestado', 'Repuestos', 'Reparado', 'Diagnosticado', 'Cobrado'])(
+    'permite abandonar desde el estado de espera %s',
+    (estado) => {
+      expect(puedeAbandonarDesde(estado)).toBe(true);
+    }
+  );
+
+  it.each(['Consulta', 'Recibido', 'Revisado', 'Aceptado', 'Rechazado', 'Enviado', 'Finalizado', 'Cancelado', 'Abandonado', 'Entregado'])(
+    'no permite abandonar desde el estado excluido %s',
+    (estado) => {
+      expect(puedeAbandonarDesde(estado)).toBe(false);
+    }
+  );
+
+  it('rechaza desde el thunk abandonar un estado operativo sin persistir cambios', async () => {
+    actualizarEstadoMock.mockClear();
+    const store = crearStore();
+    store.dispatch(setReparaciones([crearReparacion('rep-abandono')]));
+
+    const resultado = await store.dispatch(cambiarEstadoReparacionAsync({
+      reparacionId: 'rep-abandono',
+      nuevoEstado: 'Abandonado',
+      enviarEmail: true,
+    }) as any);
+
+    expect(resultado.meta.requestStatus).toBe('rejected');
+    expect((resultado.payload as Error).message)
+      .toBe('Transición no permitida: Recibido → Abandonado');
+    expect(actualizarEstadoMock).not.toHaveBeenCalled();
+    expect(enviarDroneAbandonadoMock).not.toHaveBeenCalled();
+  });
+
+  it('envía el aviso, registra su fecha y conserva el estado', async () => {
+    const store = crearStore();
+    store.dispatch(setReparaciones([{
+      ...crearReparacion('rep-abandono'),
+      data: {
+        ...crearReparacion('rep-abandono').data,
+        EstadoRep: 'Presupuestado',
+        FeRecRep: new Date(2020, 0, 1).getTime(),
+      },
+    }]));
+
+    const resultado = await store.dispatch(enviarAvisoAbandonoAsync('rep-abandono') as any);
+
+    expect(resultado.meta.requestStatus).toBe('fulfilled');
+    expect(enviarDroneAbandonadoMock).toHaveBeenCalledTimes(1);
+    expect(actualizarFechaAvisoMock).toHaveBeenCalledWith('rep-abandono', expect.any(Number));
+    expect(store.getState().reparacion.coleccionReparaciones['rep-abandono'].data.EstadoRep)
+      .toBe('Presupuestado');
+    expect(store.getState().reparacion.coleccionReparaciones['rep-abandono'].data.FechaAvisoAbandono)
+      .toEqual(expect.any(Number));
+  });
+
+  it('no registra fecha ni cambia estado si falla el email', async () => {
+    enviarDroneAbandonadoMock.mockImplementationOnce(() => () => {
+      const resultado: any = Promise.resolve({});
+      resultado.unwrap = () => Promise.reject(new Error('falló el email'));
+      return resultado;
+    });
+    const store = crearStore();
+    store.dispatch(setReparaciones([{
+      ...crearReparacion('rep-abandono'),
+      data: {
+        ...crearReparacion('rep-abandono').data,
+        EstadoRep: 'Presupuestado',
+        FeRecRep: new Date(2020, 0, 1).getTime(),
+      },
+    }]));
+
+    const resultado = await store.dispatch(enviarAvisoAbandonoAsync('rep-abandono') as any);
+
+    expect(actualizarFechaAvisoMock).not.toHaveBeenCalled();
+    expect(store.getState().reparacion.coleccionReparaciones['rep-abandono'].data.EstadoRep)
+      .toBe('Presupuestado');
+    expect(store.getState().reparacion.coleccionReparaciones['rep-abandono'].data.FechaAvisoAbandono)
+      .toBeUndefined();
+    expect(resultado.meta.requestStatus).toBe('rejected');
+  });
+
+  it('cancela el aviso sin cambiar el estado', async () => {
+    const store = crearStore();
+    store.dispatch(setReparaciones([{
+      ...crearReparacion('rep-abandono'),
+      data: {
+        ...crearReparacion('rep-abandono').data,
+        EstadoRep: 'Presupuestado',
+        FechaAvisoAbandono: Date.now() - 1000,
+      },
+    }]));
+
+    const resultado = await store.dispatch(cancelarAvisoAbandonoAsync('rep-abandono') as any);
+
+    expect(resultado.meta.requestStatus).toBe('fulfilled');
+    expect(actualizarFechaAvisoMock).toHaveBeenCalledWith('rep-abandono', null);
+    expect(store.getState().reparacion.coleccionReparaciones['rep-abandono'].data.EstadoRep)
+      .toBe('Presupuestado');
+    expect(store.getState().reparacion.coleccionReparaciones['rep-abandono'].data.FechaAvisoAbandono)
+      .toBeNull();
+  });
+
+  it('rechaza el abandono antes de que se cumplan siete días', async () => {
+    const store = crearStore();
+    store.dispatch(setReparaciones([{
+      ...crearReparacion('rep-abandono'),
+      data: {
+        ...crearReparacion('rep-abandono').data,
+        EstadoRep: 'Presupuestado',
+        FechaAvisoAbandono: Date.now() - 6 * 24 * 60 * 60 * 1000,
+      },
+    }]));
+
+    const resultado = await store.dispatch(cambiarEstadoReparacionAsync({
+      reparacionId: 'rep-abandono',
+      nuevoEstado: 'Abandonado',
+      enviarEmail: false,
+    }) as any);
+
+    expect(resultado.meta.requestStatus).toBe('rejected');
+    expect(actualizarEstadoMock).not.toHaveBeenCalled();
+  });
+
+  it('marca definitivamente como abandonado después de siete días sin enviar otro email', async () => {
+    const store = crearStore();
+    store.dispatch(setReparaciones([{
+      ...crearReparacion('rep-abandono'),
+      data: {
+        ...crearReparacion('rep-abandono').data,
+        EstadoRep: 'Presupuestado',
+        FechaAvisoAbandono: Date.now() - 8 * 24 * 60 * 60 * 1000,
+      },
+    }]));
+
+    const resultado = await store.dispatch(cambiarEstadoReparacionAsync({
+      reparacionId: 'rep-abandono',
+      nuevoEstado: 'Abandonado',
+      enviarEmail: false,
+    }) as any);
+
+    expect(resultado.meta.requestStatus).toBe('fulfilled');
+    expect(actualizarEstadoMock).toHaveBeenCalledTimes(1);
+    expect(enviarDroneAbandonadoMock).not.toHaveBeenCalled();
+    expect(store.getState().reparacion.coleccionReparaciones['rep-abandono'].data.EstadoRep)
+      .toBe('Abandonado');
+  });
+});
+
+describe('reparaciones listas para aviso de abandono', () => {
+  const ahora = new Date(2026, 8, 20, 12, 0).getTime();
+  const haceCuatroMeses = new Date(2026, 4, 20, 12, 0).getTime();
+  const haceDosMeses = new Date(2026, 6, 20, 12, 0).getTime();
+
+  it('filtra por antigüedad, estado elegible y ausencia de aviso', () => {
+    const store = crearStore();
+    store.dispatch(setReparaciones([
+      {
+        ...crearReparacion('lista-1'),
+        data: {
+          ...crearReparacion('lista-1').data,
+          EstadoRep: 'Presupuestado',
+          FeRecRep: haceCuatroMeses,
+        },
+      },
+      {
+        ...crearReparacion('lista-2'),
+        data: {
+          ...crearReparacion('lista-2').data,
+          EstadoRep: 'Cobrado',
+          FeRecRep: haceCuatroMeses - 1,
+        },
+      },
+      {
+        ...crearReparacion('reciente'),
+        data: {
+          ...crearReparacion('reciente').data,
+          EstadoRep: 'Presupuestado',
+          FeRecRep: haceDosMeses,
+        },
+      },
+      {
+        ...crearReparacion('avisada'),
+        data: {
+          ...crearReparacion('avisada').data,
+          EstadoRep: 'Presupuestado',
+          FeRecRep: haceCuatroMeses,
+          FechaAvisoAbandono: ahora - 1000,
+        },
+      },
+      {
+        ...crearReparacion('estado-excluido'),
+        data: {
+          ...crearReparacion('estado-excluido').data,
+          EstadoRep: 'Recibido',
+          FeRecRep: haceCuatroMeses,
+        },
+      },
+    ]));
+
+    const resultado = selectReparacionesListasParaAvisoAbandono(
+      store.getState() as any,
+      ahora
+    );
+
+    expect(resultado.map(reparacion => reparacion.id)).toEqual(['lista-2', 'lista-1']);
+  });
+
+  it('mantiene la referencia para los mismos argumentos', () => {
+    const store = crearStore();
+    store.dispatch(setReparaciones([{
+      ...crearReparacion('lista-1'),
+      data: {
+        ...crearReparacion('lista-1').data,
+        EstadoRep: 'Presupuestado',
+        FeRecRep: haceCuatroMeses,
+      },
+    }]));
+
+    const primero = selectReparacionesListasParaAvisoAbandono(store.getState() as any, ahora);
+    const segundo = selectReparacionesListasParaAvisoAbandono(store.getState() as any, ahora);
+
+    expect(segundo).toBe(primero);
   });
 });
 

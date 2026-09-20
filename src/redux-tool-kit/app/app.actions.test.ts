@@ -1,4 +1,4 @@
-import { construirPayloadDroneEnviado, construirPayloadReparacionFinalizada } from './app.actions';
+import { construirPayloadDroneAbandonado, construirPayloadDroneEnviado, construirPayloadReparacionFinalizada } from './app.actions';
 import { ReparacionType } from '../../types/reparacion';
 
 const crearReparacion = (seguimiento: string): ReparacionType => ({
@@ -55,5 +55,23 @@ describe('construirPayloadReparacionFinalizada', () => {
       equipo: 'DJI Mini 4 Pro',
       email: 'contacto@example.com',
     }));
+  });
+});
+
+describe('construirPayloadDroneAbandonado', () => {
+  it('identifica la reparación, el drone y el destinatario', () => {
+    const payload = construirPayloadDroneAbandonado(
+      crearReparacion(''),
+      'contacto@example.com',
+      'DJI Mini 4 Pro',
+    );
+
+    expect(payload).toEqual(expect.objectContaining({
+      cliente: 'Ada Lovelace',
+      nro_reparacion: 'REP-42',
+      equipo: 'DJI Mini 4 Pro',
+      email: 'contacto@example.com',
+    }));
+    expect(payload.fecha_notificacion).toBeTruthy();
   });
 });

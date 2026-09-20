@@ -4,6 +4,7 @@ import ReparacionesPrioritariasSection from './ReparacionesPrioritariasSection.c
 import ReparacionesEsperandoRepuestosSection from './ReparacionesEsperandoRepuestosSection.component';
 import RepuestosAgotadosSection from './RepuestosAgotadosSection.component';
 import RepuestosPedidosSection from './RepuestosPedidosSection.component';
+import ReparacionesAvisoAbandonoSection from './ReparacionesAvisoAbandonoSection.component';
 
 /**
  * Vista de inicio para administradores
@@ -30,6 +31,9 @@ const InicioAdmin = (): React.ReactElement => {
           <section className='dashboard-main' aria-label='Reparaciones'>
             <div className='dashboard-panel dashboard-panel-priority'>
               <ReparacionesPrioritariasSection />
+            </div>
+            <div className='dashboard-panel'>
+              <ReparacionesAvisoAbandonoSection />
             </div>
             <div className='dashboard-panel'>
               <ReparacionesEsperandoRepuestosSection />

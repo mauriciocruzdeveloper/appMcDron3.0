@@ -38,6 +38,10 @@ interface PayloadReparacionFinalizada extends PayloadEmailEstadoReparacion {
   fecha_finalizacion: string;
 }
 
+interface PayloadDroneAbandonado extends PayloadEmailEstadoReparacion {
+  fecha_notificacion: string;
+}
+
 // LOGIN
 export const loginAsync = createAsyncThunk(
   'app/login',
@@ -561,6 +565,53 @@ export const enviarReparacionFinalizadaAsync = createAsyncThunk(
         url: process.env.REACT_APP_API_URL + '/send_reparacion_finalizada',
         method: HttpMethod.POST,
         body: construirPayloadReparacionFinalizada(reparacion, emailDestino, equipo || 'Drone'),
+      });
+
+      dispatch(isFetchingComplete());
+      return response;
+    } catch (error: unknown) {
+      dispatch(isFetchingComplete());
+      throw error;
+    }
+  },
+);
+
+export const construirPayloadDroneAbandonado = (
+  reparacion: ReparacionType,
+  emailDestino: string | undefined,
+  equipo: string,
+): PayloadDroneAbandonado => ({
+  cliente: reparacion.data.ApellidoUsu
+    ? `${reparacion.data.NombreUsu} ${reparacion.data.ApellidoUsu}`
+    : reparacion.data.NombreUsu,
+  nro_reparacion: reparacion.data.IdPublicoRep || reparacion.id,
+  equipo,
+  fecha_notificacion: new Date().toLocaleDateString(),
+  telefono: reparacion.data.TelefonoUsu,
+  email: emailDestino,
+});
+
+export const enviarEmailAvisoAbandonoAsync = createAsyncThunk(
+  'app/enviarDroneAbandonado',
+  async (reparacion: ReparacionType, { dispatch, getState }) => {
+    try {
+      dispatch(isFetchingStart());
+      const state = getState() as RootState;
+      const usuario = state.usuario.coleccionUsuarios[reparacion.data.UsuarioRep];
+      const emailDestino = usuario?.data?.EmailContacto || reparacion.data.EmailUsu;
+      let equipo: string | undefined = reparacion.data.ModeloDroneNameRep;
+
+      if (!equipo && reparacion.data.DroneId) {
+        const drone = state.drone.coleccionDrones[reparacion.data.DroneId];
+        equipo = drone
+          ? state.modeloDrone.coleccionModelosDrone[drone.data.ModeloDroneId]?.data.NombreModelo
+          : undefined;
+      }
+
+      const response = await callEndpoint({
+        url: process.env.REACT_APP_API_URL + '/send_drone_abandonado',
+        method: HttpMethod.POST,
+        body: construirPayloadDroneAbandonado(reparacion, emailDestino, equipo || 'Drone'),
       });
 
       dispatch(isFetchingComplete());

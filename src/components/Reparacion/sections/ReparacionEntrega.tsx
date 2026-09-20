@@ -42,10 +42,6 @@ export const ReparacionEntrega: React.FC<ReparacionEntregaProps> = ({
     const puedeAvanzarAFinalizado = useAppSelector(state => 
         selectPuedeAvanzarA(reparacionId, 'Finalizado')(state)
     );
-    const puedeAvanzarAAbandonado = useAppSelector(state => 
-        selectPuedeAvanzarA(reparacionId, 'Abandonado')(state)
-    );
-
     // Usar debounce para campos de texto
     const txtEntrega = useDebouncedField({
         reparacionId,
@@ -143,14 +139,6 @@ export const ReparacionEntrega: React.FC<ReparacionEntregaProps> = ({
             tipo: "danger",
             titulo: "Error",
         });
-    };
-
-    const avanzarAAbandonado = () => {
-        dispatch(cambiarEstadoReparacionAsync({
-            reparacionId,
-            nuevoEstado: 'Abandonado',
-            enviarEmail: false
-        }));
     };
 
     return (
@@ -276,16 +264,6 @@ export const ReparacionEntrega: React.FC<ReparacionEntregaProps> = ({
                                     onClick={avanzarAFinalizado}
                                 >
                                     Finalizar Reparación
-                                </button>
-                            )}
-                            {puedeAvanzarAAbandonado && (
-                                <button
-                                    type="button"
-                                    className="btn btn-secondary flex-fill"
-                                    style={{ minWidth: '140px' }}
-                                    onClick={avanzarAAbandonado}
-                                >
-                                    Marcar como Abandonado
                                 </button>
                             )}
                         </div>

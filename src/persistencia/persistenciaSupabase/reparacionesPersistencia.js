@@ -301,6 +301,7 @@ export const getReparacionesPersistencia = async (setReparacionesToRedux, usuari
         price_total,
         price_diagnosis,
         completion_date,
+        abandonment_notice_date,
         delivery_description,
         delivery_tracking,
         delivery_date,
@@ -381,6 +382,7 @@ export const getReparacionesPersistencia = async (setReparacionesToRedux, usuari
           InformeRep: item.repair_resume || '',
           FeFinRep: item.completion_date || 0,
           FeEntRep: item.delivery_date || 0,
+          FechaAvisoAbandono: item.abandonment_notice_date || null,
           TxtEntregaRep: item.delivery_description || '',
           SeguimientoEntregaRep: item.delivery_tracking || '',
           urlsFotos: item.photo_urls || [],
@@ -491,6 +493,7 @@ export const getReparacionPersistencia = async (id) => {
         DescripcionUsuRep: data.description || '',
         DiagnosticoRep: data.diagnosis || '',
         FeRecRep: data.reception_date,
+        FechaAvisoAbandono: data.abandonment_notice_date || null,
         DescripcionTecRep: data.repair_resume || '',
         PresuMoRep: data.price_labor || 0,
         AdelantoRep: data.price_advance || 0,
@@ -595,6 +598,7 @@ export const guardarReparacionPersistencia = async (reparacion) => {
       price_total: reparacion.data.PresuFiRep,
       price_diagnosis: reparacion.data.PresuDiRep,
       completion_date: reparacion.data.FeFinRep || null,
+      abandonment_notice_date: reparacion.data.FechaAvisoAbandono || null,
       delivery_date: reparacion.data.FeEntRep || null,
       delivery_description: reparacion.data.TxtEntregaRep,
       delivery_tracking: reparacion.data.SeguimientoEntregaRep,
@@ -722,6 +726,18 @@ export const actualizarEstadoReparacionPersistencia = async (id, camposEstado) =
     console.error('Error en actualizarEstadoReparacionPersistencia:', error);
     throw error;
   }
+};
+
+export const actualizarFechaAvisoAbandonoPersistencia = async (id, fechaAviso) => {
+  const { data, error } = await supabase
+    .from('repair')
+    .update({ abandonment_notice_date: fechaAviso })
+    .eq('id', id)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data;
 };
 
 // DELETE Reparación por id

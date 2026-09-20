@@ -32,31 +32,30 @@ export type EstadoReparacion =
  */
 export const transicionesPermitidas: Record<EstadoReparacion, EstadoReparacion[]> = {
   Consulta: ["Respondido", "Cancelado"],
-  Respondido: ["Transito", "Rechazado", "Cancelado"],
-  Transito: ["Recibido", "Cancelado"],
+  Respondido: ["Transito", "Rechazado", "Cancelado", "Abandonado"],
+  Transito: ["Recibido", "Cancelado", "Abandonado"],
   Recibido: ["Revisado"],
   Revisado: ["Presupuestado"],
-  // Desde Presupuestado el cliente solo decide: acepta o rechaza.
-  Presupuestado: ["Aceptado", "Rechazado"],
+  Presupuestado: ["Aceptado", "Rechazado", "Abandonado"],
   
   // Aceptado puede pausar (Repuestos), resolver (Reparado) o cancelar definitivamente (Cancelado).
   // El rechazo del presupuesto corresponde al flujo previo a la aceptación (Presupuestado -> Rechazado).
-  Aceptado: ["Repuestos", "Reparado", "Cancelado", "Abandonado"],
+  Aceptado: ["Repuestos", "Reparado", "Cancelado"],
   
   // Repuestos puede reanudar o cerrar definitivamente por cancelación/abandono.
   Repuestos: ["Aceptado", "Cancelado", "Abandonado"],
   
-  Rechazado: ["Diagnosticado", "Cancelado", "Abandonado"],
-  Reparado: ["Cobrado", "Finalizado"],
-  Diagnosticado: ["Cobrado", "Finalizado"],
-  Cobrado: ["Enviado", "Finalizado"],
+  Rechazado: ["Diagnosticado", "Cancelado"],
+  Reparado: ["Cobrado", "Finalizado", "Abandonado"],
+  Diagnosticado: ["Cobrado", "Finalizado", "Abandonado"],
+  Cobrado: ["Enviado", "Finalizado", "Abandonado"],
   Enviado: ["Finalizado"],
   Finalizado: [],
   Abandonado: [],
   Cancelado: [],
   
   // Estados legacy - permitir migración a estados principales
-  Reparar: ["Aceptado", "Repuestos", "Reparado", "Cancelado", "Abandonado"],
+  Reparar: ["Aceptado", "Repuestos", "Reparado", "Cancelado"],
   Entregado: ["Finalizado"],
   Venta: ["Cobrado", "Finalizado"],
   Liquidación: ["Cancelado", "Finalizado"],
@@ -103,7 +102,7 @@ export const esTransicionValida = (
  * 
  * @example
  * getEstadosPermitidos("Aceptado") 
- * // ["Repuestos", "Reparado", "Cancelado", "Abandonado"]
+ * // ["Repuestos", "Reparado", "Cancelado"]
  */
 export const getEstadosPermitidos = (
   estadoActual: EstadoReparacion

@@ -7,6 +7,7 @@ import { estados } from '../../datos/estados';
 import { obtenerEstadoSeguro, esEstadoLegacy } from '../../utils/estadosHelper';
 import { esReparacionResuelta, esEstadoPrevioAAceptacion, esTransicionValida, EstadoReparacion } from '../../usecases/estadosReparacion';
 import { calcularRankingModelosDrone } from '../../usecases/estadisticasModelosDrone';
+import { puedeConfirmarAbandono, puedeEnviarAvisoAbandono } from '../../usecases/abandonoReparacion';
 
 // Constantes para filtros
 /**
@@ -135,6 +136,16 @@ export const selectReparacionesByIds = (reparacionIds: string[]): ReparacionArra
 export const selectReparacionesArray = createSelector(
   [selectReparacionesDictionary],
   (reparaciones): ReparacionType[] => Object.values(reparaciones)
+);
+
+export const selectReparacionesListasParaAvisoAbandono = createSelector(
+  [
+    selectReparacionesArray,
+    (_state: RootState, ahora: number = Date.now()) => ahora,
+  ],
+  (reparaciones, ahora): ReparacionType[] => reparaciones
+    .filter(reparacion => puedeEnviarAvisoAbandono(reparacion, ahora))
+    .sort((a, b) => Number(a.data.FeRecRep) - Number(b.data.FeRecRep))
 );
 
 export const selectRankingModelosDrone = createSelector(
@@ -976,6 +987,12 @@ export const selectPuedeAvanzarA = (reparacionId: string, nombreEstadoDestino: s
       // la salida coherente es cancelación/abandono, no volver a Rechazado.
       if (estadoActual.nombre === 'Aceptado' && nombreEstadoDestino === 'Rechazado') return false;
       if (estadoActual.nombre === 'Rechazado' && nombreEstadoDestino === 'Aceptado') return false;
+
+      // Abandonado solo se ofrece en los estados de espera definidos por el dominio.
+      // Se valida sin comparar etapas para mantener esta salida independiente del orden visual.
+      if (nombreEstadoDestino === 'Abandonado') {
+        return puedeConfirmarAbandono(reparacion);
+      }
 
       // La transicion debe ser valida segun el mapa de dominio (transicionesPermitidas)
       // ademas de avanzar en etapa. Esto evita saltear estados (p.ej. Aceptado -> Finalizado).

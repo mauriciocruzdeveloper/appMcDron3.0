@@ -31,6 +31,8 @@ export {
   guardarReparacionAsync,
   eliminarReparacionAsync,
   getReparacionesPorIntervencionAsync,
+  enviarAvisoAbandonoAsync,
+  cancelarAvisoAbandonoAsync,
 } from './reparacion.actions';
 
 // Re-exportar todos los selectores
@@ -49,6 +51,7 @@ export {
   
   // Selectores de transformación
   selectReparacionesArray,
+  selectReparacionesListasParaAvisoAbandono,
   selectReparacionIds,
   
   // Selectores de filtrado y búsqueda

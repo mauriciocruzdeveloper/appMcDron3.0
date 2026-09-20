@@ -68,8 +68,7 @@ describe('estadosReparacion - Transiciones de Estado', () => {
       const estadosEsperados: EstadoReparacion[] = [
         'Repuestos',
         'Reparado',
-        'Cancelado',
-        'Abandonado'
+        'Cancelado'
       ];
       
       estadosEsperados.forEach(estado => {
@@ -95,9 +94,43 @@ describe('estadosReparacion - Transiciones de Estado', () => {
       expect(esTransicionValida('Presupuestado', 'Aceptado')).toBe(true);
     });
 
-    test('desde Presupuestado solo se puede aceptar o rechazar', () => {
-      expect(getEstadosPermitidos('Presupuestado')).toEqual(['Aceptado', 'Rechazado']);
+    test('desde Presupuestado se puede aceptar, rechazar o abandonar', () => {
+      expect(getEstadosPermitidos('Presupuestado')).toEqual(['Aceptado', 'Rechazado', 'Abandonado']);
     });
+
+    test.each<EstadoReparacion>([
+      'Respondido',
+      'Transito',
+      'Presupuestado',
+      'Repuestos',
+      'Reparado',
+      'Diagnosticado',
+      'Cobrado',
+    ])('permite abandonar desde el estado de espera %s', (estado) => {
+      expect(esTransicionValida(estado, 'Abandonado')).toBe(true);
+    });
+
+    test.each<EstadoReparacion>([
+      'Consulta',
+      'Recibido',
+      'Revisado',
+      'Aceptado',
+      'Rechazado',
+      'Enviado',
+      'Finalizado',
+      'Cancelado',
+      'Abandonado',
+      'Reparar',
+      'Entregado',
+      'Venta',
+      'Liquidación',
+      'Indefinido',
+    ])(
+      'no permite abandonar desde el estado excluido %s',
+      (estado) => {
+        expect(esTransicionValida(estado, 'Abandonado')).toBe(false);
+      }
+    );
 
     test('transición inválida desde Recibido a Reparado', () => {
       expect(esTransicionValida('Recibido', 'Reparado')).toBe(false);

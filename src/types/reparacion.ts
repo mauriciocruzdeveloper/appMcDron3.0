@@ -27,6 +27,7 @@ export interface DataReparacion {
     InformeRep?: string;
     FeFinRep?: number | null;
     FeEntRep?: number | null;
+    FechaAvisoAbandono?: number | null;
     TxtEntregaRep?: string;
     SeguimientoEntregaRep?: string;
     urlsFotos?: string[];

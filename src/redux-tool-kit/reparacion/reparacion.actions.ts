@@ -7,6 +7,7 @@ import {
   getReparacionPersistencia,
   guardarReparacionPersistencia as guardarReparacionPersistenciaSinValidar,
   actualizarEstadoReparacionPersistencia,
+  actualizarFechaAvisoAbandonoPersistencia,
   getIntervencionesPorReparacionPersistencia,
   getReparacionesPorIntervencionPersistencia,
   agregarIntervencionAReparacionPersistencia,
@@ -14,7 +15,7 @@ import {
 } from "../../persistencia/persistencia";
 import { AppState, isFetchingComplete, isFetchingStart } from "../app/app.slice";
 import { Usuario } from "../../types/usuario";
-import { enviarDroneDiagnosticadoAsync, enviarDroneEnviadoAsync, enviarDroneReparadoAsync, enviarReciboAsync, enviarReparacionFinalizadaAsync } from "../app/app.actions";
+import { enviarEmailAvisoAbandonoAsync, enviarDroneDiagnosticadoAsync, enviarDroneEnviadoAsync, enviarDroneReparadoAsync, enviarReciboAsync, enviarReparacionFinalizadaAsync } from "../app/app.actions";
 import { generarAutoDiagnostico, generarNombreUnico, generarPasswordPorDefecto } from "../../utils/utils";
 import { PresupuestoProps } from "../../components/Presupuesto.component";
 import { Drone } from "../../types/drone";
@@ -25,6 +26,11 @@ import {
   esTelefonoArgentinoValido,
   MENSAJE_TELEFONO_ARGENTINO_INVALIDO,
 } from "../../usecases/validarTelefonoArgentino";
+import {
+  puedeCancelarAvisoAbandono,
+  puedeConfirmarAbandono,
+  puedeEnviarAvisoAbandono,
+} from "../../usecases/abandonoReparacion";
 
 const IDS_INTERVENCIONES_POR_DEFECTO = ['47', '48', '49', '50', '51', '52'];
 
@@ -1188,6 +1194,75 @@ export const actualizarCampoReparacionAsync = createAsyncThunk(
   }
 );
 
+export const enviarAvisoAbandonoAsync = createAsyncThunk(
+  'reparacion/enviarAvisoAbandono',
+  async (reparacionId: string, { dispatch, rejectWithValue, getState }) => {
+    try {
+      dispatch(isFetchingStart());
+      const state = getState() as RootState;
+      const reparacion = state.reparacion.coleccionReparaciones[reparacionId];
+
+      if (!reparacion) throw new Error('Reparación no encontrada');
+      if (!puedeEnviarAvisoAbandono(reparacion)) {
+        throw new Error('La reparación no cumple las condiciones para enviar el aviso de abandono');
+      }
+
+      await dispatch(enviarEmailAvisoAbandonoAsync(reparacion)).unwrap();
+
+      const fechaAviso = Date.now();
+      await actualizarFechaAvisoAbandonoPersistencia(reparacionId, fechaAviso);
+
+      const reparacionActualizada: ReparacionType = {
+        ...reparacion,
+        data: {
+          ...reparacion.data,
+          FechaAvisoAbandono: fechaAviso,
+        },
+      };
+      dispatch(updateReparacion(reparacionActualizada));
+
+      return reparacionActualizada;
+    } catch (error: unknown) {
+      return rejectWithValue(error);
+    } finally {
+      dispatch(isFetchingComplete());
+    }
+  }
+);
+
+export const cancelarAvisoAbandonoAsync = createAsyncThunk(
+  'reparacion/cancelarAvisoAbandono',
+  async (reparacionId: string, { dispatch, rejectWithValue, getState }) => {
+    try {
+      dispatch(isFetchingStart());
+      const state = getState() as RootState;
+      const reparacion = state.reparacion.coleccionReparaciones[reparacionId];
+
+      if (!reparacion) throw new Error('Reparación no encontrada');
+      if (!puedeCancelarAvisoAbandono(reparacion)) {
+        throw new Error('La reparación no tiene un aviso de abandono activo');
+      }
+
+      await actualizarFechaAvisoAbandonoPersistencia(reparacionId, null);
+
+      const reparacionActualizada: ReparacionType = {
+        ...reparacion,
+        data: {
+          ...reparacion.data,
+          FechaAvisoAbandono: null,
+        },
+      };
+      dispatch(updateReparacion(reparacionActualizada));
+
+      return reparacionActualizada;
+    } catch (error: unknown) {
+      return rejectWithValue(error);
+    } finally {
+      dispatch(isFetchingComplete());
+    }
+  }
+);
+
 /**
  * Cambia el estado de una reparación con toda la lógica de negocio
  * Incluye: validaciones, seteo automático de fechas, generación de diagnóstico, envío de emails
@@ -1223,6 +1298,10 @@ export const cambiarEstadoReparacionAsync = createAsyncThunk(
       const { esTransicionValida } = await import('../../usecases/estadosReparacion');
       if (!esTransicionValida(reparacionActual.data.EstadoRep as any, nuevoEstado as any)) {
         throw new Error(`Transición no permitida: ${reparacionActual.data.EstadoRep} → ${nuevoEstado}`);
+      }
+
+      if (nuevoEstado === 'Abandonado' && !puedeConfirmarAbandono(reparacionActual)) {
+        throw new Error('Deben transcurrir 7 días desde el aviso antes de marcar la reparación como abandonada');
       }
 
       if (nuevoEstado === 'Enviado' && !reparacionActual.data.SeguimientoEntregaRep?.trim()) {
