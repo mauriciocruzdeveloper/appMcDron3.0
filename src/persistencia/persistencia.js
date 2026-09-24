@@ -24,6 +24,7 @@ export const eliminarReparacionPersistencia = backend.eliminarReparacionPersiste
 
 // INTERVENCIONES Y RELACIONES
 export const getIntervencionesPorReparacionPersistencia = backend.getIntervencionesPorReparacionPersistencia;
+export const getAsignacionesCompromisoPersistencia = backend.getAsignacionesCompromisoPersistencia;
 export const agregarIntervencionAReparacionPersistencia = backend.agregarIntervencionAReparacionPersistencia;
 export const eliminarIntervencionDeReparacionPersistencia = backend.eliminarIntervencionDeReparacionPersistencia;
 export const getReparacionesPorIntervencionPersistencia = backend.getReparacionesPorIntervencionPersistencia;

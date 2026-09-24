@@ -133,6 +133,7 @@ const calcularCostosAsignacionIntervencion = async (
     estadoInicial: ESTADO_INICIAL_ASIGNACION_INTERVENCION,
     origen,
     repuestosSnapshot,
+    incluyeRepuestosTaller: repuestosSnapshot.length > 0,
   };
 };
 
@@ -161,6 +162,8 @@ const obtenerDemandaPorEstadoDeAsignacion = async (reparacionId: string): Promis
   const demandaNoCompletada = new Map<string, number>();
 
   for (const asignacion of asignaciones) {
+    if (asignacion.data.incluyeRepuestosTaller === false) continue;
+
     const intervencionId = asignacion?.data?.intervencionId;
     if (!intervencionId) continue;
 
@@ -182,54 +185,28 @@ const obtenerDemandaPorEstadoDeAsignacion = async (reparacionId: string): Promis
   return { completada: demandaCompletada, noCompletada: demandaNoCompletada };
 };
 
-const obtenerCompromisoPorRepuestoDeReparacion = async (reparacionId: string): Promise<Map<string, number>> => {
-  const demandaPorEstado = await obtenerDemandaPorEstadoDeAsignacion(reparacionId);
-  const demandaTotal = new Map(demandaPorEstado.completada);
-
-  demandaPorEstado.noCompletada.forEach((qty, repuestoId) => {
-    demandaTotal.set(repuestoId, (demandaTotal.get(repuestoId) || 0) + qty);
-  });
-
-  return demandaTotal;
-};
-
 /**
- * Aplica movimientos de stock (ledger) para los repuestos comprometidos por una reparacion.
- * - reservation: aumenta comprometido (committed_delta = +qty)
- * - release:     libera comprometido (committed_delta = -qty)
- * - consumption: descuenta stock fisico y comprometido (on_hand y committed = -qty)
- * Cada movimiento es atomico via RPC; se mergea con el store para no pisar otros campos.
+ * Descuenta stock fisico de los repuestos utilizados por una reparacion.
+ * El compromiso se deriva de las asignaciones activas y no se modifica aqui.
  */
-const aplicarMovimientosDeReparacion = async (
+const aplicarConsumosDeReparacion = async (
   demanda: Map<string, number>,
-  kind: 'reservation' | 'release' | 'consumption',
   reparacionId: string,
   dispatch: any,
   getState: () => RootState
 ): Promise<void> => {
   const { aplicarMovimientoStockPersistencia } = await import('../../persistencia/persistencia');
-  const aplicados: Array<[string, number]> = [];
 
-  const aplicarMovimiento = async (
-    repuestoId: string,
-    qty: number,
-    movimiento: 'reservation' | 'release' | 'consumption',
-    compensacion = false,
-  ) => {
-    let onHandDelta = 0;
-    let committedDelta = 0;
-    if (movimiento === 'reservation') committedDelta = qty;
-    else if (movimiento === 'release') committedDelta = -qty;
-    else if (movimiento === 'consumption') { onHandDelta = -qty; committedDelta = -qty; }
-
+  for (const [repuestoId, qty] of Array.from(demanda.entries())) {
+    if (!qty) continue;
     const actualizado = await aplicarMovimientoStockPersistencia({
       partId: repuestoId,
-      onHandDelta,
-      committedDelta,
-      kind: movimiento,
+      onHandDelta: -qty,
+      committedDelta: 0,
+      kind: 'consumption',
       referenceType: 'repair',
       referenceId: reparacionId,
-      note: compensacion ? 'Compensación por fallo en movimiento de asignación' : null,
+      note: null,
     });
 
     const existente = getState().repuesto.coleccionRepuestos[repuestoId];
@@ -241,52 +218,13 @@ const aplicarMovimientosDeReparacion = async (
         ModelosDroneIds: existente?.data?.ModelosDroneIds ?? actualizado.data.ModelosDroneIds,
       },
     }));
-  };
-
-  try {
-    for (const [repuestoId, qty] of Array.from(demanda.entries())) {
-      if (!qty) continue;
-      await aplicarMovimiento(repuestoId, qty, kind);
-      aplicados.push([repuestoId, qty]);
-    }
-  } catch (error) {
-    if (kind === 'reservation' || kind === 'release') {
-      const inverso = kind === 'reservation' ? 'release' : 'reservation';
-      for (const [repuestoId, qty] of aplicados.reverse()) {
-        await aplicarMovimiento(repuestoId, qty, inverso, true);
-      }
-    }
-    throw error;
   }
 };
 
-/** Reserva (compromete) los repuestos de una reparacion que entra al flujo comprometido. */
-const reservarRepuestosDeReparacion = async (
-  reparacionId: string,
-  dispatch: any,
-  getState: () => RootState
-): Promise<void> => {
-  const demanda = await obtenerCompromisoPorRepuestoDeReparacion(reparacionId);
-  await aplicarMovimientosDeReparacion(demanda, 'reservation', reparacionId, dispatch, getState);
-};
-
-/** Libera el compromiso de los repuestos de una reparacion (sin tocar stock fisico). */
-const liberarRepuestosDeReparacion = async (
-  reparacionId: string,
-  dispatch: any,
-  getState: () => RootState,
-  demandaPrecalculada?: Map<string, number>
-): Promise<void> => {
-  const demanda = demandaPrecalculada ?? await obtenerCompromisoPorRepuestoDeReparacion(reparacionId);
-  await aplicarMovimientosDeReparacion(demanda, 'release', reparacionId, dispatch, getState);
-};
-
 /**
- * Al pasar a Reparado, consume solo las asignaciones completadas y libera el
- * compromiso de las no completadas sin descontar su stock fisico.
+ * Al pasar a Reparado, consume solo las asignaciones completadas incluidas.
  * Regla de negocio: si un repuesto no tiene stock disponible (StockRepu <= 0), no se
- * descuenta (evita dejar un movimiento de consumo fantasma); igual se libera su
- * compromiso, ya que la reparacion se esta cerrando.
+ * descuenta para evitar dejar un movimiento de consumo fantasma.
  */
 const consumirRepuestosDeReparacion = async (
   reparacionId: string,
@@ -297,16 +235,13 @@ const consumirRepuestosDeReparacion = async (
 
   const coleccionRepuestos = getState().repuesto.coleccionRepuestos;
   const demandaConStock = new Map<string, number>();
-  const demandaSinStock = new Map<string, number>();
 
   demanda.completada.forEach((qty, repuestoId) => {
     const stockActual = Number(coleccionRepuestos[repuestoId]?.data?.StockRepu ?? 0);
-    (stockActual > 0 ? demandaConStock : demandaSinStock).set(repuestoId, qty);
+    if (stockActual > 0) demandaConStock.set(repuestoId, qty);
   });
 
-  await aplicarMovimientosDeReparacion(demandaConStock, 'consumption', reparacionId, dispatch, getState);
-  await aplicarMovimientosDeReparacion(demandaSinStock, 'release', reparacionId, dispatch, getState);
-  await aplicarMovimientosDeReparacion(demanda.noCompletada, 'release', reparacionId, dispatch, getState);
+  await aplicarConsumosDeReparacion(demandaConStock, reparacionId, dispatch, getState);
 };
 
 async function guardarReparacionNueva(reparacion: ReparacionType): Promise<ReparacionType> {
@@ -557,27 +492,11 @@ export const guardarReparacionAsync = createAsyncThunk(
 // ELIMINAR REPARACION
 export const eliminarReparacionAsync = createAsyncThunk(
   'app/eliminarReparacion',
-  async (id: string, { dispatch, getState }) => {
+  async (id: string, { dispatch }) => {
     try {
       dispatch(isFetchingStart());
 
-      const state = getState() as RootState;
-      const reparacion = state.reparacion.coleccionReparaciones[id];
-      const estabaComprometida =
-        reparacion?.data?.EstadoRep === 'Aceptado' || reparacion?.data?.EstadoRep === 'Repuestos';
-
-      // Calcular la demanda ANTES de eliminar (las intervenciones pueden borrarse en cascada).
-      const demandaComprometida = estabaComprometida
-        ? await obtenerCompromisoPorRepuestoDeReparacion(id)
-        : null;
-
       const reparacionEliminada = await eliminarReparacionPersistencia(id);
-
-      // Si estaba en un estado con compromiso, liberar el comprometido de esa reparacion.
-      // No se toca StockRepu.
-      if (demandaComprometida) {
-        await liberarRepuestosDeReparacion(id, dispatch, getState as () => RootState, demandaComprometida);
-      }
 
       dispatch(isFetchingComplete());
       return reparacionEliminada;
@@ -667,22 +586,6 @@ export const agregarIntervencionAReparacionAsync = createAsyncThunk(
         throw new Error(resultado.error);
       }
 
-      if (origen === OrigenAsignacion.ADICIONAL) {
-        try {
-          const demandaAdicional = consolidarCantidadPorRepuesto(costos.repuestosSnapshot);
-          await aplicarMovimientosDeReparacion(
-            demandaAdicional,
-            'reservation',
-            reparacionId,
-            dispatch,
-            getState as () => RootState,
-          );
-        } catch (error) {
-          await eliminarIntervencionDeReparacionPersistencia(reparacionId, String(resultado.data.id));
-          throw error;
-        }
-      }
-
       sincronizarIntervencionesIdsDeReparacion(reparacionId, intervencionId, 'add', dispatch, getState as () => RootState);
 
       // Recargar intervenciones
@@ -720,35 +623,12 @@ export const eliminarIntervencionDeReparacionAsync = createAsyncThunk(
       const stateAntes = getState() as RootState;
       const asignacionEliminada = stateAntes.reparacion.intervencionesDeReparacionActual.find(a => a.id === intervencionId);
       const esAdicional = asignacionEliminada?.data?.origen === OrigenAsignacion.ADICIONAL;
-      const demandaAdicional = esAdicional
-        ? consolidarCantidadPorRepuesto(asignacionEliminada?.data?.repuestosSnapshot || [])
-        : null;
-
       if (esAdicional && asignacionEliminada?.data?.estado === EstadoAsignacion.COMPLETADA) {
         throw new Error('No se puede eliminar una intervención adicional completada');
       }
 
-      if (demandaAdicional) {
-        await aplicarMovimientosDeReparacion(
-          demandaAdicional,
-          'release',
-          reparacionId,
-          dispatch,
-          getState as () => RootState,
-        );
-      }
-
       const resultadoEliminacion = await eliminarIntervencionDeReparacionPersistencia(reparacionId, intervencionId);
       if (!resultadoEliminacion.success) {
-        if (demandaAdicional) {
-          await aplicarMovimientosDeReparacion(
-            demandaAdicional,
-            'reservation',
-            reparacionId,
-            dispatch,
-            getState as () => RootState,
-          );
-        }
         throw new Error(resultadoEliminacion.error);
       }
 
@@ -915,7 +795,12 @@ export const actualizarIncluirRepuestoAsignacionAsync = createAsyncThunk(
 
     const { actualizarPreciosPiezasAsignacionPersistencia } = await import('../../persistencia/persistencia');
     const resultado = await actualizarPreciosPiezasAsignacionPersistencia(
-      asignacionId, reparacionId, parts_cost, total_cost, nuevoPrecioReparacion
+      asignacionId,
+      reparacionId,
+      parts_cost,
+      total_cost,
+      nuevoPrecioReparacion,
+      incluirRepuesto,
     );
 
     if (!resultado.success) throw new Error(resultado.error);
@@ -1002,7 +887,7 @@ export const guardarPresupuestadoAsync = createAsyncThunk(
 // ACEPTAR Presupuesto
 export const aceptarPresupuestoAsync = createAsyncThunk(
   'app/aceptarPresupuesto',
-  async (reparacion: ReparacionType, { dispatch, getState, rejectWithValue }) => {
+  async (reparacion: ReparacionType, { dispatch, rejectWithValue }) => {
     dispatch(isFetchingStart());
     try {
       const reparacionActualizada = {
@@ -1016,11 +901,6 @@ export const aceptarPresupuestoAsync = createAsyncThunk(
 
       const reparacionGuardada = await guardarReparacionPersistencia(reparacionActualizada);
 
-      // Reservar (comprometer) repuestos de esta reparacion al aceptar el presupuesto.
-      if (reparacion.data.EstadoRep === 'Presupuestado') {
-        await reservarRepuestosDeReparacion(reparacion.id, dispatch, getState as () => RootState);
-      }
-
       dispatch(isFetchingComplete());
       return reparacionGuardada;
     } catch (error: unknown) {
@@ -1033,7 +913,7 @@ export const aceptarPresupuestoAsync = createAsyncThunk(
 // RECHAZAR Presupuesto
 export const rechazarPresupuestoAsync = createAsyncThunk(
   'app/rechazarPresupuesto',
-  async (reparacion: ReparacionType, { dispatch, getState, rejectWithValue }) => {
+  async (reparacion: ReparacionType, { dispatch, rejectWithValue }) => {
     dispatch(isFetchingStart());
     try {
       const reparacionActualizada = {
@@ -1046,11 +926,6 @@ export const rechazarPresupuestoAsync = createAsyncThunk(
       };
 
       const reparacionGuardada = await guardarReparacionPersistencia(reparacionActualizada);
-
-      // Si venia de un estado con compromisos, liberar el comprometido de esta reparacion.
-      if (reparacion.data.EstadoRep === 'Aceptado' || reparacion.data.EstadoRep === 'Repuestos') {
-        await liberarRepuestosDeReparacion(reparacion.id, dispatch, getState as () => RootState);
-      }
 
       dispatch(isFetchingComplete());
       return reparacionGuardada;
@@ -1365,28 +1240,7 @@ export const cambiarEstadoReparacionAsync = createAsyncThunk(
         data: dataActualizada
       };
 
-      const estadoAnterior = reparacionActual.data.EstadoRep;
-      const estadoAnteriorConCompromiso = estadoAnterior === 'Aceptado' || estadoAnterior === 'Repuestos';
-      const entraEnCompromiso =
-        (nuevoEstado === 'Aceptado' || nuevoEstado === 'Repuestos') &&
-        !estadoAnteriorConCompromiso;
-      const estadoDestinoSinReparar =
-        nuevoEstado !== 'Aceptado' &&
-        nuevoEstado !== 'Repuestos' &&
-        nuevoEstado !== 'Reparado';
-
-      // Al entrar por primera vez al flujo comprometido (Aceptado/Repuestos),
-      // reservar los repuestos comprometidos por esta reparacion.
-      if (entraEnCompromiso) {
-        await reservarRepuestosDeReparacion(reparacionId, dispatch, getState as () => RootState);
-      }
-
-      // Si sale de Aceptado/Repuestos sin llegar a Reparado, liberar el comprometido.
-      if (estadoAnteriorConCompromiso && estadoDestinoSinReparar) {
-        await liberarRepuestosDeReparacion(reparacionId, dispatch, getState as () => RootState);
-      }
-
-      // Al pasar a Reparado por primera vez, consumir stock fisico y liberar comprometido.
+      // Al pasar a Reparado por primera vez, consumir solamente stock fisico.
       if (nuevoEstado === 'Reparado' && reparacionActual.data.EstadoRep !== 'Reparado') {
         await consumirRepuestosDeReparacion(reparacionId, dispatch, getState as () => RootState);
       }

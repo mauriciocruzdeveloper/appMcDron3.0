@@ -2,6 +2,7 @@ import { useEffect, useRef } from "react";
 import {
     getMessagesPersistencia,
     getReparacionesPersistencia,
+    getAsignacionesCompromisoPersistencia,
     getRepuestosPersistencia,
     getUsuariosPersistencia,
     getModelosDronePersistencia,
@@ -15,7 +16,12 @@ import {
     verifyAndReconnectChannels
 } from "../persistencia/persistencia"; // Actualizado para usar la importación centralizada
 import { useAppDispatch } from "../redux-tool-kit/hooks/useAppDispatch";
-import { setReparaciones } from "../redux-tool-kit/reparacion/reparacion.slice";
+import {
+    iniciarCargaAsignacionesCompromiso,
+    setAsignacionesCompromiso,
+    setErrorAsignacionesCompromiso,
+    setReparaciones,
+} from "../redux-tool-kit/reparacion/reparacion.slice";
 import { ReparacionType } from "../types/reparacion";
 import { Unsubscribe } from "firebase/auth";
 import { useAppSelector } from "../redux-tool-kit/hooks/useAppSelector";
@@ -56,6 +62,7 @@ export function DataManagerComponent({ children }: DataManagerProps): React.Reac
     otherUserIdMessageRef.current = otherUserIdMessage;
     // Refs (no state) para que cleanups y handlers siempre vean la desuscripción vigente
     const unsubscribeReparaciones = useRef<Unsubscribe>();
+    const unsubscribeAsignacionesCompromiso = useRef<Unsubscribe>();
     const unsubscribeUsuarios = useRef<Unsubscribe>();
     const unsubscribeMessages = useRef<Unsubscribe>();
     const unsubscribeRepuestos = useRef<Unsubscribe>();
@@ -115,6 +122,13 @@ export function DataManagerComponent({ children }: DataManagerProps): React.Reac
             unsubscribeReparaciones.current?.();
         };
     }, [usuario]);
+
+    useEffect(() => {
+        getAsignacionesCompromiso();
+        return () => {
+            unsubscribeAsignacionesCompromiso.current?.();
+        };
+    }, []);
 
     useEffect(() => {
         if (!usuarioIdMessage || !otherUserIdMessage) return;
@@ -187,6 +201,22 @@ export function DataManagerComponent({ children }: DataManagerProps): React.Reac
             unsubscribeReparaciones.current = unsubscribe;
         } catch (error) {
             console.error("Error al obtener reparaciones:", error);
+        }
+    };
+
+    const getAsignacionesCompromiso = async () => {
+        try {
+            unsubscribeAsignacionesCompromiso.current?.();
+            dispatch(iniciarCargaAsignacionesCompromiso());
+            const unsubscribe = await getAsignacionesCompromisoPersistencia(
+                asignaciones => dispatch(setAsignacionesCompromiso(asignaciones)),
+                ['Aceptado', 'Repuestos'],
+            );
+            unsubscribeAsignacionesCompromiso.current = unsubscribe;
+        } catch (error) {
+            const message = error instanceof Error ? error.message : 'No se pudieron cargar los compromisos';
+            dispatch(setErrorAsignacionesCompromiso(message));
+            console.error('Error al obtener asignaciones para compromiso:', error);
         }
     };
 
@@ -359,6 +389,7 @@ export function DataManagerComponent({ children }: DataManagerProps): React.Reac
         const recargas: Promise<void>[] = [
             getUsuarios(),
             getReparaciones(),
+            getAsignacionesCompromiso(),
             getRepuestos(),
             getModelosDrone(),
             getDrones(),
