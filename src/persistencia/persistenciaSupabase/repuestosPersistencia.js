@@ -135,6 +135,32 @@ export const getRepuestosPorProveedorPersistencia = async (proveedor) => {
   }
 };
 
+// GET historial de movimientos de stock de un repuesto. Solo consulta el ledger;
+// no recalcula ni modifica stock o compromiso.
+export const getMovimientosStockPorRepuestoPersistencia = async (repuestoId) => {
+  const { data, error } = await supabase
+    .from('stock_movement')
+    .select('id, part_id, kind, on_hand_delta, committed_delta, reference_type, reference_id, note, created_at')
+    .eq('part_id', Number(repuestoId))
+    .order('created_at', { ascending: false })
+    .order('id', { ascending: false })
+    .limit(100);
+
+  if (error) throw error;
+
+  return (data || []).map(movimiento => ({
+    id: String(movimiento.id),
+    repuestoId: String(movimiento.part_id),
+    tipo: movimiento.kind,
+    variacionStock: Number(movimiento.on_hand_delta) || 0,
+    variacionComprometido: Number(movimiento.committed_delta) || 0,
+    tipoReferencia: movimiento.reference_type || null,
+    referenciaId: movimiento.reference_id != null ? String(movimiento.reference_id) : null,
+    nota: movimiento.note || null,
+    creadoEn: movimiento.created_at,
+  }));
+};
+
 // GUARDAR Repuesto - Mejorado para trabajar con IDs o nombres de modelo
 export const guardarRepuestoPersistencia = async (repuesto) => {
   try {

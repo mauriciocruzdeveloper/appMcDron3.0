@@ -83,10 +83,10 @@ export const selectIntervencionesDeReparacionActual = (state: RootState): Asigna
 export const selectAsignacionesCompromiso = (state: RootState) =>
   state.reparacion?.asignacionesCompromiso || ASIGNACIONES_COMPROMISO_VACIAS;
 
-export const selectCompromisoPorRepuesto = createSelector(
+export const selectDemandaPorRepuesto = createSelector(
   [selectAsignacionesCompromiso],
   (asignaciones): Record<string, number> => {
-    const compromiso: Record<string, number> = {};
+    const demanda: Record<string, number> = {};
 
     asignaciones.forEach(asignacion => {
       if (asignacion.estadoReparacion !== 'Aceptado' && asignacion.estadoReparacion !== 'Repuestos') return;
@@ -95,8 +95,31 @@ export const selectCompromisoPorRepuesto = createSelector(
       asignacion.repuestosSnapshot.forEach(repuesto => {
         const cantidad = Number(repuesto.quantity) || 0;
         if (cantidad <= 0) return;
-        compromiso[repuesto.partId] = (compromiso[repuesto.partId] || 0) + cantidad;
+        demanda[repuesto.partId] = (demanda[repuesto.partId] || 0) + cantidad;
       });
+    });
+
+    return demanda;
+  }
+);
+
+export const selectCompromisoPorRepuesto = createSelector(
+  [selectDemandaPorRepuesto, (state: RootState) => state.repuesto?.coleccionRepuestos],
+  (demanda, coleccionRepuestos): Record<string, number> => {
+    const compromiso: Record<string, number> = {};
+
+    Object.entries(demanda).forEach(([partId, cantidadDemandada]) => {
+      const repuesto = coleccionRepuestos?.[partId];
+      // Durante la carga inicial puede no existir aún el catálogo. Se conserva
+      // la demanda hasta que haya stock disponible para evaluar el tope.
+      if (!repuesto) {
+        compromiso[partId] = cantidadDemandada;
+        return;
+      }
+
+      const stockDisponible = Math.max(0, Number(repuesto.data.StockRepu) || 0);
+      const cantidadComprometida = Math.min(cantidadDemandada, stockDisponible);
+      if (cantidadComprometida > 0) compromiso[partId] = cantidadComprometida;
     });
 
     return compromiso;
@@ -1287,10 +1310,12 @@ export interface RepuestoDeReparacion {
   repuestoId: string;
   nombre: string;
   demandaReparacion: number;
+  demandaTotalRepuesto: number;
+  faltanteGlobal: number;
   stockRepu: number;
   unidadesPedidas: number;
   stockLibre: number;
-  estadoStock: 'En stock' | 'En pedido' | 'Agotado';
+  estadoStock: 'En stock' | 'En pedido' | 'Cobertura parcial' | 'Agotado';
   estadoColor: 'success' | 'warning' | 'danger';
   intervencionesNombre: string[];       // qué intervenciones lo requieren
   pedidos: {                            // pedidos activos que lo contienen
@@ -1314,8 +1339,16 @@ export const selectRepuestosDeReparacionActual = createSelector(
     (state: RootState) => state.repuesto.coleccionRepuestos,
     selectPedidosRepuestoArray,
     selectCompromisoPorRepuesto,
+    selectDemandaPorRepuesto,
   ],
-  (asignaciones, catalogoIntervenciones, coleccionRepuestos, pedidos, compromisoPorRepuesto): RepuestoDeReparacion[] => {
+  (
+    asignaciones,
+    catalogoIntervenciones,
+    coleccionRepuestos,
+    pedidos,
+    compromisoPorRepuesto,
+    demandaPorRepuesto,
+  ): RepuestoDeReparacion[] => {
     // 1. Recopilar IDs únicos de repuestos y las intervenciones que los requieren
     const repuestoMap = new Map<string, { intervencionesNombre: string[]; demandaReparacion: number }>();
     // repuestoId → intervenciones que lo usan + cantidad requerida por la reparación actual
@@ -1347,6 +1380,8 @@ export const selectRepuestosDeReparacionActual = createSelector(
       const repuesto = coleccionRepuestos[repuestoId];
       const stockRepu = repuesto?.data?.StockRepu ?? 0;
       const unidadesPedidas = compromisoPorRepuesto[repuestoId] ?? 0;
+      const demandaTotalRepuesto = demandaPorRepuesto[repuestoId] ?? demandaReparacion;
+      const faltanteGlobal = Math.max(0, demandaTotalRepuesto - stockRepu);
 
       const stockLibre = stockRepu - unidadesPedidas;
 
@@ -1384,18 +1419,26 @@ export const selectRepuestosDeReparacionActual = createSelector(
 
       const disponibleProyectada = disponibleInmediata + cantidadPedidoActivo;
       const tienePedidoActivo = cantidadPedidoActivo > 0;
-      // Hay FALTANTE si no tengo cobertura inmediata, independientemente de si hay pedidos
-      const tieneFaltante = disponibleInmediata < demandaReparacion;
+      // El stock es compartido entre todas las reparaciones; no se asigna por orden automáticamente.
+      const tieneFaltante = faltanteGlobal > 0;
 
       const estadoStock: RepuestoDeReparacion['estadoStock'] =
-        !tieneFaltante ? 'En stock' : !tienePedidoActivo ? 'Agotado' : 'En pedido';
+        !tieneFaltante
+          ? 'En stock'
+          : tienePedidoActivo
+            ? 'En pedido'
+            : stockRepu === 0
+              ? 'Agotado'
+              : 'Cobertura parcial';
       const estadoColor: RepuestoDeReparacion['estadoColor'] =
-        !tieneFaltante ? 'success' : !tienePedidoActivo ? 'danger' : 'warning';
+        !tieneFaltante ? 'success' : !tienePedidoActivo && stockRepu === 0 ? 'danger' : 'warning';
 
       return {
         repuestoId,
         nombre: repuesto?.data?.NombreRepu || repuestoId,
         demandaReparacion,
+        demandaTotalRepuesto,
+        faltanteGlobal,
         stockRepu,
         unidadesPedidas,
         stockLibre,

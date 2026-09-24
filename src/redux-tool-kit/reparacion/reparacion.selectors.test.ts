@@ -31,6 +31,7 @@ import {
 import reparacionReducer, { setIntervencionesDeReparacionActual, setReparaciones } from './reparacion.slice';
 import {
   selectCompromisoPorRepuesto,
+  selectRepuestosDeReparacionActual,
   selectEstadoReparacionesPorIntervencionId,
   selectIntervencionesPresupuestadas,
   selectPuedeAvanzarA,
@@ -140,6 +141,93 @@ describe('compromiso derivado de asignaciones', () => {
       incluyeRepuestosTaller: false,
     }]))).toEqual({});
     expect(selectCompromisoPorRepuesto(crearEstado([]))).toEqual({});
+  });
+
+  it('limita el compromiso al stock físico y conserva el faltante implícito', () => {
+    const state = {
+      reparacion: {
+        asignacionesCompromiso: [{
+          id: 'a-1',
+          reparacionId: 'r-1',
+          estadoReparacion: 'Aceptado',
+          incluyeRepuestosTaller: true,
+          repuestosSnapshot: [{ partId: 'parte-a', quantity: 5 }],
+        }],
+      },
+      repuesto: {
+        coleccionRepuestos: {
+          'parte-a': {
+            id: 'parte-a',
+            data: { StockRepu: 2 },
+          },
+        },
+      },
+    } as any;
+
+    expect(selectCompromisoPorRepuesto(state)).toEqual({ 'parte-a': 2 });
+  });
+
+  it('no compromete unidades cuando el stock físico es cero', () => {
+    const state = {
+      reparacion: {
+        asignacionesCompromiso: [{
+          id: 'a-1',
+          reparacionId: 'r-1',
+          estadoReparacion: 'Aceptado',
+          incluyeRepuestosTaller: true,
+          repuestosSnapshot: [{ partId: 'parte-a', quantity: 1 }],
+        }],
+      },
+      repuesto: {
+        coleccionRepuestos: {
+          'parte-a': {
+            id: 'parte-a',
+            data: { StockRepu: 0 },
+          },
+        },
+      },
+    } as any;
+
+    expect(selectCompromisoPorRepuesto(state)).toEqual({});
+  });
+
+  it('expone el faltante global cuando varias reparaciones comparten el stock', () => {
+    const state = {
+      reparacion: {
+        asignacionesCompromiso: [
+          { reparacionId: 'r-1', estadoReparacion: 'Aceptado', incluyeRepuestosTaller: true, repuestosSnapshot: [{ partId: 'parte-a', quantity: 1 }] },
+          { reparacionId: 'r-2', estadoReparacion: 'Aceptado', incluyeRepuestosTaller: true, repuestosSnapshot: [{ partId: 'parte-a', quantity: 1 }] },
+          { reparacionId: 'r-3', estadoReparacion: 'Aceptado', incluyeRepuestosTaller: true, repuestosSnapshot: [{ partId: 'parte-a', quantity: 1 }] },
+        ],
+        intervencionesDeReparacionActual: [{
+          data: {
+            incluyeRepuestosTaller: true,
+            intervencionId: 'intervencion-a',
+            repuestosSnapshot: [{ partId: 'parte-a', quantity: 1 }],
+          },
+        }],
+      },
+      intervencion: {
+        coleccionIntervenciones: {
+          'intervencion-a': { data: { NombreInt: 'Intervención A' } },
+        },
+      },
+      repuesto: {
+        coleccionRepuestos: {
+          'parte-a': { id: 'parte-a', data: { NombreRepu: 'Parte A', StockRepu: 2 } },
+        },
+      },
+      pedidoRepuesto: { coleccionPedidos: {} },
+    } as any;
+
+    expect(selectRepuestosDeReparacionActual(state)[0]).toEqual(expect.objectContaining({
+      demandaReparacion: 1,
+      demandaTotalRepuesto: 3,
+      faltanteGlobal: 1,
+      unidadesPedidas: 2,
+      stockLibre: 0,
+      estadoStock: 'Cobertura parcial',
+    }));
   });
 });
 

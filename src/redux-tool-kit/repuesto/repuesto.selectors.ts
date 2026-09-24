@@ -1,6 +1,6 @@
 import { createSelector } from '@reduxjs/toolkit';
 import { RootState } from '../store';
-import { selectCompromisoPorRepuesto } from '../reparacion/reparacion.selectors';
+import { selectCompromisoPorRepuesto, selectDemandaPorRepuesto } from '../reparacion/reparacion.selectors';
 
 // Selector base para el estado de repuestos
 const selectRepuestoState = (state: RootState) => state.repuesto;
@@ -93,10 +93,31 @@ export const selectRepuestosSeleccionables = createSelector(
     )
 );
 
-// Función para calcular el estado del repuesto
-const calcularEstadoRepuesto = (stock: number, unidadesPedidas: number): string => {
+const esPedidoActivo = (estado: string): boolean =>
+  estado === 'pending' || estado === 'in_transit';
+
+const selectPedidos = (state: RootState) => state.pedidoRepuesto.coleccionPedidos;
+
+export const selectCantidadPedidaPorRepuesto = createSelector(
+  [selectPedidos, (_state: RootState, repuestoId: string) => repuestoId],
+  (pedidos, repuestoId) => Object.values(pedidos).reduce((total, pedido) => {
+    if (!esPedidoActivo(pedido.data.Estado)) return total;
+
+    return total + pedido.data.Items
+      .filter(item => item.data.RepuestoId === repuestoId)
+      .reduce((cantidad, item) => cantidad + (Number(item.data.Cantidad) || 0), 0);
+  }, 0)
+);
+
+export const calcularEstadoRepuesto = (
+  stock: number,
+  unidadesComprometidas: number,
+  unidadesPedidas = 0,
+): string => {
   if (stock > 0) return 'Disponible';
-  return unidadesPedidas > 0 ? 'En Pedido' : 'Agotado';
+  if (unidadesPedidas > 0) return 'En Pedido';
+  if (unidadesComprometidas > 0) return 'Comprometido';
+  return 'Agotado';
 };
 
 // Selector combinado para repuestos filtrados (texto + modelo + estado)
@@ -104,9 +125,10 @@ export const selectRepuestosFiltrados = createSelector(
   [
     selectRepuestosArray, 
     selectRepuestoFilter,
-    (state: RootState, filtroModeloDrone?: string, filtroEstado?: string) => ({ filtroModeloDrone, filtroEstado })
+    (state: RootState, filtroModeloDrone?: string, filtroEstado?: string) => ({ filtroModeloDrone, filtroEstado }),
+    selectPedidos,
   ],
-  (repuestos, textFilter, { filtroModeloDrone, filtroEstado }) => {
+  (repuestos, textFilter, { filtroModeloDrone, filtroEstado }, pedidos) => {
     return repuestos.filter(repuesto => {
       let incluirPorTexto = true;
       let incluirPorModelo = true;
@@ -126,7 +148,17 @@ export const selectRepuestosFiltrados = createSelector(
       
       // Filtro por estado
       if (filtroEstado) {
-        const estado = calcularEstadoRepuesto(repuesto.data.StockRepu, repuesto.data.UnidadesComprometidas || 0);
+        const unidadesPedidas = Object.values(pedidos).reduce((total, pedido) => {
+          if (!esPedidoActivo(pedido.data.Estado)) return total;
+          return total + pedido.data.Items
+            .filter(item => item.data.RepuestoId === repuesto.id)
+            .reduce((cantidad, item) => cantidad + (Number(item.data.Cantidad) || 0), 0);
+        }, 0);
+        const estado = calcularEstadoRepuesto(
+          repuesto.data.StockRepu,
+          repuesto.data.UnidadesComprometidas || 0,
+          unidadesPedidas,
+        );
         incluirPorEstado = estado === filtroEstado;
       }
       
@@ -151,23 +183,31 @@ export const selectRepuestosAgotados = createSelector(
 
 // Selector para repuestos en pedido
 export const selectRepuestosEnPedido = createSelector(
-  [selectRepuestosArray],
-  (repuestos) => repuestos.filter(repuesto => 
-    repuesto.data.StockRepu === 0 && (repuesto.data.UnidadesComprometidas || 0) > 0
+  [selectRepuestosArray, selectPedidos],
+  (repuestos, pedidos) => repuestos.filter(repuesto =>
+    repuesto.data.StockRepu === 0 && Object.values(pedidos).some(pedido =>
+      esPedidoActivo(pedido.data.Estado) && pedido.data.Items.some(item =>
+        item.data.RepuestoId === repuesto.id
+      )
+    )
   )
 );
 
 // Selector para estadísticas de repuestos
 export const selectEstadisticasRepuestos = createSelector(
-  [selectRepuestosArray],
-  (repuestos) => {
+  [selectRepuestosArray, selectPedidos],
+  (repuestos, pedidos) => {
     const total = repuestos.length;
     const disponibles = repuestos.filter(r => r.data.StockRepu > 0).length;
     const agotados = repuestos.filter(r => 
       r.data.StockRepu === 0 && (r.data.UnidadesComprometidas || 0) === 0
     ).length;
-    const enPedido = repuestos.filter(r => 
-      r.data.StockRepu === 0 && (r.data.UnidadesComprometidas || 0) > 0
+    const enPedido = repuestos.filter(r =>
+      r.data.StockRepu === 0 && Object.values(pedidos).some(pedido =>
+        esPedidoActivo(pedido.data.Estado) && pedido.data.Items.some(item =>
+          item.data.RepuestoId === r.id
+        )
+      )
     ).length;
     
     return {
@@ -267,14 +307,14 @@ export const selectRepuestosFaltantes = createSelector(
     selectRepuestosArray,
     selectConteoUsoRepuestos,
     (state: RootState) => state.pedidoRepuesto.coleccionPedidos,
+    selectDemandaPorRepuesto,
   ],
-  (repuestos, conteoUso, pedidos) => {
+  (repuestos, conteoUso, pedidos, demandaPorRepuesto) => {
     const repuestosFaltantes = repuestos.filter(repuesto => 
-      repuesto.data.StockRepu === 0 &&
-      (repuesto.data.UnidadesComprometidas || 0) === 0 &&
+      (demandaPorRepuesto[repuesto.id] || 0) > (repuesto.data.UnidadesComprometidas || 0) &&
       !repuesto.data.Obsoleta &&
       !Object.values(pedidos).some(pedido =>
-        pedido.data.Estado !== 'cancelled' &&
+        esPedidoActivo(pedido.data.Estado) &&
         pedido.data.Items.some(item => item.data.RepuestoId === repuesto.id)
       )
     );

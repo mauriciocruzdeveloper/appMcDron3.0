@@ -58,6 +58,7 @@ export const guardarRepuestoPersistencia = backend.guardarRepuestoPersistencia;
 export const eliminarRepuestoPersistencia = backend.eliminarRepuestoPersistencia;
 export const getRepuestosPersistencia = backend.getRepuestosPersistencia;
 export const aplicarMovimientoStockPersistencia = backend.aplicarMovimientoStockPersistencia;
+export const getMovimientosStockPorRepuestoPersistencia = backend.getMovimientosStockPorRepuestoPersistencia;
 
 // MODELOS DE DRONE
 export const getModeloDronePersistencia = backend.getModeloDronePersistencia;

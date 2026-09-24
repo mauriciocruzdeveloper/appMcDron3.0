@@ -11,7 +11,9 @@ import {
     selectTieneRepuestos,
     selectEstadisticasRepuestos
 } from '../redux-tool-kit/repuesto/repuesto.selectors';
+import { selectPedidosArray } from '../redux-tool-kit/pedidoRepuesto/pedidoRepuesto.selectors';
 import { selectModelosDroneArray } from '../redux-tool-kit/modeloDrone/modeloDrone.selectors';
+import { selectCantidadPedidaPorRepuesto } from '../redux-tool-kit/repuesto/repuesto.selectors';
 import { ComboBox } from './common';
 import { SelectOption } from '../types/selectOption';
 import { clearStoredListFilter, getStoredListFilter, saveStoredListFilter } from '../utils/listFilters';
@@ -69,9 +71,10 @@ const repuestosMock: Repuesto[] = [
 ];
 
 // Función para calcular el estado del repuesto - mantenerla idéntica a la de Repuesto.component.tsx
-export const calcularEstadoRepuesto = (stock: number, unidadesPedidas: number): string => {
+export const calcularEstadoRepuesto = (stock: number, unidadesComprometidas: number, unidadesPedidas = 0): string => {
     if (stock > 0) return 'Disponible';
-    return unidadesPedidas > 0 ? 'En Pedido' : 'Agotado';
+    if (unidadesPedidas > 0) return 'En Pedido';
+    return unidadesComprometidas > 0 ? 'Comprometido' : 'Agotado';
 };
 
 export default function ListaRepuestos(): JSX.Element {
@@ -121,11 +124,20 @@ export default function ListaRepuestos(): JSX.Element {
     const repuestosList = mostrandoMock ? repuestosMock : repuestosFiltrados;
 
     // Función para determinar el estado del repuesto basado en el stock
-    const getEstadoRepuesto = (repuesto: Repuesto): string => {
-        // Manejar migración de datos
-        const unidadesPedidas = repuesto.data.UnidadesComprometidas || 0;
+    const pedidos = useAppSelector(selectPedidosArray);
 
-        return calcularEstadoRepuesto(repuesto.data.StockRepu, unidadesPedidas);
+    const getEstadoRepuesto = (repuesto: Repuesto): string => {
+        const unidadesPedidas = pedidos
+            .filter(pedido => pedido.data.Estado === 'pending' || pedido.data.Estado === 'in_transit')
+            .flatMap(pedido => pedido.data.Items)
+            .filter(item => item.data.RepuestoId === repuesto.id)
+            .reduce((total, item) => total + (Number(item.data.Cantidad) || 0), 0);
+
+        return calcularEstadoRepuesto(
+            repuesto.data.StockRepu,
+            repuesto.data.UnidadesComprometidas || 0,
+            unidadesPedidas,
+        );
     };
 
     const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -185,6 +197,7 @@ export default function ListaRepuestos(): JSX.Element {
                             options={[
                                 { value: 'Disponible', label: 'Disponibles' },
                                 { value: 'En Pedido', label: 'En Pedido' },
+                                { value: 'Comprometido', label: 'Comprometidos sin pedido' },
                                 { value: 'Agotado', label: 'Agotados' },
                             ]}
                             value={filtroEstado}
@@ -305,12 +318,16 @@ export default function ListaRepuestos(): JSX.Element {
                                 <div>
                                     <small className={`${estado === 'Disponible' ? 'text-success' :
                                         estado === 'Agotado' ? 'text-danger' :
-                                            estado === 'En Pedido' ? 'text-warning' : ''
+                                            estado === 'En Pedido' || estado === 'Comprometido' ? 'text-warning' : ''
                                         }`}>
                                         {estado}
                                         {estado === 'Disponible' && ` ${repuesto.data.StockRepu}`}
-                                        {estado === 'En Pedido' && repuesto.data.UnidadesComprometidas &&
-                                            ` ${repuesto.data.UnidadesComprometidas}`}
+                                        {estado === 'En Pedido' && ` ${pedidos
+                                            .filter(pedido => pedido.data.Estado === 'pending' || pedido.data.Estado === 'in_transit')
+                                            .flatMap(pedido => pedido.data.Items)
+                                            .filter(item => item.data.RepuestoId === repuesto.id)
+                                            .reduce((total, item) => total + (Number(item.data.Cantidad) || 0), 0)}`}
+                                        {estado === 'Comprometido' && ` ${repuesto.data.UnidadesComprometidas}`}
                                     </small>
                                 </div>
                                 {repuesto.data.ModelosDroneIds.length > 0 && (

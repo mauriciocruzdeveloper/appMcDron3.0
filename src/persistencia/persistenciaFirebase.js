@@ -317,6 +317,9 @@ export const getAsignacionesCompromisoPersistencia = async (setAsignacionesToRed
     return onSnapshot(reparacionesQuery, cargarAsignaciones);
 };
 
+// El backend Firebase legacy no mantiene el ledger stock_movement de Supabase.
+export const getMovimientosStockPorRepuestoPersistencia = async () => [];
+
 // Añadir intervención a reparación
 export const agregarIntervencionAReparacionPersistencia = (reparacionId, intervencionId) => {
   return new Promise(async (resolve, reject) => {

@@ -4,6 +4,32 @@ Este directorio contiene todas las propuestas de cambio estructuradas según el 
 
 ## 📋 Active Changes
 
+### `cap-commitments-by-available-stock`
+**Status:** Testing
+**Priority:** High
+**Created:** 2026-09-24
+
+Limita el compromiso derivado al stock físico disponible y conserva el excedente como
+faltante, permitiendo compromiso parcial.
+
+- [📝 Proposal](./cap-commitments-by-available-stock/proposal.md)
+- [📐 Design](./cap-commitments-by-available-stock/design.md)
+- [✅ Tasks](./cap-commitments-by-available-stock/tasks.md)
+- [🔧 Specs](./cap-commitments-by-available-stock/specs/)
+
+### `add-stock-movement-history`
+**Status:** Testing
+**Priority:** Medium
+**Created:** 2026-09-24
+
+Muestra en el detalle de cada repuesto el historial de movimientos del ledger de stock en
+un desplegable de solo lectura.
+
+- [📝 Proposal](./add-stock-movement-history/proposal.md)
+- [📐 Design](./add-stock-movement-history/design.md)
+- [✅ Tasks](./add-stock-movement-history/tasks.md)
+- [🔧 Specs](./add-stock-movement-history/specs/)
+
 ### `derive-part-commitments-from-repairs`
 **Status:** Testing
 **Priority:** High

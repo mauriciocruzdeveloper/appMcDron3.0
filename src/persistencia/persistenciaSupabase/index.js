@@ -41,7 +41,8 @@ export {
   guardarRepuestoPersistencia,
   eliminarRepuestoPersistencia,
   getRepuestosPersistencia,
-  aplicarMovimientoStockPersistencia
+  aplicarMovimientoStockPersistencia,
+  getMovimientosStockPorRepuestoPersistencia
 } from './repuestosPersistencia.js';
 
 // === DRONES Y MODELOS ===

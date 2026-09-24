@@ -10,17 +10,21 @@ import { ComboBox } from './common';
 import { SelectOption } from '../types/selectOption';
 import { selectModelosDroneArray } from '../redux-tool-kit/modeloDrone/modeloDrone.selectors';
 import { selectRepuestoPorId } from '../redux-tool-kit/repuesto/repuesto.selectors';
+import { selectCantidadPedidaPorRepuesto } from '../redux-tool-kit/repuesto/repuesto.selectors';
 import { selectIntervencionesPorRepuesto } from '../redux-tool-kit/intervencion/intervencion.selectors';
 import { ImageGallery } from './ImageGallery';
+import { getMovimientosStockPorRepuestoPersistencia } from '../persistencia/persistencia';
+import { MovimientoStock } from '../types/movimientoStock';
 
 interface ParamTypes extends Record<string, string | undefined> {
   id: string;
 }
 
 // Función para calcular el estado del repuesto
-export const calcularEstadoRepuesto = (stock: number, unidadesPedidas: number): string => {
+export const calcularEstadoRepuesto = (stock: number, unidadesComprometidas: number, unidadesPedidas = 0): string => {
   if (stock > 0) return 'Disponible';
-  return unidadesPedidas > 0 ? 'En Pedido' : 'Agotado';
+  if (unidadesPedidas > 0) return 'En Pedido';
+  return unidadesComprometidas > 0 ? 'Comprometido' : 'Agotado';
 };
 
 // Obtén el color para la etiqueta del estado
@@ -29,8 +33,25 @@ const getEstadoColor = (estado: string): string => {
     case 'Disponible': return 'text-success';
     case 'Agotado': return 'text-danger';
     case 'En Pedido': return 'text-warning';
+    case 'Comprometido': return 'text-warning';
     default: return '';
   }
+};
+
+const nombresTiposMovimiento: Record<string, string> = {
+  opening: 'Apertura',
+  reception: 'Recepción',
+  reservation: 'Reserva histórica',
+  release: 'Liberación histórica',
+  consumption: 'Consumo',
+  adjustment: 'Ajuste manual',
+};
+
+const formatearFechaMovimiento = (fecha: string): string => {
+  const fechaMovimiento = new Date(fecha);
+  return Number.isNaN(fechaMovimiento.getTime())
+    ? fecha
+    : fechaMovimiento.toLocaleString('es-AR');
 };
 
 export default function RepuestoComponent(): JSX.Element {
@@ -49,6 +70,9 @@ export default function RepuestoComponent(): JSX.Element {
   const modelosDrone = useAppSelector(selectModelosDroneArray);
   const intervencionesAsociadas = useAppSelector((state) =>
     isNew || !id ? [] : selectIntervencionesPorRepuesto(state, id)
+  );
+  const unidadesPedidas = useAppSelector((state) =>
+    isNew || !id ? 0 : selectCantidadPedidaPorRepuesto(state, id)
   );
 
   const [repuesto, setRepuesto] = useState<Repuesto>({
@@ -75,6 +99,9 @@ export default function RepuestoComponent(): JSX.Element {
   // Ajuste manual de stock (movimiento 'adjustment' en el ledger)
   const [ajusteDelta, setAjusteDelta] = useState<string>('');
   const [ajusteNota, setAjusteNota] = useState<string>('');
+  const [movimientosStock, setMovimientosStock] = useState<MovimientoStock[]>([]);
+  const [cargandoMovimientos, setCargandoMovimientos] = useState(false);
+  const [errorMovimientos, setErrorMovimientos] = useState<string | null>(null);
 
   useEffect(() => {
     if (!isNew && id) {
@@ -98,14 +125,40 @@ export default function RepuestoComponent(): JSX.Element {
     }
   }, [dispatch, id, isNew, repuestoActual, modelosDrone]);
 
+  useEffect(() => {
+    if (isNew || !id) return;
+
+    let activo = true;
+    setCargandoMovimientos(true);
+    setErrorMovimientos(null);
+
+    getMovimientosStockPorRepuestoPersistencia(id)
+      .then(movimientos => {
+        if (activo) setMovimientosStock(movimientos);
+      })
+      .catch(error => {
+        if (activo) {
+          setErrorMovimientos(error instanceof Error ? error.message : 'No se pudo cargar el historial.');
+        }
+      })
+      .finally(() => {
+        if (activo) setCargandoMovimientos(false);
+      });
+
+    return () => {
+      activo = false;
+    };
+  }, [id, isNew]);
+
   // Actualizar el estado calculado cuando cambien los valores relevantes
   useEffect(() => {
     const nuevoEstado = calcularEstadoRepuesto(
       repuesto.data.StockRepu,
-      repuesto.data.UnidadesComprometidas
+      repuesto.data.UnidadesComprometidas,
+      unidadesPedidas,
     );
     setEstadoCalculado(nuevoEstado);
-  }, [repuesto.data.StockRepu, repuesto.data.UnidadesComprometidas]);
+  }, [repuesto.data.StockRepu, repuesto.data.UnidadesComprometidas, unidadesPedidas]);
 
   // Manejador para campos de texto comunes
   const handleTextInputChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -238,6 +291,8 @@ export default function RepuestoComponent(): JSX.Element {
         delta,
         nota: ajusteNota.trim() || undefined,
       })).unwrap();
+      const movimientosActualizados = await getMovimientosStockPorRepuestoPersistencia(id);
+      setMovimientosStock(movimientosActualizados);
       setAjusteDelta('');
       setAjusteNota('');
       openModal({
@@ -579,7 +634,8 @@ export default function RepuestoComponent(): JSX.Element {
               </p>
               <ul className="mb-0 mt-1">
                 <li>Stock &gt; 0 → Disponible</li>
-                <li>Stock 0 + Unidades pedidas &gt; 0 → En Pedido</li>
+                <li>Stock 0 + Pedido activo &gt; 0 → En Pedido</li>
+                <li>Stock 0 + Comprometido &gt; 0 → Comprometido</li>
                 <li>Stock 0 + Sin unidades pedidas → Agotado</li>
               </ul>
             </div>
@@ -633,6 +689,63 @@ export default function RepuestoComponent(): JSX.Element {
                           </span>
                         </div>
                       </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </details>
+          )}
+
+          {!isNew && (
+            <details className="card bg-light mt-3 mb-0">
+              <summary className="card-body d-flex justify-content-between align-items-center cursor-pointer">
+                <div>
+                  <h6 className="card-title mb-1">Movimientos de stock</h6>
+                  <p className="mb-0 small text-muted">
+                    Historial del libro de movimientos, sin modificar el stock desde aquí.
+                  </p>
+                </div>
+                <span className="badge bg-bluemcdron text-white">{movimientosStock.length}</span>
+              </summary>
+
+              <div className="card-body border-top pt-3">
+                {cargandoMovimientos ? (
+                  <div className="d-flex align-items-center gap-2 text-muted">
+                    <div className="spinner-border spinner-border-sm" role="status" aria-hidden="true" />
+                    <span>Cargando movimientos...</span>
+                  </div>
+                ) : errorMovimientos ? (
+                  <p className="mb-0 text-danger">No se pudo cargar el historial: {errorMovimientos}</p>
+                ) : movimientosStock.length === 0 ? (
+                  <p className="mb-0 text-muted">No hay movimientos registrados para este repuesto.</p>
+                ) : (
+                  <div className="list-group list-group-flush">
+                    {movimientosStock.map(movimiento => (
+                      <div key={movimiento.id} className="list-group-item px-0">
+                        <div className="d-flex justify-content-between align-items-start gap-3">
+                          <div>
+                            <div className="fw-bold">
+                              {nombresTiposMovimiento[movimiento.tipo] || movimiento.tipo}
+                            </div>
+                            <div className="small text-muted">
+                              {formatearFechaMovimiento(movimiento.creadoEn)}
+                              {movimiento.tipoReferencia && ` · ${movimiento.tipoReferencia}`}
+                              {movimiento.referenciaId && ` #${movimiento.referenciaId}`}
+                            </div>
+                            {movimiento.nota && <div className="small mt-1">{movimiento.nota}</div>}
+                          </div>
+                          <div className="text-end small text-nowrap">
+                            <div className={movimiento.variacionStock >= 0 ? 'text-success' : 'text-danger'}>
+                              Stock: {movimiento.variacionStock > 0 ? '+' : ''}{movimiento.variacionStock}
+                            </div>
+                            {movimiento.variacionComprometido !== 0 && (
+                              <div className="text-muted">
+                                Comprometido histórico: {movimiento.variacionComprometido > 0 ? '+' : ''}{movimiento.variacionComprometido}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
                     ))}
                   </div>
                 )}

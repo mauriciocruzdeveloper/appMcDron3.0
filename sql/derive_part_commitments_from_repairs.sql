@@ -37,16 +37,22 @@ WHERE COALESCE(ri.parts_cost, 0) = 0
 ORDER BY ri.repair_id, ri.id;
 
 -- Reconciliacion: compromiso derivado frente al cache y al saldo historico.
-WITH derived_commitment AS (
+WITH active_demand AS (
   SELECT
     (snapshot.item ->> 'partId')::BIGINT AS part_id,
-    SUM(COALESCE((snapshot.item ->> 'quantity')::INTEGER, 1)) AS committed_units
+    SUM(COALESCE((snapshot.item ->> 'quantity')::INTEGER, 1)) AS demanded_units
   FROM public.repair_intervention ri
   JOIN public.repair r ON r.id = ri.repair_id
   CROSS JOIN LATERAL jsonb_array_elements(ri.parts_snapshot) AS snapshot(item)
   WHERE r.state IN ('Aceptado', 'Repuestos')
     AND ri.includes_workshop_parts
   GROUP BY (snapshot.item ->> 'partId')::BIGINT
+), derived_commitment AS (
+  SELECT
+    d.part_id,
+    LEAST(d.demanded_units, GREATEST(COALESCE(p.stock, 0), 0)) AS committed_units
+  FROM active_demand d
+  JOIN public.part p ON p.id = d.part_id
 ), ledger_commitment AS (
   SELECT part_id, SUM(committed_delta) AS committed_units
   FROM public.stock_movement

@@ -95,7 +95,7 @@ export const ReparacionRepuestos: React.FC<ReparacionRepuestosProps> = ({
 
                     {repuestosSinPedido.length > 0 && (
                         <div className="alert alert-danger py-2 mb-2" role="alert">
-                            <strong>⚠️ {repuestosSinPedido.length} repuesto{repuestosSinPedido.length !== 1 ? 's' : ''} con faltante sin pedido activo:</strong>
+                            <strong>⚠️ {repuestosSinPedido.length} repuesto{repuestosSinPedido.length !== 1 ? 's' : ''} con cobertura compartida insuficiente:</strong>
                             <span className="ms-2 small">
                                 {repuestosSinPedido.map(r => r.nombre).join(', ')}
                             </span>
@@ -104,7 +104,7 @@ export const ReparacionRepuestos: React.FC<ReparacionRepuestosProps> = ({
 
                     {repuestosConPedido.length > 0 && (
                         <div className="alert alert-warning py-2 mb-2" role="alert">
-                            <strong>⏳ {repuestosConPedido.length} repuesto{repuestosConPedido.length !== 1 ? 's' : ''} con faltante, pedido en camino:</strong>
+                                                    <strong>⏳ {repuestosConPedido.length} repuesto{repuestosConPedido.length !== 1 ? 's' : ''} con cobertura insuficiente, pedido en camino:</strong>
                             <div className="mt-2 d-flex flex-column gap-1 small">
                                 {repuestosConPedido.map(r => (
                                     <div key={r.repuestoId} className="d-flex align-items-center gap-2 flex-wrap">
@@ -164,14 +164,14 @@ export const ReparacionRepuestos: React.FC<ReparacionRepuestosProps> = ({
                                         </div>
 
                                         <div className="small text-muted mt-1">
-                                            Stock: {r.stockRepu} | Comprometido: {r.unidadesPedidas} | Libre: {r.stockLibre}
+                                            Stock: {r.stockRepu} | Demanda total: {r.demandaTotalRepuesto} | Comprometido: {r.unidadesPedidas} | Libre: {r.stockLibre}
                                         </div>
 
                                         {mostrarFaltante ? (
                                             <div className="mt-2 d-flex flex-column gap-1">
                                                 <span className="badge bg-danger">⚠️ Faltante crítico</span>
                                                 <span className="text-muted small">
-                                                    No hay cobertura para la demanda de esta reparación
+                                                    Cobertura compartida insuficiente: faltan {r.faltanteGlobal} unidad{r.faltanteGlobal !== 1 ? 'es' : ''} para el conjunto de reparaciones
                                                 </span>
                                                 {r.tienePedidoActivo && (
                                                     <>
