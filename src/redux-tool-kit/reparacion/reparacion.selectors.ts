@@ -2,7 +2,7 @@ import { createSelector } from '@reduxjs/toolkit';
 import { RootState } from '../store';
 import { ReparacionRelacionada, ReparacionType, Reparaciones } from '../../types/reparacion';
 import { Filtro } from '../../types/Filtro';
-import { AsignacionIntervencion, EstadoAsignacion, OrigenAsignacion } from '../../types/intervencion';
+import { AsignacionCompromiso, AsignacionIntervencion, EstadoAsignacion, OrigenAsignacion } from '../../types/intervencion';
 import { estados } from '../../datos/estados';
 import { obtenerEstadoSeguro, esEstadoLegacy } from '../../utils/estadosHelper';
 import { esReparacionResuelta, esEstadoPrevioAAceptacion, esTransicionValida, EstadoReparacion } from '../../usecases/estadosReparacion';
@@ -15,6 +15,7 @@ import { puedeConfirmarAbandono, puedeEnviarAvisoAbandono } from '../../usecases
  * Incluye estados finalizados, cancelados y legacy
  */
 const ESTADOS_NO_PRIORITARIOS = ["Entregado", "Liquidación", "Abandonado", "Respondido", "Finalizado", "Cancelado"];
+const ASIGNACIONES_COMPROMISO_VACIAS: AsignacionCompromiso[] = [];
 
 /**
  * Normaliza un string removiendo tildes y diacríticos
@@ -65,6 +66,11 @@ export const selectReparacionesDictionary = (state: RootState): Reparaciones =>
 export const selectReparacionFilter = (state: RootState): Filtro =>
   state.reparacion.filter;
 
+const selectPedidosRepuestoArray = createSelector(
+  [(state: RootState) => state.pedidoRepuesto.coleccionPedidos],
+  (pedidos) => Object.values(pedidos)
+);
+
 /**
  * Selector base para obtener las asignaciones de intervenciones de la reparación actual
  * Complejidad: O(1)
@@ -73,6 +79,29 @@ export const selectReparacionFilter = (state: RootState): Filtro =>
  */
 export const selectIntervencionesDeReparacionActual = (state: RootState): AsignacionIntervencion[] =>
   state.reparacion.intervencionesDeReparacionActual;
+
+export const selectAsignacionesCompromiso = (state: RootState) =>
+  state.reparacion?.asignacionesCompromiso || ASIGNACIONES_COMPROMISO_VACIAS;
+
+export const selectCompromisoPorRepuesto = createSelector(
+  [selectAsignacionesCompromiso],
+  (asignaciones): Record<string, number> => {
+    const compromiso: Record<string, number> = {};
+
+    asignaciones.forEach(asignacion => {
+      if (asignacion.estadoReparacion !== 'Aceptado' && asignacion.estadoReparacion !== 'Repuestos') return;
+      if (!asignacion.incluyeRepuestosTaller) return;
+
+      asignacion.repuestosSnapshot.forEach(repuesto => {
+        const cantidad = Number(repuesto.quantity) || 0;
+        if (cantidad <= 0) return;
+        compromiso[repuesto.partId] = (compromiso[repuesto.partId] || 0) + cantidad;
+      });
+    });
+
+    return compromiso;
+  }
+);
 
 export const selectIntervencionesPresupuestadas = createSelector(
   [selectIntervencionesDeReparacionActual],
@@ -1193,34 +1222,36 @@ export const selectCanEditReparacion = (reparacionId: string) =>
 export const selectReparacionesConRepuestoFaltante = createSelector(
   [
     selectReparacionesArray,
-    (state: RootState) => state.intervencion.coleccionIntervenciones,
     (state: RootState) => state.repuesto.coleccionRepuestos,
-    (state: RootState) => Object.values(state.pedidoRepuesto.coleccionPedidos),
+    selectPedidosRepuestoArray,
+    selectCompromisoPorRepuesto,
+    selectAsignacionesCompromiso,
   ],
-  (reparaciones, catalogoIntervenciones, coleccionRepuestos, pedidos): Set<string> => {
+  (reparaciones, coleccionRepuestos, pedidos, compromisoPorRepuesto, asignacionesCompromiso): Set<string> => {
     const resultado = new Set<string>();
+    const demandaPorReparacion = new Map<string, Map<string, number>>();
+
+    asignacionesCompromiso.forEach(asignacion => {
+      if (!asignacion.incluyeRepuestosTaller) return;
+      const demanda = demandaPorReparacion.get(asignacion.reparacionId) || new Map<string, number>();
+      asignacion.repuestosSnapshot.forEach(({ partId, quantity }) => {
+        const cantidad = Number(quantity) || 0;
+        if (cantidad > 0) demanda.set(partId, (demanda.get(partId) || 0) + cantidad);
+      });
+      demandaPorReparacion.set(asignacion.reparacionId, demanda);
+    });
 
     reparaciones.forEach(reparacion => {
       // No alertar si la reparación ya fue resuelta o aún no fue aceptada (repuestos no relevantes todavía)
       if (esReparacionResuelta(reparacion.data.EstadoRep as EstadoReparacion)) return;
       if (esEstadoPrevioAAceptacion(reparacion.data.EstadoRep as EstadoReparacion)) return;
 
-      const intervencionesIds: string[] = reparacion.data.IntervencionesIds || [];
-
-      // Demanda de esta reparación por repuesto (un mismo repuesto puede repetirse en varias intervenciones)
-      const demandaPorRepuesto = new Map<string, number>();
-      intervencionesIds.forEach((ivId) => {
-        const intervencion = catalogoIntervenciones[ivId];
-        const repuestosIds: string[] = intervencion?.data?.RepuestosIds || [];
-        repuestosIds.forEach((repId) => {
-          demandaPorRepuesto.set(repId, (demandaPorRepuesto.get(repId) || 0) + 1);
-        });
-      });
+      const demandaPorRepuesto = demandaPorReparacion.get(reparacion.id) || new Map<string, number>();
 
       demandaPorRepuesto.forEach((demandaReparacion, repId) => {
         const repuesto = coleccionRepuestos[repId];
         const stockActual = Number(repuesto?.data?.StockRepu ?? 0);
-        const comprometido = Number(repuesto?.data?.UnidadesComprometidas ?? 0);
+        const comprometido = Number(compromisoPorRepuesto[repId] ?? 0);
         const compromisoAjeno = Math.max(0, comprometido - demandaReparacion);
         const disponibleInmediata = stockActual - compromisoAjeno;
 
@@ -1281,20 +1312,21 @@ export const selectRepuestosDeReparacionActual = createSelector(
     selectIntervencionesDeReparacionActual,
     (state: RootState) => state.intervencion.coleccionIntervenciones,
     (state: RootState) => state.repuesto.coleccionRepuestos,
-    (state: RootState) => Object.values(state.pedidoRepuesto.coleccionPedidos),
+    selectPedidosRepuestoArray,
+    selectCompromisoPorRepuesto,
   ],
-  (asignaciones, catalogoIntervenciones, coleccionRepuestos, pedidos): RepuestoDeReparacion[] => {
+  (asignaciones, catalogoIntervenciones, coleccionRepuestos, pedidos, compromisoPorRepuesto): RepuestoDeReparacion[] => {
     // 1. Recopilar IDs únicos de repuestos y las intervenciones que los requieren
     const repuestoMap = new Map<string, { intervencionesNombre: string[]; demandaReparacion: number }>();
     // repuestoId → intervenciones que lo usan + cantidad requerida por la reparación actual
     asignaciones.forEach(asignacion => {
-      // Si la asignación no incluye el repuesto en el presupuesto (PrecioPiezas === 0),
-      // el cliente lo compra por su cuenta: no se considera para el cálculo de stock/faltante.
-      if ((asignacion.data.PrecioPiezas || 0) <= 0) return;
+      if (asignacion.data.incluyeRepuestosTaller === false) return;
 
       const iv = catalogoIntervenciones[asignacion.data.intervencionId];
-      const repIds: string[] = iv?.data?.RepuestosIds || [];
-      repIds.forEach(repId => {
+      const repuestos = Array.isArray(asignacion.data.repuestosSnapshot)
+        ? asignacion.data.repuestosSnapshot
+        : (iv?.data?.RepuestosIds || []).map(partId => ({ partId, quantity: 1 }));
+      repuestos.forEach(({ partId: repId, quantity }) => {
         const ivNombre = iv?.data?.NombreInt || asignacion.data.intervencionId;
         if (!repuestoMap.has(repId)) {
           repuestoMap.set(repId, {
@@ -1305,7 +1337,7 @@ export const selectRepuestosDeReparacionActual = createSelector(
         const entry = repuestoMap.get(repId)!;
         const nombres = entry.intervencionesNombre;
         if (!nombres.includes(ivNombre)) nombres.push(ivNombre);
-        entry.demandaReparacion += 1;
+        entry.demandaReparacion += Number(quantity) || 0;
       });
     });
 
@@ -1314,7 +1346,7 @@ export const selectRepuestosDeReparacionActual = createSelector(
       const { intervencionesNombre, demandaReparacion } = entry;
       const repuesto = coleccionRepuestos[repuestoId];
       const stockRepu = repuesto?.data?.StockRepu ?? 0;
-      const unidadesPedidas = repuesto?.data?.UnidadesComprometidas ?? 0;
+      const unidadesPedidas = compromisoPorRepuesto[repuestoId] ?? 0;
 
       const stockLibre = stockRepu - unidadesPedidas;
 

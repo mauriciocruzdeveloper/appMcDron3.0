@@ -4,6 +4,22 @@ Este directorio contiene todas las propuestas de cambio estructuradas según el 
 
 ## 📋 Active Changes
 
+### `derive-part-commitments-from-repairs`
+**Status:** Testing
+**Priority:** High
+**Created:** 2026-09-23
+
+Reemplaza el contador acumulativo de repuestos comprometidos por una proyeccion
+determinista en selectores, calculada desde reparaciones `Aceptado`/`Repuestos` y los
+snapshots de sus asignaciones incluidas, sin reservas ni liberaciones compensatorias.
+
+- [📝 Proposal](./derive-part-commitments-from-repairs/proposal.md)
+- [📐 Design](./derive-part-commitments-from-repairs/design.md)
+- [✅ Tasks](./derive-part-commitments-from-repairs/tasks.md)
+- [🔧 Specs](./derive-part-commitments-from-repairs/specs/)
+
+---
+
 ### `add-collapsible-repair-sections`
 **Status:** Implemented
 **Priority:** Medium

@@ -9,6 +9,7 @@ export { supabase } from './supabaseClient.js';
 export {
   agregarIntervencionAReparacionPersistencia,
   getIntervencionesPorReparacionPersistencia,
+  getAsignacionesCompromisoPersistencia,
   eliminarIntervencionDeReparacionPersistencia,
   actualizarEstadoAsignacionPersistencia,
   actualizarDescripcionAsignacionPersistencia,

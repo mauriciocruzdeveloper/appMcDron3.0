@@ -1,13 +1,30 @@
 import { createSelector } from '@reduxjs/toolkit';
 import { RootState } from '../store';
+import { selectCompromisoPorRepuesto } from '../reparacion/reparacion.selectors';
 
 // Selector base para el estado de repuestos
 const selectRepuestoState = (state: RootState) => state.repuesto;
 
-// Selector para la colección de repuestos (objeto)
-export const selectColeccionRepuestos = createSelector(
+const selectColeccionRepuestosPersistida = createSelector(
   [selectRepuestoState],
   (repuestoState) => repuestoState.coleccionRepuestos
+);
+
+// Selector para la colección de repuestos (objeto)
+export const selectColeccionRepuestos = createSelector(
+  [selectColeccionRepuestosPersistida, selectCompromisoPorRepuesto],
+  (coleccionRepuestos, compromisoPorRepuesto) => Object.fromEntries(
+    Object.entries(coleccionRepuestos).map(([repuestoId, repuesto]) => [
+      repuestoId,
+      {
+        ...repuesto,
+        data: {
+          ...repuesto.data,
+          UnidadesComprometidas: compromisoPorRepuesto[repuestoId] || 0,
+        },
+      },
+    ])
+  )
 );
 
 // Selector para convertir la colección a array

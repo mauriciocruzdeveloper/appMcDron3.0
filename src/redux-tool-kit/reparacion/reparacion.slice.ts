@@ -2,7 +2,7 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { ReparacionRelacionada, ReparacionType, Reparaciones } from '../../types/reparacion';
 import { Filtro } from '../../types/Filtro';
-import { AsignacionIntervencion } from '../../types/intervencion';
+import { AsignacionCompromiso, AsignacionIntervencion } from '../../types/intervencion';
 import {
   eliminarReparacionAsync,
   getReparacionesPorIntervencionAsync,
@@ -14,6 +14,9 @@ interface ReparacionState {
   coleccionReparaciones: Reparaciones;
   filter: Filtro;
   intervencionesDeReparacionActual: AsignacionIntervencion[]; // Asignaciones, no intervenciones
+  asignacionesCompromiso: AsignacionCompromiso[];
+  estadoAsignacionesCompromiso: 'idle' | 'loading' | 'succeeded' | 'failed';
+  errorAsignacionesCompromiso: string | null;
   reparacionesPorIntervencion: Record<string, {
     reparaciones: ReparacionRelacionada[];
     status: 'loading' | 'succeeded' | 'failed';
@@ -30,6 +33,9 @@ const initialState: ReparacionState = {
   },
   coleccionReparaciones: {},
   intervencionesDeReparacionActual: [],
+  asignacionesCompromiso: [],
+  estadoAsignacionesCompromiso: 'idle',
+  errorAsignacionesCompromiso: null,
   reparacionesPorIntervencion: {},
 };
 
@@ -55,6 +61,19 @@ const reparacionSlice = createSlice({
     },
     setIntervencionesDeReparacionActual: (state, action: PayloadAction<AsignacionIntervencion[]>) => {
       state.intervencionesDeReparacionActual = action.payload;
+    },
+    iniciarCargaAsignacionesCompromiso: (state) => {
+      state.estadoAsignacionesCompromiso = 'loading';
+      state.errorAsignacionesCompromiso = null;
+    },
+    setAsignacionesCompromiso: (state, action: PayloadAction<AsignacionCompromiso[]>) => {
+      state.asignacionesCompromiso = action.payload;
+      state.estadoAsignacionesCompromiso = 'succeeded';
+      state.errorAsignacionesCompromiso = null;
+    },
+    setErrorAsignacionesCompromiso: (state, action: PayloadAction<string>) => {
+      state.estadoAsignacionesCompromiso = 'failed';
+      state.errorAsignacionesCompromiso = action.payload;
     },
     addReparacion: (state, action: PayloadAction<ReparacionType>) => {
       state.coleccionReparaciones[action.payload.id] = action.payload;
@@ -107,6 +126,9 @@ export const {
   setReparacionesDictionary,
   setFilter,
   setIntervencionesDeReparacionActual,
+  iniciarCargaAsignacionesCompromiso,
+  setAsignacionesCompromiso,
+  setErrorAsignacionesCompromiso,
   addReparacion,
   updateReparacion,
   removeReparacion,

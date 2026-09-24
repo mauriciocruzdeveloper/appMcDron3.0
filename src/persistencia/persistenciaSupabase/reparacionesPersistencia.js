@@ -10,7 +10,15 @@ import { createRealtimeReloadScheduler } from './realtimeReloadScheduler.js';
 // función solo persiste el registro, sin lógica de negocio.
 export const agregarIntervencionAReparacionPersistencia = async (reparacionId, intervencionId, costos) => {
   try {
-    const { laborCost, partsCost, totalCost, estadoInicial, origen, repuestosSnapshot } = costos;
+    const {
+      laborCost,
+      partsCost,
+      totalCost,
+      estadoInicial,
+      origen,
+      repuestosSnapshot,
+      incluyeRepuestosTaller,
+    } = costos;
 
     const { data: nuevaRelacion, error: insercionError } = await supabase
       .from('repair_intervention')
@@ -23,7 +31,8 @@ export const agregarIntervencionAReparacionPersistencia = async (reparacionId, i
           total_cost: totalCost,
           status: estadoInicial,
           origin: origen,
-          parts_snapshot: repuestosSnapshot
+          parts_snapshot: repuestosSnapshot,
+          includes_workshop_parts: incluyeRepuestosTaller,
         }
       ])
       .select();
@@ -71,6 +80,7 @@ export const getIntervencionesPorReparacionPersistencia = async (reparacionId) =
           intervencionId: String(item.intervention.id),
           estado: item.status || 'pendiente', // Estado de la asignación
           origen: item.origin || 'presupuestada',
+          incluyeRepuestosTaller: item.includes_workshop_parts ?? true,
           repuestosSnapshot: Array.isArray(item.parts_snapshot)
             ? item.parts_snapshot.map(repuesto => ({
                 partId: String(repuesto.partId),
@@ -92,6 +102,65 @@ export const getIntervencionesPorReparacionPersistencia = async (reparacionId) =
     console.error('Error en getIntervencionesPorReparacionPersistencia:', error);
     throw error;
   }
+};
+
+// Read model global para derivar compromiso en selectores. La persistencia
+// filtra candidatos y mapea filas, pero no agrega ni calcula reglas de negocio.
+export const getAsignacionesCompromisoPersistencia = async (setAsignacionesToRedux, estadosCandidatos) => {
+  const cargarAsignaciones = async () => {
+    const { data, error } = await supabase
+      .from('repair_intervention')
+      .select(`
+        id,
+        repair_id,
+        parts_snapshot,
+        includes_workshop_parts,
+        repair:repair_id!inner (state)
+      `)
+      .in('repair.state', estadosCandidatos);
+
+    if (error) throw error;
+
+    setAsignacionesToRedux((data || []).map(item => ({
+      id: String(item.id),
+      reparacionId: String(item.repair_id),
+      estadoReparacion: item.repair?.state || '',
+      incluyeRepuestosTaller: item.includes_workshop_parts ?? true,
+      repuestosSnapshot: Array.isArray(item.parts_snapshot)
+        ? item.parts_snapshot.map(repuesto => ({
+            partId: String(repuesto.partId),
+            quantity: Number(repuesto.quantity) || 1,
+          }))
+        : [],
+    })));
+  };
+
+  const realtimeReload = createRealtimeReloadScheduler(cargarAsignaciones);
+  await cargarAsignaciones();
+
+  const repairsChannel = supabase
+    .channel('asignaciones-compromiso-reparaciones-changes')
+    .on('postgres_changes', {
+      event: '*',
+      schema: 'public',
+      table: 'repair',
+    }, () => realtimeReload.scheduleReload())
+    .subscribe();
+
+  const assignmentsChannel = supabase
+    .channel('asignaciones-compromiso-asignaciones-changes')
+    .on('postgres_changes', {
+      event: '*',
+      schema: 'public',
+      table: 'repair_intervention',
+    }, () => realtimeReload.scheduleReload())
+    .subscribe();
+
+  return () => {
+    realtimeReload.stop();
+    supabase.removeChannel(repairsChannel);
+    supabase.removeChannel(assignmentsChannel);
+  };
 };
 
 // Eliminar intervención de reparación
@@ -211,11 +280,22 @@ export const actualizarDescripcionAsignacionPersistencia = async (asignacionId, 
 
 // ACTUALIZAR PRECIOS DE PIEZAS DE ASIGNACIÓN
 // Recibe los valores ya calculados desde el thunk; solo persiste sin lógica.
-export const actualizarPreciosPiezasAsignacionPersistencia = async (asignacionId, reparacionId, parts_cost, total_cost, nuevoPrecioReparacion) => {
+export const actualizarPreciosPiezasAsignacionPersistencia = async (
+  asignacionId,
+  reparacionId,
+  parts_cost,
+  total_cost,
+  nuevoPrecioReparacion,
+  incluyeRepuestosTaller,
+) => {
   try {
     const { data, error } = await supabase
       .from('repair_intervention')
-      .update({ parts_cost, total_cost })
+      .update({
+        parts_cost,
+        total_cost,
+        includes_workshop_parts: incluyeRepuestosTaller,
+      })
       .eq('id', asignacionId)
       .select()
       .single();

@@ -282,6 +282,41 @@ export const getIntervencionesPorReparacionPersistencia = (reparacionId) => {
   });
 };
 
+// Compatibilidad para el backend legacy: proyecta las relaciones disponibles
+// como snapshots de cantidad uno. Supabase es el backend operativo actual.
+export const getAsignacionesCompromisoPersistencia = async (setAsignacionesToRedux, estadosCandidatos) => {
+    const reparacionesQuery = query(
+        collection(firestore, collectionNames.REPARACIONES),
+        where('EstadoRep', 'in', estadosCandidatos),
+    );
+
+    const cargarAsignaciones = async (snapshot) => {
+        const asignaciones = [];
+        for (const reparacionDoc of snapshot.docs) {
+            const reparacion = reparacionDoc.data();
+            for (const intervencionId of reparacion.IntervencionesIds || []) {
+                const intervencionSnap = await getDoc(doc(firestore, collectionNames.INTERVENCIONES, intervencionId));
+                if (!intervencionSnap.exists()) continue;
+
+                const intervencion = intervencionSnap.data();
+                asignaciones.push({
+                    id: `${reparacionDoc.id}-${intervencionId}`,
+                    reparacionId: reparacionDoc.id,
+                    estadoReparacion: reparacion.EstadoRep,
+                    incluyeRepuestosTaller: true,
+                    repuestosSnapshot: (intervencion.RepuestosIds || []).map(partId => ({
+                        partId: String(partId),
+                        quantity: 1,
+                    })),
+                });
+            }
+        }
+        setAsignacionesToRedux(asignaciones);
+    };
+
+    return onSnapshot(reparacionesQuery, cargarAsignaciones);
+};
+
 // Añadir intervención a reparación
 export const agregarIntervencionAReparacionPersistencia = (reparacionId, intervencionId) => {
   return new Promise(async (resolve, reject) => {

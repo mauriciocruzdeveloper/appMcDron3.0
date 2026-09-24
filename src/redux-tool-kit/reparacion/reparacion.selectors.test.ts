@@ -17,6 +17,7 @@ import { EstadoAsignacion, OrigenAsignacion } from '../../types/intervencion';
 import { ReparacionRelacionada, ReparacionType } from '../../types/reparacion';
 import { enviarEmailAvisoAbandonoAsync, enviarDroneEnviadoAsync, enviarReparacionFinalizadaAsync } from '../app/app.actions';
 import repuestoReducer, { setRepuestos } from '../repuesto/repuesto.slice';
+import { selectRepuestosArray } from '../repuesto/repuesto.selectors';
 import { RootState } from '../store';
 import {
   agregarIntervencionAReparacionAsync,
@@ -29,6 +30,7 @@ import {
 } from './reparacion.actions';
 import reparacionReducer, { setIntervencionesDeReparacionActual, setReparaciones } from './reparacion.slice';
 import {
+  selectCompromisoPorRepuesto,
   selectEstadoReparacionesPorIntervencionId,
   selectIntervencionesPresupuestadas,
   selectPuedeAvanzarA,
@@ -36,6 +38,110 @@ import {
   selectReparacionesPorIntervencionId,
   selectTotalIntervenciones,
 } from './reparacion.selectors';
+
+describe('compromiso derivado de asignaciones', () => {
+  it('consolida cantidades activas y excluye asignaciones ajenas al taller o fuera de estado', () => {
+    const state = {
+      reparacion: {
+        asignacionesCompromiso: [
+          {
+            id: 'a-1',
+            reparacionId: 'r-1',
+            estadoReparacion: 'Aceptado',
+            incluyeRepuestosTaller: true,
+            repuestosSnapshot: [
+              { partId: 'parte-a', quantity: 2 },
+              { partId: 'parte-compartida', quantity: 1 },
+            ],
+          },
+          {
+            id: 'a-2',
+            reparacionId: 'r-2',
+            estadoReparacion: 'Repuestos',
+            incluyeRepuestosTaller: true,
+            repuestosSnapshot: [{ partId: 'parte-compartida', quantity: 3 }],
+          },
+          {
+            id: 'a-3',
+            reparacionId: 'r-3',
+            estadoReparacion: 'Aceptado',
+            incluyeRepuestosTaller: false,
+            repuestosSnapshot: [{ partId: 'parte-a', quantity: 10 }],
+          },
+          {
+            id: 'a-4',
+            reparacionId: 'r-4',
+            estadoReparacion: 'Reparado',
+            incluyeRepuestosTaller: true,
+            repuestosSnapshot: [{ partId: 'parte-a', quantity: 20 }],
+          },
+          {
+            id: 'a-5',
+            reparacionId: 'r-5',
+            estadoReparacion: 'Aceptado',
+            incluyeRepuestosTaller: true,
+            repuestosSnapshot: [],
+          },
+        ],
+      },
+    } as any;
+
+    expect(selectCompromisoPorRepuesto(state)).toEqual({
+      'parte-a': 2,
+      'parte-compartida': 4,
+    });
+  });
+
+  it('reemplaza el cache persistido al exponer el catálogo de repuestos', () => {
+    const state = {
+      reparacion: {
+        asignacionesCompromiso: [{
+          id: 'a-1',
+          reparacionId: 'r-1',
+          estadoReparacion: 'Aceptado',
+          incluyeRepuestosTaller: true,
+          repuestosSnapshot: [{ partId: 'parte-a', quantity: 2 }],
+        }],
+      },
+      repuesto: {
+        coleccionRepuestos: {
+          'parte-a': {
+            id: 'parte-a',
+            data: {
+              NombreRepu: 'Parte A',
+              StockRepu: 5,
+              UnidadesComprometidas: 99,
+            },
+          },
+        },
+        filter: '',
+      },
+    } as any;
+
+    expect(selectRepuestosArray(state)[0].data.UnidadesComprometidas).toBe(2);
+  });
+
+  it('refleja alta, exclusión y baja sin depender del catálogo mutable', () => {
+    const crearEstado = (asignacionesCompromiso: any[]) => ({
+      reparacion: { asignacionesCompromiso },
+    } as any);
+    const asignacion = {
+      id: 'a-1',
+      reparacionId: 'r-1',
+      estadoReparacion: 'Aceptado',
+      incluyeRepuestosTaller: true,
+      repuestosSnapshot: [{ partId: 'parte-snapshot', quantity: 2 }],
+    };
+
+    expect(selectCompromisoPorRepuesto(crearEstado([asignacion])))
+      .toEqual({ 'parte-snapshot': 2 });
+    expect(selectCompromisoPorRepuesto(crearEstado([{
+      ...asignacion,
+      incluyeRepuestosTaller: false,
+    }]))).toEqual({});
+    expect(selectCompromisoPorRepuesto(crearEstado([]))).toEqual({});
+  });
+});
 
 jest.mock('../../persistencia/persistencia', () => ({
   agregarIntervencionAReparacionPersistencia: jest.fn(),
@@ -525,7 +631,7 @@ describe('consumo de repuestos al reparar', () => {
     );
   });
 
-  it('consume solo las asignaciones completadas y libera las pendientes', async () => {
+  it('consume solo el stock físico de asignaciones completadas e incluidas', async () => {
     getIntervencionesMock.mockResolvedValue([
       {
         id: 'asignacion-completada',
@@ -553,6 +659,17 @@ describe('consumo de repuestos al reparar', () => {
           ],
         },
       },
+      {
+        id: 'asignacion-excluida',
+        data: {
+          reparacionId: 'rep-stock',
+          intervencionId: 'intervencion-excluida',
+          estado: EstadoAsignacion.COMPLETADA,
+          origen: OrigenAsignacion.PRESUPUESTADA,
+          incluyeRepuestosTaller: false,
+          repuestosSnapshot: [{ partId: 'parte-excluida', quantity: 5 }],
+        },
+      },
     ]);
 
     const store = crearStore();
@@ -563,7 +680,7 @@ describe('consumo de repuestos al reparar', () => {
         EstadoRep: 'Aceptado',
       },
     }]));
-    store.dispatch(setRepuestos(['parte-completada', 'parte-pendiente', 'parte-compartida'].map(id => ({
+    store.dispatch(setRepuestos(['parte-completada', 'parte-pendiente', 'parte-compartida', 'parte-excluida'].map(id => ({
       id,
       data: {
         NombreRepu: id,
@@ -585,29 +702,63 @@ describe('consumo de repuestos al reparar', () => {
     expect(aplicarMovimientoStockMock).toHaveBeenCalledWith(expect.objectContaining({
       partId: 'parte-completada',
       onHandDelta: -2,
-      committedDelta: -2,
+      committedDelta: 0,
       kind: 'consumption',
     }));
     expect(aplicarMovimientoStockMock).toHaveBeenCalledWith(expect.objectContaining({
       partId: 'parte-compartida',
       onHandDelta: -1,
-      committedDelta: -1,
+      committedDelta: 0,
       kind: 'consumption',
     }));
-    expect(aplicarMovimientoStockMock).toHaveBeenCalledWith(expect.objectContaining({
-      partId: 'parte-pendiente',
-      onHandDelta: 0,
-      committedDelta: -3,
-      kind: 'release',
+    expect(aplicarMovimientoStockMock).toHaveBeenCalledTimes(2);
+    expect(aplicarMovimientoStockMock).not.toHaveBeenCalledWith(expect.objectContaining({
+      partId: 'parte-excluida',
     }));
-    expect(aplicarMovimientoStockMock).toHaveBeenCalledWith(expect.objectContaining({
-      partId: 'parte-compartida',
-      onHandDelta: 0,
-      committedDelta: -4,
-      kind: 'release',
-    }));
-    expect(aplicarMovimientoStockMock).toHaveBeenCalledTimes(4);
     expect(getIntervencionMock).not.toHaveBeenCalled();
+  });
+
+  it('aceptar una reparación no crea movimientos de compromiso', async () => {
+    const store = crearStore();
+    store.dispatch(setReparaciones([{
+      ...crearReparacion('rep-aceptada'),
+      data: {
+        ...crearReparacion('rep-aceptada').data,
+        EstadoRep: 'Presupuestado',
+      },
+    }]));
+
+    const resultado = await store.dispatch(cambiarEstadoReparacionAsync({
+      reparacionId: 'rep-aceptada',
+      nuevoEstado: 'Aceptado',
+    }) as any);
+
+    expect(resultado.meta.requestStatus).toBe('fulfilled');
+    expect(aplicarMovimientoStockMock).not.toHaveBeenCalled();
+  });
+
+  it('cancelaciones concurrentes no crean liberaciones ni acumulan efectos', async () => {
+    const store = crearStore();
+    store.dispatch(setReparaciones([{
+      ...crearReparacion('rep-cancelada'),
+      data: {
+        ...crearReparacion('rep-cancelada').data,
+        EstadoRep: 'Aceptado',
+      },
+    }]));
+
+    await Promise.all([
+      store.dispatch(cambiarEstadoReparacionAsync({
+        reparacionId: 'rep-cancelada',
+        nuevoEstado: 'Cancelado',
+      }) as any),
+      store.dispatch(cambiarEstadoReparacionAsync({
+        reparacionId: 'rep-cancelada',
+        nuevoEstado: 'Cancelado',
+      }) as any),
+    ]);
+
+    expect(aplicarMovimientoStockMock).not.toHaveBeenCalled();
   });
 });
 
@@ -638,7 +789,7 @@ describe('intervenciones adicionales', () => {
     );
   });
 
-  it('persiste el origen, congela los repuestos y reserva la demanda adicional', async () => {
+  it('persiste origen, inclusión y snapshot sin crear una reserva', async () => {
     getIntervencionMock.mockResolvedValue({
       id: 'intervencion-extra',
       data: {
@@ -697,26 +848,18 @@ describe('intervenciones adicionales', () => {
       'intervencion-extra',
       expect.objectContaining({
         origen: OrigenAsignacion.ADICIONAL,
+        incluyeRepuestosTaller: true,
         repuestosSnapshot: [
           { partId: 'parte-a', quantity: 2 },
           { partId: 'parte-b', quantity: 1 },
         ],
       }),
     );
-    expect(aplicarMovimientoStockMock).toHaveBeenCalledWith(expect.objectContaining({
-      partId: 'parte-a',
-      committedDelta: 2,
-      kind: 'reservation',
-    }));
-    expect(aplicarMovimientoStockMock).toHaveBeenCalledWith(expect.objectContaining({
-      partId: 'parte-b',
-      committedDelta: 1,
-      kind: 'reservation',
-    }));
+    expect(aplicarMovimientoStockMock).not.toHaveBeenCalled();
     expect(guardarReparacionMock).not.toHaveBeenCalled();
   });
 
-  it('libera la reserva al eliminar una intervención adicional pendiente', async () => {
+  it('elimina una intervención adicional pendiente sin crear una liberación', async () => {
     eliminarIntervencionMock.mockResolvedValue({ success: true });
     getIntervencionesMock.mockResolvedValue([]);
 
@@ -757,12 +900,7 @@ describe('intervenciones adicionales', () => {
     }) as any);
 
     expect(resultado.meta.requestStatus).toBe('fulfilled');
-    expect(aplicarMovimientoStockMock).toHaveBeenCalledWith(expect.objectContaining({
-      partId: 'parte-a',
-      onHandDelta: 0,
-      committedDelta: -2,
-      kind: 'release',
-    }));
+    expect(aplicarMovimientoStockMock).not.toHaveBeenCalled();
     expect(eliminarIntervencionMock).toHaveBeenCalledWith('rep-adicional', 'asignacion-extra');
     expect(guardarReparacionMock).not.toHaveBeenCalled();
   });
@@ -832,6 +970,7 @@ describe('intervenciones adicionales', () => {
       0,
       100,
       null,
+      false,
     );
   });
 });

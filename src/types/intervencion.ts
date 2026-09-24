@@ -49,6 +49,7 @@ export interface AsignacionIntervencionData {
   estado: EstadoAsignacion; // Estado actual de la asignación
   origen: OrigenAsignacion;
   repuestosSnapshot?: RepuestoAsignacionSnapshot[];
+  incluyeRepuestosTaller?: boolean;
   
   // Precios congelados al momento de la asignación
   PrecioManoObra: number; // Labor cost congelado
@@ -63,6 +64,14 @@ export interface AsignacionIntervencionData {
 export interface AsignacionIntervencion {
   id: string; // ID único de la asignación (repair_intervention.id)
   data: AsignacionIntervencionData;
+}
+
+export interface AsignacionCompromiso {
+  id: string;
+  reparacionId: string;
+  estadoReparacion: string;
+  incluyeRepuestosTaller: boolean;
+  repuestosSnapshot: RepuestoAsignacionSnapshot[];
 }
 
 // Tipo para colección de asignaciones
