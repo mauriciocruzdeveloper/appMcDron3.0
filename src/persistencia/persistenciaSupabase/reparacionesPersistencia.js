@@ -67,7 +67,8 @@ export const getIntervencionesPorReparacionPersistencia = async (reparacionId) =
         *,
         intervention:intervention_id (*)
       `)
-      .eq('repair_id', reparacionId);
+      .eq('repair_id', reparacionId)
+      .order('id', { ascending: true });
 
     if (error) throw error;
 
