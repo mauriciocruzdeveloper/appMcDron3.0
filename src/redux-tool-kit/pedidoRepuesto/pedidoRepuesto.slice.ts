@@ -3,11 +3,15 @@ import { PedidoRepuesto, PedidosRepuesto } from '../../types/pedidoRepuesto';
 import { guardarPedidoAsync, eliminarPedidoAsync, cancelarPedidoAsync } from './pedidoRepuesto.actions';
 
 interface PedidoRepuestoState {
+    estadoCarga: 'idle' | 'loading' | 'succeeded' | 'failed';
+    errorCarga: string | null;
     filter: string;
     coleccionPedidos: PedidosRepuesto;
 }
 
 const initialState: PedidoRepuestoState = {
+    estadoCarga: 'idle',
+    errorCarga: null,
     filter: '',
     coleccionPedidos: {},
 };
@@ -16,10 +20,20 @@ const pedidoRepuestoSlice = createSlice({
     name: 'pedidoRepuesto',
     initialState,
     reducers: {
+        iniciarCargaPedidos: (state) => {
+            state.estadoCarga = 'loading';
+            state.errorCarga = null;
+        },
+        setErrorCargaPedidos: (state, action: PayloadAction<string>) => {
+            state.estadoCarga = 'failed';
+            state.errorCarga = action.payload;
+        },
         setPedidos: (state, action: PayloadAction<PedidoRepuesto[]>) => {
             const obj: PedidosRepuesto = {};
             action.payload.forEach(p => { obj[p.id] = p; });
             state.coleccionPedidos = obj;
+            state.estadoCarga = 'succeeded';
+            state.errorCarga = null;
         },
         setPedido: (state, action: PayloadAction<PedidoRepuesto>) => {
             const p = action.payload;
@@ -44,5 +58,5 @@ const pedidoRepuestoSlice = createSlice({
     },
 });
 
-export const { setPedidos, setPedido, setFilter } = pedidoRepuestoSlice.actions;
+export const { iniciarCargaPedidos, setErrorCargaPedidos, setPedidos, setPedido, setFilter } = pedidoRepuestoSlice.actions;
 export default pedidoRepuestoSlice.reducer;

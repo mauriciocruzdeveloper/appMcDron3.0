@@ -1,11 +1,12 @@
 import React from 'react';
 import { useHistory } from 'hooks/useHistory';
 import { useAppSelector } from 'redux-tool-kit/hooks/useAppSelector';
-import { selectReparacionesListasParaAvisoAbandono } from 'redux-tool-kit/reparacion/reparacion.selectors';
+import { selectReparacionesListasParaAvisoAbandono, selectReparacionesConRepuestoFaltante } from 'redux-tool-kit/reparacion/reparacion.selectors';
 import { convertTimestampCORTO } from 'utils/utils';
 
 const ReparacionesAvisoAbandonoSection = (): React.ReactElement => {
   const history = useHistory();
+  const reparacionesConRepuestoFaltante = useAppSelector(selectReparacionesConRepuestoFaltante);
   const [ahora] = React.useState(() => Date.now());
   const reparaciones = useAppSelector(state =>
     selectReparacionesListasParaAvisoAbandono(state, ahora)
@@ -50,6 +51,13 @@ const ReparacionesAvisoAbandonoSection = (): React.ReactElement => {
                   <span className='badge bg-warning text-dark'>Enviar aviso</span>
                 </div>
               </div>
+              {reparacionesConRepuestoFaltante.has(reparacion.id) && (
+                <div className='d-flex flex-wrap mt-1'>
+                  <span style={{ backgroundColor: '#dc3545', color: 'white', borderRadius: 4, padding: '2px 6px', fontSize: '0.75rem' }}>
+                    ⚠️ Repuesto sin cobertura
+                  </span>
+                </div>
+              )}
             </button>
           ))}
         </div>

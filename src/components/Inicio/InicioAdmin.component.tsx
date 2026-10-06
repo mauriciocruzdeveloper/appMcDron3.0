@@ -4,6 +4,7 @@ import ReparacionesPrioritariasSection from './ReparacionesPrioritariasSection.c
 import ReparacionesEsperandoRepuestosSection from './ReparacionesEsperandoRepuestosSection.component';
 import RepuestosAgotadosSection from './RepuestosAgotadosSection.component';
 import RepuestosPedidosSection from './RepuestosPedidosSection.component';
+import RepuestosAComprarSection from './RepuestosAComprarSection.component';
 import ReparacionesAvisoAbandonoSection from './ReparacionesAvisoAbandonoSection.component';
 
 /**
@@ -41,6 +42,9 @@ const InicioAdmin = (): React.ReactElement => {
           </section>
 
           <aside className='dashboard-sidebar' aria-label='Inventario'>
+            <div className='dashboard-panel'>
+              <RepuestosAComprarSection />
+            </div>
             <div className='dashboard-panel'>
               <RepuestosAgotadosSection />
             </div>

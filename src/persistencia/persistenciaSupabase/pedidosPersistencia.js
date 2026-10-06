@@ -30,7 +30,7 @@ const toFrontend = (row, items = []) => ({
 // -------------------------
 // GET todos los pedidos
 // -------------------------
-export const getPedidosPersistencia = async (callback) => {
+export const getPedidosPersistencia = async (callback, onError = console.error) => {
   try {
     const cargarPedidos = async () => {
       const { data: pedidos, error } = await supabase
@@ -60,14 +60,14 @@ export const getPedidosPersistencia = async (callback) => {
     const channel = supabase
       .channel('purchase_order_changes')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'purchase_order' }, () => {
-        cargarPedidos();
+        return cargarPedidos().catch(onError);
       })
       .subscribe();
 
     const itemsChannel = supabase
       .channel('purchase_order_items_changes')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'purchase_order_item' }, () => {
-        cargarPedidos();
+        return cargarPedidos().catch(onError);
       })
       .subscribe();
 

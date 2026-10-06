@@ -2,7 +2,7 @@ import React from 'react';
 import { useHistory } from 'hooks/useHistory';
 import { useLocation } from 'react-router-dom';
 import { useAppSelector } from 'redux-tool-kit/hooks/useAppSelector';
-import { selectReparacionesEnRepuestos, selectCantidadEnRepuestos } from 'redux-tool-kit/reparacion/reparacion.selectors';
+import { selectReparacionesEnRepuestos, selectCantidadEnRepuestos, selectReparacionesConRepuestoFaltante } from 'redux-tool-kit/reparacion/reparacion.selectors';
 import { estados } from 'datos/estados';
 
 const ReparacionesEsperandoRepuestosSection = (): React.ReactElement => {
@@ -11,6 +11,7 @@ const ReparacionesEsperandoRepuestosSection = (): React.ReactElement => {
   const match = { path: location.pathname };
   const reparacionesEnRepuestos = useAppSelector(selectReparacionesEnRepuestos);
   const cantidadEnRepuestos = useAppSelector(selectCantidadEnRepuestos);
+  const reparacionesConRepuestoFaltante = useAppSelector(selectReparacionesConRepuestoFaltante);
   const [expanded, setExpanded] = React.useState(false);
 
   return (
@@ -70,6 +71,13 @@ const ReparacionesEsperandoRepuestosSection = (): React.ReactElement => {
                       </span>
                     </div>
                   </div>
+                  {reparacionesConRepuestoFaltante.has(reparacion.id) && (
+                    <div className='d-flex flex-wrap mt-1'>
+                      <span style={{ backgroundColor: '#dc3545', color: 'white', borderRadius: 4, padding: '2px 6px', fontSize: '0.75rem' }}>
+                        ⚠️ Repuesto sin cobertura
+                      </span>
+                    </div>
+                  )}
                 </div>
               );
             })}

@@ -284,7 +284,7 @@ export const getIntervencionesPorReparacionPersistencia = (reparacionId) => {
 
 // Compatibilidad para el backend legacy: proyecta las relaciones disponibles
 // como snapshots de cantidad uno. Supabase es el backend operativo actual.
-export const getAsignacionesCompromisoPersistencia = async (setAsignacionesToRedux, estadosCandidatos) => {
+export const getAsignacionesCompromisoPersistencia = async (setAsignacionesToRedux, estadosCandidatos, onError = console.error) => {
     const reparacionesQuery = query(
         collection(firestore, collectionNames.REPARACIONES),
         where('EstadoRep', 'in', estadosCandidatos),
@@ -314,7 +314,7 @@ export const getAsignacionesCompromisoPersistencia = async (setAsignacionesToRed
         setAsignacionesToRedux(asignaciones);
     };
 
-    return onSnapshot(reparacionesQuery, cargarAsignaciones);
+    return onSnapshot(reparacionesQuery, snapshot => cargarAsignaciones(snapshot).catch(onError), onError);
 };
 
 // El backend Firebase legacy no mantiene el ledger stock_movement de Supabase.
@@ -915,7 +915,7 @@ export const eliminarRepuestoPersistencia = (id) => {
 };
 
 // GET todos los Repuestos
-export const getRepuestosPersistencia = (setRepuestosToRedux) => {
+export const getRepuestosPersistencia = (setRepuestosToRedux, onError = console.error) => {
     // Cambio el campo de ordenación de 'descripcion' a 'DescripcionRepu' para coincidir con la estructura real 
     const q = query(collection(firestore, collectionNames.REPUESTOS), orderBy('DescripcionRepu'));
     try {
@@ -924,11 +924,11 @@ export const getRepuestosPersistencia = (setRepuestosToRedux) => {
             querySnapshot.forEach(doc => repuestos.push({ id: doc.id, data: doc.data() }));
             console.log('Repuestos cargados:', repuestos.length);
             setRepuestosToRedux(repuestos);
-        });
+        }, onError);
         return unsubscribeRep;
     } catch (error) {
         console.error("Error en getRepuestosPersistencia:", error);
-        return error;
+        throw error;
     }
 };
 

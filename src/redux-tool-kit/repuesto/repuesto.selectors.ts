@@ -1,6 +1,6 @@
 import { createSelector } from '@reduxjs/toolkit';
 import { RootState } from '../store';
-import { selectCompromisoPorRepuesto, selectDemandaPorRepuesto } from '../reparacion/reparacion.selectors';
+import { selectAsignacionesCompromiso, selectCompromisoPorRepuesto, selectDemandaPorRepuesto } from '../reparacion/reparacion.selectors';
 
 // Selector base para el estado de repuestos
 const selectRepuestoState = (state: RootState) => state.repuesto;
@@ -97,6 +97,70 @@ const esPedidoActivo = (estado: string): boolean =>
   estado === 'pending' || estado === 'in_transit';
 
 const selectPedidos = (state: RootState) => state.pedidoRepuesto.coleccionPedidos;
+
+export const selectEstadoComprasRepuestos = createSelector(
+  [
+    (state: RootState) => state.reparacion.estadoAsignacionesCompromiso,
+    (state: RootState) => state.reparacion.errorAsignacionesCompromiso,
+    (state: RootState) => state.repuesto.estadoCarga,
+    (state: RootState) => state.repuesto.errorCarga,
+    (state: RootState) => state.pedidoRepuesto.estadoCarga,
+    (state: RootState) => state.pedidoRepuesto.errorCarga,
+  ],
+  (asignaciones, errorAsignaciones, repuestos, errorRepuestos, pedidos, errorPedidos) => {
+    const estadosCarga = [asignaciones, repuestos, pedidos];
+    if (estadosCarga.includes('failed')) {
+      return { estado: 'failed' as const, error: errorAsignaciones || errorRepuestos || errorPedidos || 'No se pudo calcular la lista de compras' };
+    }
+    if (!estadosCarga.every(estado => estado === 'succeeded')) {
+      return { estado: 'loading' as const, error: null };
+    }
+    return { estado: 'succeeded' as const, error: null };
+  }
+);
+
+export const selectRepuestosAComprar = createSelector(
+  [selectColeccionRepuestosPersistida, selectDemandaPorRepuesto, selectPedidos, selectAsignacionesCompromiso],
+  (repuestos, demanda, pedidos, asignaciones) => {
+    const cantidadesPedidas: Record<string, number> = {};
+    Object.values(pedidos).forEach(pedido => {
+      if (!esPedidoActivo(pedido.data.Estado)) return;
+      pedido.data.Items.forEach(item => {
+        const repuestoId = item.data.RepuestoId;
+        if (!repuestoId) return;
+        cantidadesPedidas[repuestoId] = (cantidadesPedidas[repuestoId] || 0)
+          + Math.max(0, Number(item.data.Cantidad) || 0);
+      });
+    });
+    const reparacionesPorRepuesto: Record<string, Set<string>> = {};
+    asignaciones.forEach(asignacion => {
+      if (!asignacion.incluyeRepuestosTaller || !['Aceptado', 'Repuestos'].includes(asignacion.estadoReparacion)) return;
+      asignacion.repuestosSnapshot.forEach(({ partId, quantity }) => {
+        if (!(Number(quantity) > 0)) return;
+        if (!reparacionesPorRepuesto[partId]) reparacionesPorRepuesto[partId] = new Set();
+        reparacionesPorRepuesto[partId].add(asignacion.reparacionId);
+      });
+    });
+    return Object.entries(demanda).map(([repuestoId, cantidadNecesaria]) => {
+      const repuesto = repuestos[repuestoId];
+      const stock = repuesto ? Math.max(0, Number(repuesto.data.StockRepu) || 0) : null;
+      const cantidadPedida = cantidadesPedidas[repuestoId] || 0;
+      const cantidadAComprar = stock === null ? null : Math.max(0, cantidadNecesaria - stock - cantidadPedida);
+      return {
+        repuestoId,
+        nombre: repuesto?.data.NombreRepu || `Repuesto no encontrado (${repuestoId})`,
+        proveedor: repuesto?.data.ProveedorRepu || '',
+        obsoleto: repuesto?.data.Obsoleta || false,
+        cantidadNecesaria,
+        stock,
+        cantidadPedida,
+        cantidadAComprar,
+        reparacionesIds: Array.from(reparacionesPorRepuesto[repuestoId] || []),
+      };
+    }).filter(fila => fila.cantidadAComprar === null || fila.cantidadAComprar > 0)
+      .sort((primera, segunda) => primera.nombre.localeCompare(segunda.nombre, 'es'));
+  }
+);
 
 export const selectCantidadPedidaPorRepuesto = createSelector(
   [selectPedidos, (_state: RootState, repuestoId: string) => repuestoId],

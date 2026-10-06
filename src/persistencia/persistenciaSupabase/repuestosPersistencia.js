@@ -302,7 +302,7 @@ export const eliminarRepuestoPersistencia = async (id) => {
 };
 
 // GET todos los Repuestos con suscripción en tiempo real
-export const getRepuestosPersistencia = async (setRepuestosToRedux) => {
+export const getRepuestosPersistencia = async (setRepuestosToRedux, onError = console.error) => {
   // Función para cargar los datos iniciales
   const cargarRepuestos = async () => {
     try {
@@ -341,7 +341,7 @@ export const getRepuestosPersistencia = async (setRepuestosToRedux) => {
     }
   };
 
-  const cargaInicial = cargarRepuestos();
+  await cargarRepuestos();
 
   // Configurar la suscripción en tiempo real
   const channelRepuestos = supabase
@@ -353,7 +353,7 @@ export const getRepuestosPersistencia = async (setRepuestosToRedux) => {
     }, (payload) => {
       console.log('Cambio detectado en repuestos:', payload);
       // Cuando hay cambios, recargamos todos los datos
-      cargarRepuestos();
+      return cargarRepuestos().catch(onError);
     })
     .subscribe((status, err) => {
       if (err) {
@@ -376,7 +376,7 @@ export const getRepuestosPersistencia = async (setRepuestosToRedux) => {
     }, (payload) => {
       console.log('Cambio detectado en relaciones repuestos-modelos:', payload);
       // Cuando hay cambios, recargamos todos los datos
-      cargarRepuestos();
+      return cargarRepuestos().catch(onError);
     })
     .subscribe((status, err) => {
       if (err) {
@@ -389,8 +389,6 @@ export const getRepuestosPersistencia = async (setRepuestosToRedux) => {
         console.error('- Permisos insuficientes en la tabla');
       }
     });
-
-  await cargaInicial;
 
   // Devolver función para cancelar la suscripción
   return () => {

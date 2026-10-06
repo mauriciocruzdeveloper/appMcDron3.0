@@ -1,0 +1,12 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Inicio compras - desarrollo",
+			"type": "shell",
+			"command": "BROWSER=none PORT=3001 npm start",
+			"isBackground": true,
+			"problemMatcher": []
+		}
+	]
+}

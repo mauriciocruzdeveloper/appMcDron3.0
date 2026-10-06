@@ -107,7 +107,7 @@ export const getIntervencionesPorReparacionPersistencia = async (reparacionId) =
 
 // Read model global para derivar compromiso en selectores. La persistencia
 // filtra candidatos y mapea filas, pero no agrega ni calcula reglas de negocio.
-export const getAsignacionesCompromisoPersistencia = async (setAsignacionesToRedux, estadosCandidatos) => {
+export const getAsignacionesCompromisoPersistencia = async (setAsignacionesToRedux, estadosCandidatos, onError = console.error) => {
   const cargarAsignaciones = async () => {
     const { data, error } = await supabase
       .from('repair_intervention')
@@ -136,7 +136,7 @@ export const getAsignacionesCompromisoPersistencia = async (setAsignacionesToRed
     })));
   };
 
-  const realtimeReload = createRealtimeReloadScheduler(cargarAsignaciones);
+  const realtimeReload = createRealtimeReloadScheduler(() => cargarAsignaciones().catch(onError));
   await cargarAsignaciones();
 
   const repairsChannel = supabase

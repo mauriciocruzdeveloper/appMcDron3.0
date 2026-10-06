@@ -1,6 +1,6 @@
 import React from 'react';
 import { useAppSelector } from 'redux-tool-kit/hooks/useAppSelector';
-import { selectModeloNombreByReparacionId, esUrgente, getDiasAtrasoUrgencia } from 'redux-tool-kit/reparacion/reparacion.selectors';
+import { selectModeloNombreByReparacionId, selectReparacionesConRepuestoFaltante, esUrgente, getDiasAtrasoUrgencia } from 'redux-tool-kit/reparacion/reparacion.selectors';
 
 interface ReparacionItemProps {
   reparacion: any;
@@ -10,6 +10,7 @@ interface ReparacionItemProps {
 
 const ReparacionItem = ({ reparacion, estado, onClick }: ReparacionItemProps): React.ReactElement => {
   const modeloNombre = useAppSelector(selectModeloNombreByReparacionId(reparacion.id));
+  const faltanRepuestos = useAppSelector(state => selectReparacionesConRepuestoFaltante(state).has(reparacion.id));
   const urgente = esUrgente(reparacion);
   const diasAtraso = getDiasAtrasoUrgencia(reparacion);
 
@@ -54,6 +55,13 @@ const ReparacionItem = ({ reparacion, estado, onClick }: ReparacionItemProps): R
           </span>
         </div>
       </div>
+      {faltanRepuestos && (
+        <div className='d-flex flex-wrap mt-1'>
+          <span style={{ backgroundColor: '#dc3545', color: 'white', borderRadius: 4, padding: '2px 6px', fontSize: '0.75rem' }}>
+            ⚠️ Repuesto sin cobertura
+          </span>
+        </div>
+      )}
     </div>
   );
 };

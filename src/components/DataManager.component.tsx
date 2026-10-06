@@ -28,7 +28,7 @@ import { useAppSelector } from "../redux-tool-kit/hooks/useAppSelector";
 import { setUsuarios, setUsuariosSelect } from "../redux-tool-kit/usuario/usuario.slice";
 import { Usuario } from "../types/usuario";
 import { setMessages } from "../redux-tool-kit/mensaje/mensaje.slice";
-import { setRepuestos } from "../redux-tool-kit/repuesto/repuesto.slice";
+import { iniciarCargaRepuestos, setErrorCargaRepuestos, setRepuestos } from "../redux-tool-kit/repuesto/repuesto.slice";
 import { Repuesto } from "../types/repuesto";
 import { ModeloDrone } from "../types/modeloDrone";
 import { setModelosDrone } from "../redux-tool-kit/modeloDrone/modeloDrone.slice";
@@ -36,7 +36,7 @@ import { Drone } from "../types/drone";
 import { setDrones } from "../redux-tool-kit/drone/drone.slice";
 import { Intervencion } from "../types/intervencion";
 import { setIntervenciones } from "../redux-tool-kit/intervencion/intervencion.slice";
-import { setPedidos } from "../redux-tool-kit/pedidoRepuesto/pedidoRepuesto.slice";
+import { iniciarCargaPedidos, setErrorCargaPedidos, setPedidos } from "../redux-tool-kit/pedidoRepuesto/pedidoRepuesto.slice";
 import { PedidoRepuesto } from "../types/pedidoRepuesto";
 import { verificarConexionWebSocketAsync } from "../redux-tool-kit/app/app.actions";
 import { setPlantillasEmail } from "../redux-tool-kit/plantillaEmail/plantillaEmail.slice";
@@ -211,6 +211,7 @@ export function DataManagerComponent({ children }: DataManagerProps): React.Reac
             const unsubscribe = await getAsignacionesCompromisoPersistencia(
                 asignaciones => dispatch(setAsignacionesCompromiso(asignaciones)),
                 ['Aceptado', 'Repuestos'],
+                error => dispatch(setErrorAsignacionesCompromiso(error instanceof Error ? error.message : 'No se pudieron actualizar los compromisos')),
             );
             unsubscribeAsignacionesCompromiso.current = unsubscribe;
         } catch (error) {
@@ -264,14 +265,17 @@ export function DataManagerComponent({ children }: DataManagerProps): React.Reac
     const getRepuestos = async () => {
         try {
             unsubscribeRepuestos.current?.();
+            dispatch(iniciarCargaRepuestos());
             const unsubscribe = await getRepuestosPersistencia(
                 (repuestos: Repuesto[]) => {
                     dispatch(setRepuestos(repuestos));
                 },
+                error => dispatch(setErrorCargaRepuestos(error instanceof Error ? error.message : 'No se pudieron actualizar los repuestos')),
             );
 
             unsubscribeRepuestos.current = unsubscribe;
         } catch (error) {
+            dispatch(setErrorCargaRepuestos(error instanceof Error ? error.message : 'No se pudieron cargar los repuestos'));
             console.error("Error al obtener repuestos:", error);
         }
     };
@@ -323,13 +327,16 @@ export function DataManagerComponent({ children }: DataManagerProps): React.Reac
     const getPedidos = async () => {
         try {
             unsubscribePedidos.current?.();
+            dispatch(iniciarCargaPedidos());
             const unsubscribe = await getPedidosPersistencia(
                 (pedidos: PedidoRepuesto[]) => {
                     dispatch(setPedidos(pedidos));
-                }
+                },
+                error => dispatch(setErrorCargaPedidos(error instanceof Error ? error.message : 'No se pudieron actualizar los pedidos')),
             );
             unsubscribePedidos.current = unsubscribe;
         } catch (error) {
+            dispatch(setErrorCargaPedidos(error instanceof Error ? error.message : 'No se pudieron cargar los pedidos'));
             console.error("Error al obtener pedidos:", error);
         }
     };

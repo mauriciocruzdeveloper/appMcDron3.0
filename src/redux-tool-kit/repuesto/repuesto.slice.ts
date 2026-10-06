@@ -5,6 +5,8 @@ import { guardarRepuestoAsync, eliminarRepuestoAsync } from './repuesto.actions'
 
 // Tipos para el estado inicial
 interface RepuestoState {
+    estadoCarga: 'idle' | 'loading' | 'succeeded' | 'failed';
+    errorCarga: string | null;
     filter: string;
     coleccionRepuestos: Repuestos;
     modelosDroneSelect: SelectOption[];
@@ -13,6 +15,8 @@ interface RepuestoState {
 
 // Estado inicial
 const initialState: RepuestoState = {
+    estadoCarga: 'idle',
+    errorCarga: null,
     filter: '',
     coleccionRepuestos: {},
     modelosDroneSelect: [],
@@ -26,6 +30,14 @@ const repuestoSlice = createSlice({
     name: 'repuesto',
     initialState,
     reducers: {
+        iniciarCargaRepuestos: (state) => {
+            state.estadoCarga = 'loading';
+            state.errorCarga = null;
+        },
+        setErrorCargaRepuestos: (state, action: PayloadAction<string>) => {
+            state.estadoCarga = 'failed';
+            state.errorCarga = action.payload;
+        },
         setRepuestos: (state, action: PayloadAction<Repuesto[]>) => {
             // Convertir el array de repuestos a un objeto con ID como clave
             const repuestosObj: Repuestos = {};
@@ -33,6 +45,8 @@ const repuestoSlice = createSlice({
                 repuestosObj[repuesto.id] = repuesto;
             });
             state.coleccionRepuestos = repuestosObj;
+            state.estadoCarga = 'succeeded';
+            state.errorCarga = null;
         },
         setRepuesto: (state, action: PayloadAction<Repuesto>) => {
             // Actualizar o añadir un repuesto específico
@@ -65,6 +79,8 @@ const repuestoSlice = createSlice({
 
 // Exportar acciones síncronas
 export const {
+    iniciarCargaRepuestos,
+    setErrorCargaRepuestos,
     setFilter,
     setRepuestos,
     setRepuesto,
