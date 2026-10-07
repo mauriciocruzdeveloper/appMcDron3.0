@@ -12,6 +12,10 @@ jest.mock('redux-tool-kit/hooks/useAppSelector', () => ({
 }));
 
 const crearEstado = (): any => ({
+  modeloDrone: { coleccionModelosDrone: {
+    mini3: { id: 'mini3', data: { NombreModelo: 'Mini 3' } },
+    mini4: { id: 'mini4', data: { NombreModelo: 'Mini 4 Pro' } },
+  } },
   reparacion: {
     estadoAsignacionesCompromiso: 'succeeded', errorAsignacionesCompromiso: null,
     asignacionesCompromiso: [{ id: 'a1', reparacionId: 'r1', estadoReparacion: 'Aceptado',
@@ -50,6 +54,24 @@ describe('lista de compras del inicio', () => {
     expect(boton.getAttribute('aria-expanded')).toBe('true');
     fireEvent.click(boton);
     expect(screen.queryByText('Comprar: 2')).toBeNull();
+  });
+
+  it('muestra el modelo junto al repuesto separado por un guion', () => {
+    mockState.repuesto.coleccionRepuestos.motor.data.ModelosDroneIds = ['mini3'];
+    desplegar();
+    expect(screen.getByRole('link', { name: 'Motor - Mini 3' }).getAttribute('href')).toBe('/inicio/repuestos/motor');
+  });
+
+  it('muestra varios modelos sin duplicados e ignora referencias no cargadas', () => {
+    mockState.repuesto.coleccionRepuestos.motor.data.ModelosDroneIds = ['mini3', 'mini4', 'mini3', 'ausente'];
+    desplegar();
+    expect(screen.getByRole('link', { name: 'Motor - Mini 3, Mini 4 Pro' })).toBeTruthy();
+  });
+
+  it('conserva el nombre sin guion si no hay modelos disponibles', () => {
+    mockState.repuesto.coleccionRepuestos.motor.data.ModelosDroneIds = ['ausente'];
+    desplegar();
+    expect(screen.getByRole('link', { name: 'Motor' })).toBeTruthy();
   });
 
   it.each(['repuesto', 'pedidoRepuesto', 'reparacion'])('no confirma vacio durante carga de %s', capa => {

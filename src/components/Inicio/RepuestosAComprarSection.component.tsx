@@ -3,12 +3,15 @@ import { Link } from 'react-router-dom';
 import { useAppSelector } from 'redux-tool-kit/hooks/useAppSelector';
 import { selectEstadoComprasRepuestos, selectRepuestosAComprar } from 'redux-tool-kit/repuesto/repuesto.selectors';
 import { selectReparacionesDictionary } from 'redux-tool-kit/reparacion/reparacion.selectors';
+import { selectColeccionModelosDrone } from 'redux-tool-kit/modeloDrone/modeloDrone.selectors';
 
 const RepuestosAComprarSection = (): React.ReactElement => {
   const [expanded, setExpanded] = React.useState(false);
   const filas = useAppSelector(selectRepuestosAComprar);
   const carga = useAppSelector(selectEstadoComprasRepuestos);
   const reparaciones = useAppSelector(selectReparacionesDictionary);
+  const repuestos = useAppSelector(state => state.repuesto.coleccionRepuestos);
+  const modelos = useAppSelector(selectColeccionModelosDrone);
   const cantidadTipos = filas.filter(fila => fila.cantidadAComprar !== null).length;
 
   return (
@@ -41,13 +44,20 @@ const RepuestosAComprarSection = (): React.ReactElement => {
             <p className='text-muted mb-0'>No hay repuestos pendientes de compra</p>
           ) : (
             <ul className='list-group list-unstyled'>
-              {filas.map(fila => (
+              {filas.map(fila => {
+                const nombresModelos = Array.from(new Set(
+                  (repuestos[fila.repuestoId]?.data.ModelosDroneIds || [])
+                    .map(modeloId => modelos[modeloId]?.data.NombreModelo)
+                    .filter(Boolean)
+                )).join(', ');
+                const nombreMostrado = nombresModelos ? `${fila.nombre} - ${nombresModelos}` : fila.nombre;
+                return (
                 <li key={fila.repuestoId} className='list-group-item' style={{ overflowWrap: 'anywhere' }}>
                   <div className='d-flex justify-content-between align-items-start flex-wrap gap-2'>
                     {fila.stock === null ? (
-                      <strong>{fila.nombre}</strong>
+                      <strong>{nombreMostrado}</strong>
                     ) : (
-                      <Link className='fw-semibold' to={`/inicio/repuestos/${fila.repuestoId}`}>{fila.nombre}</Link>
+                      <Link className='fw-semibold' to={`/inicio/repuestos/${fila.repuestoId}`}>{nombreMostrado}</Link>
                     )}
                     {fila.cantidadAComprar !== null && <span className='badge bg-danger'>Comprar: {fila.cantidadAComprar}</span>}
                   </div>
@@ -75,7 +85,8 @@ const RepuestosAComprarSection = (): React.ReactElement => {
                     })}
                   </ul>
                 </li>
-              ))}
+                );
+              })}
             </ul>
           )}
         </div>
