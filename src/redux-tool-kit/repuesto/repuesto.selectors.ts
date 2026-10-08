@@ -157,7 +157,7 @@ export const selectRepuestosAComprar = createSelector(
         cantidadAComprar,
         reparacionesIds: Array.from(reparacionesPorRepuesto[repuestoId] || []),
       };
-    }).filter(fila => fila.cantidadAComprar === null || fila.cantidadAComprar > 0)
+    }).filter(fila => !fila.obsoleto && (fila.stock === null || (fila.stock === 0 && (fila.cantidadAComprar || 0) > 0)))
       .sort((primera, segunda) => primera.nombre.localeCompare(segunda.nombre, 'es'));
   }
 );
@@ -241,7 +241,7 @@ export const selectRepuestosDisponibles = createSelector(
 export const selectRepuestosAgotados = createSelector(
   [selectRepuestosArray],
   (repuestos) => repuestos.filter(repuesto => 
-    repuesto.data.StockRepu === 0 && (repuesto.data.UnidadesComprometidas || 0) === 0
+    Number(repuesto.data.StockRepu) <= 0
   )
 );
 
@@ -368,23 +368,14 @@ export const selectConteoUsoRepuestos = createSelector(
 // Selector para repuestos agotados (stock = 0) ordenados por cantidad de uso
 export const selectRepuestosFaltantes = createSelector(
   [
-    selectRepuestosArray,
+    selectRepuestosAgotados,
     selectConteoUsoRepuestos,
-    (state: RootState) => state.pedidoRepuesto.coleccionPedidos,
-    selectDemandaPorRepuesto,
   ],
-  (repuestos, conteoUso, pedidos, demandaPorRepuesto) => {
-    const repuestosFaltantes = repuestos.filter(repuesto => 
-      (demandaPorRepuesto[repuesto.id] || 0) > (repuesto.data.UnidadesComprometidas || 0) &&
-      !repuesto.data.Obsoleta &&
-      !Object.values(pedidos).some(pedido =>
-        esPedidoActivo(pedido.data.Estado) &&
-        pedido.data.Items.some(item => item.data.RepuestoId === repuesto.id)
-      )
-    );
+  (repuestos, conteoUso) => {
     
     // Ordenar por cantidad de uso (de mayor a menor)
-    return repuestosFaltantes
+    return repuestos
+      .filter(repuesto => !repuesto.data.Obsoleta)
       .map(repuesto => ({
         ...repuesto,
         vecesUsado: conteoUso[repuesto.id] || 0
@@ -395,16 +386,22 @@ export const selectRepuestosFaltantes = createSelector(
 
 // Selector para repuestos en pedido ordenados por cantidad de uso
 export const selectRepuestosPedidos = createSelector(
-  [selectRepuestosArray, selectConteoUsoRepuestos],
-  (repuestos, conteoUso) => {
-    const repuestosPedidos = repuestos.filter(repuesto => 
-      (repuesto.data.UnidadesComprometidas || 0) > 0 // Repuestos con unidades pedidas
+  [selectRepuestosArray, selectConteoUsoRepuestos, selectPedidos],
+  (repuestos, conteoUso, pedidos) => {
+    const itemsActivos = Object.values(pedidos)
+      .filter(pedido => esPedidoActivo(pedido.data.Estado))
+      .flatMap(pedido => pedido.data.Items);
+    const repuestosPedidos = repuestos.filter(repuesto =>
+      !repuesto.data.Obsoleta && itemsActivos.some(item => item.data.RepuestoId === repuesto.id)
     );
     
     // Ordenar por cantidad de uso (de mayor a menor)
     return repuestosPedidos
       .map(repuesto => ({
         ...repuesto,
+        cantidadPedida: itemsActivos
+          .filter(item => item.data.RepuestoId === repuesto.id)
+          .reduce((total, item) => total + Math.max(0, Number(item.data.Cantidad) || 0), 0),
         vecesUsado: conteoUso[repuesto.id] || 0
       }))
       .sort((a, b) => b.vecesUsado - a.vecesUsado);

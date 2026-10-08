@@ -1,8 +1,8 @@
 import { selectRepuestosAComprar } from './repuesto.selectors';
 
-const crearEstado = (stock = 1, cantidadPedida = 2, estadoPedido = 'in_transit'): any => ({
+const crearEstado = (stock = 0, cantidadPedida = 2, estadoPedido = 'in_transit'): any => ({
   repuesto: { coleccionRepuestos: {
-    motor: { id: 'motor', data: { NombreRepu: 'Motor', StockRepu: stock, Obsoleta: true } },
+    motor: { id: 'motor', data: { NombreRepu: 'Motor', StockRepu: stock, Obsoleta: false } },
     agotado: { id: 'agotado', data: { NombreRepu: 'Sin demanda', StockRepu: 0 } },
   } },
   reparacion: { asignacionesCompromiso: [
@@ -21,20 +21,31 @@ const crearEstado = (stock = 1, cantidadPedida = 2, estadoPedido = 'in_transit')
 });
 
 describe('repuestos a comprar', () => {
-  it('consolida demanda compartida, descuenta pedidos y conserva obsoletos', () => {
+  it('consolida demanda compartida y descuenta pedidos', () => {
     expect(selectRepuestosAComprar(crearEstado())).toEqual([expect.objectContaining({
-      repuestoId: 'motor', cantidadNecesaria: 5, stock: 1, cantidadPedida: 2,
-      cantidadAComprar: 2, reparacionesIds: ['r1', 'r2'], obsoleto: true,
+      repuestoId: 'motor', cantidadNecesaria: 5, stock: 0, cantidadPedida: 2,
+      cantidadAComprar: 3, reparacionesIds: ['r1', 'r2'], obsoleto: false,
     })]);
   });
 
+  it('excluye obsoletos aunque tengan demanda y pedidos parciales', () => {
+    const state = crearEstado();
+    state.repuesto.coleccionRepuestos.motor.data.Obsoleta = true;
+    expect(selectRepuestosAComprar(state)).toEqual([]);
+  });
+
   it.each(['pending', 'in_transit'])('descuenta pedidos %s y omite compras cubiertas', estado => {
-    expect(selectRepuestosAComprar(crearEstado(2, 3, estado))).toEqual([]);
+    expect(selectRepuestosAComprar(crearEstado(0, 5, estado))).toEqual([]);
+    expect(selectRepuestosAComprar(crearEstado(0, 6, estado))).toEqual([]);
     expect(selectRepuestosAComprar(crearEstado(6, 0, estado))).toEqual([]);
   });
 
   it.each(['arrived', 'cancelled'])('no descuenta pedidos %s', estado => {
-    expect(selectRepuestosAComprar(crearEstado(2, 20, estado))[0].cantidadAComprar).toBe(3);
+    expect(selectRepuestosAComprar(crearEstado(0, 20, estado))[0].cantidadAComprar).toBe(5);
+  });
+
+  it('excluye repuestos con stock positivo aunque no alcance para toda la demanda', () => {
+    expect(selectRepuestosAComprar(crearEstado(1, 0))).toEqual([]);
   });
 
   it('normaliza stock y pedidos negativos y cuenta demanda sin stock', () => {

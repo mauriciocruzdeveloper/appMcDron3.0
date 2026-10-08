@@ -26,7 +26,7 @@ const RepuestoPedidoItem = ({ repuesto, onClick }: RepuestoPedidoItemProps): Rea
           </small>
           <div className='d-flex flex-wrap gap-2 mt-1'>
             <small className='badge bg-warning text-dark text-wrap text-start'>
-              📦 {repuesto.data.UnidadesComprometidas} {repuesto.data.UnidadesComprometidas === 1 ? 'unidad comprometida' : 'unidades comprometidas'}
+              📦 {repuesto.cantidadPedida} {repuesto.cantidadPedida === 1 ? 'unidad pedida' : 'unidades pedidas'}
             </small>
             <small className={`badge text-wrap text-start ${vecesUsado > 0 ? 'bg-info text-dark' : 'bg-secondary'}`}>
               {vecesUsado > 0 

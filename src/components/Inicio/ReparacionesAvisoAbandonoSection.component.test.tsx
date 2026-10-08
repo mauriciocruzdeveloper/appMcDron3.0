@@ -17,6 +17,7 @@ jest.mock("../../redux-tool-kit/hooks/useAppSelector", () => ({
 
 jest.mock("../../redux-tool-kit/reparacion/reparacion.selectors", () => ({
   selectReparacionesListasParaAvisoAbandono: jest.fn(),
+  selectReparacionesConRepuestoFaltante: () => new Set<string>(),
 }));
 
 jest.mock("../../utils/utils", () => ({

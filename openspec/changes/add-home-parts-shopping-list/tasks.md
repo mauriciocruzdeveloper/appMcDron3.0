@@ -15,3 +15,15 @@
 Navegacion y plegado cubiertos por pruebas de componente; integracion exclusiva en
 InicioAdmin. Verificacion visual escritorio/movil pendiente por apertura de navegador
 omitida. No se marca la tarea 2.4 como completada sin esa comprobacion.
+
+## 3. Correccion de criterios confirmada el 2026-10-08
+
+- [x] 3.1 Comprar: demanda y stock cero, excluyendo cobertura total de pedidos activos.
+- [x] 3.2 Agotados: todos sin stock, sin filtros de demanda o pedidos, excluyendo obsoletos.
+- [x] 3.3 Pedidos: items de pedidos activos y cantidades pedidas reales, sin usar compromiso.
+- [x] 3.4 Validar las tres secciones juntas y ejecutar regresion automatizada.
+
+Resultado 2026-10-08: 28 pruebas focalizadas de listas y 256 pruebas aprobadas en
+30 suites de regresion completa. Sin errores del editor en los archivos modificados.
+
+- [x] 3.5 Excluir obsoletos de las tres listas del inicio y cubrirlos con pruebas de selectores y componentes.

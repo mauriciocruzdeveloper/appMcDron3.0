@@ -1,7 +1,9 @@
 import React from 'react';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import RepuestosAComprarSection from './RepuestosAComprarSection.component';
+import RepuestosAgotadosSection from './RepuestosAgotadosSection.component';
+import RepuestosPedidosSection from './RepuestosPedidosSection.component';
 import repuestoReducer, { iniciarCargaRepuestos, setErrorCargaRepuestos, setRepuestos } from '../../redux-tool-kit/repuesto/repuesto.slice';
 import pedidoReducer, { iniciarCargaPedidos, setErrorCargaPedidos, setPedidos } from '../../redux-tool-kit/pedidoRepuesto/pedidoRepuesto.slice';
 import { selectEstadoComprasRepuestos } from '../../redux-tool-kit/repuesto/repuesto.selectors';
@@ -12,6 +14,7 @@ jest.mock('redux-tool-kit/hooks/useAppSelector', () => ({
 }));
 
 const crearEstado = (): any => ({
+  intervencion: { coleccionIntervenciones: {} },
   modeloDrone: { coleccionModelosDrone: {
     mini3: { id: 'mini3', data: { NombreModelo: 'Mini 3' } },
     mini4: { id: 'mini4', data: { NombreModelo: 'Mini 4 Pro' } },
@@ -26,7 +29,7 @@ const crearEstado = (): any => ({
   },
   repuesto: {
     estadoCarga: 'succeeded', errorCarga: null,
-    coleccionRepuestos: { motor: { id: 'motor', data: { NombreRepu: 'Motor', StockRepu: 1, ProveedorRepu: 'DJI' } } },
+    coleccionRepuestos: { motor: { id: 'motor', data: { NombreRepu: 'Motor', StockRepu: 0, ProveedorRepu: 'DJI' } } },
   },
   pedidoRepuesto: {
     estadoCarga: 'succeeded', errorCarga: null,
@@ -44,16 +47,16 @@ describe('lista de compras del inicio', () => {
 
   it('pliega la lista, muestra cantidades y enlaza a repuesto y reparacion', () => {
     desplegar();
-    expect(screen.getByText('Comprar: 2')).toBeTruthy();
+    expect(screen.getByText('Comprar: 3')).toBeTruthy();
     expect(screen.getByText('Necesarios: 5')).toBeTruthy();
-    expect(screen.getByText('Stock: 1')).toBeTruthy();
+    expect(screen.getByText('Stock: 0')).toBeTruthy();
     expect(screen.getByText('Pedidos: 2')).toBeTruthy();
     expect(screen.getByRole('link', { name: 'Motor' }).getAttribute('href')).toBe('/inicio/repuestos/motor');
     expect(screen.getByRole('link', { name: /REP-2026-00001/ }).getAttribute('href')).toBe('/inicio/reparaciones/r1');
     const boton = screen.getByRole('button', { name: /Repuestos a comprar/ });
     expect(boton.getAttribute('aria-expanded')).toBe('true');
     fireEvent.click(boton);
-    expect(screen.queryByText('Comprar: 2')).toBeNull();
+    expect(screen.queryByText('Comprar: 3')).toBeNull();
   });
 
   it('muestra el modelo junto al repuesto separado por un guion', () => {
@@ -87,26 +90,72 @@ describe('lista de compras del inicio', () => {
     mockState.pedidoRepuesto.errorCarga = 'Error de pedidos';
     desplegar();
     expect(screen.getByRole('alert').textContent).toBe('Error de pedidos');
-    expect(screen.queryByText('Comprar: 2')).toBeNull();
+    expect(screen.queryByText('Comprar: 3')).toBeNull();
   });
 
-  it('muestra vacio confirmado cuando stock y pedidos cubren la demanda', () => {
-    mockState.repuesto.coleccionRepuestos.motor.data.StockRepu = 3;
+  it('muestra vacio confirmado cuando los pedidos cubren toda la demanda sin stock', () => {
+    mockState.pedidoRepuesto.coleccionPedidos.p1.data.Items[0].data.Cantidad = 5;
     desplegar();
     expect(screen.getByText('No hay repuestos pendientes de compra')).toBeTruthy();
   });
 
-  it('identifica referencias ausentes sin compra inventada y senala obsoletos', () => {
+  it('no muestra compras para repuestos con stock positivo aunque haya demanda sin cubrir', () => {
+    mockState.repuesto.coleccionRepuestos.motor.data.StockRepu = 1;
+    desplegar();
+    expect(screen.getByText('No hay repuestos pendientes de compra')).toBeTruthy();
+  });
+
+  it.each([2, 5])('mantiene agotados y pedidos cuando hay %s unidades pedidas', cantidadPedida => {
+    mockState.pedidoRepuesto.coleccionPedidos.p1.data.Items[0].data.Cantidad = cantidadPedida;
+    render(
+      <MemoryRouter>
+        <section aria-label='Compras'><RepuestosAComprarSection /></section>
+        <section aria-label='Agotados'><RepuestosAgotadosSection /></section>
+        <section aria-label='Pedidos'><RepuestosPedidosSection /></section>
+      </MemoryRouter>
+    );
+    fireEvent.click(screen.getByRole('button', { name: /Repuestos a comprar/ }));
+    fireEvent.click(screen.getByText(/Repuestos Agotados/));
+    fireEvent.click(screen.getByText(/Repuestos en Pedido/));
+    const compras = within(screen.getByRole('region', { name: 'Compras' }));
+    expect(Boolean(compras.queryByRole('link', { name: 'Motor' }))).toBe(cantidadPedida < 5);
+    expect(within(screen.getByRole('region', { name: 'Agotados' })).getByText('Motor')).toBeTruthy();
+    const pedidos = within(screen.getByRole('region', { name: 'Pedidos' }));
+    expect(pedidos.getByText('Motor')).toBeTruthy();
+    expect(pedidos.getByText(new RegExp(`${cantidadPedida} unidades pedidas`))).toBeTruthy();
+    expect(pedidos.queryByText(/unidades comprometidas/)).toBeNull();
+  });
+
+  it('oculta obsoletos e identifica referencias ausentes sin compra inventada', () => {
     mockState.repuesto.coleccionRepuestos.motor.data.Obsoleta = true;
     const { unmount } = render(<MemoryRouter><RepuestosAComprarSection /></MemoryRouter>);
     fireEvent.click(screen.getByRole('button', { name: /Repuestos a comprar/ }));
-    expect(screen.getByText('Obsoleto: revisar alternativa')).toBeTruthy();
+    expect(screen.queryByRole('link', { name: 'Motor' })).toBeNull();
+    expect(screen.getByText('No hay repuestos pendientes de compra')).toBeTruthy();
     unmount();
     mockState = { ...mockState, repuesto: { ...mockState.repuesto, coleccionRepuestos: {} } };
     desplegar();
     expect(screen.getByText('Repuesto no encontrado (motor)')).toBeTruthy();
-    expect(screen.queryByText('Comprar: 2')).toBeNull();
+    expect(screen.queryByText('Comprar: 3')).toBeNull();
     expect(screen.getByText('Stock: Sin confirmar')).toBeTruthy();
+  });
+
+  it('no muestra obsoletos en ninguna de las tres secciones del inicio', () => {
+    mockState.repuesto.coleccionRepuestos.motor.data.Obsoleta = true;
+    render(
+      <MemoryRouter>
+        <RepuestosAComprarSection />
+        <RepuestosAgotadosSection />
+        <RepuestosPedidosSection />
+      </MemoryRouter>
+    );
+    fireEvent.click(screen.getByRole('button', { name: /Repuestos a comprar/ }));
+    fireEvent.click(screen.getByText(/Repuestos Agotados/));
+    fireEvent.click(screen.getByText(/Repuestos en Pedido/));
+    expect(screen.queryByText('Motor')).toBeNull();
+    expect(screen.getByText('No hay repuestos pendientes de compra')).toBeTruthy();
+    expect(screen.getByText('No hay repuestos agotados')).toBeTruthy();
+    expect(screen.getByText('No hay repuestos en pedido')).toBeTruthy();
   });
 
   it('los reducers distinguen carga, error y recuperacion con colecciones vacias', () => {
