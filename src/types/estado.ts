@@ -19,6 +19,7 @@ export enum Etapas {
     Revisado = 5,
     Presupuestado = 6,
     Aceptado = 7,
+    EsperandoAdelanto = 7.5,
     Rechazado = 8,
     Repuestos = 8.5,    // Estado principal - Esperando repuestos
     Reparado = 9,

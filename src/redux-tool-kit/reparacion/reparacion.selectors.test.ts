@@ -15,7 +15,7 @@ import {
 } from '../../persistencia/persistencia';
 import { EstadoAsignacion, OrigenAsignacion } from '../../types/intervencion';
 import { ReparacionRelacionada, ReparacionType } from '../../types/reparacion';
-import { enviarEmailAvisoAbandonoAsync, enviarDroneEnviadoAsync, enviarReparacionFinalizadaAsync } from '../app/app.actions';
+import { enviarEmailAvisoAbandonoAsync, enviarDroneEnviadoAsync, enviarReparacionFinalizadaAsync, enviarReciboAsync, enviarDroneReparadoAsync, enviarDroneDiagnosticadoAsync } from '../app/app.actions';
 import repuestoReducer, { setRepuestos } from '../repuesto/repuesto.slice';
 import { selectRepuestosArray } from '../repuesto/repuesto.selectors';
 import { RootState } from '../store';
@@ -28,9 +28,15 @@ import {
   enviarAvisoAbandonoAsync,
   getReparacionesPorIntervencionAsync,
 } from './reparacion.actions';
-import reparacionReducer, { setIntervencionesDeReparacionActual, setReparaciones } from './reparacion.slice';
+import reparacionReducer, { setFilter, setIntervencionesDeReparacionActual, setReparaciones } from './reparacion.slice';
 import {
   selectCompromisoPorRepuesto,
+  selectDemandaPorRepuesto,
+  selectContadorEstados,
+  selectReparacionesFiltradas,
+  selectReparacionesConRepuestoFaltante,
+  selectResumenProgreso,
+  selectSeccionesVisibles,
   selectRepuestosDeReparacionActual,
   selectEstadoReparacionesPorIntervencionId,
   selectIntervencionesPresupuestadas,
@@ -295,6 +301,152 @@ const crearReparacion = (id: string): ReparacionType => ({
     DescripcionUsuRep: '',
     UsuarioRep: 'usuario-test',
   },
+});
+
+describe('Esperando adelanto en selectores', () => {
+  const crearStoreEnEstado = (estado: string) => {
+    const store = crearStore();
+    const reparacion = crearReparacion('rep-adelanto');
+    store.dispatch(setReparaciones([{
+      ...reparacion,
+      data: { ...reparacion.data, EstadoRep: estado, AdelantoRep: 5000, PresuFiRep: 20000 },
+    }]));
+    return store;
+  };
+
+  it('ofrece pausa solo desde Aceptado y permite retornar sin comparar etapas', () => {
+    const aceptada = crearStoreEnEstado('Aceptado');
+    const pausada = crearStoreEnEstado('Esperando adelanto');
+    const presupuestada = crearStoreEnEstado('Presupuestado');
+    const repuestos = crearStoreEnEstado('Repuestos');
+
+    expect(selectPuedeAvanzarA('rep-adelanto', 'Esperando adelanto')(aceptada.getState() as any)).toBe(true);
+    expect(selectPuedeAvanzarA('rep-adelanto', 'Aceptado')(pausada.getState() as any)).toBe(true);
+    expect(selectPuedeAvanzarA('rep-adelanto', 'Esperando adelanto')(presupuestada.getState() as any)).toBe(false);
+    expect(selectPuedeAvanzarA('rep-adelanto', 'Esperando adelanto')(repuestos.getState() as any)).toBe(false);
+    expect(selectPuedeAvanzarA('rep-adelanto', 'Repuestos')(pausada.getState() as any)).toBe(false);
+    expect(selectPuedeAvanzarA('rep-adelanto', 'Reparado')(pausada.getState() as any)).toBe(false);
+    expect(selectPuedeAvanzarA('rep-adelanto', 'Cancelado')(pausada.getState() as any)).toBe(true);
+    expect(selectPuedeAvanzarA('rep-adelanto', 'Abandonado')(pausada.getState() as any)).toBe(false);
+  });
+
+  it('mantiene presupuesto y tareas visibles y reconoce el progreso actual', () => {
+    const state = crearStoreEnEstado('Esperando adelanto').getState() as any;
+    expect(selectSeccionesVisibles('rep-adelanto', false)(state)).toEqual(expect.objectContaining({
+      presupuesto: true,
+      reparar: true,
+    }));
+    expect(selectResumenProgreso('rep-adelanto')(state)?.progreso).toContainEqual(expect.objectContaining({
+      nombre: 'Esperando adelanto', esActual: true,
+    }));
+  });
+
+  it('filtra y cuenta separadamente Aceptado, Esperando adelanto y Repuestos', () => {
+    const store = crearStore();
+    store.dispatch(setReparaciones(['Aceptado', 'Esperando adelanto', 'Repuestos'].map(estado => ({
+      ...crearReparacion(estado), data: { ...crearReparacion(estado).data, EstadoRep: estado },
+    }))));
+
+    ['Aceptado', 'Esperando adelanto', 'Repuestos'].forEach(estado => {
+      store.dispatch(setFilter({ search: '', estadosPrioritarios: true, estadosReparacion: [estado] }));
+      expect(selectReparacionesFiltradas(store.getState() as any).map(reparacion => reparacion.id)).toEqual([estado]);
+    });
+    expect(selectContadorEstados(store.getState() as any)).toEqual({
+      Aceptado: 1, 'Esperando adelanto': 1, Repuestos: 1,
+    });
+  });
+
+  it('excluye demanda, compromiso y alerta de faltante durante la pausa', () => {
+    const store = crearStoreEnEstado('Esperando adelanto');
+    const asignacion = {
+      id: 'asignacion-adelanto', reparacionId: 'rep-adelanto', estadoReparacion: 'Esperando adelanto',
+      incluyeRepuestosTaller: true, repuestosSnapshot: [{ partId: 'parte-a', quantity: 2 }],
+    };
+    const state = {
+      ...store.getState(),
+      reparacion: { ...store.getState().reparacion, asignacionesCompromiso: [asignacion] },
+      repuesto: { coleccionRepuestos: { 'parte-a': { data: { StockRepu: 1 } } } },
+      pedidoRepuesto: { coleccionPedidos: {} },
+    } as any;
+    expect(selectDemandaPorRepuesto(state)).toEqual({});
+    expect(selectCompromisoPorRepuesto(state)).toEqual({});
+    expect(selectReparacionesConRepuestoFaltante(state).size).toBe(0);
+
+    const reanudado = {
+      ...state,
+      reparacion: {
+        ...state.reparacion,
+        asignacionesCompromiso: [{ ...asignacion, estadoReparacion: 'Aceptado' }],
+        coleccionReparaciones: { 'rep-adelanto': {
+          ...state.reparacion.coleccionReparaciones['rep-adelanto'],
+          data: { ...state.reparacion.coleccionReparaciones['rep-adelanto'].data, EstadoRep: 'Aceptado' },
+        } },
+      },
+    };
+    expect(selectDemandaPorRepuesto(reanudado)).toEqual({ 'parte-a': 2 });
+    expect(selectCompromisoPorRepuesto(reanudado)).toEqual({ 'parte-a': 1 });
+    expect(selectReparacionesConRepuestoFaltante(reanudado).has('rep-adelanto')).toBe(true);
+  });
+});
+
+describe('Esperando adelanto en el cambio de estado real', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    actualizarEstadoMock.mockResolvedValue(undefined);
+  });
+
+  it('persiste pausa y retorno conservando datos, sin consumir stock ni enviar correos', async () => {
+    const store = crearStore();
+    const reparacion = crearReparacion('rep-adelanto');
+    const data = {
+      ...reparacion.data, EstadoRep: 'Aceptado', AdelantoRep: 5000, PresuFiRep: 20000,
+      FeRecRep: 1000, IntervencionesIds: ['intervencion-1'],
+    };
+    store.dispatch(setReparaciones([{ ...reparacion, data }]));
+
+    for (const nuevoEstado of ['Esperando adelanto', 'Aceptado']) {
+      const resultado = await store.dispatch(cambiarEstadoReparacionAsync({
+        reparacionId: reparacion.id, nuevoEstado, enviarEmail: false,
+      }) as any);
+
+      expect(resultado.meta.requestStatus).toBe('fulfilled');
+      expect(store.getState().reparacion.coleccionReparaciones[reparacion.id].data).toEqual({
+        ...data, EstadoRep: nuevoEstado, PrioridadRep: nuevoEstado === 'Aceptado' ? 1 : 3,
+      });
+      expect(actualizarEstadoMock).toHaveBeenLastCalledWith(reparacion.id, {
+        state: nuevoEstado, priority: nuevoEstado === 'Aceptado' ? 1 : 3, reception_date: 1000,
+      });
+    }
+
+    expect(aplicarMovimientoStockMock).not.toHaveBeenCalled();
+    [enviarReciboAsync, enviarDroneReparadoAsync, enviarDroneDiagnosticadoAsync,
+      enviarDroneEnviadoAsync, enviarReparacionFinalizadaAsync, enviarEmailAvisoAbandonoAsync]
+      .forEach(enviar => expect(enviar).not.toHaveBeenCalled());
+  });
+
+  it.each(['Presupuestado', 'Repuestos', 'Reparar'])('rechaza pausar desde %s sin persistir', async estado => {
+    const store = crearStore();
+    const reparacion = crearReparacion('rep-invalida');
+    store.dispatch(setReparaciones([{ ...reparacion, data: { ...reparacion.data, EstadoRep: estado } }]));
+    const resultado = await store.dispatch(cambiarEstadoReparacionAsync({
+      reparacionId: reparacion.id, nuevoEstado: 'Esperando adelanto', enviarEmail: false,
+    }) as any);
+    expect(resultado.meta.requestStatus).toBe('rejected');
+    expect(actualizarEstadoMock).not.toHaveBeenCalled();
+    expect(aplicarMovimientoStockMock).not.toHaveBeenCalled();
+  });
+
+  it.each(['Repuestos', 'Reparado'])('rechaza saltar de la espera a %s sin consumir stock', async nuevoEstado => {
+    const store = crearStore();
+    const reparacion = crearReparacion('rep-pausada');
+    store.dispatch(setReparaciones([{ ...reparacion, data: { ...reparacion.data, EstadoRep: 'Esperando adelanto' } }]));
+    const resultado = await store.dispatch(cambiarEstadoReparacionAsync({
+      reparacionId: reparacion.id, nuevoEstado, enviarEmail: false,
+    }) as any);
+    expect(resultado.meta.requestStatus).toBe('rejected');
+    expect(actualizarEstadoMock).not.toHaveBeenCalled();
+    expect(aplicarMovimientoStockMock).not.toHaveBeenCalled();
+  });
 });
 
 describe('reparaciones por intervención', () => {

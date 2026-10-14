@@ -31,6 +31,7 @@ export const ReparacionPresupuesto: React.FC<ReparacionPresupuestoProps> = ({
 }) => {
     const dispatch = useAppDispatch();
     const { openModal } = useModal();
+    const [cambiandoEstadoAdelanto, setCambiandoEstadoAdelanto] = React.useState(false);
     
     const reparacion = useAppSelector(state => selectReparacionById(reparacionId)(state));
     const drone = useAppSelector(state => 
@@ -55,6 +56,9 @@ export const ReparacionPresupuesto: React.FC<ReparacionPresupuestoProps> = ({
     );
     const puedeAvanzarACancelado = useAppSelector(state => 
         selectPuedeAvanzarA(reparacionId, 'Cancelado')(state)
+    );
+    const puedeEsperarAdelanto = useAppSelector(state =>
+        selectPuedeAvanzarA(reparacionId, 'Esperando adelanto')(state)
     );
 
     // Bloqueo por estado: una vez presupuestado no se puede modificar el presupuesto
@@ -107,6 +111,27 @@ export const ReparacionPresupuesto: React.FC<ReparacionPresupuestoProps> = ({
     });
 
     if (!seccionVisible || !reparacion) return null;
+
+    const esperandoAdelanto = reparacion.data.EstadoRep === 'Esperando adelanto';
+
+    const cambiarEstadoAdelanto = async (nuevoEstado: 'Aceptado' | 'Esperando adelanto') => {
+        setCambiandoEstadoAdelanto(true);
+        try {
+            await dispatch(cambiarEstadoReparacionAsync({
+                reparacionId,
+                nuevoEstado,
+                enviarEmail: false,
+            })).unwrap();
+        } catch (error: unknown) {
+            openModal({
+                mensaje: (error as { message?: string })?.message || 'No se pudo cambiar el estado de la reparación.',
+                tipo: 'danger',
+                titulo: 'Error',
+            });
+        } finally {
+            setCambiandoEstadoAdelanto(false);
+        }
+    };
 
     const formatPrice = (precio: number): string => {
         return precio.toLocaleString('es-AR', { style: 'currency', currency: 'ARS' });
@@ -219,6 +244,22 @@ export const ReparacionPresupuesto: React.FC<ReparacionPresupuestoProps> = ({
                         value={presuRe.value}
                         disabled={!isAdmin}
                     />
+                    {esperandoAdelanto && (
+                        <div className="alert alert-warning mt-2 mb-0" role="status">
+                            Esperando adelanto
+                        </div>
+                    )}
+                    {isAdmin && puedeEsperarAdelanto && (
+                        <button
+                            type="button"
+                            className="btn btn-warning mt-2"
+                            disabled={cambiandoEstadoAdelanto}
+                            onClick={() => cambiarEstadoAdelanto('Esperando adelanto')}
+                        >
+                            <i className="bi bi-pause-circle me-2" aria-hidden="true"></i>
+                            Esperar adelanto
+                        </button>
+                    )}
                 </div>
                 <div>
                     <label className="form-label">
@@ -305,9 +346,13 @@ export const ReparacionPresupuesto: React.FC<ReparacionPresupuestoProps> = ({
                                         type="button"
                                         className="btn btn-success flex-fill"
                                         style={{ minWidth: '140px' }}
-                                        onClick={avanzarAAceptado}
+                                        disabled={cambiandoEstadoAdelanto}
+                                        onClick={esperandoAdelanto
+                                            ? () => cambiarEstadoAdelanto('Aceptado')
+                                            : avanzarAAceptado}
                                     >
-                                        Presupuesto Aceptado
+                                        {esperandoAdelanto && <i className="bi bi-play-circle me-2" aria-hidden="true"></i>}
+                                        {esperandoAdelanto ? 'Volver a Aceptado' : 'Presupuesto Aceptado'}
                                     </button>
                                 )}
                                 {puedeAvanzarARechazado && (

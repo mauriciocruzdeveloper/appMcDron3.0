@@ -69,7 +69,8 @@ export const ReparacionRepuestos: React.FC<ReparacionRepuestosProps> = ({
 
     const reparacionResuelta = esReparacionResuelta(reparacion.data.EstadoRep as EstadoReparacion);
     const previaAceptacion = esEstadoPrevioAAceptacion(reparacion.data.EstadoRep as EstadoReparacion);
-    const repuestosFaltantes = (reparacionResuelta || previaAceptacion) ? [] : repuestos.filter(r => r.requierePedido);
+    const esperandoAdelanto = reparacion.data.EstadoRep === 'Esperando adelanto';
+    const repuestosFaltantes = (reparacionResuelta || previaAceptacion || esperandoAdelanto) ? [] : repuestos.filter(r => r.requierePedido);
     const repuestosSinPedido = repuestosFaltantes.filter(r => !r.tienePedidoActivo);
     const repuestosConPedido = repuestosFaltantes.filter(r => r.tienePedidoActivo);
 
@@ -143,7 +144,7 @@ export const ReparacionRepuestos: React.FC<ReparacionRepuestosProps> = ({
                     ) : (
                         <div className="d-flex flex-column gap-2">
                             {repuestos.map(r => {
-                                const mostrarFaltante = r.requierePedido && !reparacionResuelta && !previaAceptacion;
+                                const mostrarFaltante = r.requierePedido && !reparacionResuelta && !previaAceptacion && !esperandoAdelanto;
                                 const repuesto = catalogoRepuestos[r.repuestoId];
 
                                 return (
@@ -199,12 +200,14 @@ export const ReparacionRepuestos: React.FC<ReparacionRepuestosProps> = ({
                                                 )}
                                             </div>
                                         ) : (
-                                            <div className={`mt-2 small ${previaAceptacion ? 'text-muted' : 'text-success'}`}>
+                                            <div className={`mt-2 small ${previaAceptacion || esperandoAdelanto ? 'text-muted' : 'text-success'}`}>
                                                 {reparacionResuelta
                                                     ? '✓ Reparación finalizada, repuestos ya utilizados'
-                                                    : previaAceptacion
-                                                        ? 'ℹ️ Presupuesto aún no aceptado, el faltante se validará al aceptar'
-                                                        : '✓ Stock disponible para esta reparación'}
+                                                    : esperandoAdelanto
+                                                        ? 'Esperando adelanto, sin compromiso de repuestos'
+                                                        : previaAceptacion
+                                                            ? 'ℹ️ Presupuesto aún no aceptado, el faltante se validará al aceptar'
+                                                            : '✓ Stock disponible para esta reparación'}
                                             </div>
                                         )}
                                     </RepuestoCard>

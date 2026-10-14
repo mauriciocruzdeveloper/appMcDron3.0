@@ -15,7 +15,7 @@ export const ReparacionProgreso: React.FC<ReparacionProgresoProps> = ({ reparaci
 
     const estadosOrdenados = [
         'Consulta', 'Respondido', 'Transito', 'Recibido', 'Revisado',
-        'Presupuestado', 'Aceptado', 'Repuestos', 'Rechazado', 'Reparado', 
+        'Presupuestado', 'Aceptado', 'Esperando adelanto', 'Repuestos', 'Rechazado', 'Reparado',
         'Diagnosticado', 'Cobrado', 'Enviado', 'Finalizado', 'Abandonado', 'Cancelado'
     ];
 
@@ -47,7 +47,7 @@ export const ReparacionProgreso: React.FC<ReparacionProgresoProps> = ({ reparaci
                                     <div className="me-2">
                                         {completado && !esActual ? '✓' : esActual ? '●' : '○'}
                                     </div>
-                                    <div className="text-truncate">
+                                    <div className="text-break">
                                         {estado.nombre}
                                     </div>
                                 </div>

@@ -96,3 +96,14 @@ test('reparacion finalizada conserva el detalle de repuestos utilizados sin aler
     expect(screen.getByText(/Reparación finalizada, repuestos ya utilizados/)).toBeTruthy();
     expect(screen.queryByText(/Faltante crítico/)).toBeNull();
 });
+
+test('esperando adelanto conserva piezas presupuestadas sin alertas ni afirmar disponibilidad', () => {
+    mockEstadoReparacion = 'Esperando adelanto';
+    render(<ReparacionRepuestos reparacionId="rep-1" isAdmin />);
+    expect(screen.getByRole('article', { name: 'Repuesto Motor' })).toBeTruthy();
+    expect(screen.getByText('Requerido por: Cambiar motor')).toBeTruthy();
+    expect(screen.getByText('Esperando adelanto, sin compromiso de repuestos')).toBeTruthy();
+    expect(screen.queryByText(/Faltante crítico/)).toBeNull();
+    expect(screen.queryByRole('alert')).toBeNull();
+    expect(screen.queryByText(/Stock disponible para esta reparación/)).toBeNull();
+});
