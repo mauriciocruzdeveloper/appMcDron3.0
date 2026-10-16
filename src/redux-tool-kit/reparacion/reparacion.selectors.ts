@@ -1011,6 +1011,16 @@ export const selectPuedeAvanzarA = (reparacionId: string, nombreEstadoDestino: s
       if (!estadoDestino) return false;
 
       if (
+        nombreEstadoDestino === 'Esperando adelanto' ||
+        (estadoActual.nombre === 'Esperando adelanto' && nombreEstadoDestino === 'Aceptado')
+      ) {
+        return esTransicionValida(
+          estadoActual.nombre as EstadoReparacion,
+          nombreEstadoDestino as EstadoReparacion
+        );
+      }
+
+      if (
         nombreEstadoDestino === 'Enviado' &&
         !reparacion.data.SeguimientoEntregaRep?.trim()
       ) {
@@ -1153,7 +1163,7 @@ export const selectResumenProgreso = (reparacionId: string) =>
       
       const estadosOrdenados = [
         'Consulta', 'Respondido', 'Transito', 'Recibido', 'Revisado',
-        'Presupuestado', 'Aceptado', 'Repuestos', 'Rechazado', 'Reparado', 
+        'Presupuestado', 'Aceptado', 'Esperando adelanto', 'Repuestos', 'Rechazado', 'Reparado',
         'Diagnosticado', 'Cobrado', 'Enviado', 'Finalizado', 'Abandonado', 'Cancelado'
       ];
 
@@ -1268,6 +1278,7 @@ export const selectReparacionesConRepuestoFaltante = createSelector(
       // No alertar si la reparación ya fue resuelta o aún no fue aceptada (repuestos no relevantes todavía)
       if (esReparacionResuelta(reparacion.data.EstadoRep as EstadoReparacion)) return;
       if (esEstadoPrevioAAceptacion(reparacion.data.EstadoRep as EstadoReparacion)) return;
+      if (reparacion.data.EstadoRep === 'Esperando adelanto') return;
 
       const demandaPorRepuesto = demandaPorReparacion.get(reparacion.id) || new Map<string, number>();
 

@@ -11,6 +11,7 @@ export type EstadoReparacion =
   | "Revisado"
   | "Presupuestado"
   | "Aceptado"
+  | "Esperando adelanto"
   | "Repuestos"      // ← NUEVO: Estado para esperar repuestos
   | "Rechazado"
   | "Reparado"
@@ -40,7 +41,8 @@ export const transicionesPermitidas: Record<EstadoReparacion, EstadoReparacion[]
   
   // Aceptado puede pausar (Repuestos), resolver (Reparado) o cancelar definitivamente (Cancelado).
   // El rechazo del presupuesto corresponde al flujo previo a la aceptación (Presupuestado -> Rechazado).
-  Aceptado: ["Repuestos", "Reparado", "Cancelado"],
+  Aceptado: ["Esperando adelanto", "Repuestos", "Reparado", "Cancelado"],
+  "Esperando adelanto": ["Aceptado", "Cancelado", "Abandonado"],
   
   // Repuestos puede reanudar o cerrar definitivamente por cancelación/abandono.
   Repuestos: ["Aceptado", "Cancelado", "Abandonado"],
@@ -224,6 +226,14 @@ export const getMensajeTransicion = (
   estadoActual: EstadoReparacion,
   estadoNuevo: EstadoReparacion
 ): string => {
+  if (estadoActual === "Aceptado" && estadoNuevo === "Esperando adelanto") {
+    return "La reparación quedará pausada hasta que se cobre el adelanto";
+  }
+
+  if (estadoActual === "Esperando adelanto" && estadoNuevo === "Aceptado") {
+    return "Se retomará la reparación aceptada";
+  }
+
   // Transiciones especiales con Repuestos
   if (estadoActual === "Aceptado" && estadoNuevo === "Repuestos") {
     return "⚠️ La reparación quedará pausada hasta que lleguen los repuestos";

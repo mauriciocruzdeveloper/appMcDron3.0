@@ -4,8 +4,11 @@ import { useAppSelector } from 'redux-tool-kit/hooks/useAppSelector';
 import { selectEstadoComprasRepuestos, selectRepuestosAComprar } from 'redux-tool-kit/repuesto/repuesto.selectors';
 import { selectReparacionesDictionary } from 'redux-tool-kit/reparacion/reparacion.selectors';
 import { selectColeccionModelosDrone } from 'redux-tool-kit/modeloDrone/modeloDrone.selectors';
+import { useHistory } from 'hooks/useHistory';
+import RepuestoCard from '../RepuestoCard.component';
 
 const RepuestosAComprarSection = (): React.ReactElement => {
+  const history = useHistory();
   const [expanded, setExpanded] = React.useState(false);
   const filas = useAppSelector(selectRepuestosAComprar);
   const carga = useAppSelector(selectEstadoComprasRepuestos);
@@ -48,24 +51,20 @@ const RepuestosAComprarSection = (): React.ReactElement => {
                 const nombresModelos = Array.from(new Set(
                   (repuestos[fila.repuestoId]?.data.ModelosDroneIds || [])
                     .map(modeloId => modelos[modeloId]?.data.NombreModelo)
-                    .filter(Boolean)
-                )).join(', ');
-                const nombreMostrado = nombresModelos ? `${fila.nombre} - ${nombresModelos}` : fila.nombre;
+                    .filter((nombre): nombre is string => nombre !== undefined)
+                ));
                 return (
-                <li key={fila.repuestoId} className='list-group-item' style={{ overflowWrap: 'anywhere' }}>
-                  <div className='d-flex justify-content-between align-items-start flex-wrap gap-2'>
-                    {fila.stock === null ? (
-                      <strong>{nombreMostrado}</strong>
-                    ) : (
-                      <Link className='fw-semibold' to={`/inicio/repuestos/${fila.repuestoId}`}>{nombreMostrado}</Link>
-                    )}
-                    {fila.cantidadAComprar !== null && <span className='badge bg-danger'>Comprar: {fila.cantidadAComprar}</span>}
-                  </div>
-                  {fila.proveedor && <div className='small text-muted mt-1'>{fila.proveedor}</div>}
-                  {fila.obsoleto && <span className='badge bg-warning text-dark mt-1'>Obsoleto: revisar alternativa</span>}
+                <li key={fila.repuestoId} style={{ overflowWrap: 'anywhere' }}>
+                  <RepuestoCard
+                    repuesto={repuestos[fila.repuestoId] || { id: fila.repuestoId, data: { NombreRepu: fila.nombre } }}
+                    modelosNombres={nombresModelos}
+                    estado={fila.stock === null ? 'Sin confirmar' : 'Agotado'}
+                    cantidadPedida={fila.cantidadPedida}
+                    onClick={fila.stock === null ? undefined : () => history.push(`/inicio/repuestos/${fila.repuestoId}`)}
+                  >
+                  {fila.cantidadAComprar !== null && <span className='badge bg-danger'>Comprar: {fila.cantidadAComprar}</span>}
                   <div className='small mt-2 d-flex flex-wrap gap-2'>
                     <span>Necesarios: {fila.cantidadNecesaria}</span>
-                    <span>Stock: {fila.stock === null ? 'Sin confirmar' : fila.stock}</span>
                     <span>Pedidos: {fila.cantidadPedida}</span>
                   </div>
                   {fila.stock === null && <p className='small text-danger mt-1 mb-0'>No se pudo confirmar la cantidad a comprar</p>}
@@ -84,6 +83,7 @@ const RepuestosAComprarSection = (): React.ReactElement => {
                       );
                     })}
                   </ul>
+                  </RepuestoCard>
                 </li>
                 );
               })}

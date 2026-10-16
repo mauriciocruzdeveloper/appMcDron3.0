@@ -8,7 +8,7 @@ import { ComboBox } from "../common";
 
 const ESTADOS_REPARACION = [
   "Consulta", "Respondido", "Transito", "Recibido", "Revisado",
-  "Presupuestado", "Aceptado", "Repuestos", "Rechazado", "Reparado",
+  "Presupuestado", "Aceptado", "Esperando adelanto", "Repuestos", "Rechazado", "Reparado",
   "Diagnosticado", "Cobrado", "Enviado", "Finalizado", "Abandonado", "Cancelado",
 ];
 

@@ -50,6 +50,13 @@ export const estados: Estados = {
     color: "#007aff",
     etapa: 7,
   },
+  "Esperando adelanto": {
+    nombre: "Esperando adelanto",
+    prioridad: 3,
+    accion: "Esperar pago del adelanto",
+    color: "#b77900",
+    etapa: 7.5,
+  },
   Rechazado: {
     nombre: "Rechazado",
     prioridad: 1,

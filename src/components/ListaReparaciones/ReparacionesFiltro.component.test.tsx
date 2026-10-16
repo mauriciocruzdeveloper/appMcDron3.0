@@ -1,6 +1,7 @@
 import '@testing-library/jest-dom';
 import React from 'react';
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
+import { setFilter } from 'redux-tool-kit/reparacion';
 import { Provider } from 'react-redux';
 import { configureStore } from '@reduxjs/toolkit';
 import ReparacionesFiltro from './ReparacionesFiltro.component';
@@ -33,6 +34,23 @@ const createStore = () => configureStore({
 });
 
 describe('ReparacionesFiltro', () => {
+  it('ofrece un filtro independiente para Esperando adelanto', () => {
+    const store = createStore();
+    const dispatch = jest.spyOn(store, 'dispatch');
+    render(
+      <Provider store={store}>
+        <ReparacionesFiltro selectedModelo="" onModeloChange={jest.fn()} onReset={jest.fn()} />
+      </Provider>
+    );
+
+    fireEvent.click(screen.getByText('Filtros'));
+    fireEvent.click(screen.getByRole('button', { name: 'Esperando adelanto' }));
+
+    expect(dispatch).toHaveBeenCalledWith(setFilter({
+      estadosPrioritarios: false, search: '', estadosReparacion: ['Reparado', 'Esperando adelanto'],
+    }));
+  });
+
   it('muestra el botón de restaurar filtros aunque el panel esté cerrado', () => {
     const onReset = jest.fn();
     const store = createStore();

@@ -17,6 +17,9 @@ import { ESTADOS_PEDIDO } from "../../../types/pedidoRepuesto";
 import { esReparacionResuelta, esEstadoPrevioAAceptacion, EstadoReparacion } from "../../../usecases/estadosReparacion";
 import TextareaAutosize from "react-textarea-autosize";
 import { ReparacionSeccionColapsable } from "./ReparacionSeccionColapsable";
+import RepuestoCard from "../../RepuestoCard.component";
+import { selectColeccionRepuestos } from "../../../redux-tool-kit/repuesto/repuesto.selectors";
+import { selectColeccionModelosDrone } from "../../../redux-tool-kit/modeloDrone/modeloDrone.selectors";
 
 interface ReparacionRepuestosProps {
     reparacionId: string;
@@ -41,6 +44,8 @@ export const ReparacionRepuestos: React.FC<ReparacionRepuestosProps> = ({
         selectPuedeAvanzarA(reparacionId, 'Aceptado')(state)
     );
     const repuestos = useAppSelector(selectRepuestosDeReparacionActual);
+    const catalogoRepuestos = useAppSelector(selectColeccionRepuestos);
+    const modelosDrone = useAppSelector(selectColeccionModelosDrone);
 
     const obsRepuestos = useDebouncedField({
         reparacionId,
@@ -64,7 +69,8 @@ export const ReparacionRepuestos: React.FC<ReparacionRepuestosProps> = ({
 
     const reparacionResuelta = esReparacionResuelta(reparacion.data.EstadoRep as EstadoReparacion);
     const previaAceptacion = esEstadoPrevioAAceptacion(reparacion.data.EstadoRep as EstadoReparacion);
-    const repuestosFaltantes = (reparacionResuelta || previaAceptacion) ? [] : repuestos.filter(r => r.requierePedido);
+    const esperandoAdelanto = reparacion.data.EstadoRep === 'Esperando adelanto';
+    const repuestosFaltantes = (reparacionResuelta || previaAceptacion || esperandoAdelanto) ? [] : repuestos.filter(r => r.requierePedido);
     const repuestosSinPedido = repuestosFaltantes.filter(r => !r.tienePedidoActivo);
     const repuestosConPedido = repuestosFaltantes.filter(r => r.tienePedidoActivo);
 
@@ -138,33 +144,24 @@ export const ReparacionRepuestos: React.FC<ReparacionRepuestosProps> = ({
                     ) : (
                         <div className="d-flex flex-column gap-2">
                             {repuestos.map(r => {
-                                const mostrarFaltante = r.requierePedido && !reparacionResuelta && !previaAceptacion;
-                                const borderColor = reparacionResuelta || previaAceptacion || r.stockLibre > 0
-                                    ? '#198754'
-                                    : r.tienePedidoActivo
-                                        ? '#ffc107'
-                                        : '#dc3545';
+                                const mostrarFaltante = r.requierePedido && !reparacionResuelta && !previaAceptacion && !esperandoAdelanto;
+                                const repuesto = catalogoRepuestos[r.repuestoId];
 
                                 return (
-                                    <div
+                                    <RepuestoCard
                                         key={r.repuestoId}
-                                        className="border rounded p-2"
-                                        style={{ borderLeftWidth: 4, borderLeftColor: borderColor, borderLeftStyle: 'solid' }}
+                                        repuesto={repuesto || { id: r.repuestoId, data: { NombreRepu: r.nombre } }}
+                                        modelosNombres={(repuesto?.data.ModelosDroneIds || []).map(id => modelosDrone[id]?.data.NombreModelo || id)}
+                                        estado={r.estadoStock}
+                                        estadoColor={r.estadoColor}
+                                        onClick={repuesto ? () => history.push(`/inicio/repuestos/${r.repuestoId}`) : undefined}
                                     >
-                                        <div className="d-flex justify-content-between align-items-start flex-wrap gap-1">
-                                            <div>
-                                                <span className="fw-semibold">{r.nombre}</span>
-                                                <span className={`badge bg-${r.estadoColor} ms-2`}>
-                                                    {r.estadoStock}
-                                                </span>
-                                                <div className="text-muted small mt-1">
-                                                    Requerido por: {r.intervencionesNombre.join(', ')}
-                                                </div>
-                                            </div>
+                                        <div className="text-muted small">
+                                            Requerido por: {r.intervencionesNombre.join(', ')}
                                         </div>
 
                                         <div className="small text-muted mt-1">
-                                            Stock: {r.stockRepu} | Demanda total: {r.demandaTotalRepuesto} | Comprometido: {r.unidadesPedidas} | Libre: {r.stockLibre}
+                                            Demanda total: {r.demandaTotalRepuesto} | Libre: {r.stockLibre}
                                         </div>
 
                                         {mostrarFaltante ? (
@@ -203,15 +200,17 @@ export const ReparacionRepuestos: React.FC<ReparacionRepuestosProps> = ({
                                                 )}
                                             </div>
                                         ) : (
-                                            <div className={`mt-2 small ${previaAceptacion ? 'text-muted' : 'text-success'}`}>
+                                            <div className={`mt-2 small ${previaAceptacion || esperandoAdelanto ? 'text-muted' : 'text-success'}`}>
                                                 {reparacionResuelta
                                                     ? '✓ Reparación finalizada, repuestos ya utilizados'
-                                                    : previaAceptacion
-                                                        ? 'ℹ️ Presupuesto aún no aceptado, el faltante se validará al aceptar'
-                                                        : '✓ Stock disponible para esta reparación'}
+                                                    : esperandoAdelanto
+                                                        ? 'Esperando adelanto, sin compromiso de repuestos'
+                                                        : previaAceptacion
+                                                            ? 'ℹ️ Presupuesto aún no aceptado, el faltante se validará al aceptar'
+                                                            : '✓ Stock disponible para esta reparación'}
                                             </div>
                                         )}
-                                    </div>
+                                    </RepuestoCard>
                                 );
                             })}
                         </div>

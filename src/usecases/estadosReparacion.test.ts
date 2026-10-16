@@ -13,8 +13,51 @@ import {
   requiereObservaciones,
   getMensajeTransicion
 } from './estadosReparacion';
+import { estados } from '../datos/estados';
+import { Etapas } from '../types/estado';
 
 describe('estadosReparacion - Transiciones de Estado', () => {
+  describe('Esperando adelanto', () => {
+    test('permite pausar y reanudar repetidamente desde Aceptado', () => {
+      for (let ciclo = 0; ciclo < 3; ciclo++) {
+        expect(esTransicionValida('Aceptado', 'Esperando adelanto')).toBe(true);
+        expect(esTransicionValida('Esperando adelanto', 'Aceptado')).toBe(true);
+      }
+    });
+
+    test('solo permite entrar desde Aceptado', () => {
+      Object.keys(transicionesPermitidas)
+        .filter(estado => estado !== 'Aceptado')
+        .forEach(estado => {
+          expect(esTransicionValida(estado as EstadoReparacion, 'Esperando adelanto')).toBe(false);
+        });
+    });
+
+    test('solo permite reanudar o cerrar como Repuestos', () => {
+      expect(getEstadosPermitidos('Esperando adelanto')).toEqual(['Aceptado', 'Cancelado', 'Abandonado']);
+      expect(esTransicionValida('Esperando adelanto', 'Repuestos')).toBe(false);
+      expect(esTransicionValida('Esperando adelanto', 'Reparado')).toBe(false);
+      expect(esTransicionValida('Esperando adelanto', 'Presupuestado')).toBe(false);
+    });
+
+    test('no obliga a esperar adelanto para reparar o esperar repuestos', () => {
+      expect(esTransicionValida('Aceptado', 'Repuestos')).toBe(true);
+      expect(esTransicionValida('Aceptado', 'Reparado')).toBe(true);
+    });
+
+    test('registra un estado principal de espera sin observaciones obligatorias', () => {
+      expect(esEstadoTerminal('Esperando adelanto')).toBe(false);
+      expect(esEstadoLegacy('Esperando adelanto')).toBe(false);
+      expect(requiereObservaciones('Esperando adelanto')).toBe(false);
+      expect(estados['Esperando adelanto'].etapa).toBe(Etapas.EsperandoAdelanto);
+      expect(estados['Esperando adelanto'].accion).toBe('Esperar pago del adelanto');
+    });
+
+    test('describe la pausa y el retorno sin afirmar que se registro un pago', () => {
+      expect(getMensajeTransicion('Aceptado', 'Esperando adelanto')).toContain('pausada');
+      expect(getMensajeTransicion('Esperando adelanto', 'Aceptado')).toContain('retomará');
+    });
+  });
   
   // ============================================================================
   // TESTS: Estado "Repuestos" - Transiciones Bidireccionales
@@ -334,6 +377,7 @@ describe('estadosReparacion - Transiciones de Estado', () => {
       'Revisado',
       'Presupuestado',
       'Aceptado',
+      'Esperando adelanto',
       'Repuestos',
       'Rechazado',
       'Reparado',

@@ -59,16 +59,18 @@ describe('lista de compras del inicio', () => {
     expect(screen.queryByText('Comprar: 3')).toBeNull();
   });
 
-  it('muestra el modelo junto al repuesto separado por un guion', () => {
+  it('muestra el modelo en el espacio comun de la tarjeta', () => {
     mockState.repuesto.coleccionRepuestos.motor.data.ModelosDroneIds = ['mini3'];
     desplegar();
-    expect(screen.getByRole('link', { name: 'Motor - Mini 3' }).getAttribute('href')).toBe('/inicio/repuestos/motor');
+    expect(screen.getByRole('link', { name: 'Motor' }).getAttribute('href')).toBe('/inicio/repuestos/motor');
+    expect(screen.getByText('Modelos de drones: Mini 3')).toBeTruthy();
   });
 
   it('muestra varios modelos sin duplicados e ignora referencias no cargadas', () => {
     mockState.repuesto.coleccionRepuestos.motor.data.ModelosDroneIds = ['mini3', 'mini4', 'mini3', 'ausente'];
     desplegar();
-    expect(screen.getByRole('link', { name: 'Motor - Mini 3, Mini 4 Pro' })).toBeTruthy();
+    expect(screen.getByRole('link', { name: 'Motor' })).toBeTruthy();
+    expect(screen.getByText('Modelos de drones: Mini 3, Mini 4 Pro')).toBeTruthy();
   });
 
   it('conserva el nombre sin guion si no hay modelos disponibles', () => {

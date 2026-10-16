@@ -178,6 +178,13 @@ Component → Action Creator → Async Logic → Dispatch → Reducer → State 
    - **Estados principales**: Consulta → Respondido → Transito → Recibido → Revisado → Presupuestado → Aceptado → **Repuestos** ⇄ Aceptado → Reparado → Diagnosticado → Cobrado → Enviado → Finalizado
    - **Estados terminales**: Rechazado, Cancelado, Abandonado
    - **Estados legacy**: Reparar, Entregado, Venta, Liquidación
+   - **Estado "Esperando adelanto" (Etapa 7.5)**:
+     - Pausa opcional de una reparacion ya aceptada: Aceptado -> Esperando adelanto -> Aceptado.
+     - Solo se ingresa desde Aceptado; el retorno es manual y no registra un cobro.
+     - Prioridad 3 (espera); filtro propio separado de Aceptado y Repuestos.
+     - No aporta demanda ni compromiso de repuestos y no consume stock al pausar o reanudar.
+     - Permite Cancelado o Abandonado con las condiciones de cierre existentes.
+     - No exige adelanto para avanzar desde Aceptado a Repuestos o Reparado.
    - **Estado "Repuestos" (Etapa 8.5)**:
      - **Propósito**: Pausar reparaciones cuando faltan repuestos necesarios
      - **Transición bidireccional**: Aceptado ⇄ Repuestos (permite volver a Aceptado cuando llegan los repuestos)
