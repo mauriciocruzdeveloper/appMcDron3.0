@@ -1,5 +1,11 @@
-import { construirPayloadDroneAbandonado, construirPayloadDroneEnviado, construirPayloadReparacionFinalizada } from './app.actions';
+import { construirPayloadDroneAbandonado, construirPayloadDroneEnviado, construirPayloadReparacionFinalizada, enviarDroneDiagnosticadoAsync } from './app.actions';
 import { ReparacionType } from '../../types/reparacion';
+import { callEndpoint } from '../../utils/utils';
+
+jest.mock('../../utils/utils', () => ({
+  ...jest.requireActual('../../utils/utils'),
+  callEndpoint: jest.fn(),
+}));
 
 const crearReparacion = (seguimiento: string): ReparacionType => ({
   id: 'repair-id',
@@ -73,5 +79,43 @@ describe('construirPayloadDroneAbandonado', () => {
       email: 'contacto@example.com',
     }));
     expect(payload.fecha_notificacion).toBeTruthy();
+  });
+});
+
+describe('email de drone diagnosticado', () => {
+  beforeEach(() => {
+    (callEndpoint as jest.Mock).mockResolvedValue({});
+  });
+
+  it.each([undefined, '', '   ', '\n\t '])('remite al presupuesto cuando el informe es %p', async informe => {
+    const reparacion = crearReparacion('');
+    reparacion.data.DescripcionTecRep = informe;
+    const resultado = await enviarDroneDiagnosticadoAsync(reparacion)(
+      jest.fn(),
+      () => ({ usuario: { coleccionUsuarios: {} } }) as any,
+      undefined,
+    );
+
+    expect(resultado.meta.requestStatus).toBe('fulfilled');
+    expect(callEndpoint).toHaveBeenLastCalledWith(expect.objectContaining({
+      body: expect.objectContaining({
+        diagnostico: 'El diagnóstico se encuentra detallado en el presupuesto enviado.',
+      }),
+    }));
+  });
+
+  it('conserva el informe del tecnico cuando hay texto', async () => {
+    const reparacion = crearReparacion('');
+    const informe = '  Motor dañado.\nSe recomienda reemplazarlo.  ';
+    reparacion.data.DescripcionTecRep = informe;
+    await enviarDroneDiagnosticadoAsync(reparacion)(
+      jest.fn(),
+      () => ({ usuario: { coleccionUsuarios: {} } }) as any,
+      undefined,
+    );
+
+    expect(callEndpoint).toHaveBeenLastCalledWith(expect.objectContaining({
+      body: expect.objectContaining({ diagnostico: informe }),
+    }));
   });
 });

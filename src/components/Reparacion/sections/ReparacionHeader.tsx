@@ -51,9 +51,33 @@ export const ReparacionHeader: React.FC<ReparacionHeaderProps> = ({ reparacionId
                 )}
 
                 <div>Nro: {getPublicIdDisplay(reparacion)}</div>
-                <div>Drone: {drone?.data?.Nombre || 'Sin nombre'}</div>
+                <div className="d-flex flex-wrap align-items-center gap-2">
+                    <span>Drone: {drone?.data?.Nombre || 'Sin nombre'}</span>
+                    {reparacion.data.DroneId && (
+                        <Link
+                            to={`/inicio/drones/${reparacion.data.DroneId}`}
+                            className="btn btn-sm btn-outline-secondary bg-bluemcdron text-white"
+                            title="Ver drone"
+                            aria-label="Ver drone"
+                        >
+                            <i className="bi bi-eye" aria-hidden="true"></i>
+                        </Link>
+                    )}
+                </div>
                 <div>Modelo: {modeloDrone?.data?.NombreModelo || reparacion.data.ModeloDroneNameRep || 'Modelo no disponible'}</div>
-                <div>Cliente: {usuario?.data?.NombreUsu}{usuario?.data?.ApellidoUsu ? ` ${usuario?.data?.ApellidoUsu}` : ''}</div>
+                <div className="d-flex flex-wrap align-items-center gap-2">
+                    <span>Cliente: {usuario?.data?.NombreUsu}{usuario?.data?.ApellidoUsu ? ` ${usuario?.data?.ApellidoUsu}` : ''}</span>
+                    {usuario?.id && (
+                        <Link
+                            to={`/inicio/usuarios/${usuario.id}`}
+                            className="btn btn-sm btn-outline-secondary bg-bluemcdron text-white"
+                            title="Ver cliente"
+                            aria-label="Ver cliente"
+                        >
+                            <i className="bi bi-eye" aria-hidden="true"></i>
+                        </Link>
+                    )}
+                </div>
 
                 {(reparacionPadre || ampliaciones.length > 0) && (
                     <div className="mt-2 pt-2 border-top">

@@ -1,7 +1,6 @@
 import React from "react";
 import { useAppSelector } from "../../../redux-tool-kit/hooks/useAppSelector";
 import { useAppDispatch } from "../../../redux-tool-kit/hooks/useAppDispatch";
-import { useHistory } from "../../../hooks/useHistory";
 import { useDebouncedField } from "../../../hooks/useDebouncedField";
 import { 
     selectReparacionById, 
@@ -35,7 +34,6 @@ export const ReparacionConsulta: React.FC<ReparacionConsultaProps> = ({
     isAdmin 
 }) => {
     const dispatch = useAppDispatch();
-    const history = useHistory();
     
     const reparacion = useAppSelector(state => selectReparacionById(reparacionId)(state));
     const usuario = useAppSelector(state => 
@@ -91,16 +89,6 @@ export const ReparacionConsulta: React.FC<ReparacionConsultaProps> = ({
         }));
     };
 
-    const handleGoToUser = () => {
-        if (!usuario?.id) return;
-        history.push(`/inicio/usuarios/${usuario.id}`);
-    };
-
-    const handleGoToDrone = () => {
-        if (!reparacion.data.DroneId) return;
-        history.push(`/inicio/drones/${reparacion.data.DroneId}`);
-    };
-
     const handleSendEmail = () => {
         if (!reparacion || !usuario) return;
         enviarEmailVacio(reparacion, usuario);
@@ -138,25 +126,6 @@ export const ReparacionConsulta: React.FC<ReparacionConsultaProps> = ({
 
     return (
         <ReparacionSeccionColapsable id="seccion-consulta" titulo="CONSULTA">
-                <div className="d-flex w-100 justify-content-between align-items-center gap-2">
-                    <div className="d-flex gap-2">
-                        <button
-                            type="button"
-                            className="btn btn-outline-secondary bg-bluemcdron text-white"
-                            onClick={handleGoToUser}
-                        >
-                            Ir al Cliente
-                        </button>
-                        <button
-                            type="button"
-                            className="btn btn-outline-secondary bg-bluemcdron text-white"
-                            onClick={handleGoToDrone}
-                            disabled={!reparacion.data.DroneId}
-                        >
-                            Ir al Drone
-                        </button>
-                    </div>
-                </div>
                 <div>
                     <label className="form-label">Fecha de Cosulta</label>
                     <input
