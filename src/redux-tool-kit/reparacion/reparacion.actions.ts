@@ -102,6 +102,7 @@ const guardarReparacionPersistencia = async (reparacion: ReparacionType): Promis
 const calcularCostosAsignacionIntervencion = async (
   intervencionId: string,
   origen: OrigenAsignacion = OrigenAsignacion.PRESUPUESTADA,
+  incluirRepuesto = true,
 ) => {
   const { getIntervencionPersistencia } = await import('../../persistencia/persistencia');
   const intervencion = await getIntervencionPersistencia(intervencionId);
@@ -111,20 +112,23 @@ const calcularCostosAsignacionIntervencion = async (
   }
 
   const partesRelacionadas = (intervencion.data._partsRelations || []) as RelacionRepuestoIntervencion[];
-  const partsCost = partesRelacionadas.reduce((sum: number, rel) => {
-    const precio = rel.part?.price || 0;
-    const cantidad = Number(rel.quantity) || 1;
-    return sum + (precio * cantidad);
-  }, 0);
-
-  const laborCost = intervencion.data.PrecioManoObra || 0;
-  const totalCost = laborCost + partsCost;
   const repuestosSnapshot: RepuestoAsignacionSnapshot[] = partesRelacionadas
     .filter(rel => rel.part_id)
     .map(rel => ({
       partId: String(rel.part_id),
       quantity: Number(rel.quantity) || 1,
     }));
+  const incluyeRepuestosTaller = Boolean(incluirRepuesto) && repuestosSnapshot.length > 0;
+  const partsCost = incluyeRepuestosTaller
+    ? partesRelacionadas.reduce((sum: number, rel) => {
+        const precio = rel.part?.price || 0;
+        const cantidad = Number(rel.quantity) || 1;
+        return sum + (precio * cantidad);
+      }, 0)
+    : 0;
+
+  const laborCost = intervencion.data.PrecioManoObra || 0;
+  const totalCost = laborCost + partsCost;
 
   return {
     laborCost,
@@ -133,7 +137,7 @@ const calcularCostosAsignacionIntervencion = async (
     estadoInicial: ESTADO_INICIAL_ASIGNACION_INTERVENCION,
     origen,
     repuestosSnapshot,
-    incluyeRepuestosTaller: repuestosSnapshot.length > 0,
+    incluyeRepuestosTaller,
   };
 };
 
@@ -561,10 +565,11 @@ export const getReparacionesPorIntervencionAsync = createAsyncThunk(
 // Agregar Intervención a una Reparación
 export const agregarIntervencionAReparacionAsync = createAsyncThunk(
   'app/agregarIntervencionAReparacion',
-  async ({ reparacionId, intervencionId, origen = OrigenAsignacion.PRESUPUESTADA }: {
+  async ({ reparacionId, intervencionId, origen = OrigenAsignacion.PRESUPUESTADA, incluirRepuesto = true }: {
     reparacionId: string,
     intervencionId: string,
     origen?: OrigenAsignacion,
+    incluirRepuesto?: boolean,
   }, { dispatch, getState }) => {
     try {
       dispatch(isFetchingStart());
@@ -579,7 +584,7 @@ export const agregarIntervencionAReparacionAsync = createAsyncThunk(
 
       // Calcular costos y validar reglas de negocio (intervención obsoleta) ANTES
       // de persistir. La capa de persistencia solo escribe los valores ya resueltos.
-      const costos = await calcularCostosAsignacionIntervencion(intervencionId, origen);
+      const costos = await calcularCostosAsignacionIntervencion(intervencionId, origen, incluirRepuesto);
       const resultado = await agregarIntervencionAReparacionPersistencia(reparacionId, intervencionId, costos);
 
       if (!resultado.success) {
@@ -762,7 +767,7 @@ export const actualizarFotosAsignacionAsync = createAsyncThunk(
   },
 );
 
-// Actualizar si se incluye el repuesto en el presupuesto de una asignación.
+// Actualizar si se incluye el repuesto del taller en una asignación.
 // Toda la lógica de cálculo se resuelve aquí con datos del store; la persistencia solo escribe.
 export const actualizarIncluirRepuestoAsignacionAsync = createAsyncThunk(
   'reparacion/actualizarIncluirRepuestoAsignacion',
@@ -772,18 +777,38 @@ export const actualizarIncluirRepuestoAsignacionAsync = createAsyncThunk(
     const asignacion = asignaciones.find(a => a.id === asignacionId);
     if (!asignacion) throw new Error('Asignación no encontrada en el store');
 
-    // Calcular parts_cost: si se incluye, tomar el precio del catálogo actual (cantidad = 1)
-    let parts_cost = 0;
-    if (incluirRepuesto) {
-      const intervencion = state.intervencion.coleccionIntervenciones[intervencionId];
-      const repuestoId = intervencion?.data?.RepuestosIds?.[0];
-      if (repuestoId) {
-        parts_cost = state.repuesto.coleccionRepuestos[repuestoId]?.data?.PrecioRepu || 0;
+    const reparacionId = asignacion.data.reparacionId;
+
+    if (asignacion.data.origen === OrigenAsignacion.ADICIONAL) {
+      if (asignacion.data.estado === EstadoAsignacion.COMPLETADA) {
+        throw new Error('No se puede modificar el uso de repuestos de una intervención adicional completada');
+      }
+      const reparacion = state.reparacion.coleccionReparaciones[reparacionId];
+      if (reparacion && reparacion.data.EstadoRep !== 'Aceptado' && reparacion.data.EstadoRep !== 'Repuestos') {
+        throw new Error('Solo se puede modificar el uso de repuestos de intervenciones adicionales en reparaciones aceptadas o esperando repuestos');
       }
     }
 
+    const intervencion = state.intervencion?.coleccionIntervenciones?.[intervencionId];
+    const tieneSnapshot = Array.isArray(asignacion.data.repuestosSnapshot);
+    const repuestosBase: RepuestoAsignacionSnapshot[] = tieneSnapshot
+      ? (asignacion.data.repuestosSnapshot || [])
+      : (intervencion?.data?.RepuestosIds || []).map(partId => ({ partId, quantity: 1 }));
+    const tieneRepuestos = tieneSnapshot
+      ? repuestosBase.length > 0
+      : (intervencion ? repuestosBase.length > 0 : true);
+    const incluyeRepuestosTaller = Boolean(incluirRepuesto) && tieneRepuestos;
+
+    let parts_cost = 0;
+    if (incluyeRepuestosTaller) {
+      parts_cost = repuestosBase.reduce((sum, item) => {
+        const precio = state.repuesto?.coleccionRepuestos?.[item.partId]?.data?.PrecioRepu || 0;
+        const cantidad = Number(item.quantity) || 1;
+        return sum + (precio * cantidad);
+      }, 0);
+    }
+
     const total_cost = (asignacion.data.PrecioManoObra || 0) + parts_cost;
-    const reparacionId = asignacion.data.reparacionId;
 
     const nuevoPrecioReparacion = asignacion.data.origen === OrigenAsignacion.ADICIONAL
       ? null
@@ -800,7 +825,7 @@ export const actualizarIncluirRepuestoAsignacionAsync = createAsyncThunk(
       parts_cost,
       total_cost,
       nuevoPrecioReparacion,
-      incluirRepuesto,
+      incluyeRepuestosTaller,
     );
 
     if (!resultado.success) throw new Error(resultado.error);

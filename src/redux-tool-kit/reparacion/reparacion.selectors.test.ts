@@ -1213,4 +1213,185 @@ describe('intervenciones adicionales', () => {
       false,
     );
   });
+
+  it('permite agregar una intervención adicional sin repuesto del taller conservando snapshot y sin consumir stock', async () => {
+    getIntervencionMock.mockResolvedValue({
+      id: 'intervencion-extra',
+      data: {
+        PrecioManoObra: 100,
+        _partsRelations: [
+          { part_id: 'parte-a', quantity: 2, part: { price: 50 } },
+        ],
+      },
+    });
+    agregarIntervencionMock.mockResolvedValue({ success: true, data: { id: 'asignacion-sin-repuesto' } });
+    getIntervencionesMock.mockResolvedValue([{
+      id: 'asignacion-sin-repuesto',
+      data: {
+        reparacionId: 'rep-adicional',
+        intervencionId: 'intervencion-extra',
+        estado: EstadoAsignacion.COMPLETADA,
+        origen: OrigenAsignacion.ADICIONAL,
+        incluyeRepuestosTaller: false,
+        repuestosSnapshot: [{ partId: 'parte-a', quantity: 2 }],
+        PrecioManoObra: 100,
+        PrecioPiezas: 0,
+        PrecioTotal: 100,
+      },
+    }]);
+
+    const store = crearStore();
+    store.dispatch(setReparaciones([{
+      ...crearReparacion('rep-adicional'),
+      data: { ...crearReparacion('rep-adicional').data, EstadoRep: 'Aceptado' },
+    }]));
+    store.dispatch(setRepuestos([{
+      id: 'parte-a',
+      data: {
+        NombreRepu: 'parte-a',
+        DescripcionRepu: '',
+        ModelosDroneIds: [],
+        ProveedorRepu: '',
+        PrecioRepu: 50,
+        StockRepu: 10,
+        UnidadesComprometidas: 0,
+      },
+    }]));
+
+    const alta = await store.dispatch(agregarIntervencionAReparacionAsync({
+      reparacionId: 'rep-adicional',
+      intervencionId: 'intervencion-extra',
+      origen: OrigenAsignacion.ADICIONAL,
+      incluirRepuesto: false,
+    }) as any);
+
+    expect(alta.meta.requestStatus).toBe('fulfilled');
+    expect(agregarIntervencionMock).toHaveBeenCalledWith(
+      'rep-adicional',
+      'intervencion-extra',
+      expect.objectContaining({
+        laborCost: 100,
+        partsCost: 0,
+        totalCost: 100,
+        origen: OrigenAsignacion.ADICIONAL,
+        incluyeRepuestosTaller: false,
+        repuestosSnapshot: [{ partId: 'parte-a', quantity: 2 }],
+      }),
+    );
+    expect(guardarReparacionMock).not.toHaveBeenCalled();
+
+    actualizarEstadoMock.mockResolvedValue({
+      ...crearReparacion('rep-adicional'),
+      data: { ...crearReparacion('rep-adicional').data, EstadoRep: 'Reparado' },
+    });
+
+    const cierre = await store.dispatch(cambiarEstadoReparacionAsync({
+      reparacionId: 'rep-adicional',
+      nuevoEstado: 'Reparado',
+      enviarEmail: false,
+    }) as any);
+
+    expect(cierre.meta.requestStatus).toBe('fulfilled');
+    expect(aplicarMovimientoStockMock).not.toHaveBeenCalled();
+  });
+
+  it('recalcula parts_cost con cantidades del snapshot al reactivar repuesto en adicional pendiente', async () => {
+    const store = crearStore();
+    store.dispatch(setReparaciones([{
+      ...crearReparacion('rep-adicional'),
+      data: { ...crearReparacion('rep-adicional').data, EstadoRep: 'Aceptado' },
+    }]));
+    store.dispatch(setRepuestos([
+      {
+        id: 'parte-a',
+        data: {
+          NombreRepu: 'parte-a',
+          DescripcionRepu: '',
+          ModelosDroneIds: [],
+          ProveedorRepu: '',
+          PrecioRepu: 50,
+          StockRepu: 10,
+          UnidadesComprometidas: 0,
+        },
+      },
+      {
+        id: 'parte-b',
+        data: {
+          NombreRepu: 'parte-b',
+          DescripcionRepu: '',
+          ModelosDroneIds: [],
+          ProveedorRepu: '',
+          PrecioRepu: 25,
+          StockRepu: 10,
+          UnidadesComprometidas: 0,
+        },
+      },
+    ]));
+    const asignacionAdicional = {
+      id: 'asignacion-extra',
+      data: {
+        reparacionId: 'rep-adicional',
+        intervencionId: 'intervencion-extra',
+        estado: EstadoAsignacion.PENDIENTE,
+        origen: OrigenAsignacion.ADICIONAL,
+        incluyeRepuestosTaller: false,
+        repuestosSnapshot: [
+          { partId: 'parte-a', quantity: 2 },
+          { partId: 'parte-b', quantity: 1 },
+        ],
+        PrecioManoObra: 100,
+        PrecioPiezas: 0,
+        PrecioTotal: 100,
+      },
+    };
+    store.dispatch(setIntervencionesDeReparacionActual([asignacionAdicional]));
+    getIntervencionesMock.mockResolvedValue([asignacionAdicional]);
+
+    const resultado = await store.dispatch(actualizarIncluirRepuestoAsignacionAsync({
+      asignacionId: 'asignacion-extra',
+      intervencionId: 'intervencion-extra',
+      incluirRepuesto: true,
+    }) as any);
+
+    expect(resultado.meta.requestStatus).toBe('fulfilled');
+    expect(actualizarPreciosPiezasMock).toHaveBeenCalledWith(
+      'asignacion-extra',
+      'rep-adicional',
+      125,
+      225,
+      null,
+      true,
+    );
+  });
+
+  it('rechaza cambiar inclusión de repuestos en una adicional completada', async () => {
+    const store = crearStore();
+    store.dispatch(setReparaciones([{
+      ...crearReparacion('rep-adicional'),
+      data: { ...crearReparacion('rep-adicional').data, EstadoRep: 'Aceptado' },
+    }]));
+    store.dispatch(setIntervencionesDeReparacionActual([{
+      id: 'asignacion-extra',
+      data: {
+        reparacionId: 'rep-adicional',
+        intervencionId: 'intervencion-extra',
+        estado: EstadoAsignacion.COMPLETADA,
+        origen: OrigenAsignacion.ADICIONAL,
+        incluyeRepuestosTaller: true,
+        repuestosSnapshot: [{ partId: 'parte-a', quantity: 1 }],
+        PrecioManoObra: 100,
+        PrecioPiezas: 50,
+        PrecioTotal: 150,
+      },
+    }]));
+
+    const resultado = await store.dispatch(actualizarIncluirRepuestoAsignacionAsync({
+      asignacionId: 'asignacion-extra',
+      intervencionId: 'intervencion-extra',
+      incluirRepuesto: false,
+    }) as any);
+
+    expect(resultado.meta.requestStatus).toBe('rejected');
+    expect(actualizarPreciosPiezasMock).not.toHaveBeenCalled();
+  });
 });

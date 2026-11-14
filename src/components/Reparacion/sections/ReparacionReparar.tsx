@@ -11,6 +11,7 @@ import {
 } from "../../../redux-tool-kit/reparacion";
 import { 
     agregarIntervencionAReparacionAsync,
+    actualizarIncluirRepuestoAsignacionAsync,
     cambiarEstadoReparacionAsync,
     eliminarIntervencionDeReparacionAsync,
     getIntervencionesPorReparacionAsync,
@@ -61,6 +62,12 @@ export const ReparacionReparar: React.FC<ReparacionRepararProps> = ({
     const catalogoIntervenciones = useAppSelector(selectColeccionIntervenciones);
     const intervencionesAsignables = useAppSelector(selectIntervencionesAsignables);
     const [intervencionAdicionalSeleccionada, setIntervencionAdicionalSeleccionada] = useState<string | null>(null);
+    const [incluirRepuestoAdicional, setIncluirRepuestoAdicional] = useState<boolean>(true);
+
+    const intervencionAdicionalCatalogo = intervencionAdicionalSeleccionada
+        ? catalogoIntervenciones[intervencionAdicionalSeleccionada]
+        : undefined;
+    const intervencionAdicionalTieneRepuestos = (intervencionAdicionalCatalogo?.data.RepuestosIds?.length || 0) > 0;
 
     // Cargar asignaciones al montar
     useEffect(() => {
@@ -189,11 +196,33 @@ export const ReparacionReparar: React.FC<ReparacionRepararProps> = ({
                 reparacionId,
                 intervencionId: intervencionAdicionalSeleccionada,
                 origen: OrigenAsignacion.ADICIONAL,
+                incluirRepuesto: intervencionAdicionalTieneRepuestos ? incluirRepuestoAdicional : false,
             })).unwrap();
             setIntervencionAdicionalSeleccionada(null);
+            setIncluirRepuestoAdicional(true);
         } catch (error: unknown) {
             openModal({
                 mensaje: (error as { message?: string })?.message || "No se pudo agregar la intervención adicional.",
+                tipo: "danger",
+                titulo: "Error",
+            });
+        }
+    };
+
+    const handleCambiarIncluirRepuesto = async (
+        asignacionId: string,
+        intervencionId: string,
+        incluirRepuesto: boolean,
+    ) => {
+        try {
+            await dispatch(actualizarIncluirRepuestoAsignacionAsync({
+                asignacionId,
+                intervencionId,
+                incluirRepuesto,
+            })).unwrap();
+        } catch (error: unknown) {
+            openModal({
+                mensaje: (error as { message?: string })?.message || "No se pudo actualizar el uso de repuestos.",
                 tipo: "danger",
                 titulo: "Error",
             });
@@ -290,7 +319,10 @@ export const ReparacionReparar: React.FC<ReparacionRepararProps> = ({
                                             label: intervencion.data.NombreInt,
                                         }))}
                                     value={intervencionAdicionalSeleccionada || ''}
-                                    onChange={(selected) => setIntervencionAdicionalSeleccionada(selected?.value || null)}
+                                    onChange={(selected) => {
+                                        setIntervencionAdicionalSeleccionada(selected?.value || null);
+                                        setIncluirRepuestoAdicional(true);
+                                    }}
                                     placeholder="Seleccionar una intervención..."
                                     noOptionsMessage="No se encontraron intervenciones"
                                     isClearable
@@ -308,6 +340,20 @@ export const ReparacionReparar: React.FC<ReparacionRepararProps> = ({
                                 </button>
                             </div>
                         </div>
+                        {intervencionAdicionalTieneRepuestos && (
+                            <div className="form-check mt-2">
+                                <input
+                                    className="form-check-input"
+                                    type="checkbox"
+                                    id="incluir-repuesto-adicional"
+                                    checked={incluirRepuestoAdicional}
+                                    onChange={(e) => setIncluirRepuestoAdicional(e.target.checked)}
+                                />
+                                <label className="form-check-label small" htmlFor="incluir-repuesto-adicional">
+                                    Usar repuesto del taller
+                                </label>
+                            </div>
+                        )}
                     </div>
                 )}
                 
@@ -325,49 +371,85 @@ export const ReparacionReparar: React.FC<ReparacionRepararProps> = ({
                                 .map((asignacion) => {
                                 const intervencion = catalogoIntervenciones[asignacion.data.intervencionId];
                                 const estaCompletada = asignacion.data.estado === EstadoAsignacion.COMPLETADA;
+                                const tieneRepuestosAsociados = Array.isArray(asignacion.data.repuestosSnapshot)
+                                    ? asignacion.data.repuestosSnapshot.length > 0
+                                    : (intervencion?.data?.RepuestosIds?.length || 0) > 0;
+                                const incluyeRepuestos = asignacion.data.incluyeRepuestosTaller ?? ((asignacion.data.PrecioPiezas || 0) > 0);
+                                const puedeEditarAdicionalPendiente =
+                                    isAdmin &&
+                                    (estadoActual === 'Aceptado' || estadoActual === 'Repuestos') &&
+                                    asignacion.data.origen === OrigenAsignacion.ADICIONAL &&
+                                    asignacion.data.estado === EstadoAsignacion.PENDIENTE;
                                 
                                 return (
                                     <div 
                                         key={asignacion.id} 
-                                        className="list-group-item d-flex align-items-center py-2"
+                                        className="list-group-item py-2"
                                     >
-                                        <div className="form-check flex-grow-1">
-                                            <input
-                                                className="form-check-input"
-                                                type="checkbox"
-                                                checked={estaCompletada}
-                                                onChange={() => handleCambiarEstado(asignacion.id, asignacion.data.estado)}
-                                                id={`tarea-${asignacion.id}`}
-                                                disabled={!isAdmin}
-                                                style={{ cursor: isAdmin ? 'pointer' : 'default' }}
-                                            />
-                                            <label 
-                                                className={`form-check-label ms-2 ${estaCompletada ? 'text-decoration-line-through text-muted' : ''}`}
-                                                htmlFor={`tarea-${asignacion.id}`}
-                                                style={{ cursor: isAdmin ? 'pointer' : 'default' }}
-                                            >
-                                                {intervencion?.data?.NombreInt || 'Intervención'}
-                                                {asignacion.data.origen === OrigenAsignacion.ADICIONAL && (
-                                                    <span className="badge bg-info text-dark ms-2">Adicional</span>
-                                                )}
-                                            </label>
-                                        </div>
-                                        {isAdmin &&
-                                            asignacion.data.origen === OrigenAsignacion.ADICIONAL &&
-                                            asignacion.data.estado === EstadoAsignacion.PENDIENTE && (
-                                                <button
-                                                    type="button"
-                                                    className="btn btn-sm btn-outline-danger ms-2"
-                                                    title="Eliminar intervención adicional"
-                                                    aria-label={`Eliminar ${intervencion?.data?.NombreInt || 'intervención adicional'}`}
-                                                    onClick={() => handleEliminarIntervencionAdicional(
-                                                        asignacion.id,
-                                                        intervencion?.data?.NombreInt || 'Intervención adicional',
-                                                    )}
+                                        <div className="d-flex align-items-center">
+                                            <div className="form-check flex-grow-1">
+                                                <input
+                                                    className="form-check-input"
+                                                    type="checkbox"
+                                                    checked={estaCompletada}
+                                                    onChange={() => handleCambiarEstado(asignacion.id, asignacion.data.estado)}
+                                                    id={`tarea-${asignacion.id}`}
+                                                    disabled={!isAdmin}
+                                                    style={{ cursor: isAdmin ? 'pointer' : 'default' }}
+                                                />
+                                                <label 
+                                                    className={`form-check-label ms-2 ${estaCompletada ? 'text-decoration-line-through text-muted' : ''}`}
+                                                    htmlFor={`tarea-${asignacion.id}`}
+                                                    style={{ cursor: isAdmin ? 'pointer' : 'default' }}
                                                 >
-                                                    <i className="bi bi-trash"></i>
-                                                </button>
-                                            )}
+                                                    {intervencion?.data?.NombreInt || 'Intervención'}
+                                                    {asignacion.data.origen === OrigenAsignacion.ADICIONAL && (
+                                                        <span className="badge bg-info text-dark ms-2">Adicional</span>
+                                                    )}
+                                                    {tieneRepuestosAsociados && !incluyeRepuestos && (
+                                                        <span className="badge bg-secondary ms-2">Sin repuesto taller</span>
+                                                    )}
+                                                </label>
+                                            </div>
+                                            {isAdmin &&
+                                                asignacion.data.origen === OrigenAsignacion.ADICIONAL &&
+                                                asignacion.data.estado === EstadoAsignacion.PENDIENTE && (
+                                                    <button
+                                                        type="button"
+                                                        className="btn btn-sm btn-outline-danger ms-2"
+                                                        title="Eliminar intervención adicional"
+                                                        aria-label={`Eliminar ${intervencion?.data?.NombreInt || 'intervención adicional'}`}
+                                                        onClick={() => handleEliminarIntervencionAdicional(
+                                                            asignacion.id,
+                                                            intervencion?.data?.NombreInt || 'Intervención adicional',
+                                                        )}
+                                                    >
+                                                        <i className="bi bi-trash"></i>
+                                                    </button>
+                                                )}
+                                        </div>
+                                        {puedeEditarAdicionalPendiente && tieneRepuestosAsociados && (
+                                            <div className="form-check form-switch mt-1 ms-4">
+                                                <input
+                                                    className="form-check-input"
+                                                    type="checkbox"
+                                                    role="switch"
+                                                    id={`usar-repuesto-${asignacion.id}`}
+                                                    checked={incluyeRepuestos}
+                                                    onChange={(e) => handleCambiarIncluirRepuesto(
+                                                        asignacion.id,
+                                                        asignacion.data.intervencionId,
+                                                        e.target.checked,
+                                                    )}
+                                                />
+                                                <label
+                                                    className="form-check-label small text-muted"
+                                                    htmlFor={`usar-repuesto-${asignacion.id}`}
+                                                >
+                                                    Usar repuesto del taller
+                                                </label>
+                                            </div>
+                                        )}
                                     </div>
                                 );
                             })}
