@@ -1,4 +1,5 @@
 import React from "react";
+import { Link } from "react-router-dom";
 import { useAppSelector } from "../../../redux-tool-kit/hooks/useAppSelector";
 import { useAppDispatch } from "../../../redux-tool-kit/hooks/useAppDispatch";
 import { useDebouncedField } from "../../../hooks/useDebouncedField";
@@ -9,6 +10,7 @@ import {
     selectIntervencionesPresupuestadas,
     selectTotalIntervenciones,
     selectPrecioManualDifiere,
+    selectRelacionPresupuestoModelo,
 } from "../../../redux-tool-kit/reparacion";
 import { 
     cambiarEstadoReparacionAsync,
@@ -85,6 +87,10 @@ export const ReparacionPresupuesto: React.FC<ReparacionPresupuestoProps> = ({
         valorInicial: reparacion?.data.PresuFiRep || ""
     });
 
+    const relacionPresupuestoModelo = useAppSelector(state =>
+        selectRelacionPresupuestoModelo(reparacionId, presuFi.value)(state)
+    );
+
     // Actualizar PresuFiRep cuando cambia totalIntervenciones (por agregar/quitar
     // asignaciones o marcar/desmarcar checkbox de repuesto), SOLO si el admin no
     // modificó el total manualmente. Se detecta comparando el valor actual del campo
@@ -131,6 +137,14 @@ export const ReparacionPresupuesto: React.FC<ReparacionPresupuestoProps> = ({
         } finally {
             setCambiandoEstadoAdelanto(false);
         }
+    };
+
+    const formatPercentage = (porcentaje: number): string => {
+        const redondeado = Math.round(porcentaje * 10) / 10;
+        return `${redondeado.toLocaleString('es-AR', {
+            minimumFractionDigits: Number.isInteger(redondeado) ? 0 : 1,
+            maximumFractionDigits: 1,
+        })}%`;
     };
 
     const formatPrice = (precio: number): string => {
@@ -276,10 +290,35 @@ export const ReparacionPresupuesto: React.FC<ReparacionPresupuestoProps> = ({
                         title="El precio se calcula automáticamente en base a las intervenciones, o puede ingresar un valor manual"
                     />
                     {isAdmin && intervencionesAplicadas.length > 0 && (
-                        <small className="form-text text-muted">
+                        <small className="form-text text-muted d-block">
                             {Math.abs(totalIntervenciones - (Number(presuFi.value) || 0)) > 0.01
                                 ? `El precio actual difiere del total de intervenciones (${formatPrice(totalIntervenciones)})`
                                 : `Precio calculado a partir de las intervenciones: ${formatPrice(totalIntervenciones)}`}
+                        </small>
+                    )}
+                    {isAdmin && relacionPresupuestoModelo && (
+                        <small className="form-text text-muted d-block" data-testid="presupuesto-porcentaje-modelo">
+                            {relacionPresupuestoModelo.estado === 'disponible' && (
+                                <>
+                                    {`Representa el ${formatPercentage(relacionPresupuestoModelo.porcentaje ?? 0)} del valor del modelo ${relacionPresupuestoModelo.nombreModelo} (${formatPrice(relacionPresupuestoModelo.precioReferencia ?? 0)})`}
+                                </>
+                            )}
+                            {relacionPresupuestoModelo.estado === 'sin_precio_modelo' && (
+                                <>
+                                    {`El modelo ${relacionPresupuestoModelo.nombreModelo} no tiene precio de referencia cargado.`}
+                                    {relacionPresupuestoModelo.modeloId && (
+                                        <Link
+                                            to={`/inicio/modelos-drone/${relacionPresupuestoModelo.modeloId}`}
+                                            className="ms-1"
+                                        >
+                                            Cargar precio
+                                        </Link>
+                                    )}
+                                </>
+                            )}
+                            {relacionPresupuestoModelo.estado === 'sin_modelo' && (
+                                <>Sin modelo de drone asociado en el catálogo para calcular porcentaje.</>
+                            )}
                         </small>
                     )}
                 </div>

@@ -1,6 +1,8 @@
 import { createSelector } from '@reduxjs/toolkit';
 import { RootState } from '../store';
 import { ReparacionRelacionada, ReparacionType, Reparaciones } from '../../types/reparacion';
+import { Drones } from '../../types/drone';
+import { ModeloDrone, ModelosDrone } from '../../types/modeloDrone';
 import { Filtro } from '../../types/Filtro';
 import { AsignacionCompromiso, AsignacionIntervencion, EstadoAsignacion, OrigenAsignacion } from '../../types/intervencion';
 import { estados } from '../../datos/estados';
@@ -16,6 +18,8 @@ import { puedeConfirmarAbandono, puedeEnviarAvisoAbandono } from '../../usecases
  */
 const ESTADOS_NO_PRIORITARIOS = ["Entregado", "Liquidación", "Abandonado", "Respondido", "Finalizado", "Cancelado"];
 const ASIGNACIONES_COMPROMISO_VACIAS: AsignacionCompromiso[] = [];
+const DRONES_VACIOS: Drones = {};
+const MODELOS_DRONE_VACIOS: ModelosDrone = {};
 
 /**
  * Normaliza un string removiendo tildes y diacríticos
@@ -1147,6 +1151,133 @@ export const selectPrecioManualDifiere = (reparacionId: string) =>
       if (!reparacion) return false;
       const precioFinal = reparacion.data.PresuFiRep || 0;
       return precioFinal !== totalIntervenciones && totalIntervenciones > 0;
+    }
+  );
+
+export type EstadoRelacionPresupuestoModelo =
+  | 'disponible'
+  | 'sin_precio_modelo'
+  | 'sin_modelo';
+
+export interface RelacionPresupuestoModelo {
+  estado: EstadoRelacionPresupuestoModelo;
+  modeloId: string | null;
+  nombreModelo: string | null;
+  precioReferencia: number | null;
+  montoPresupuesto: number;
+  porcentaje: number | null;
+}
+
+const normalizeModelKey = (valor: string | undefined): string =>
+  normalizeString(valor).trim().replace(/\s+/g, ' ');
+
+/**
+ * Resuelve el ModeloDrone asociado a una reparación priorizando DroneId -> ModeloDroneId
+ * y usando como respaldo coincidencia única por nombre normalizado con ModeloDroneNameRep.
+ */
+export const resolverModeloDroneDeReparacion = (
+  reparacion: ReparacionType,
+  drones: Drones,
+  modelos: ModelosDrone,
+): ModeloDrone | null => {
+  if (reparacion.data.DroneId) {
+    const drone = drones[reparacion.data.DroneId];
+    if (drone?.data.ModeloDroneId && modelos[drone.data.ModeloDroneId]) {
+      return modelos[drone.data.ModeloDroneId];
+    }
+  }
+
+  const claveBuscada = normalizeModelKey(reparacion.data.ModeloDroneNameRep);
+  if (!claveBuscada) return null;
+
+  const listaModelos = Object.values(modelos);
+  const coincidenciasNombre = listaModelos.filter(
+    modelo => normalizeModelKey(modelo.data.NombreModelo) === claveBuscada
+  );
+  if (coincidenciasNombre.length === 1) {
+    return coincidenciasNombre[0];
+  }
+  if (coincidenciasNombre.length > 1) {
+    return null;
+  }
+
+  const coincidenciasConFabricante = listaModelos.filter(modelo => {
+    const conGuion = normalizeModelKey(`${modelo.data.NombreModelo} - ${modelo.data.Fabricante}`);
+    const conPrefijo = normalizeModelKey(`${modelo.data.Fabricante} ${modelo.data.NombreModelo}`);
+    return conGuion === claveBuscada || conPrefijo === claveBuscada;
+  });
+
+  return coincidenciasConFabricante.length === 1 ? coincidenciasConFabricante[0] : null;
+};
+
+/**
+ * Calcula la relación porcentual entre el monto presupuestado y el precio de referencia
+ * del modelo de drone asociado.
+ */
+export const calcularRelacionPresupuestoModelo = (
+  modelo: ModeloDrone | null,
+  montoPresupuestoRaw: number | string | null | undefined,
+  nombreFallback?: string,
+): RelacionPresupuestoModelo => {
+  const numeroMonto = Number(montoPresupuestoRaw);
+  const montoPresupuesto = Number.isFinite(numeroMonto) && numeroMonto > 0 ? numeroMonto : 0;
+
+  if (!modelo) {
+    return {
+      estado: 'sin_modelo',
+      modeloId: null,
+      nombreModelo: nombreFallback?.trim() || null,
+      precioReferencia: null,
+      montoPresupuesto,
+      porcentaje: null,
+    };
+  }
+
+  const precioReferencia = Number(modelo.data.PrecioReferencia) || 0;
+  if (precioReferencia <= 0) {
+    return {
+      estado: 'sin_precio_modelo',
+      modeloId: modelo.id,
+      nombreModelo: modelo.data.NombreModelo,
+      precioReferencia: null,
+      montoPresupuesto,
+      porcentaje: null,
+    };
+  }
+
+  return {
+    estado: 'disponible',
+    modeloId: modelo.id,
+    nombreModelo: modelo.data.NombreModelo,
+    precioReferencia,
+    montoPresupuesto,
+    porcentaje: (montoPresupuesto / precioReferencia) * 100,
+  };
+};
+
+/**
+ * Selector que retorna el porcentaje del presupuesto respecto al valor del modelo de drone
+ * o el motivo por el cual no está disponible.
+ */
+export const selectRelacionPresupuestoModelo = (
+  reparacionId: string,
+  montoOverride?: number | string,
+) =>
+  createSelector(
+    [
+      (state: RootState) => selectReparacionById(reparacionId)(state),
+      (state: RootState) => state.drone?.coleccionDrones || DRONES_VACIOS,
+      (state: RootState) => state.modeloDrone?.coleccionModelosDrone || MODELOS_DRONE_VACIOS,
+    ],
+    (reparacion, drones, modelos): RelacionPresupuestoModelo | null => {
+      if (!reparacion) return null;
+      const modelo = resolverModeloDroneDeReparacion(reparacion, drones, modelos);
+      const montoBase = montoOverride !== undefined ? montoOverride : reparacion.data.PresuFiRep;
+      return calcularRelacionPresupuestoModelo(
+        modelo,
+        montoBase,
+        reparacion.data.ModeloDroneNameRep,
+      );
     }
   );
 

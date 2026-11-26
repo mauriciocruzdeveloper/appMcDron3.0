@@ -3,6 +3,7 @@ import React from 'react';
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import { configureStore } from '@reduxjs/toolkit';
 import { Provider } from 'react-redux';
+import { MemoryRouter } from 'react-router-dom';
 import { ReparacionPresupuesto } from './ReparacionPresupuesto';
 import { cambiarEstadoReparacionAsync } from '../../../redux-tool-kit/reparacion/reparacion.actions';
 
@@ -33,22 +34,43 @@ jest.mock('./ReparacionSeccionColapsable', () => ({
     ReparacionSeccionColapsable: ({ children }: { children: React.ReactNode }) => <section>{children}</section>,
 }));
 
-const renderPresupuesto = (estado: string, isAdmin = true) => {
+interface RenderPresupuestoOptions {
+    isAdmin?: boolean;
+    reparacionExtra?: Record<string, unknown>;
+    drones?: Record<string, unknown>;
+    modelosDrone?: Record<string, unknown>;
+}
+
+const renderPresupuesto = (
+    estado: string,
+    isAdminOrOptions: boolean | RenderPresupuestoOptions = true,
+) => {
+    const options: RenderPresupuestoOptions = typeof isAdminOrOptions === 'boolean'
+        ? { isAdmin: isAdminOrOptions }
+        : isAdminOrOptions;
+    const isAdmin = options.isAdmin ?? true;
+
     const store = configureStore({
         reducer: {
             reparacion: (state = {
                 coleccionReparaciones: { 'rep-1': { id: 'rep-1', data: {
-                    EstadoRep: estado, AdelantoRep: 5000, PresuFiRep: 20000,
+                    EstadoRep: estado,
+                    AdelantoRep: 5000,
+                    PresuFiRep: 20000,
+                    ...(options.reparacionExtra || {}),
                 } } },
                 intervencionesDeReparacionActual: [],
             }) => state,
-            drone: (state = { coleccionDrones: {} }) => state,
+            drone: (state = { coleccionDrones: options.drones || {} }) => state,
+            modeloDrone: (state = { coleccionModelosDrone: options.modelosDrone || {} }) => state,
         },
     });
     return render(
-        <Provider store={store}>
-            <ReparacionPresupuesto reparacionId="rep-1" isAdmin={isAdmin} />
-        </Provider>
+        <MemoryRouter>
+            <Provider store={store}>
+                <ReparacionPresupuesto reparacionId="rep-1" isAdmin={isAdmin} />
+            </Provider>
+        </MemoryRouter>
     );
 };
 
@@ -101,5 +123,91 @@ describe('Presupuesto - Esperando adelanto', () => {
             tipo: 'danger', mensaje: 'Error al guardar',
         }));
         expect(screen.getByRole('button', { name: 'Esperar adelanto' })).toBeEnabled();
+    });
+});
+
+describe('Presupuesto - Porcentaje respecto al modelo de drone', () => {
+    it('muestra el porcentaje y valor de referencia cuando el modelo tiene precio cargado', () => {
+        renderPresupuesto('Revisado', {
+            reparacionExtra: { DroneId: 'drone-1', PresuFiRep: 150000 },
+            drones: {
+                'drone-1': { id: 'drone-1', data: { ModeloDroneId: 'mod-1', Nombre: 'Mavic' } },
+            },
+            modelosDrone: {
+                'mod-1': {
+                    id: 'mod-1',
+                    data: {
+                        NombreModelo: 'Mavic 3',
+                        Fabricante: 'DJI',
+                        DescripcionModelo: '',
+                        PrecioReferencia: 1000000,
+                        code: 'MAV3',
+                    },
+                },
+            },
+        });
+
+        const leyenda = screen.getByTestId('presupuesto-porcentaje-modelo');
+        expect(leyenda).toHaveTextContent('Representa el 15% del valor del modelo Mavic 3');
+    });
+
+    it('muestra leyenda y enlace para cargar precio cuando el modelo no tiene PrecioReferencia', () => {
+        renderPresupuesto('Revisado', {
+            reparacionExtra: { DroneId: 'drone-1', PresuFiRep: 150000 },
+            drones: {
+                'drone-1': { id: 'drone-1', data: { ModeloDroneId: 'mod-2', Nombre: 'Mini' } },
+            },
+            modelosDrone: {
+                'mod-2': {
+                    id: 'mod-2',
+                    data: {
+                        NombreModelo: 'Mini 4 Pro',
+                        Fabricante: 'DJI',
+                        DescripcionModelo: '',
+                        PrecioReferencia: 0,
+                        code: 'M4P',
+                    },
+                },
+            },
+        });
+
+        const leyenda = screen.getByTestId('presupuesto-porcentaje-modelo');
+        expect(leyenda).toHaveTextContent('El modelo Mini 4 Pro no tiene precio de referencia cargado.');
+        const link = screen.getByRole('link', { name: 'Cargar precio' });
+        expect(link).toHaveAttribute('href', '/inicio/modelos-drone/mod-2');
+    });
+
+    it('muestra leyenda cuando no hay modelo asociado en catálogo', () => {
+        renderPresupuesto('Revisado', {
+            reparacionExtra: { ModeloDroneNameRep: 'Drone casero' },
+        });
+
+        expect(screen.getByTestId('presupuesto-porcentaje-modelo')).toHaveTextContent(
+            'Sin modelo de drone asociado en el catálogo para calcular porcentaje.'
+        );
+    });
+
+    it('no muestra porcentaje ni leyenda a usuarios no administradores', () => {
+        renderPresupuesto('Presupuestado', {
+            isAdmin: false,
+            reparacionExtra: { DroneId: 'drone-1', PresuFiRep: 150000 },
+            drones: {
+                'drone-1': { id: 'drone-1', data: { ModeloDroneId: 'mod-1', Nombre: 'Mavic' } },
+            },
+            modelosDrone: {
+                'mod-1': {
+                    id: 'mod-1',
+                    data: {
+                        NombreModelo: 'Mavic 3',
+                        Fabricante: 'DJI',
+                        DescripcionModelo: '',
+                        PrecioReferencia: 1000000,
+                        code: 'MAV3',
+                    },
+                },
+            },
+        });
+
+        expect(screen.queryByTestId('presupuesto-porcentaje-modelo')).not.toBeInTheDocument();
     });
 });

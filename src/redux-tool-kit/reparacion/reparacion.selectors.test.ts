@@ -41,6 +41,9 @@ import {
   selectEstadoReparacionesPorIntervencionId,
   selectIntervencionesPresupuestadas,
   selectPuedeAvanzarA,
+  selectRelacionPresupuestoModelo,
+  calcularRelacionPresupuestoModelo,
+  resolverModeloDroneDeReparacion,
   selectReparacionesListasParaAvisoAbandono,
   selectReparacionesPorIntervencionId,
   selectTotalIntervenciones,
@@ -1393,5 +1396,144 @@ describe('intervenciones adicionales', () => {
 
     expect(resultado.meta.requestStatus).toBe('rejected');
     expect(actualizarPreciosPiezasMock).not.toHaveBeenCalled();
+  });
+});
+
+describe('selectRelacionPresupuestoModelo', () => {
+  const modelos = {
+    'mod-1': {
+      id: 'mod-1',
+      data: {
+        NombreModelo: 'Mavic 3',
+        Fabricante: 'DJI',
+        DescripcionModelo: '',
+        PrecioReferencia: 2000000,
+        code: 'MAV3',
+      },
+    },
+    'mod-sin-precio': {
+      id: 'mod-sin-precio',
+      data: {
+        NombreModelo: 'Mini 4 Pro',
+        Fabricante: 'DJI',
+        DescripcionModelo: '',
+        PrecioReferencia: 0,
+        code: 'M4P',
+      },
+    },
+  };
+
+  it('calcula el porcentaje usando el modelo vinculado por DroneId', () => {
+    const state = {
+      reparacion: {
+        coleccionReparaciones: {
+          'rep-1': {
+            ...crearReparacion('rep-1'),
+            data: {
+              ...crearReparacion('rep-1').data,
+              DroneId: 'drone-1',
+              PresuFiRep: 300000,
+            },
+          },
+        },
+      },
+      drone: {
+        coleccionDrones: {
+          'drone-1': {
+            id: 'drone-1',
+            data: {
+              ModeloDroneId: 'mod-1',
+              Propietario: 'usuario-test',
+              NumeroSerie: 'SN1',
+              Nombre: 'Drone 1',
+            },
+          },
+        },
+      },
+      modeloDrone: { coleccionModelosDrone: modelos },
+    } as unknown as RootState;
+
+    expect(selectRelacionPresupuestoModelo('rep-1')(state)).toEqual({
+      estado: 'disponible',
+      modeloId: 'mod-1',
+      nombreModelo: 'Mavic 3',
+      precioReferencia: 2000000,
+      montoPresupuesto: 300000,
+      porcentaje: 15,
+    });
+  });
+
+  it('permite evaluar un monto editado en vivo y resuelve fallback por ModeloDroneNameRep', () => {
+    const reparacion = {
+      ...crearReparacion('rep-fallback'),
+      data: {
+        ...crearReparacion('rep-fallback').data,
+        DroneId: '',
+        ModeloDroneNameRep: '  mavic   3 ',
+        PresuFiRep: 100000,
+      },
+    };
+    const state = {
+      reparacion: { coleccionReparaciones: { 'rep-fallback': reparacion } },
+      drone: { coleccionDrones: {} },
+      modeloDrone: { coleccionModelosDrone: modelos },
+    } as unknown as RootState;
+
+    expect(selectRelacionPresupuestoModelo('rep-fallback', '500000')(state)).toEqual({
+      estado: 'disponible',
+      modeloId: 'mod-1',
+      nombreModelo: 'Mavic 3',
+      precioReferencia: 2000000,
+      montoPresupuesto: 500000,
+      porcentaje: 25,
+    });
+  });
+
+  it('indica sin_precio_modelo cuando PrecioReferencia es 0 o menor', () => {
+    const state = {
+      reparacion: {
+        coleccionReparaciones: {
+          'rep-sin-precio': {
+            ...crearReparacion('rep-sin-precio'),
+            data: {
+              ...crearReparacion('rep-sin-precio').data,
+              ModeloDroneNameRep: 'Mini 4 Pro - DJI',
+              PresuFiRep: 80000,
+            },
+          },
+        },
+      },
+      drone: { coleccionDrones: {} },
+      modeloDrone: { coleccionModelosDrone: modelos },
+    } as unknown as RootState;
+
+    expect(selectRelacionPresupuestoModelo('rep-sin-precio')(state)).toEqual({
+      estado: 'sin_precio_modelo',
+      modeloId: 'mod-sin-precio',
+      nombreModelo: 'Mini 4 Pro',
+      precioReferencia: null,
+      montoPresupuesto: 80000,
+      porcentaje: null,
+    });
+  });
+
+  it('indica sin_modelo cuando no hay coincidencia única en el catálogo', () => {
+    const reparacion = {
+      ...crearReparacion('rep-desconocido'),
+      data: {
+        ...crearReparacion('rep-desconocido').data,
+        ModeloDroneNameRep: 'Autel Evo Lite',
+        PresuFiRep: 50000,
+      },
+    };
+    expect(resolverModeloDroneDeReparacion(reparacion, {}, modelos)).toBeNull();
+    expect(calcularRelacionPresupuestoModelo(null, 50000, 'Autel Evo Lite')).toEqual({
+      estado: 'sin_modelo',
+      modeloId: null,
+      nombreModelo: 'Autel Evo Lite',
+      precioReferencia: null,
+      montoPresupuesto: 50000,
+      porcentaje: null,
+    });
   });
 });

@@ -109,6 +109,9 @@ export {
   selectPuedeAvanzarA,
   selectSeccionesVisibles,
   selectPrecioManualDifiere,
+  selectRelacionPresupuestoModelo,
+  calcularRelacionPresupuestoModelo,
+  resolverModeloDroneDeReparacion,
   selectResumenProgreso,
 
   // Selectores para repuestos de reparación
