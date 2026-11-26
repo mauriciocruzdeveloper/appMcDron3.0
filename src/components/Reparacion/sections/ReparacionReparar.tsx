@@ -407,7 +407,7 @@ export const ReparacionReparar: React.FC<ReparacionRepararProps> = ({
                                                         <span className="badge bg-info text-dark ms-2">Adicional</span>
                                                     )}
                                                     {tieneRepuestosAsociados && !incluyeRepuestos && (
-                                                        <span className="badge bg-secondary ms-2">Sin repuesto taller</span>
+                                                        <span className="badge bg-secondary ms-2">Repuesto no incluido</span>
                                                     )}
                                                 </label>
                                             </div>

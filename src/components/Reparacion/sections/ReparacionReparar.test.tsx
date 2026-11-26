@@ -169,7 +169,7 @@ describe('ReparacionReparar - repuesto opcional en intervenciones adicionales', 
         expect(screen.queryByLabelText('Usar repuesto del taller')).not.toBeInTheDocument();
     });
 
-    it('muestra indicador Sin repuesto taller y permite alternarlo en adicional pendiente con piezas', async () => {
+    it('muestra indicador Repuesto no incluido y permite alternarlo en adicional pendiente con piezas', async () => {
         renderReparar({
             asignaciones: [
                 {
@@ -203,7 +203,7 @@ describe('ReparacionReparar - repuesto opcional en intervenciones adicionales', 
             ],
         });
 
-        expect(screen.getAllByText('Sin repuesto taller')).toHaveLength(1);
+        expect(screen.getAllByText('Repuesto no incluido')).toHaveLength(1);
 
         const switches = screen.getAllByRole('switch', { name: 'Usar repuesto del taller' });
         expect(switches).toHaveLength(1);
@@ -240,7 +240,7 @@ describe('ReparacionReparar - repuesto opcional en intervenciones adicionales', 
             ],
         });
 
-        expect(screen.getByText('Sin repuesto taller')).toBeInTheDocument();
+        expect(screen.getByText('Repuesto no incluido')).toBeInTheDocument();
         expect(screen.queryByRole('switch', { name: 'Usar repuesto del taller' })).not.toBeInTheDocument();
     });
 });
