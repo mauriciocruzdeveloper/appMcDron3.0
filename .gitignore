@@ -25,3 +25,7 @@ ainfo/
 ..env.development.local
 
 prompts.txt..env.development.local
+
+# Migración de archivos a DonWeb (archivos descargados y backups locales)
+tmp_migracion_archivos/
+backup_urls_supabase_*.json

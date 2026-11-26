@@ -863,7 +863,7 @@ export const eliminarReparacionPersistencia = async (id) => {
       // 3.1 Eliminar fotos y documentos relacionados
       const { data: reparacion, error: errorReparacion } = await supabase
         .from('repair')
-        .select('photo_urls, document_urls')
+        .select('photo_urls, document_urls, informe_photo_urls')
         .eq('id', id)
         .single();
 
@@ -875,6 +875,16 @@ export const eliminarReparacionPersistencia = async (id) => {
             await eliminarArchivoPersistencia(url);
           } catch (error) {
             console.error(`Error al eliminar foto: ${url}`, error);
+          }
+        }
+      }
+
+      if (reparacion.informe_photo_urls) {
+        for (const url of reparacion.informe_photo_urls) {
+          try {
+            await eliminarArchivoPersistencia(url);
+          } catch (error) {
+            console.error(`Error al eliminar foto de informe: ${url}`, error);
           }
         }
       }
