@@ -9,6 +9,11 @@ import { isFetchingComplete, isFetchingStart } from "../app/app.slice";
 import { Usuario } from "../../types/usuario";
 import { isValidCuit, sanitizeCuitInput } from "../../utils/cuit";
 import { validarTelefonoArgentino } from "../../usecases/validarTelefonoArgentino";
+import {
+    normalizarEmail,
+    validarEmail,
+    validarEmailOpcional,
+} from "../../usecases/validarEmail";
 
 // ELIMINAR USUARIO
 export const eliminarUsuarioAsync = createAsyncThunk(
@@ -33,6 +38,12 @@ export const guardarUsuarioAsync = createAsyncThunk(
     'app/guardarUsuario',
     async (usuario: Usuario, { dispatch }) => {
         try {
+            if (!usuario.id) {
+                validarEmail(usuario.data.EmailUsu);
+            } else {
+                validarEmailOpcional(usuario.data.EmailUsu);
+            }
+            validarEmailOpcional(usuario.data.EmailContacto);
             validarTelefonoArgentino(usuario.data.TelefonoUsu);
             dispatch(isFetchingStart());
             if (usuario.data.CUIT?.trim() && !isValidCuit(usuario.data.CUIT)) {
@@ -43,6 +54,12 @@ export const guardarUsuarioAsync = createAsyncThunk(
                 ...usuario,
                 data: {
                     ...usuario.data,
+                    ...(usuario.data.EmailUsu !== undefined
+                        ? { EmailUsu: normalizarEmail(usuario.data.EmailUsu) }
+                        : {}),
+                    ...(usuario.data.EmailContacto !== undefined
+                        ? { EmailContacto: normalizarEmail(usuario.data.EmailContacto) }
+                        : {}),
                     CUIT: sanitizeCuitInput(usuario.data.CUIT),
                 },
             };

@@ -27,6 +27,11 @@ import {
   MENSAJE_TELEFONO_ARGENTINO_INVALIDO,
 } from "../../usecases/validarTelefonoArgentino";
 import {
+  esEmailValido,
+  MENSAJE_EMAIL_INVALIDO,
+  normalizarEmail,
+} from "../../usecases/validarEmail";
+import {
   puedeCancelarAvisoAbandono,
   puedeConfirmarAbandono,
   puedeEnviarAvisoAbandono,
@@ -301,6 +306,11 @@ export const guardarReciboAsync = createAsyncThunk(
     if (!esTelefonoArgentinoValido(presupuesto.TelefonoUsu)) {
       return rejectWithValue(MENSAJE_TELEFONO_ARGENTINO_INVALIDO);
     }
+    if (!esEmailValido(presupuesto.EmailUsu)) {
+      return rejectWithValue(MENSAJE_EMAIL_INVALIDO);
+    }
+
+    const emailNormalizado = normalizarEmail(presupuesto.EmailUsu);
 
     const state = getState() as RootState;
     const drones = state.drone.coleccionDrones;
@@ -314,7 +324,7 @@ export const guardarReciboAsync = createAsyncThunk(
         EstadoRep: presupuesto.EstadoRep,
         PrioridadRep: presupuesto.PrioridadRep,
         FeConRep: presupuesto.FeConRep,
-        UsuarioRep: presupuesto.EmailUsu,
+        UsuarioRep: emailNormalizado,
         DroneId: presupuesto.DroneId,
         ModeloDroneNameRep: presupuesto.ModeloDroneNameRep,
       }
@@ -322,7 +332,7 @@ export const guardarReciboAsync = createAsyncThunk(
     const usuario: Usuario = {
       id: presupuesto.UsuarioRep,
       data: {
-        EmailUsu: presupuesto.EmailUsu,
+        EmailUsu: emailNormalizado,
         NombreUsu: presupuesto.NombreUsu,
         ApellidoUsu: presupuesto.ApellidoUsu,
         TelefonoUsu: presupuesto.TelefonoUsu,
@@ -370,7 +380,7 @@ export const guardarReciboAsync = createAsyncThunk(
           ...reparacionGuardada.data,
           NombreUsu: nombreCompleto,
           TelefonoUsu: presupuesto.TelefonoUsu,
-          EmailUsu: presupuesto.EmailUsu,
+          EmailUsu: emailNormalizado,
         },
       }));
       if (response.meta.requestStatus === 'rejected') {
@@ -393,6 +403,11 @@ export const guardarTransitoAsync = createAsyncThunk(
     if (!esTelefonoArgentinoValido(presupuesto.TelefonoUsu)) {
       return rejectWithValue(MENSAJE_TELEFONO_ARGENTINO_INVALIDO);
     }
+    if (!esEmailValido(presupuesto.EmailUsu)) {
+      return rejectWithValue(MENSAJE_EMAIL_INVALIDO);
+    }
+
+    const emailNormalizado = normalizarEmail(presupuesto.EmailUsu);
 
     const state = getState() as RootState;
     const drones = state.drone.coleccionDrones;
@@ -405,7 +420,7 @@ export const guardarTransitoAsync = createAsyncThunk(
         EstadoRep: presupuesto.EstadoRep,
         PrioridadRep: presupuesto.PrioridadRep,
         FeConRep: presupuesto.FeConRep,
-        UsuarioRep: presupuesto.EmailUsu,
+        UsuarioRep: emailNormalizado,
         DroneId: presupuesto.DroneId,
         ModeloDroneNameRep: presupuesto.ModeloDroneNameRep,
       }
@@ -413,7 +428,7 @@ export const guardarTransitoAsync = createAsyncThunk(
     const usuario: Usuario = {
       id: presupuesto.UsuarioRep,
       data: {
-        EmailUsu: presupuesto.EmailUsu,
+        EmailUsu: emailNormalizado,
         NombreUsu: presupuesto.NombreUsu,
         ApellidoUsu: presupuesto.ApellidoUsu,
         TelefonoUsu: presupuesto.TelefonoUsu,
@@ -843,6 +858,11 @@ export const guardarPresupuestadoAsync = createAsyncThunk(
     if (!esTelefonoArgentinoValido(presupuesto.TelefonoUsu)) {
       return rejectWithValue(MENSAJE_TELEFONO_ARGENTINO_INVALIDO);
     }
+    if (!esEmailValido(presupuesto.EmailUsu)) {
+      return rejectWithValue(MENSAJE_EMAIL_INVALIDO);
+    }
+
+    const emailNormalizado = normalizarEmail(presupuesto.EmailUsu);
 
     const state = getState() as RootState;
     const drones = state.drone.coleccionDrones;
@@ -855,7 +875,7 @@ export const guardarPresupuestadoAsync = createAsyncThunk(
         EstadoRep: presupuesto.EstadoRep,
         PrioridadRep: presupuesto.PrioridadRep,
         FeConRep: presupuesto.FeConRep,
-        UsuarioRep: presupuesto.EmailUsu,
+        UsuarioRep: emailNormalizado,
         DroneId: presupuesto.DroneId,
         ModeloDroneNameRep: presupuesto.ModeloDroneNameRep,
       }
@@ -863,7 +883,7 @@ export const guardarPresupuestadoAsync = createAsyncThunk(
     const usuario: Usuario = {
       id: presupuesto.UsuarioRep,
       data: {
-        EmailUsu: presupuesto.EmailUsu,
+        EmailUsu: emailNormalizado,
         NombreUsu: presupuesto.NombreUsu,
         ApellidoUsu: presupuesto.ApellidoUsu,
         TelefonoUsu: presupuesto.TelefonoUsu,

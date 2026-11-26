@@ -15,6 +15,7 @@ import { estados } from "../datos/estados";
 import { obtenerEstadoSeguro } from "../utils/estadosHelper";
 import { selectModelosDroneSelect } from "../redux-tool-kit/modeloDrone/modeloDrone.selectors";
 import { selectDronesByPropietario } from "../redux-tool-kit/drone";
+import { esEmailValido, MENSAJE_EMAIL_INVALIDO } from "../usecases/validarEmail";
 
 // import { provincias } from '../datos/provincias.json';
 
@@ -183,8 +184,14 @@ export default function Presupuesto(): JSX.Element {
             console.log(JSON.stringify(presupuesto));
             history.goBack();
         } else {
+            const payload = response?.payload as unknown;
+            const detalleError = typeof payload === 'string'
+                ? payload
+                : payload && typeof payload === 'object' && 'message' in payload && typeof (payload as { message?: unknown }).message === 'string'
+                    ? (payload as { message: string }).message
+                    : "Error desconocido.";
             openModal({
-                mensaje: "Error al guardar: " + (response?.payload || "Error desconocido."),
+                mensaje: "Error al guardar: " + detalleError,
                 tipo: "danger",
                 titulo: `Registrar ${estadoInfo.nombre}`,
             })
@@ -206,6 +213,15 @@ export default function Presupuesto(): JSX.Element {
         if (!presupuesto.EmailUsu || !presupuesto.NombreUsu) {
             openModal({
                 mensaje: "Por favor complete los campos obligatorios: Email y Nombre",
+                tipo: "danger",
+                titulo: `Registrar ${estadoInfo.nombre}`,
+            });
+            return;
+        }
+
+        if (!esEmailValido(presupuesto.EmailUsu)) {
+            openModal({
+                mensaje: MENSAJE_EMAIL_INVALIDO,
                 tipo: "danger",
                 titulo: `Registrar ${estadoInfo.nombre}`,
             });

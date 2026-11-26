@@ -75,4 +75,71 @@ describe('guardarUsuarioAsync', () => {
             meta: { requestStatus: 'rejected' },
         });
     });
+
+    it('rechaza crear un usuario nuevo cuando EmailUsu tiene tilde o es inválido', async () => {
+        guardarUsuarioMock.mockImplementation(async (usuario: Usuario) => usuario);
+
+        const store = crearStore();
+        const nuevoUsuario: Usuario = {
+            id: '',
+            data: {
+                EmailUsu: 'maría@gmail.com',
+                NombreUsu: 'María',
+                TelefonoUsu: '',
+                Role: 'cliente',
+            },
+        };
+        const result = await store.dispatch(guardarUsuarioAsync(nuevoUsuario) as any);
+
+        expect(result).toMatchObject({
+            error: { message: expect.stringContaining('email ingresado no es válido') },
+            meta: { requestStatus: 'rejected' },
+        });
+        expect(guardarUsuarioMock).not.toHaveBeenCalled();
+    });
+
+    it('rechaza actualizar cuando EmailContacto tiene formato inválido', async () => {
+        guardarUsuarioMock.mockImplementation(async (usuario: Usuario) => usuario);
+
+        const store = crearStore();
+        const usuarioConContactoInvalido: Usuario = {
+            ...crearUsuario('27123456780'),
+            data: {
+                ...crearUsuario('27123456780').data,
+                EmailContacto: 'contacto.con.tilde.á@gmail.com',
+            },
+        };
+        const result = await store.dispatch(guardarUsuarioAsync(usuarioConContactoInvalido) as any);
+
+        expect(result).toMatchObject({
+            error: { message: expect.stringContaining('email ingresado no es válido') },
+            meta: { requestStatus: 'rejected' },
+        });
+        expect(guardarUsuarioMock).not.toHaveBeenCalled();
+    });
+
+    it('normaliza espacios laterales de EmailUsu y EmailContacto al persistir', async () => {
+        guardarUsuarioMock.mockImplementation(async (usuario: Usuario) => usuario);
+
+        const store = crearStore();
+        const nuevoUsuario: Usuario = {
+            id: '',
+            data: {
+                EmailUsu: '  cliente@gmail.com  ',
+                EmailContacto: '  avisos@gmail.com ',
+                NombreUsu: 'Cliente',
+                TelefonoUsu: '',
+                Role: 'cliente',
+            },
+        };
+        const result = await store.dispatch(guardarUsuarioAsync(nuevoUsuario) as any);
+
+        expect(result.meta.requestStatus).toBe('fulfilled');
+        expect(guardarUsuarioMock).toHaveBeenCalledWith(expect.objectContaining({
+            data: expect.objectContaining({
+                EmailUsu: 'cliente@gmail.com',
+                EmailContacto: 'avisos@gmail.com',
+            }),
+        }));
+    });
 });
