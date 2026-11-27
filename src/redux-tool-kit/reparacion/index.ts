@@ -33,6 +33,7 @@ export {
   getReparacionesPorIntervencionAsync,
   enviarAvisoAbandonoAsync,
   cancelarAvisoAbandonoAsync,
+  actualizarRepuestosAsignacionAsync,
 } from './reparacion.actions';
 
 // Re-exportar todos los selectores

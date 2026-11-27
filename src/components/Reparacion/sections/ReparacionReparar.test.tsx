@@ -7,6 +7,7 @@ import { ReparacionReparar } from './ReparacionReparar';
 import {
     agregarIntervencionAReparacionAsync,
     actualizarIncluirRepuestoAsignacionAsync,
+    actualizarRepuestosAsignacionAsync,
     getIntervencionesPorReparacionAsync,
 } from '../../../redux-tool-kit/reparacion/reparacion.actions';
 import { AsignacionIntervencion, EstadoAsignacion, OrigenAsignacion } from '../../../types/intervencion';
@@ -14,6 +15,7 @@ import { AsignacionIntervencion, EstadoAsignacion, OrigenAsignacion } from '../.
 const mockOpenModal = jest.fn();
 const mockAgregarIntervencion = jest.fn();
 const mockActualizarIncluirRepuesto = jest.fn();
+const mockActualizarRepuestosAsignacion = jest.fn();
 
 jest.mock('../../../redux-tool-kit/reparacion', () =>
     jest.requireActual('../../../redux-tool-kit/reparacion/reparacion.selectors')
@@ -21,6 +23,7 @@ jest.mock('../../../redux-tool-kit/reparacion', () =>
 jest.mock('../../../redux-tool-kit/reparacion/reparacion.actions', () => ({
     agregarIntervencionAReparacionAsync: jest.fn(),
     actualizarIncluirRepuestoAsignacionAsync: jest.fn(),
+    actualizarRepuestosAsignacionAsync: jest.fn(),
     cambiarEstadoReparacionAsync: jest.fn(),
     eliminarIntervencionDeReparacionAsync: jest.fn(),
     getIntervencionesPorReparacionAsync: jest.fn(() => () => Promise.resolve()),
@@ -40,9 +43,9 @@ jest.mock('./ReparacionSeccionColapsable', () => ({
     ReparacionSeccionColapsable: ({ children }: { children: React.ReactNode }) => <section>{children}</section>,
 }));
 jest.mock('../../common', () => ({
-    ComboBox: ({ options, value, onChange }: any) => (
+    ComboBox: ({ options, value, onChange, placeholder }: any) => (
         <select
-            aria-label="Seleccionar una intervención..."
+            aria-label={placeholder || 'Seleccionar una intervención...'}
             value={value}
             onChange={(e) => {
                 const selected = options.find((o: any) => o.value === e.target.value) || null;
@@ -84,10 +87,12 @@ const renderReparar = ({
     estado = 'Aceptado',
     isAdmin = true,
     asignaciones = [],
+    informe = '',
 }: {
     estado?: string;
     isAdmin?: boolean;
     asignaciones?: AsignacionIntervencion[];
+    informe?: string;
 } = {}) => {
     const store = configureStore({
         reducer: {
@@ -97,15 +102,28 @@ const renderReparar = ({
                         id: 'rep-1',
                         data: {
                             EstadoRep: estado,
-                            DescripcionTecRep: '',
+                            DescripcionTecRep: informe,
                             FeFinRep: null,
                         },
                     },
                 },
                 intervencionesDeReparacionActual: asignaciones,
+                asignacionesCompromiso: [],
             }) => state,
             intervencion: (state = {
                 coleccionIntervenciones: catalogoIntervencionesMock,
+            }) => state,
+            repuesto: (state = {
+                coleccionRepuestos: {
+                    'rep-motor': {
+                        id: 'rep-motor',
+                        data: { NombreRepu: 'Brazo con motor original', StockRepu: 0, ModelosDroneIds: [] },
+                    },
+                    'rep-sustituto': {
+                        id: 'rep-sustituto',
+                        data: { NombreRepu: 'Motor suelto compatible', StockRepu: 4, ModelosDroneIds: [] },
+                    },
+                },
             }) => state,
             drone: (state = { coleccionDrones: {} }) => state,
         },
@@ -123,6 +141,7 @@ describe('ReparacionReparar - repuesto opcional en intervenciones adicionales', 
         jest.clearAllMocks();
         mockAgregarIntervencion.mockResolvedValue(true);
         mockActualizarIncluirRepuesto.mockResolvedValue({});
+        mockActualizarRepuestosAsignacion.mockResolvedValue({ descripcionTecActualizada: '' });
         (getIntervencionesPorReparacionAsync as unknown as jest.Mock).mockImplementation(
             () => () => Promise.resolve()
         );
@@ -133,6 +152,10 @@ describe('ReparacionReparar - repuesto opcional en intervenciones adicionales', 
         (actualizarIncluirRepuestoAsignacionAsync as unknown as jest.Mock).mockImplementation(payload => () => {
             const resultado = Promise.resolve({});
             return Object.assign(resultado, { unwrap: () => mockActualizarIncluirRepuesto(payload) });
+        });
+        (actualizarRepuestosAsignacionAsync as unknown as jest.Mock).mockImplementation(payload => () => {
+            const resultado = Promise.resolve({});
+            return Object.assign(resultado, { unwrap: () => mockActualizarRepuestosAsignacion(payload) });
         });
     });
 
@@ -242,5 +265,117 @@ describe('ReparacionReparar - repuesto opcional en intervenciones adicionales', 
 
         expect(screen.getByText('Repuesto no incluido')).toBeInTheDocument();
         expect(screen.queryByRole('switch', { name: 'Usar repuesto del taller' })).not.toBeInTheDocument();
+        expect(screen.queryByRole('button', { name: /Cambiar repuestos/i })).not.toBeInTheDocument();
+    });
+
+    it('permite reemplazar el repuesto de una asignación presupuestada pendiente por un sustituto', async () => {
+        renderReparar({
+            informe: 'Diagnóstico previo.',
+            asignaciones: [
+                {
+                    id: 'asig-presu',
+                    data: {
+                        reparacionId: 'rep-1',
+                        intervencionId: 'int-con-repuesto',
+                        estado: EstadoAsignacion.PENDIENTE,
+                        origen: OrigenAsignacion.PRESUPUESTADA,
+                        incluyeRepuestosTaller: true,
+                        repuestosSnapshot: [{ partId: 'rep-motor', quantity: 1 }],
+                        PrecioManoObra: 5000,
+                        PrecioPiezas: 20000,
+                        PrecioTotal: 25000,
+                    },
+                },
+            ],
+        });
+
+        fireEvent.click(screen.getByRole('button', { name: /Cambiar repuestos de Cambio de motor/i }));
+
+        const selectorInventario = screen.getByLabelText('Buscar repuesto en inventario...');
+        fireEvent.change(selectorInventario, { target: { value: 'rep-sustituto' } });
+
+        fireEvent.click(screen.getByRole('button', { name: 'Reemplazar' }));
+
+        await act(async () => {
+            fireEvent.click(screen.getByRole('button', { name: 'Guardar repuestos' }));
+        });
+
+        expect(mockActualizarRepuestosAsignacion).toHaveBeenCalledWith({
+            asignacionId: 'asig-presu',
+            repuestos: [{ partId: 'rep-sustituto', quantity: 1 }],
+            textoInformeActual: 'Diagnóstico previo.',
+        });
+    });
+
+    it('permite dejar una asignación presupuestada sin repuesto de stock', async () => {
+        renderReparar({
+            informe: '',
+            asignaciones: [
+                {
+                    id: 'asig-sin-stock',
+                    data: {
+                        reparacionId: 'rep-1',
+                        intervencionId: 'int-con-repuesto',
+                        estado: EstadoAsignacion.PENDIENTE,
+                        origen: OrigenAsignacion.PRESUPUESTADA,
+                        incluyeRepuestosTaller: true,
+                        repuestosSnapshot: [{ partId: 'rep-motor', quantity: 1 }],
+                        PrecioManoObra: 5000,
+                        PrecioPiezas: 20000,
+                        PrecioTotal: 25000,
+                    },
+                },
+            ],
+        });
+
+        fireEvent.click(screen.getByRole('button', { name: /Cambiar repuestos de Cambio de motor/i }));
+        fireEvent.click(screen.getByRole('button', { name: 'Sin repuesto de stock' }));
+
+        await act(async () => {
+            fireEvent.click(screen.getByRole('button', { name: 'Guardar repuestos' }));
+        });
+
+        expect(mockActualizarRepuestosAsignacion).toHaveBeenCalledWith({
+            asignacionId: 'asig-sin-stock',
+            repuestos: [],
+            textoInformeActual: '',
+        });
+    });
+
+    it('muestra badge Repuesto sustituto y permite restaurar el repuesto original', async () => {
+        renderReparar({
+            informe: '- Cambio de motor: resuelto utilizando Motor suelto compatible.',
+            asignaciones: [
+                {
+                    id: 'asig-sust',
+                    data: {
+                        reparacionId: 'rep-1',
+                        intervencionId: 'int-con-repuesto',
+                        estado: EstadoAsignacion.PENDIENTE,
+                        origen: OrigenAsignacion.PRESUPUESTADA,
+                        incluyeRepuestosTaller: true,
+                        repuestosSnapshot: [{ partId: 'rep-sustituto', quantity: 1 }],
+                        PrecioManoObra: 5000,
+                        PrecioPiezas: 20000,
+                        PrecioTotal: 25000,
+                    },
+                },
+            ],
+        });
+
+        expect(screen.getByText('Repuesto sustituto')).toBeInTheDocument();
+        expect(screen.getByText('Repuesto a usar: Motor suelto compatible')).toBeInTheDocument();
+
+        fireEvent.click(screen.getByRole('button', { name: /Cambiar repuestos de Cambio de motor/i }));
+
+        await act(async () => {
+            fireEvent.click(screen.getByRole('button', { name: 'Restaurar original' }));
+        });
+
+        expect(mockActualizarRepuestosAsignacion).toHaveBeenCalledWith({
+            asignacionId: 'asig-sust',
+            restaurarOriginal: true,
+            textoInformeActual: '- Cambio de motor: resuelto utilizando Motor suelto compatible.',
+        });
     });
 });

@@ -12,6 +12,7 @@ import {
 import { 
     agregarIntervencionAReparacionAsync,
     actualizarIncluirRepuestoAsignacionAsync,
+    actualizarRepuestosAsignacionAsync,
     cambiarEstadoReparacionAsync,
     eliminarIntervencionDeReparacionAsync,
     getIntervencionesPorReparacionAsync,
@@ -19,9 +20,14 @@ import {
 } from "../../../redux-tool-kit/reparacion/reparacion.actions";
 import { subirFotoInformeAsync, borrarFotoInformeAsync } from "../../../redux-tool-kit/app/app.actions";
 import { selectColeccionIntervenciones, selectIntervencionesAsignables } from "../../../redux-tool-kit/intervencion/intervencion.selectors";
+import { selectColeccionRepuestos } from "../../../redux-tool-kit/repuesto/repuesto.selectors";
 import { selectDroneById } from "../../../redux-tool-kit/drone/drone.selectors";
-import { EstadoAsignacion, OrigenAsignacion } from "../../../types/intervencion";
-import { convertTimestampCORTO } from "../../../utils/utils";
+import { AsignacionIntervencion, EstadoAsignacion, OrigenAsignacion, RepuestoAsignacionSnapshot } from "../../../types/intervencion";
+import {
+    evaluarAjusteRepuestosAsignacion,
+    formatearListaRepuestos,
+    normalizarRepuestosSnapshot,
+} from "../../../usecases/repuestosAsignacion";
 import { getThumbnailUrl } from "../../../utils/imageUtils";
 import { ComboBox } from "../../common";
 import TextareaAutosize from "react-textarea-autosize";
@@ -61,8 +67,15 @@ export const ReparacionReparar: React.FC<ReparacionRepararProps> = ({
     const asignaciones = useAppSelector(selectIntervencionesDeReparacionActual);
     const catalogoIntervenciones = useAppSelector(selectColeccionIntervenciones);
     const intervencionesAsignables = useAppSelector(selectIntervencionesAsignables);
+    const coleccionRepuestos = useAppSelector(state =>
+        state.repuesto ? selectColeccionRepuestos(state) : {}
+    );
     const [intervencionAdicionalSeleccionada, setIntervencionAdicionalSeleccionada] = useState<string | null>(null);
     const [incluirRepuestoAdicional, setIncluirRepuestoAdicional] = useState<boolean>(true);
+    const [asignacionEditandoRepuestosId, setAsignacionEditandoRepuestosId] = useState<string | null>(null);
+    const [borradorRepuestos, setBorradorRepuestos] = useState<RepuestoAsignacionSnapshot[]>([]);
+    const [repuestoSustitutoSeleccionado, setRepuestoSustitutoSeleccionado] = useState<string | null>(null);
+    const [guardandoRepuestosAsignacion, setGuardandoRepuestosAsignacion] = useState<boolean>(false);
 
     const intervencionAdicionalCatalogo = intervencionAdicionalSeleccionada
         ? catalogoIntervenciones[intervencionAdicionalSeleccionada]
@@ -229,6 +242,116 @@ export const ReparacionReparar: React.FC<ReparacionRepararProps> = ({
         }
     };
 
+    const obtenerNombreRepuesto = (partId: string): string =>
+        coleccionRepuestos[partId]?.data?.NombreRepu || partId;
+
+    const modeloDroneIdActual = drone?.data.ModeloDroneId;
+    const opcionesRepuestosInventario = Object.values(coleccionRepuestos)
+        .filter(rep => !rep.data.Obsoleta)
+        .sort((a, b) => {
+            const compA = modeloDroneIdActual && a.data.ModelosDroneIds?.includes(modeloDroneIdActual) ? 0 : 1;
+            const compB = modeloDroneIdActual && b.data.ModelosDroneIds?.includes(modeloDroneIdActual) ? 0 : 1;
+            if (compA !== compB) return compA - compB;
+            return (a.data.NombreRepu || '').localeCompare(b.data.NombreRepu || '');
+        })
+        .map(rep => {
+            const esCompatible = Boolean(
+                modeloDroneIdActual && rep.data.ModelosDroneIds?.includes(modeloDroneIdActual)
+            );
+            const stock = Number(rep.data.StockRepu ?? 0);
+            const prefijo = esCompatible ? '★ ' : '';
+            return {
+                value: rep.id,
+                label: `${prefijo}${rep.data.NombreRepu} (Stock: ${stock})`,
+            };
+        });
+
+    const handleAbrirEdicionRepuestos = (asignacion: AsignacionIntervencion) => {
+        if (asignacionEditandoRepuestosId === asignacion.id) {
+            setAsignacionEditandoRepuestosId(null);
+            setBorradorRepuestos([]);
+            setRepuestoSustitutoSeleccionado(null);
+            return;
+        }
+        const intervencion = catalogoIntervenciones[asignacion.data.intervencionId];
+        const evaluacion = evaluarAjusteRepuestosAsignacion(asignacion.data, intervencion);
+        setAsignacionEditandoRepuestosId(asignacion.id);
+        setBorradorRepuestos(evaluacion.repuestosEfectivos.map(item => ({ ...item })));
+        setRepuestoSustitutoSeleccionado(null);
+    };
+
+    const handleReemplazarBorradorRepuesto = () => {
+        if (!repuestoSustitutoSeleccionado) return;
+        setBorradorRepuestos([{ partId: repuestoSustitutoSeleccionado, quantity: 1 }]);
+        setRepuestoSustitutoSeleccionado(null);
+    };
+
+    const handleSumarBorradorRepuesto = () => {
+        if (!repuestoSustitutoSeleccionado) return;
+        setBorradorRepuestos(prev =>
+            normalizarRepuestosSnapshot([
+                ...prev,
+                { partId: repuestoSustitutoSeleccionado, quantity: 1 },
+            ])
+        );
+        setRepuestoSustitutoSeleccionado(null);
+    };
+
+    const handleCambiarCantidadBorrador = (partId: string, cantidadRaw: string) => {
+        const cantidad = Math.max(1, Math.floor(Number(cantidadRaw) || 1));
+        setBorradorRepuestos(prev =>
+            prev.map(item => (item.partId === partId ? { ...item, quantity: cantidad } : item))
+        );
+    };
+
+    const handleQuitarRepuestoBorrador = (partId: string) => {
+        setBorradorRepuestos(prev => prev.filter(item => item.partId !== partId));
+    };
+
+    const handleGuardarRepuestosAsignacion = async (asignacionId: string, repuestosAGuardar: RepuestoAsignacionSnapshot[]) => {
+        setGuardandoRepuestosAsignacion(true);
+        try {
+            await dispatch(actualizarRepuestosAsignacionAsync({
+                asignacionId,
+                repuestos: repuestosAGuardar,
+                textoInformeActual: descripcionTec.value,
+            })).unwrap();
+            setAsignacionEditandoRepuestosId(null);
+            setBorradorRepuestos([]);
+            setRepuestoSustitutoSeleccionado(null);
+        } catch (error: unknown) {
+            openModal({
+                mensaje: (error as { message?: string })?.message || "No se pudieron actualizar los repuestos de la tarea.",
+                tipo: "danger",
+                titulo: "Error",
+            });
+        } finally {
+            setGuardandoRepuestosAsignacion(false);
+        }
+    };
+
+    const handleRestaurarRepuestosOriginales = async (asignacionId: string) => {
+        setGuardandoRepuestosAsignacion(true);
+        try {
+            await dispatch(actualizarRepuestosAsignacionAsync({
+                asignacionId,
+                restaurarOriginal: true,
+                textoInformeActual: descripcionTec.value,
+            })).unwrap();
+            setAsignacionEditandoRepuestosId(null);
+            setBorradorRepuestos([]);
+            setRepuestoSustitutoSeleccionado(null);
+        } catch (error: unknown) {
+            openModal({
+                mensaje: (error as { message?: string })?.message || "No se pudieron restaurar los repuestos originales.",
+                tipo: "danger",
+                titulo: "Error",
+            });
+        } finally {
+            setGuardandoRepuestosAsignacion(false);
+        }
+    };
+
     const handleEliminarIntervencionAdicional = (asignacionId: string, nombre: string) => {
         openModal({
             mensaje: `¿Eliminar la intervención adicional "${nombre}" y liberar sus repuestos reservados?`,
@@ -375,11 +498,17 @@ export const ReparacionReparar: React.FC<ReparacionRepararProps> = ({
                                     ? asignacion.data.repuestosSnapshot.length > 0
                                     : (intervencion?.data?.RepuestosIds?.length || 0) > 0;
                                 const incluyeRepuestos = asignacion.data.incluyeRepuestosTaller ?? ((asignacion.data.PrecioPiezas || 0) > 0);
-                                const puedeEditarAdicionalPendiente =
+                                const evaluacionRepuestos = evaluarAjusteRepuestosAsignacion(asignacion.data, intervencion);
+                                const puedeEditarRepuestosAsignacion =
                                     isAdmin &&
                                     (estadoActual === 'Aceptado' || estadoActual === 'Repuestos') &&
-                                    asignacion.data.origen === OrigenAsignacion.ADICIONAL &&
                                     asignacion.data.estado === EstadoAsignacion.PENDIENTE;
+                                const puedeEditarAdicionalPendiente =
+                                    puedeEditarRepuestosAsignacion &&
+                                    asignacion.data.origen === OrigenAsignacion.ADICIONAL;
+                                const editandoEstaAsignacion =
+                                    puedeEditarRepuestosAsignacion &&
+                                    asignacionEditandoRepuestosId === asignacion.id;
                                 
                                 return (
                                     <div 
@@ -409,8 +538,26 @@ export const ReparacionReparar: React.FC<ReparacionRepararProps> = ({
                                                     {tieneRepuestosAsociados && !incluyeRepuestos && (
                                                         <span className="badge bg-secondary ms-2">Repuesto no incluido</span>
                                                     )}
+                                                    {evaluacionRepuestos.tipoAjuste === 'sustituido' && (
+                                                        <span className="badge bg-warning text-dark ms-2">Repuesto sustituto</span>
+                                                    )}
+                                                    {evaluacionRepuestos.tipoAjuste === 'sin_repuesto_stock' && (
+                                                        <span className="badge bg-warning text-dark ms-2">Sin repuesto de stock</span>
+                                                    )}
                                                 </label>
                                             </div>
+                                            {puedeEditarRepuestosAsignacion && (
+                                                <button
+                                                    type="button"
+                                                    className="btn btn-sm btn-outline-secondary ms-2"
+                                                    title="Cambiar repuestos utilizados en esta tarea"
+                                                    aria-label={`Cambiar repuestos de ${intervencion?.data?.NombreInt || 'intervención'}`}
+                                                    onClick={() => handleAbrirEdicionRepuestos(asignacion)}
+                                                >
+                                                    <i className="bi bi-tools me-1"></i>
+                                                    {editandoEstaAsignacion ? 'Cerrar' : 'Repuestos'}
+                                                </button>
+                                            )}
                                             {isAdmin &&
                                                 asignacion.data.origen === OrigenAsignacion.ADICIONAL &&
                                                 asignacion.data.estado === EstadoAsignacion.PENDIENTE && (
@@ -428,6 +575,19 @@ export const ReparacionReparar: React.FC<ReparacionRepararProps> = ({
                                                     </button>
                                                 )}
                                         </div>
+                                        {isAdmin && evaluacionRepuestos.repuestosEfectivos.length > 0 && (
+                                            <div className="small text-muted mt-1 ms-4">
+                                                Repuesto a usar: {formatearListaRepuestos(
+                                                    evaluacionRepuestos.repuestosEfectivos,
+                                                    obtenerNombreRepuesto,
+                                                )}
+                                            </div>
+                                        )}
+                                        {isAdmin && evaluacionRepuestos.tipoAjuste === 'sin_repuesto_stock' && (
+                                            <div className="small text-muted mt-1 ms-4">
+                                                Repuesto a usar: resuelto sin repuestos de stock
+                                            </div>
+                                        )}
                                         {puedeEditarAdicionalPendiente && tieneRepuestosAsociados && (
                                             <div className="form-check form-switch mt-1 ms-4">
                                                 <input
@@ -448,6 +608,143 @@ export const ReparacionReparar: React.FC<ReparacionRepararProps> = ({
                                                 >
                                                     Usar repuesto del taller
                                                 </label>
+                                            </div>
+                                        )}
+                                        {editandoEstaAsignacion && (
+                                            <div className="border rounded bg-light p-2 mt-2 ms-4">
+                                                <div className="d-flex justify-content-between align-items-center flex-wrap gap-1 mb-2">
+                                                    <span className="small fw-semibold">
+                                                        Ajustar repuestos efectivos de la tarea
+                                                    </span>
+                                                    {evaluacionRepuestos.repuestosCatalogo.length > 0 && (
+                                                        <span className="small text-muted">
+                                                            Catálogo: {formatearListaRepuestos(
+                                                                evaluacionRepuestos.repuestosCatalogo,
+                                                                obtenerNombreRepuesto,
+                                                            )}
+                                                        </span>
+                                                    )}
+                                                </div>
+
+                                                {borradorRepuestos.length === 0 ? (
+                                                    <div className="small text-muted fst-italic mb-2">
+                                                        Sin repuestos de inventario seleccionados (no descontará stock).
+                                                    </div>
+                                                ) : (
+                                                    <div className="d-flex flex-column gap-1 mb-2">
+                                                        {borradorRepuestos.map(item => (
+                                                            <div
+                                                                key={item.partId}
+                                                                className="d-flex align-items-center gap-2 bg-white border rounded px-2 py-1"
+                                                            >
+                                                                <span className="small flex-grow-1">
+                                                                    {obtenerNombreRepuesto(item.partId)}
+                                                                </span>
+                                                                <input
+                                                                    type="number"
+                                                                    min={1}
+                                                                    className="form-control form-control-sm"
+                                                                    style={{ width: '70px' }}
+                                                                    aria-label={`Cantidad de ${obtenerNombreRepuesto(item.partId)}`}
+                                                                    value={item.quantity}
+                                                                    onChange={(e) => handleCambiarCantidadBorrador(item.partId, e.target.value)}
+                                                                />
+                                                                <button
+                                                                    type="button"
+                                                                    className="btn btn-sm btn-outline-danger py-0 px-2"
+                                                                    aria-label={`Quitar ${obtenerNombreRepuesto(item.partId)}`}
+                                                                    onClick={() => handleQuitarRepuestoBorrador(item.partId)}
+                                                                >
+                                                                    ×
+                                                                </button>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                )}
+
+                                                <div className="row g-2 align-items-center mb-2">
+                                                    <div className="col">
+                                                        <ComboBox
+                                                            options={opcionesRepuestosInventario}
+                                                            value={repuestoSustitutoSeleccionado || ''}
+                                                            onChange={(selected) => setRepuestoSustitutoSeleccionado(selected?.value || null)}
+                                                            placeholder="Buscar repuesto en inventario..."
+                                                            noOptionsMessage="No se encontraron repuestos"
+                                                            isClearable
+                                                        />
+                                                    </div>
+                                                    {borradorRepuestos.length > 0 ? (
+                                                        <>
+                                                            <div className="col-auto">
+                                                                <button
+                                                                    type="button"
+                                                                    className="btn btn-sm btn-outline-primary"
+                                                                    disabled={!repuestoSustitutoSeleccionado}
+                                                                    onClick={handleReemplazarBorradorRepuesto}
+                                                                >
+                                                                    Reemplazar
+                                                                </button>
+                                                            </div>
+                                                            <div className="col-auto">
+                                                                <button
+                                                                    type="button"
+                                                                    className="btn btn-sm btn-outline-secondary"
+                                                                    disabled={!repuestoSustitutoSeleccionado}
+                                                                    onClick={handleSumarBorradorRepuesto}
+                                                                >
+                                                                    Sumar
+                                                                </button>
+                                                            </div>
+                                                        </>
+                                                    ) : (
+                                                        <div className="col-auto">
+                                                            <button
+                                                                type="button"
+                                                                className="btn btn-sm btn-outline-primary"
+                                                                disabled={!repuestoSustitutoSeleccionado}
+                                                                onClick={handleSumarBorradorRepuesto}
+                                                            >
+                                                                Agregar repuesto
+                                                            </button>
+                                                        </div>
+                                                    )}
+                                                </div>
+
+                                                <div className="d-flex flex-wrap align-items-center gap-2">
+                                                    <button
+                                                        type="button"
+                                                        className="btn btn-sm bg-bluemcdron text-white"
+                                                        disabled={guardandoRepuestosAsignacion}
+                                                        onClick={() => handleGuardarRepuestosAsignacion(asignacion.id, borradorRepuestos)}
+                                                    >
+                                                        Guardar repuestos
+                                                    </button>
+                                                    {borradorRepuestos.length > 0 && (
+                                                        <button
+                                                            type="button"
+                                                            className="btn btn-sm btn-outline-warning text-dark"
+                                                            disabled={guardandoRepuestosAsignacion}
+                                                            onClick={() => setBorradorRepuestos([])}
+                                                        >
+                                                            Sin repuesto de stock
+                                                        </button>
+                                                    )}
+                                                    {evaluacionRepuestos.esAjustado && (
+                                                        <button
+                                                            type="button"
+                                                            className="btn btn-sm btn-outline-secondary"
+                                                            disabled={guardandoRepuestosAsignacion}
+                                                            onClick={() => handleRestaurarRepuestosOriginales(asignacion.id)}
+                                                        >
+                                                            Restaurar original
+                                                        </button>
+                                                    )}
+                                                    {asignacion.data.origen !== OrigenAsignacion.ADICIONAL && (
+                                                        <small className="text-muted ms-auto">
+                                                            No altera el presupuesto acordado.
+                                                        </small>
+                                                    )}
+                                                </div>
                                             </div>
                                         )}
                                     </div>

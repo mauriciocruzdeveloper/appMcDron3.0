@@ -323,6 +323,48 @@ export const actualizarPreciosPiezasAsignacionPersistencia = async (
   }
 };
 
+// ACTUALIZAR REPUESTOS EFECTIVOS DE UNA ASIGNACIÓN
+// Solo escribe los valores ya validados y calculados por la capa de acciones.
+export const actualizarRepuestosAsignacionPersistencia = async (
+  asignacionId,
+  {
+    repuestosSnapshot,
+    incluyeRepuestosTaller,
+    parts_cost,
+    total_cost,
+  },
+) => {
+  try {
+    const payload = {
+      parts_snapshot: repuestosSnapshot,
+      includes_workshop_parts: incluyeRepuestosTaller,
+    };
+
+    if (parts_cost !== undefined) {
+      payload.parts_cost = parts_cost;
+    }
+    if (total_cost !== undefined) {
+      payload.total_cost = total_cost;
+    }
+
+    const { data, error } = await supabase
+      .from('repair_intervention')
+      .update(payload)
+      .eq('id', asignacionId)
+      .select()
+      .single();
+
+    if (error) {
+      throw new Error(`Error al actualizar repuestos de asignación: ${error.message}`);
+    }
+
+    return { success: true, data };
+  } catch (error) {
+    console.error('Error en actualizarRepuestosAsignacionPersistencia:', error);
+    return { success: false, error: error.message };
+  }
+};
+
 // ACTUALIZAR FOTOS DE ASIGNACIÓN
 export const actualizarFotosAsignacionPersistencia = async (asignacionId, fotos) => {
   try {

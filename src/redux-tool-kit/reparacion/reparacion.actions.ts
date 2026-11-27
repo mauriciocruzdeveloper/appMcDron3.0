@@ -1,6 +1,11 @@
 import { createAsyncThunk, Unsubscribe } from "@reduxjs/toolkit";
 import { ReparacionType, DataReparacion, ReparacionRelacionada } from "../../types/reparacion";
-import { setReparaciones, setIntervencionesDeReparacionActual, updateReparacion } from "./reparacion.slice";
+import {
+  setAsignacionesCompromiso,
+  setReparaciones,
+  setIntervencionesDeReparacionActual,
+  updateReparacion,
+} from "./reparacion.slice";
 import {
   eliminarReparacionPersistencia,
   getReparacionesPersistencia,
@@ -21,7 +26,14 @@ import { PresupuestoProps } from "../../components/Presupuesto.component";
 import { Drone } from "../../types/drone";
 import { RootState } from "../store";
 import { setRepuesto } from "../repuesto/repuesto.slice";
-import { EstadoAsignacion, OrigenAsignacion, RepuestoAsignacionSnapshot } from "../../types/intervencion";
+import { EstadoAsignacion, Intervenciones, OrigenAsignacion, RepuestoAsignacionSnapshot } from "../../types/intervencion";
+import {
+  evaluarAjusteRepuestosAsignacion,
+  generarLineaInformeAjusteRepuestos,
+  normalizarRepuestosSnapshot,
+  obtenerRepuestosBaseIntervencion,
+  sincronizarNotaAjusteEnInforme,
+} from "../../usecases/repuestosAsignacion";
 import {
   esTelefonoArgentinoValido,
   MENSAJE_TELEFONO_ARGENTINO_INVALIDO,
@@ -161,14 +173,19 @@ const consolidarCantidadPorRepuesto = (partsRelations: RelacionRepuestoIntervenc
   return requiredByPart;
 };
 
-const obtenerDemandaPorEstadoDeAsignacion = async (reparacionId: string): Promise<{
+const obtenerDemandaPorEstadoDeAsignacion = async (
+  reparacionId: string,
+  catalogoIntervenciones?: Intervenciones,
+): Promise<{
   completada: Map<string, number>;
   noCompletada: Map<string, number>;
+  notasPorRepuesto: Map<string, string[]>;
 }> => {
   const { getIntervencionPersistencia } = await import('../../persistencia/persistencia');
   const asignaciones = await getIntervencionesPorReparacionPersistencia(reparacionId);
   const demandaCompletada = new Map<string, number>();
   const demandaNoCompletada = new Map<string, number>();
+  const notasPorRepuesto = new Map<string, string[]>();
 
   for (const asignacion of asignaciones) {
     if (asignacion.data.incluyeRepuestosTaller === false) continue;
@@ -182,16 +199,40 @@ const obtenerDemandaPorEstadoDeAsignacion = async (reparacionId: string): Promis
       repuestosAsignados = (intervencion?.data?._partsRelations || []) as RelacionRepuestoIntervencion[];
     }
     const requiredByIntervention = consolidarCantidadPorRepuesto(repuestosAsignados);
-    const demandaDestino = asignacion.data.estado === EstadoAsignacion.COMPLETADA
-      ? demandaCompletada
-      : demandaNoCompletada;
+    const esCompletada = asignacion.data.estado === EstadoAsignacion.COMPLETADA;
+    const demandaDestino = esCompletada ? demandaCompletada : demandaNoCompletada;
+
+    const intervencionCatalogo = catalogoIntervenciones?.[intervencionId];
+    const evaluacionAjuste = esCompletada && intervencionCatalogo
+      ? evaluarAjusteRepuestosAsignacion(asignacion.data, intervencionCatalogo)
+      : null;
+    const mapaCatalogo = new Map(
+      (evaluacionAjuste?.repuestosCatalogo || []).map(item => [item.partId, item.quantity]),
+    );
 
     Array.from(requiredByIntervention.entries()).forEach(([partId, qty]) => {
       demandaDestino.set(partId, (demandaDestino.get(partId) || 0) + qty);
+
+      if (
+        evaluacionAjuste?.esAjustado &&
+        evaluacionAjuste.tipoAjuste === 'sustituido' &&
+        mapaCatalogo.get(partId) !== qty
+      ) {
+        const nombreIntervencion = intervencionCatalogo?.data?.NombreInt || intervencionId;
+        const nota = `Repuesto ajustado en intervención: ${nombreIntervencion}`;
+        const existentes = notasPorRepuesto.get(partId) || [];
+        if (!existentes.includes(nota)) {
+          notasPorRepuesto.set(partId, [...existentes, nota]);
+        }
+      }
     });
   }
 
-  return { completada: demandaCompletada, noCompletada: demandaNoCompletada };
+  return {
+    completada: demandaCompletada,
+    noCompletada: demandaNoCompletada,
+    notasPorRepuesto,
+  };
 };
 
 /**
@@ -200,6 +241,7 @@ const obtenerDemandaPorEstadoDeAsignacion = async (reparacionId: string): Promis
  */
 const aplicarConsumosDeReparacion = async (
   demanda: Map<string, number>,
+  notasPorRepuesto: Map<string, string[]>,
   reparacionId: string,
   dispatch: any,
   getState: () => RootState
@@ -208,6 +250,7 @@ const aplicarConsumosDeReparacion = async (
 
   for (const [repuestoId, qty] of Array.from(demanda.entries())) {
     if (!qty) continue;
+    const notas = notasPorRepuesto.get(repuestoId);
     const actualizado = await aplicarMovimientoStockPersistencia({
       partId: repuestoId,
       onHandDelta: -qty,
@@ -215,7 +258,7 @@ const aplicarConsumosDeReparacion = async (
       kind: 'consumption',
       referenceType: 'repair',
       referenceId: reparacionId,
-      note: null,
+      note: notas && notas.length > 0 ? notas.join('; ') : null,
     });
 
     const existente = getState().repuesto.coleccionRepuestos[repuestoId];
@@ -240,7 +283,11 @@ const consumirRepuestosDeReparacion = async (
   dispatch: any,
   getState: () => RootState
 ): Promise<void> => {
-  const demanda = await obtenerDemandaPorEstadoDeAsignacion(reparacionId);
+  const stateInicial = getState();
+  const demanda = await obtenerDemandaPorEstadoDeAsignacion(
+    reparacionId,
+    stateInicial.intervencion?.coleccionIntervenciones,
+  );
 
   const coleccionRepuestos = getState().repuesto.coleccionRepuestos;
   const demandaConStock = new Map<string, number>();
@@ -250,7 +297,13 @@ const consumirRepuestosDeReparacion = async (
     if (stockActual > 0) demandaConStock.set(repuestoId, qty);
   });
 
-  await aplicarConsumosDeReparacion(demandaConStock, reparacionId, dispatch, getState);
+  await aplicarConsumosDeReparacion(
+    demandaConStock,
+    demanda.notasPorRepuesto,
+    reparacionId,
+    dispatch,
+    getState,
+  );
 };
 
 async function guardarReparacionNueva(reparacion: ReparacionType): Promise<ReparacionType> {
@@ -848,6 +901,198 @@ export const actualizarIncluirRepuestoAsignacionAsync = createAsyncThunk(
     await dispatch(getIntervencionesPorReparacionAsync(reparacionId));
 
     return resultado.data;
+  },
+);
+
+export interface ActualizarRepuestosAsignacionParams {
+  asignacionId: string;
+  repuestos?: RepuestoAsignacionSnapshot[];
+  restaurarOriginal?: boolean;
+  textoInformeActual?: string;
+}
+
+/**
+ * Actualiza los repuestos efectivos (`repuestosSnapshot` e `incluyeRepuestosTaller`) de
+ * una asignación pendiente durante el trabajo activo (`Aceptado` o `Repuestos`),
+ * preservando intacto el presupuesto acordado (`PresuFiRep` y precios congelados de
+ * asignaciones presupuestadas) y sincronizando la aclaración en `DescripcionTecRep`.
+ */
+export const actualizarRepuestosAsignacionAsync = createAsyncThunk(
+  'reparacion/actualizarRepuestosAsignacion',
+  async (
+    {
+      asignacionId,
+      repuestos = [],
+      restaurarOriginal = false,
+      textoInformeActual,
+    }: ActualizarRepuestosAsignacionParams,
+    { dispatch, getState },
+  ) => {
+    const state = getState() as RootState;
+    const asignacion = state.reparacion.intervencionesDeReparacionActual.find(
+      a => a.id === asignacionId,
+    );
+    if (!asignacion) {
+      throw new Error('Asignación no encontrada en el store');
+    }
+
+    if (asignacion.data.estado === EstadoAsignacion.COMPLETADA) {
+      throw new Error('No se pueden modificar los repuestos de una intervención completada');
+    }
+
+    const reparacionId = asignacion.data.reparacionId;
+    const reparacion = state.reparacion.coleccionReparaciones[reparacionId];
+    if (
+      !reparacion ||
+      (reparacion.data.EstadoRep !== 'Aceptado' && reparacion.data.EstadoRep !== 'Repuestos')
+    ) {
+      throw new Error(
+        'Solo se pueden modificar los repuestos de una asignación en reparaciones aceptadas o esperando repuestos',
+      );
+    }
+
+    const intervencionEnStore =
+      state.intervencion?.coleccionIntervenciones?.[asignacion.data.intervencionId];
+    let intervencionEfectiva = intervencionEnStore;
+
+    if (restaurarOriginal || !intervencionEfectiva) {
+      const { getIntervencionPersistencia } = await import('../../persistencia/persistencia');
+      const intervencionRemota = await getIntervencionPersistencia(
+        asignacion.data.intervencionId,
+      ).catch(() => null);
+      if (intervencionRemota) {
+        intervencionEfectiva = intervencionRemota;
+      }
+    }
+
+    let nuevosRepuestosSnapshot: RepuestoAsignacionSnapshot[];
+    if (restaurarOriginal) {
+      nuevosRepuestosSnapshot = obtenerRepuestosBaseIntervencion(intervencionEfectiva);
+    } else {
+      nuevosRepuestosSnapshot = normalizarRepuestosSnapshot(repuestos);
+      const idsPrevios = new Set(
+        (asignacion.data.repuestosSnapshot || []).map(item => item.partId),
+      );
+
+      nuevosRepuestosSnapshot.forEach(({ partId }) => {
+        const repuestoCat = state.repuesto?.coleccionRepuestos?.[partId];
+        if (repuestoCat?.data?.Obsoleta && !idsPrevios.has(partId)) {
+          throw new Error(
+            `El repuesto "${repuestoCat.data.NombreRepu || partId}" está marcado como obsoleto y no puede seleccionarse`,
+          );
+        }
+      });
+    }
+
+    const incluyeRepuestosTaller = nuevosRepuestosSnapshot.length > 0;
+    const esAdicional = asignacion.data.origen === OrigenAsignacion.ADICIONAL;
+
+    let parts_cost: number | undefined;
+    let total_cost: number | undefined;
+
+    if (esAdicional) {
+      parts_cost = incluyeRepuestosTaller
+        ? nuevosRepuestosSnapshot.reduce((sum, item) => {
+            const precio = state.repuesto?.coleccionRepuestos?.[item.partId]?.data?.PrecioRepu || 0;
+            const cantidad = Number(item.quantity) || 1;
+            return sum + precio * cantidad;
+          }, 0)
+        : 0;
+      total_cost = (asignacion.data.PrecioManoObra || 0) + parts_cost;
+    }
+
+    const obtenerNombreRepuesto = (partId: string): string =>
+      state.repuesto?.coleccionRepuestos?.[partId]?.data?.NombreRepu || partId;
+    const nombreIntervencion = intervencionEfectiva?.data?.NombreInt || 'Intervención';
+
+    const evaluacionAnterior = evaluarAjusteRepuestosAsignacion(
+      asignacion.data,
+      intervencionEfectiva,
+    );
+    const evaluacionNueva = evaluarAjusteRepuestosAsignacion(
+      {
+        repuestosSnapshot: nuevosRepuestosSnapshot,
+        incluyeRepuestosTaller,
+        PrecioPiezas: asignacion.data.PrecioPiezas,
+      },
+      intervencionEfectiva,
+    );
+
+    const lineaAnterior = generarLineaInformeAjusteRepuestos(
+      nombreIntervencion,
+      evaluacionAnterior,
+      obtenerNombreRepuesto,
+    );
+    const lineaNueva = generarLineaInformeAjusteRepuestos(
+      nombreIntervencion,
+      evaluacionNueva,
+      obtenerNombreRepuesto,
+    );
+
+    const textoBase =
+      textoInformeActual !== undefined
+        ? textoInformeActual
+        : (reparacion.data.DescripcionTecRep || '');
+    const descripcionTecActualizada = sincronizarNotaAjusteEnInforme(textoBase, {
+      nombreIntervencion,
+      lineaAnterior,
+      lineaNueva,
+    });
+
+    const { actualizarRepuestosAsignacionPersistencia } = await import(
+      '../../persistencia/persistencia'
+    );
+    const resultado = await actualizarRepuestosAsignacionPersistencia(asignacionId, {
+      repuestosSnapshot: nuevosRepuestosSnapshot,
+      incluyeRepuestosTaller,
+      parts_cost,
+      total_cost,
+    });
+
+    if (!resultado.success) {
+      throw new Error(resultado.error);
+    }
+
+    // Actualizar optimistamente el read model de compromiso para reflejar al instante
+    // cambios en REPUESTOS, faltantes y lista de compras antes de que llegue Realtime.
+    const stateTrasPersistencia = getState() as RootState;
+    const compromisosActuales = stateTrasPersistencia.reparacion.asignacionesCompromiso || [];
+    if (compromisosActuales.some(item => item.id === asignacionId)) {
+      dispatch(
+        setAsignacionesCompromiso(
+          compromisosActuales.map(item =>
+            item.id === asignacionId
+              ? {
+                  ...item,
+                  incluyeRepuestosTaller,
+                  repuestosSnapshot: nuevosRepuestosSnapshot,
+                }
+              : item,
+          ),
+        ),
+      );
+    }
+
+    await dispatch(getIntervencionesPorReparacionAsync(reparacionId));
+
+    const informeEnStore =
+      (getState() as RootState).reparacion.coleccionReparaciones[reparacionId]?.data
+        .DescripcionTecRep || '';
+
+    if (descripcionTecActualizada !== informeEnStore) {
+      await dispatch(
+        actualizarCampoReparacionAsync({
+          reparacionId,
+          campo: 'DescripcionTecRep',
+          valor: descripcionTecActualizada,
+        }),
+      ).unwrap();
+    }
+
+    return {
+      asignacion: resultado.data,
+      descripcionTecActualizada,
+    };
   },
 );
 

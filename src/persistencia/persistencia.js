@@ -32,6 +32,7 @@ export const actualizarEstadoAsignacionPersistencia = backend.actualizarEstadoAs
 export const actualizarDescripcionAsignacionPersistencia = backend.actualizarDescripcionAsignacionPersistencia;
 export const actualizarFotosAsignacionPersistencia = backend.actualizarFotosAsignacionPersistencia;
 export const actualizarPreciosPiezasAsignacionPersistencia = backend.actualizarPreciosPiezasAsignacionPersistencia;
+export const actualizarRepuestosAsignacionPersistencia = backend.actualizarRepuestosAsignacionPersistencia;
 
 // USUARIOS / CLIENTES
 export const getUsuariosPersistencia = backend.getUsuariosPersistencia;

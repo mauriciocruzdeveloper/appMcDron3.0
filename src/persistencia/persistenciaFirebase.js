@@ -413,6 +413,12 @@ export const getReparacionesPorIntervencionPersistencia = (intervencionId) => {
   });
 };
 
+// El backend Firebase legacy no mantiene la tabla repair_intervention con snapshots.
+export const actualizarRepuestosAsignacionPersistencia = async () => ({
+  success: false,
+  error: 'Edición de repuestos por asignación no soportada en persistencia Firebase legacy',
+});
+
 ///////////////////// CLIENTES/USUARIOS ///////////////////////////////////////////////////////////////////////////
 
 // GET todos los clientes

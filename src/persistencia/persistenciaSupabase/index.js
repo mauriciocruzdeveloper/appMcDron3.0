@@ -15,6 +15,7 @@ export {
   actualizarDescripcionAsignacionPersistencia,
   actualizarFotosAsignacionPersistencia,
   actualizarPreciosPiezasAsignacionPersistencia,
+  actualizarRepuestosAsignacionPersistencia,
   getReparacionesPersistencia,
   getReparacionPersistencia,
   getReparacionesPorIntervencionPersistencia,
