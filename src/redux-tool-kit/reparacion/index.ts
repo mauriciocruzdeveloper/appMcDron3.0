@@ -110,6 +110,7 @@ export {
   selectSeccionesVisibles,
   selectPrecioManualDifiere,
   selectRelacionPresupuestoModelo,
+  selectModeloDroneResueltoIdByReparacionId,
   calcularRelacionPresupuestoModelo,
   resolverModeloDroneDeReparacion,
   selectResumenProgreso,

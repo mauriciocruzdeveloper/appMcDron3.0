@@ -1282,6 +1282,45 @@ export const selectRelacionPresupuestoModelo = (
   );
 
 /**
+ * Selector que retorna el ID del modelo de drone del catálogo asociado a una reparación
+ * (priorizando DroneId -> ModeloDroneId y usando como respaldo coincidencia única por nombre).
+ */
+export const selectModeloDroneResueltoIdByReparacionId = (
+  reparacionId: string,
+  nombreOverride?: string,
+) =>
+  createSelector(
+    [
+      (state: RootState) => selectReparacionById(reparacionId)(state),
+      (state: RootState) => state.drone?.coleccionDrones || DRONES_VACIOS,
+      (state: RootState) => state.modeloDrone?.coleccionModelosDrone || MODELOS_DRONE_VACIOS,
+    ],
+    (reparacion, drones, modelos): string | null => {
+      if (!reparacion) return null;
+
+      if (reparacion.data.DroneId) {
+        const drone = drones[reparacion.data.DroneId];
+        if (drone?.data.ModeloDroneId) {
+          return drone.data.ModeloDroneId;
+        }
+      }
+
+      const reparacionEfectiva = nombreOverride !== undefined
+        ? {
+            ...reparacion,
+            data: {
+              ...reparacion.data,
+              ModeloDroneNameRep: nombreOverride,
+            },
+          }
+        : reparacion;
+
+      const modelo = resolverModeloDroneDeReparacion(reparacionEfectiva, drones, modelos);
+      return modelo?.id ?? null;
+    }
+  );
+
+/**
  * Selector que retorna información completa para el resumen de progreso
  */
 export const selectResumenProgreso = (reparacionId: string) =>

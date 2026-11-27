@@ -1,4 +1,5 @@
 import React from "react";
+import { Link } from "react-router-dom";
 import { useAppSelector } from "../../../redux-tool-kit/hooks/useAppSelector";
 import { useAppDispatch } from "../../../redux-tool-kit/hooks/useAppDispatch";
 import { useDebouncedField } from "../../../hooks/useDebouncedField";
@@ -12,10 +13,13 @@ import {
     cambiarEstadoReparacionAsync,
     cambiarModeloDroneEnReparacionAsync,
 } from "../../../redux-tool-kit/reparacion/reparacion.actions";
-import { selectModeloDroneIdByReparacionId } from "../../../redux-tool-kit/reparacion/reparacion.selectors";
+import {
+    selectModeloDroneIdByReparacionId,
+    selectModeloDroneResueltoIdByReparacionId,
+} from "../../../redux-tool-kit/reparacion/reparacion.selectors";
 import { selectUsuarioPorId } from "../../../redux-tool-kit/usuario/usuario.selectors";
 import { selectDronesByPropietario } from "../../../redux-tool-kit/drone/drone.selectors";
-import { selectModeloDronePorId, selectModelosDroneOrdenados } from "../../../redux-tool-kit/modeloDrone/modeloDrone.selectors";
+import { selectModelosDroneOrdenados } from "../../../redux-tool-kit/modeloDrone/modeloDrone.selectors";
 import { enviarSms, getEmailForNotifications } from "../../../utils/utils";
 import { enviarEmailVacio } from "../../../utils/sendEmails";
 import { convertTimestampCORTO } from "../../../utils/utils";
@@ -62,6 +66,13 @@ export const ReparacionConsulta: React.FC<ReparacionConsultaProps> = ({
         campo: 'ModeloDroneNameRep',
         valorInicial: reparacion?.data.ModeloDroneNameRep || ""
     });
+
+    const modeloDroneEditableId = useAppSelector(state =>
+        selectModeloDroneResueltoIdByReparacionId(
+            reparacionId,
+            reparacion?.data.DroneId ? undefined : modeloDrone.value,
+        )(state)
+    );
 
     const descripcionUsu = useDebouncedField({
         reparacionId,
@@ -216,17 +227,30 @@ export const ReparacionConsulta: React.FC<ReparacionConsultaProps> = ({
                 {reparacion.data.DroneId ? (
                     <div>
                         <label className="form-label">Modelo del Drone</label>
-                        <ComboBox
-                            id="ModeloDroneIdSelect"
-                            options={modelosDrone.map(modelo => ({
-                                value: modelo.id,
-                                label: `${modelo.data.NombreModelo} - ${modelo.data.Fabricante}`,
-                            }))}
-                            value={modeloDroneIdActual || ""}
-                            onChange={handleModeloDroneChange}
-                            placeholder="Seleccione un modelo"
-                            disabled={!isAdmin}
-                        />
+                        <div className="d-flex w-100 justify-content-between">
+                            <ComboBox
+                                id="ModeloDroneIdSelect"
+                                className="flex-grow-1"
+                                options={modelosDrone.map(modelo => ({
+                                    value: modelo.id,
+                                    label: `${modelo.data.NombreModelo} - ${modelo.data.Fabricante}`,
+                                }))}
+                                value={modeloDroneIdActual || ""}
+                                onChange={handleModeloDroneChange}
+                                placeholder="Seleccione un modelo"
+                                disabled={!isAdmin}
+                            />
+                            {isAdmin && modeloDroneEditableId && (
+                                <Link
+                                    to={`/inicio/modelos-drone/${modeloDroneEditableId}`}
+                                    className="btn btn-outline-secondary bg-bluemcdron text-white"
+                                    title="Editar modelo de drone"
+                                    aria-label="Editar modelo de drone"
+                                >
+                                    <i className="bi bi-pencil-square" aria-hidden="true"></i>
+                                </Link>
+                            )}
+                        </div>
                     </div>
                 ) : (
                     <div>
@@ -234,14 +258,26 @@ export const ReparacionConsulta: React.FC<ReparacionConsultaProps> = ({
                             Modelo del Drone
                             {modeloDrone.isSaving && <small className="text-muted ms-2">Guardando...</small>}
                         </label>
-                        <input
-                            type="text"
-                            className="form-control"
-                            id="ModeloDroneNameRep"
-                            value={modeloDrone.value}
-                            onChange={(e) => modeloDrone.onChange(e.target.value)}
-                            disabled={!isAdmin}
-                        />
+                        <div className="d-flex w-100 justify-content-between">
+                            <input
+                                type="text"
+                                className="form-control"
+                                id="ModeloDroneNameRep"
+                                value={modeloDrone.value}
+                                onChange={(e) => modeloDrone.onChange(e.target.value)}
+                                disabled={!isAdmin}
+                            />
+                            {isAdmin && modeloDroneEditableId && (
+                                <Link
+                                    to={`/inicio/modelos-drone/${modeloDroneEditableId}`}
+                                    className="btn btn-outline-secondary bg-bluemcdron text-white"
+                                    title="Editar modelo de drone"
+                                    aria-label="Editar modelo de drone"
+                                >
+                                    <i className="bi bi-pencil-square" aria-hidden="true"></i>
+                                </Link>
+                            )}
+                        </div>
                     </div>
                 )}
                 <div>

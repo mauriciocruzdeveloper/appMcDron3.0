@@ -42,6 +42,7 @@ import {
   selectIntervencionesPresupuestadas,
   selectPuedeAvanzarA,
   selectRelacionPresupuestoModelo,
+  selectModeloDroneResueltoIdByReparacionId,
   calcularRelacionPresupuestoModelo,
   resolverModeloDroneDeReparacion,
   selectReparacionesListasParaAvisoAbandono,
@@ -1535,5 +1536,41 @@ describe('selectRelacionPresupuestoModelo', () => {
       montoPresupuesto: 50000,
       porcentaje: null,
     });
+  });
+
+  it('resuelve el ID del modelo por DroneId o por nombre (incluyendo override en vivo)', () => {
+    const state = {
+      reparacion: {
+        coleccionReparaciones: {
+          'rep-con-drone': {
+            ...crearReparacion('rep-con-drone'),
+            data: { ...crearReparacion('rep-con-drone').data, DroneId: 'drone-1' },
+          },
+          'rep-por-nombre': {
+            ...crearReparacion('rep-por-nombre'),
+            data: { ...crearReparacion('rep-por-nombre').data, ModeloDroneNameRep: 'Autel Evo' },
+          },
+        },
+      },
+      drone: {
+        coleccionDrones: {
+          'drone-1': {
+            id: 'drone-1',
+            data: {
+              Nombre: 'Mavic 3',
+              ModeloDroneId: 'mod-1',
+              Propietario: 'usu-1',
+              NumeroSerie: '',
+              Observaciones: '',
+            },
+          },
+        },
+      },
+      modeloDrone: { coleccionModelosDrone: modelos },
+    } as unknown as RootState;
+
+    expect(selectModeloDroneResueltoIdByReparacionId('rep-con-drone')(state)).toBe('mod-1');
+    expect(selectModeloDroneResueltoIdByReparacionId('rep-por-nombre')(state)).toBeNull();
+    expect(selectModeloDroneResueltoIdByReparacionId('rep-por-nombre', 'Mavic 3')(state)).toBe('mod-1');
   });
 });
