@@ -261,6 +261,17 @@ export default function PedidoComponent(): JSX.Element {
             });
             return;
         }
+        const itemCantidadInvalida = pedido.data.Items.find(
+            i => !Number.isInteger(i.data.Cantidad) || i.data.Cantidad < 1
+        );
+        if (itemCantidadInvalida) {
+            openModal({
+                mensaje: 'La cantidad de cada repuesto debe ser al menos 1.',
+                tipo: 'warning',
+                titulo: 'Atención',
+            });
+            return;
+        }
         openModal({
             mensaje: '¿Desea guardar este pedido?',
             tipo: 'warning',
@@ -578,13 +589,25 @@ export default function PedidoComponent(): JSX.Element {
 
                                 <div className="row g-2">
                                     <div className="col-6">
-                                        <label className="form-label small mb-1">Cantidad *</label>
+                                        <label htmlFor={`cantidad-${item.id}`} className="form-label small mb-1">Cantidad *</label>
                                         <input
+                                            id={`cantidad-${item.id}`}
                                             type="number"
                                             className="form-control form-control-sm"
                                             min={1}
-                                            value={item.data.Cantidad}
-                                            onChange={e => handleItemChange(item.id, 'Cantidad', Math.max(1, Number(e.target.value)))}
+                                            step={1}
+                                            value={item.data.Cantidad > 0 ? item.data.Cantidad : ''}
+                                            onChange={e => {
+                                                const raw = e.target.value;
+                                                if (raw === '') {
+                                                    handleItemChange(item.id, 'Cantidad', 0);
+                                                    return;
+                                                }
+                                                const parsed = parseInt(raw, 10);
+                                                if (!Number.isNaN(parsed) && parsed >= 0) {
+                                                    handleItemChange(item.id, 'Cantidad', parsed);
+                                                }
+                                            }}
                                         />
                                     </div>
                                     <div className="col-6">

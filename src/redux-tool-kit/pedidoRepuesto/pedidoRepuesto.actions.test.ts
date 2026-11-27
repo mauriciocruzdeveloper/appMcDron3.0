@@ -61,4 +61,26 @@ describe('guardarPedidoAsync CUIT', () => {
         expect(result.meta.requestStatus).toBe('rejected');
         expect(guardarPedidoMock).not.toHaveBeenCalled();
     });
+
+    it('rechaza la action cuando algún ítem tiene cantidad menor a 1', async () => {
+        const store = crearStore();
+        const pedido = crearPedido('');
+        pedido.data.Items = [
+            {
+                id: 'item-1',
+                data: {
+                    PedidoId: 'pedido-1',
+                    RepuestoId: 'repuesto-1',
+                    NombreRepuesto: 'Motor',
+                    Cantidad: 0,
+                    PrecioUnitario: 100,
+                },
+            },
+        ];
+
+        const result = await store.dispatch(guardarPedidoAsync(pedido) as any);
+
+        expect(result.meta.requestStatus).toBe('rejected');
+        expect(guardarPedidoMock).not.toHaveBeenCalled();
+    });
 });

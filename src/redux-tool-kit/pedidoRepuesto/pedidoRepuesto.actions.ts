@@ -64,6 +64,14 @@ export const guardarPedidoAsync = createAsyncThunk(
                 throw new Error('El CUIT ingresado no es válido. Verifique el formato y los dígitos.');
             }
 
+            const tieneCantidadInvalida = pedido.data.Items.some(
+                item => !Number.isInteger(Number(item.data.Cantidad)) || Number(item.data.Cantidad) < 1
+            );
+            if (tieneCantidadInvalida) {
+                dispatch(isFetchingComplete());
+                throw new Error('La cantidad de cada repuesto debe ser al menos 1.');
+            }
+
             // El estado se recalcula siempre a partir de los datos: no se acepta el valor
             // de Estado que venga del formulario.
             const estadoDerivado = derivarEstadoPedido(pedido.data, pedidoAnterior?.data.Estado);
